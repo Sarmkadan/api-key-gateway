@@ -1,0 +1,47 @@
+## Rider
+.idea/
+*.sln.iml
+
+## Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+.vscode/
+.DS_Store
+
+## Build
+*.nupkg
+packages/
+*.nupkg.metadata.json
+
+## Test Results
+TestResults/
+coverage/
+
+## Environment
+.env
+.env.local
+*.pfx
+*.pem
+
+## Dependencies
+node_modules/
+dist/
+
+## Logs
+logs/
+*.log
+
+## Temporary files
+*.tmp
+*.temp
+.swp
+*~
+
+## Application settings
+appsettings.Development.json
+
+## IDE user settings
+*.DotSettings.user
