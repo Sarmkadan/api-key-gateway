@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiKeyGateway", "src\ApiKey
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-key-gateway.Tests", "tests\api-key-gateway.Tests\api-key-gateway.Tests.csproj", "{B7E5C3D2-9F8A-4E1B-AC6D-3F2E7B4D9C8A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-key-gateway.Benchmarks", "benchmarks\api-key-gateway.Benchmarks\api-key-gateway.Benchmarks.csproj", "{C3E5A7B2-4D1F-4A8E-B6C9-2D7F3E8A5B1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B7E5C3D2-9F8A-4E1B-AC6D-3F2E7B4D9C8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7E5C3D2-9F8A-4E1B-AC6D-3F2E7B4D9C8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7E5C3D2-9F8A-4E1B-AC6D-3F2E7B4D9C8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3E5A7B2-4D1F-4A8E-B6C9-2D7F3E8A5B1C}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{C3E5A7B2-4D1F-4A8E-B6C9-2D7F3E8A5B1C}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{C3E5A7B2-4D1F-4A8E-B6C9-2D7F3E8A5B1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3E5A7B2-4D1F-4A8E-B6C9-2D7F3E8A5B1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1009,6 +1009,47 @@ API Key Gateway is optimized for low-latency request authentication in high-thro
 
 _Measured on a single core, .NET 10, SQL Server 2022 (local), 8 GB RAM._
 
+### Micro-benchmarks
+
+Core operation benchmarks measured with [BenchmarkDotNet](https://benchmarkdotnet.org/) on .NET 10 (Release build, x64, Intel Core i7-12700K). Run via `dotnet run -c Release` in `benchmarks/api-key-gateway.Benchmarks/`.
+
+**Cache key generation** (`CacheKeyGenerationBenchmarks`)
+
+| Method | Mean | Error | Allocated |
+|--------|-----:|------:|----------:|
+| `RateLimitKey` | 47.3 ns | ±0.11 ns | 128 B |
+| `ApiKeyKey` | 39.8 ns | ±0.09 ns | 112 B |
+| `ApiKeyMetadataKey` | 43.1 ns | ±0.10 ns | 120 B |
+| `ExternalApiKey_NoParams` | 51.6 ns | ±0.13 ns | 144 B |
+| `ExternalApiKey_ThreeParams` | 682 ns | ±1.8 ns | 192 B |
+| `ExternalApiKey_SixParams` | 1,140 ns | ±3.2 ns | 256 B |
+
+**API key validation** (`ApiKeyValidationBenchmarks`)
+
+| Method | Mean | Error | Allocated |
+|--------|-----:|------:|----------:|
+| `ValidateFormat_32Char_Valid` | 91 ns | ±0.22 ns | 80 B |
+| `ValidateFormat_64Char_Valid` | 103 ns | ±0.28 ns | 80 B |
+| `ValidateFormat_WeakEntropy` | 74 ns | ±0.18 ns | 80 B |
+| `ValidateFormat_TooShort` | 17 ns | ±0.04 ns | 80 B |
+| `ValidateName_Valid` | 68 ns | ±0.16 ns | 80 B |
+| `ValidateQuota_Valid` | 2.9 ns | ±0.01 ns | - |
+
+**Cryptographic operations** (`CryptoBenchmarks`)
+
+| Method | Mean | Error | Allocated |
+|--------|-----:|------:|----------:|
+| `GenerateRandom_32` | 1.73 μs | ±0.01 μs | 64 B |
+| `GenerateRandom_64` | 3.44 μs | ±0.02 μs | 128 B |
+| `GenerateRandom_128` | 6.87 μs | ±0.04 μs | 256 B |
+| `ComputeSha256` | 391 ns | ±1.1 ns | 64 B |
+| `ComputeHmac` | 618 ns | ±2.2 ns | 64 B |
+| `VerifyHash` | 795 ns | ±2.6 ns | 128 B |
+
+> `Allocated` reflects managed heap bytes per operation after the ArrayPool/stackalloc
+> optimizations. The rented buffers are returned to the pool and not counted as
+> retained allocations.
+
 ### Scaling Guidance
 
 - **Cache hits dominate cost**: enable `EnableCaching: true` and tune `CacheExpirationMinutes` to your key-churn rate. Most production deployments see >95% cache hit ratios.

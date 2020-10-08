@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Buffers;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ApiKeyGateway.Caching;
@@ -89,16 +91,45 @@ public static class CacheKeyGenerator
     /// <summary>
     /// Creates a hash of parameters for consistent cache key generation.
     /// Order-independent so different parameter orders hash to same value.
+    /// Uses ArrayPool for the char and byte encoding buffers to avoid
+    /// creating an intermediate List&lt;string&gt;, a joined string, and a
+    /// heap-allocated byte array on every external-API cache lookup.
     /// </summary>
     private static string ComputeParameterHash(Dictionary<string, string> parameters)
     {
-        var orderedParams = parameters
-            .OrderBy(p => p.Key)
-            .Select(p => $"{p.Key}={p.Value}")
-            .ToList();
+        var keys = parameters.Keys.ToArray();
+        Array.Sort(keys, StringComparer.Ordinal);
 
-        var combined = string.Join('&', orderedParams);
-        var hashBytes = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(combined));
-        return Convert.ToHexString(hashBytes)[..8]; // First 8 chars of hash
+        int bufLen = 0;
+        foreach (var k in keys)
+            bufLen += k.Length + parameters[k].Length + 2; // "k=v&" worst case
+
+        char[] charBuf = ArrayPool<char>.Shared.Rent(bufLen);
+        byte[]? byteBuf = null;
+        try
+        {
+            int pos = 0;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (i > 0) charBuf[pos++] = '&';
+                string k = keys[i], v = parameters[k];
+                k.AsSpan().CopyTo(charBuf.AsSpan(pos)); pos += k.Length;
+                charBuf[pos++] = '=';
+                v.AsSpan().CopyTo(charBuf.AsSpan(pos)); pos += v.Length;
+            }
+
+            int maxBytes = Encoding.UTF8.GetMaxByteCount(pos);
+            byteBuf = ArrayPool<byte>.Shared.Rent(maxBytes);
+            int byteCount = Encoding.UTF8.GetBytes(charBuf.AsSpan(0, pos), byteBuf);
+
+            Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(byteBuf.AsSpan(0, byteCount), hash);
+            return Convert.ToHexString(hash[..4]); // 4 bytes → 8 uppercase hex chars
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(charBuf);
+            if (byteBuf != null) ArrayPool<byte>.Shared.Return(byteBuf);
+        }
     }
 }
