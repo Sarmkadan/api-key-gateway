@@ -1,0 +1,163 @@
+// =============================================================================
+// Author: Vladyslav Zaiets | https://sarmkadan.com
+// CTO & Software Architect
+// =============================================================================
+
+using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Services;
+
+namespace ApiKeyGateway.Middleware;
+
+/// <summary>
+/// Middleware for API key authentication and request validation
+/// </summary>
+public class ApiKeyAuthenticationMiddleware
+{
+    private const string ApiKeyHeaderName = "X-API-Key";
+    private const string ApiKeyQueryName = "api_key";
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ApiKeyAuthenticationMiddleware> _logger;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly IUsageTrackingService _usageTrackingService;
+    private readonly IRateLimitingService _rateLimitingService;
+
+    public ApiKeyAuthenticationMiddleware(
+        RequestDelegate next,
+        ILogger<ApiKeyAuthenticationMiddleware> logger,
+        IAuthenticationService authenticationService,
+        IUsageTrackingService usageTrackingService,
+        IRateLimitingService rateLimitingService)
+    {
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+        _usageTrackingService = usageTrackingService ?? throw new ArgumentNullException(nameof(usageTrackingService));
+        _rateLimitingService = rateLimitingService ?? throw new ArgumentNullException(nameof(rateLimitingService));
+    }
+
+    /// <summary>
+    /// Invokes the middleware to process the request
+    /// </summary>
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var startTime = DateTime.UtcNow;
+        var apiKey = ExtractApiKey(context.Request);
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                var clientIp = ExtractClientIp(context);
+                var authenticatedKey = await _authenticationService.AuthenticateAsync(apiKey, clientIp);
+
+                if (authenticatedKey != null)
+                {
+                    await _rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
+                    context.Items["ApiKey"] = authenticatedKey;
+                    context.Items["ConsumerId"] = authenticatedKey.ConsumerId;
+                }
+            }
+
+            await _next(context);
+
+            var duration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
+            await RecordUsageAsync(context, apiKey, duration);
+        }
+        catch (RateLimitExceededException ex)
+        {
+            _logger.LogWarning("Rate limit exceeded for key {ApiKeyId}", ex.ApiKeyId);
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.Response.Headers.Append("Retry-After", ((int)ex.RetryAfter!.Value.Subtract(DateTime.UtcNow).TotalSeconds).ToString());
+            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+        }
+        catch (InvalidApiKeyException ex)
+        {
+            _logger.LogWarning("Invalid API key attempt: {Reason}", ex.Message);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Unauthorized access attempt from {SourceIp}: {Reason}", ex.SourceIp, ex.Reason);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in authentication middleware");
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Extracts the API key from the request
+    /// </summary>
+    private static string? ExtractApiKey(HttpRequest request)
+    {
+        if (request.Headers.TryGetValue(ApiKeyHeaderName, out var headerValue))
+            return headerValue.ToString();
+
+        if (request.Query.TryGetValue(ApiKeyQueryName, out var queryValue))
+            return queryValue.ToString();
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extracts the client IP address from the request
+    /// </summary>
+    private static string ExtractClientIp(HttpContext context)
+    {
+        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+            return forwardedFor.ToString().Split(',')[0].Trim();
+
+        return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    }
+
+    /// <summary>
+    /// Records usage metrics for analytics
+    /// </summary>
+    private async Task RecordUsageAsync(HttpContext context, string? apiKey, int durationMs)
+    {
+        try
+        {
+            if (context.Items.TryGetValue("ApiKey", out var keyObj) && keyObj is Domain.Models.ApiKey key &&
+                context.Items.TryGetValue("ConsumerId", out var consumerObj) && consumerObj is string consumerId)
+            {
+                var record = new Domain.Models.UsageRecord
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    ApiKeyId = key.Id,
+                    ConsumerId = consumerId,
+                    RecordedAt = DateTime.UtcNow,
+                    Endpoint = context.Request.Path.ToString(),
+                    Method = context.Request.Method,
+                    ResponseStatusCode = context.Response.StatusCode,
+                    RequestBytes = context.Request.ContentLength ?? 0,
+                    ResponseBytes = context.Response.ContentLength ?? 0,
+                    ResponseTimeMs = durationMs,
+                    SourceIp = ExtractClientIp(context)
+                };
+
+                await _usageTrackingService.RecordUsageAsync(record);
+                await _rateLimitingService.RecordRequestAsync(key.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to record usage");
+        }
+    }
+}
+
+/// <summary>
+/// Extension methods for middleware registration
+/// </summary>
+public static class ApiKeyAuthenticationMiddlewareExtensions
+{
+    public static IApplicationBuilder UseApiKeyAuthentication(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
+    }
+}
