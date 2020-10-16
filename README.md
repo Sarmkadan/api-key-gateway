@@ -1,3 +1,7 @@
+[![Build](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+
 # API Key Gateway
 
 > A lightweight, production-grade API key authentication gateway for self-hosted services. Built for developers who need enterprise-grade API authentication without the enterprise complexity.
