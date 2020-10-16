@@ -39,3 +39,9 @@ logs/
 *.temp
 .swp
 *~
+
+## Application settings
+appsettings.Development.json
+
+## IDE user settings
+*.DotSettings.user

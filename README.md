@@ -1010,11 +1010,11 @@ See [LICENSE](LICENSE) file for full details.
 
 ### Get Help
 
-- 📖 **Documentation**: [docs/](docs/)
-- 💬 **Discussions**: GitHub Discussions
-- 🐛 **Issues**: GitHub Issues
-- 📧 **Email**: rutova2@gmail.com
-- 🌐 **Website**: https://sarmkadan.com
+- **Documentation**: [docs/](docs/)
+- **Discussions**: GitHub Discussions
+- **Issues**: GitHub Issues
+- **Email**: rutova2@gmail.com
+- **Website**: https://sarmkadan.com
 
 ---
 
