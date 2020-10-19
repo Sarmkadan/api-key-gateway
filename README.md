@@ -22,7 +22,7 @@
 - [Troubleshooting](#troubleshooting)
 - [Performance](#performance)
 - [Testing](#testing)
-- [Ecosystem](#ecosystem)
+- [Related Projects](#related-projects)
 - [Contributing](#contributing)
 - [License & Support](#license--support)
 
@@ -1045,7 +1045,7 @@ reportgenerator \
 
 Open `./coverage/html/index.html` in a browser to view line-level coverage.
 
-## Ecosystem
+## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
 
