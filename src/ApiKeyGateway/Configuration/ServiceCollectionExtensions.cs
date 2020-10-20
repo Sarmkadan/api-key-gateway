@@ -40,6 +40,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+        services.AddRequestCoalescing();
+
         services.AddSingleton<GatewayConfiguration>(sp =>
             sp.GetRequiredService<IConfiguration>().GetSection("Gateway")
                 .Get<GatewayConfiguration>() ?? new GatewayConfiguration());
