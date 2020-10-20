@@ -52,6 +52,11 @@ public class ApiKeysController : ControllerBase
                 CreatedAt = apiKey.CreatedAt
             });
         }
+        catch (InvalidApiKeyException ex)
+        {
+            _logger.LogWarning(ex, "Invalid API Key creation attempt: {ErrorMessage}", ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating API key");
