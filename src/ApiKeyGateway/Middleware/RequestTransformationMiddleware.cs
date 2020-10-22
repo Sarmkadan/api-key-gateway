@@ -108,7 +108,7 @@ public sealed class RequestTransformationMiddleware
         ApplyQueryMutations(context.Request, transformContext);
 
         // Apply path mutation when the script or built-in action rewrote it.
-        if (!string.Equals(transformContext.Path, context.Request.Path.Value,
+        if (!string.Equals(transformContext.Path, context.Request.Path.ToString(),
                 StringComparison.OrdinalIgnoreCase))
         {
             context.Request.Path = new PathString(transformContext.Path);
