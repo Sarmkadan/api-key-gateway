@@ -32,7 +32,7 @@ public class ApiKeyServiceTests
     public async Task CreateKeyAsync_EmptyOrNullConsumerId_ThrowsArgumentException(string? consumerId)
     {
         // Act
-        var act = async () => await _sut.CreateKeyAsync(consumerId!, "My Key");
+        var act = async () => await _sut.CreateKeyAsync(consumerId!, "My Key").ConfigureAwait(false);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentException>()
@@ -46,7 +46,7 @@ public class ApiKeyServiceTests
     public async Task CreateKeyAsync_EmptyOrNullName_ThrowsArgumentException(string? name)
     {
         // Act
-        var act = async () => await _sut.CreateKeyAsync("consumer-123", name!);
+        var act = async () => await _sut.CreateKeyAsync("consumer-123", name!).ConfigureAwait(false);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentException>()
@@ -67,7 +67,7 @@ public class ApiKeyServiceTests
             .ReturnsAsync((ApiKey k) => k);
 
         // Act
-        var result = await _sut.CreateKeyAsync(consumerId, keyName);
+        var result = await _sut.CreateKeyAsync(consumerId, keyName).ConfigureAwait(false);
 
         // Assert
         result.Should().NotBeNull();
@@ -82,9 +82,9 @@ public class ApiKeyServiceTests
     public async Task GetByIdAsync_NullOrEmptyKeyId_ReturnsNull()
     {
         // Act
-        var resultNull = await _sut.GetByIdAsync(null!);
-        var resultEmpty = await _sut.GetByIdAsync(string.Empty);
-        var resultWhitespace = await _sut.GetByIdAsync("   ");
+        var resultNull = await _sut.GetByIdAsync(null!).ConfigureAwait(false);
+        var resultEmpty = await _sut.GetByIdAsync(string.Empty).ConfigureAwait(false);
+        var resultWhitespace = await _sut.GetByIdAsync("   ").ConfigureAwait(false);
 
         // Assert
         resultNull.Should().BeNull();
@@ -102,7 +102,7 @@ public class ApiKeyServiceTests
             .ReturnsAsync((ApiKey?)null);
 
         // Act
-        var result = await _sut.DisableKeyAsync("missing-key");
+        var result = await _sut.DisableKeyAsync("missing-key").ConfigureAwait(false);
 
         // Assert
         result.Should().BeFalse();
@@ -122,7 +122,7 @@ public class ApiKeyServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DisableKeyAsync("key-001");
+        var result = await _sut.DisableKeyAsync("key-001").ConfigureAwait(false);
 
         // Assert
         result.Should().BeTrue();
@@ -134,17 +134,17 @@ public class ApiKeyServiceTests
     public async Task ValidateKeyAsync_EmptyKeyValue_ThrowsUnauthorizedException()
     {
         // Act
-        var act = async () => await _sut.ValidateKeyAsync(string.Empty);
+        var act = async () => await _sut.ValidateKeyAsync(string.Empty).ConfigureAwait(false);
 
         // Assert
-        await act.Should().ThrowAsync<GatewayUnauthorizedException>();
+        await act.Should().ThrowAsync<GatewayUnauthorizedException>().ConfigureAwait(false);
     }
 
     [Fact]
     public async Task GetConsumerKeysAsync_EmptyConsumerId_ReturnsEmptyListWithoutQueryingRepository()
     {
         // Act
-        var result = await _sut.GetConsumerKeysAsync(string.Empty);
+        var result = await _sut.GetConsumerKeysAsync(string.Empty).ConfigureAwait(false);
 
         // Assert
         result.Should().BeEmpty();
@@ -164,7 +164,7 @@ public class ApiKeyServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.RevokeKeyAsync("key-to-revoke");
+        var result = await _sut.RevokeKeyAsync("key-to-revoke").ConfigureAwait(false);
 
         // Assert
         result.Should().BeTrue();

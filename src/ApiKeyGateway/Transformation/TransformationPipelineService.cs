@@ -66,7 +66,7 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         var evaluated = 0;
         var applied = 0;
 
-        var rules = await ResolveRulesAsync(context, cancellationToken);
+        var rules = await ResolveRulesAsync(context, cancellationToken).ConfigureAwait(false);
 
         foreach (var rule in rules)
         {
@@ -77,7 +77,7 @@ public sealed class TransformationPipelineService : ITransformationPipeline
 
             try
             {
-                var didApply = await ApplyRuleAsync(rule, context, cancellationToken);
+                var didApply = await ApplyRuleAsync(rule, context, cancellationToken).ConfigureAwait(false);
                 if (didApply) applied++;
 
                 _logger.LogDebug(
@@ -119,7 +119,7 @@ public sealed class TransformationPipelineService : ITransformationPipeline
     /// <inheritdoc />
     public async Task WarmAsync(string apiKeyId, CancellationToken cancellationToken = default)
     {
-        _ = await LoadKeyRulesAsync(apiKeyId, cancellationToken);
+        _ = await LoadKeyRulesAsync(apiKeyId, cancellationToken).ConfigureAwait(false);
         _logger.LogDebug("Transformation rule cache warmed for API key {ApiKeyId}", apiKeyId);
     }
 
@@ -142,7 +142,7 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         if (context.ApiKeyId is not null)
             tasks.Add(LoadKeyRulesAsync(context.ApiKeyId, ct));
 
-        var buckets = await Task.WhenAll(tasks);
+        var buckets = await Task.WhenAll(tasks).ConfigureAwait(false);
 
         return buckets
             .SelectMany(b => b)
@@ -166,7 +166,7 @@ public sealed class TransformationPipelineService : ITransformationPipeline
             return cached.Rules;
         }
 
-        var rules = await _repository.GetByApiKeyAsync(apiKeyId, ct);
+        var rules = await _repository.GetByApiKeyAsync(apiKeyId, ct).ConfigureAwait(false);
 
         if (ttl > TimeSpan.Zero)
             _ruleCache[apiKeyId] = (rules, DateTime.UtcNow.Add(ttl));

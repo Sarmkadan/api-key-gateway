@@ -100,7 +100,7 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
 
             try
             {
-                var result = await operation(cancellationToken);
+                var result = await operation(cancellationToken).ConfigureAwait(false);
                 entry.TrySetResult(result);
                 return result;
             }
@@ -131,7 +131,7 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
             _logger.LogDebug(
                 "Joining in-flight coalesced request for key {RequestKey}", requestKey);
 
-            var boxed = await existing.Task.WaitAsync(cancellationToken);
+            var boxed = await existing.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
             return (T)boxed!;
         }
 
@@ -139,7 +139,7 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
         _logger.LogDebug(
             "Falling back to independent execution for key {RequestKey}", requestKey);
 
-        return await operation(cancellationToken);
+        return await operation(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

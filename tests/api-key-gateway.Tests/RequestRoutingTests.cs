@@ -35,7 +35,7 @@ public class RequestRoutingTests
         var request = new HttpRequestMessage(HttpMethod.Get, encodedPath);
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request).ConfigureAwait(false);
 
         // Assert
         // Should not return 404 - should properly route to the endpoint

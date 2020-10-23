@@ -78,12 +78,12 @@ public static class ServiceRegistrationExtensions
         try
         {
             // Validate cache configuration
-            await CachingConfiguration.ValidateCacheConfiguration(serviceProvider);
+            await CachingConfiguration.ValidateCacheConfiguration(serviceProvider).ConfigureAwait(false);
             logger.LogInformation("Cache validation completed successfully");
 
             // Validate database connectivity
             var apiKeyRepo = serviceProvider.GetRequiredService<IApiKeyRepository>();
-            await apiKeyRepo.GetAllAsync();
+            await apiKeyRepo.GetAllAsync().ConfigureAwait(false);
             logger.LogInformation("Database connectivity validated");
 
             logger.LogInformation("All service validations passed");

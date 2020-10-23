@@ -41,11 +41,11 @@ public class RateLimitingService : IRateLimitingService
         if (string.IsNullOrWhiteSpace(apiKeyId))
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
 
-        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
+        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit == null)
             return true;
 
-        await CheckAndResetWindowAsync(rateLimit);
+        await CheckAndResetWindowAsync(rateLimit).ConfigureAwait(false);
 
         if (!rateLimit.CanProcessRequest())
         {
@@ -64,13 +64,13 @@ public class RateLimitingService : IRateLimitingService
         if (string.IsNullOrWhiteSpace(apiKeyId))
             return;
 
-        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
+        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit == null)
             return;
 
-        await CheckAndResetWindowAsync(rateLimit);
+        await CheckAndResetWindowAsync(rateLimit).ConfigureAwait(false);
         rateLimit.RecordRequest();
-        await _repository.UpdateAsync(rateLimit);
+        await _repository.UpdateAsync(rateLimit).ConfigureAwait(false);
 
         _logger.LogDebug("Recorded request for API key {ApiKeyId}. Remaining: {Remaining}/{Total}",
             apiKeyId, rateLimit.RemainingRequests, rateLimit.RequestsPerUnit);
@@ -81,7 +81,7 @@ public class RateLimitingService : IRateLimitingService
     /// </summary>
     public async Task<RateLimit?> GetLimitAsync(string apiKeyId)
     {
-        return await _repository.GetByApiKeyIdAsync(apiKeyId);
+        return await _repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class RateLimitingService : IRateLimitingService
     /// </summary>
     public async Task<bool> UpdateLimitAsync(string apiKeyId, int requestsPerUnit, Domain.Enums.RateLimitUnit unit)
     {
-        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
+        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit == null)
             return false;
 
@@ -103,7 +103,7 @@ public class RateLimitingService : IRateLimitingService
             LastResetAt = DateTime.UtcNow
         };
 
-        await _repository.UpdateAsync(rateLimit);
+        await _repository.UpdateAsync(rateLimit).ConfigureAwait(false);
         _logger.LogInformation("Rate limit updated for API key {ApiKeyId}: {Requests} per {Unit}",
             apiKeyId, requestsPerUnit, unit);
 
@@ -115,12 +115,12 @@ public class RateLimitingService : IRateLimitingService
     /// </summary>
     public async Task ResetWindowAsync(string apiKeyId)
     {
-        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
+        var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit == null)
             return;
 
         rateLimit.ResetWindow();
-        await _repository.UpdateAsync(rateLimit);
+        await _repository.UpdateAsync(rateLimit).ConfigureAwait(false);
         _windowResetCache.AddOrUpdate(apiKeyId, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
 
         _logger.LogInformation("Rate limit window reset for API key {ApiKeyId}", apiKeyId);
@@ -141,7 +141,7 @@ public class RateLimitingService : IRateLimitingService
         if ((now - lastReset).TotalSeconds > windowSeconds)
         {
             rateLimit.ResetWindow();
-            await _repository.UpdateAsync(rateLimit);
+            await _repository.UpdateAsync(rateLimit).ConfigureAwait(false);
         }
     }
 }

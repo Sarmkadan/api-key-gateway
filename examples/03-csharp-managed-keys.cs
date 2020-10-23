@@ -52,10 +52,10 @@ public class ApiKeyGatewayExample
         var json = JsonSerializer.Serialize(payload);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync($"{_baseUrl}/api/apikeys", content);
+        var response = await _httpClient.PostAsync($"{_baseUrl}/api/apikeys", content).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync();
+        var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var document = JsonDocument.Parse(responseJson);
         var dataElement = document.RootElement.GetProperty("data");
 
@@ -71,10 +71,10 @@ public class ApiKeyGatewayExample
     // Get all keys for a consumer
     public async Task<List<ApiKeyInfo>> ListConsumerKeysAsync(string consumerId)
     {
-        var response = await _httpClient.GetAsync($"{_baseUrl}/api/apikeys/consumer/{consumerId}");
+        var response = await _httpClient.GetAsync($"{_baseUrl}/api/apikeys/consumer/{consumerId}").ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var responseJson = await response.Content.ReadAsStringAsync();
+        var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var document = JsonDocument.Parse(responseJson);
         var dataArray = document.RootElement.GetProperty("data").EnumerateArray();
 
@@ -104,7 +104,7 @@ public class ApiKeyGatewayExample
                 var json = JsonSerializer.Serialize(updates);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"{_baseUrl}/api/apikeys/{keyId}", content);
+                var response = await _httpClient.PutAsync($"{_baseUrl}/api/apikeys/{keyId}", content).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                     updated++;
             }
@@ -123,14 +123,14 @@ public class ApiKeyGatewayExample
         Console.WriteLine($"\n🔄 Rotating API keys for consumer: {consumerId}");
 
         // Get existing keys
-        var existingKeys = await ListConsumerKeysAsync(consumerId);
+        var existingKeys = await ListConsumerKeysAsync(consumerId).ConfigureAwait(false);
         Console.WriteLine($"   Found {existingKeys.Count} existing keys");
 
         // Create new keys (one for each existing key)
         var newKeys = new List<ApiKeyResponse>();
         foreach (var oldKey in existingKeys)
         {
-            var newKey = await CreateKeyAsync(consumerId, $"{oldKey.Name} (rotated)");
+            var newKey = await CreateKeyAsync(consumerId, $"{oldKey.Name} (rotated)").ConfigureAwait(false);
             newKeys.Add(newKey);
             Console.WriteLine($"   ✅ Created new key: {newKey.Id}");
         }
@@ -151,7 +151,7 @@ public class ApiKeyGatewayExample
     {
         Console.WriteLine($"\n📊 Consumer Report: {consumerId}");
 
-        var keys = await ListConsumerKeysAsync(consumerId);
+        var keys = await ListConsumerKeysAsync(consumerId).ConfigureAwait(false);
         Console.WriteLine($"   📌 Active Keys: {keys.Count(k => k.Status == "Active")}");
         Console.WriteLine($"   🚫 Disabled Keys: {keys.Count(k => k.Status == "Disabled")}");
         Console.WriteLine($"   ❌ Revoked Keys: {keys.Count(k => k.Status == "Revoked")}");
@@ -176,18 +176,18 @@ public class ApiKeyGatewayExample
             Console.WriteLine("1️⃣  Creating API keys for multiple consumers...");
             var consumerId = $"csharp_demo_{DateTime.Now.Ticks}";
 
-            var key1 = await CreateKeyAsync(consumerId, "Production API Key");
+            var key1 = await CreateKeyAsync(consumerId, "Production API Key").ConfigureAwait(false);
             Console.WriteLine($"✅ Key 1 created: {key1.Id}");
 
-            var key2 = await CreateKeyAsync(consumerId, "Staging API Key");
+            var key2 = await CreateKeyAsync(consumerId, "Staging API Key").ConfigureAwait(false);
             Console.WriteLine($"✅ Key 2 created: {key2.Id}");
 
-            var key3 = await CreateKeyAsync(consumerId, "Development API Key");
+            var key3 = await CreateKeyAsync(consumerId, "Development API Key").ConfigureAwait(false);
             Console.WriteLine($"✅ Key 3 created: {key3.Id}\n");
 
             // Step 2: List all keys
             Console.WriteLine("2️⃣  Listing all keys for consumer...");
-            var allKeys = await ListConsumerKeysAsync(consumerId);
+            var allKeys = await ListConsumerKeysAsync(consumerId).ConfigureAwait(false);
             Console.WriteLine($"✅ Found {allKeys.Count} keys");
             foreach (var key in allKeys)
             {
@@ -208,10 +208,10 @@ public class ApiKeyGatewayExample
             Console.WriteLine($"✅ Updated {updated} keys\n");
 
             // Step 4: Generate report
-            await GenerateConsumerReportAsync(consumerId);
+            await GenerateConsumerReportAsync(consumerId).ConfigureAwait(false);
 
             // Step 5: Demonstrate key rotation
-            await RotateConsumerKeysAsync(consumerId, gracePeriodHours: 24);
+            await RotateConsumerKeysAsync(consumerId, gracePeriodHours: 24).ConfigureAwait(false);
 
             Console.WriteLine("\n✨ Example completed successfully!");
         }
@@ -226,7 +226,7 @@ public class ApiKeyGatewayExample
     public static async Task Main(string[] args)
     {
         var example = new ApiKeyGatewayExample();
-        await example.RunAsync();
+        await example.RunAsync().ConfigureAwait(false);
     }
 }
 

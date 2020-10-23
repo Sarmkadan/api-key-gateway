@@ -39,7 +39,7 @@ public class AuditLogService : IAuditLogService
 
         try
         {
-            await _repository.CreateAsync(log);
+            await _repository.CreateAsync(log).ConfigureAwait(false);
             _logger.LogInformation(
                 "Audit log: {Action} on {ResourceType} {ResourceId} by {PerformedBy}",
                 log.GetActionDescription(), log.ResourceType, log.ResourceId, log.PerformedBy);
@@ -58,7 +58,7 @@ public class AuditLogService : IAuditLogService
         if (string.IsNullOrWhiteSpace(resourceId))
             return [];
 
-        return await _repository.GetByResourceIdAsync(resourceId, limit);
+        return await _repository.GetByResourceIdAsync(resourceId, limit).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public class AuditLogService : IAuditLogService
         if (endDate < startDate)
             throw new ArgumentException("End date must be after start date");
 
-        return await _repository.GetByDateRangeAsync(startDate, endDate);
+        return await _repository.GetByDateRangeAsync(startDate, endDate).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class AuditLogService : IAuditLogService
         try
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
-            var deletedCount = await _repository.DeleteOlderThanAsync(cutoffDate);
+            var deletedCount = await _repository.DeleteOlderThanAsync(cutoffDate).ConfigureAwait(false);
             _logger.LogInformation("Cleaned up {Count} audit logs older than {Date}", deletedCount, cutoffDate);
         }
         catch (Exception ex)

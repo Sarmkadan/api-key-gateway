@@ -49,7 +49,7 @@ public sealed class RateLimitResetScheduler : BackgroundService
                 }
 
                 // Wait for next check cycle
-                await Task.Delay(_checkInterval, stoppingToken);
+                await Task.Delay(_checkInterval, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -59,7 +59,7 @@ public sealed class RateLimitResetScheduler : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during rate limit reset");
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken).ConfigureAwait(false);
             }
         }
     }

@@ -54,8 +54,8 @@ public class RateLimitingServiceTests
     [InlineData(null)]
     public async Task CheckLimitAsync_EmptyOrNullKeyId_ThrowsArgumentException(string? apiKeyId)
     {
-        var act = async () => await _sut.CheckLimitAsync(apiKeyId!);
-        await act.Should().ThrowAsync<ArgumentException>();
+        var act = async () => await _sut.CheckLimitAsync(apiKeyId!).ConfigureAwait(false);
+        await act.Should().ThrowAsync<ArgumentException>().ConfigureAwait(false);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync((RateLimit?)null);
 
-        var result = await _sut.CheckLimitAsync("key-001");
+        var result = await _sut.CheckLimitAsync("key-001").ConfigureAwait(false);
         result.Should().BeTrue();
     }
 
@@ -84,7 +84,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync(rateLimit);
 
-        var result = await _sut.CheckLimitAsync("key-001");
+        var result = await _sut.CheckLimitAsync("key-001").ConfigureAwait(false);
         result.Should().BeTrue();
     }
 
@@ -103,8 +103,8 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync(rateLimit);
 
-        var act = async () => await _sut.CheckLimitAsync("key-001");
-        await act.Should().ThrowAsync<RateLimitExceededException>();
+        var act = async () => await _sut.CheckLimitAsync("key-001").ConfigureAwait(false);
+        await act.Should().ThrowAsync<RateLimitExceededException>().ConfigureAwait(false);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
             .Returns(Task.CompletedTask);
 
-        var result = await _sut.CheckLimitAsync("key-001");
+        var result = await _sut.CheckLimitAsync("key-001").ConfigureAwait(false);
         result.Should().BeTrue();
     }
 
@@ -136,7 +136,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task RecordRequestAsync_EmptyKeyId_DoesNotQueryRepository()
     {
-        await _sut.RecordRequestAsync("");
+        await _sut.RecordRequestAsync("").ConfigureAwait(false);
         _repositoryMock.Verify(r => r.GetByApiKeyIdAsync(It.IsAny<string>()), Times.Never);
     }
 
@@ -147,7 +147,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync((RateLimit?)null);
 
-        await _sut.RecordRequestAsync("key-001");
+        await _sut.RecordRequestAsync("key-001").ConfigureAwait(false);
         _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<RateLimit>()), Times.Never);
     }
 
@@ -169,7 +169,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
             .Returns(Task.CompletedTask);
 
-        await _sut.RecordRequestAsync("key-001");
+        await _sut.RecordRequestAsync("key-001").ConfigureAwait(false);
 
         rateLimit.CurrentRequestCount.Should().Be(6);
         _repositoryMock.Verify(r => r.UpdateAsync(rateLimit), Times.Once);
@@ -186,7 +186,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("missing"))
             .ReturnsAsync((RateLimit?)null);
 
-        var result = await _sut.UpdateLimitAsync("missing", 100, RateLimitUnit.Hour);
+        var result = await _sut.UpdateLimitAsync("missing", 100, RateLimitUnit.Hour).ConfigureAwait(false);
         result.Should().BeFalse();
     }
 
@@ -208,7 +208,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
             .Returns(Task.CompletedTask);
 
-        var result = await _sut.UpdateLimitAsync("key-001", 500, RateLimitUnit.Hour);
+        var result = await _sut.UpdateLimitAsync("key-001", 500, RateLimitUnit.Hour).ConfigureAwait(false);
 
         result.Should().BeTrue();
         _repositoryMock.Verify(r => r.UpdateAsync(It.Is<RateLimit>(
@@ -227,8 +227,8 @@ public class RateLimitingServiceTests
             .Setup(r => r.GetByApiKeyIdAsync("missing"))
             .ReturnsAsync((RateLimit?)null);
 
-        var act = async () => await _sut.ResetWindowAsync("missing");
-        await act.Should().NotThrowAsync();
+        var act = async () => await _sut.ResetWindowAsync("missing").ConfigureAwait(false);
+        await act.Should().NotThrowAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -248,7 +248,7 @@ public class RateLimitingServiceTests
             .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
             .Returns(Task.CompletedTask);
 
-        await _sut.ResetWindowAsync("key-001");
+        await _sut.ResetWindowAsync("key-001").ConfigureAwait(false);
 
         rateLimit.CurrentRequestCount.Should().Be(0);
         _repositoryMock.Verify(r => r.UpdateAsync(rateLimit), Times.Once);

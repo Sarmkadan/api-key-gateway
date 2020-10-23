@@ -86,7 +86,7 @@ public sealed class WebhookHandler : IWebhookHandler
             .Select(s => DeliverToEndpointAsync(s, payload, @event.EventId))
             .ToList();
 
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     private async Task DeliverToEndpointAsync(WebhookSubscription subscription, string payload, Guid eventId)
@@ -112,7 +112,7 @@ public sealed class WebhookHandler : IWebhookHandler
                 request.Headers.Add("X-Event-Id", eventId.ToString());
                 request.Headers.Add("X-Delivery-Attempt", (attempt + 1).ToString());
 
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -142,7 +142,7 @@ public sealed class WebhookHandler : IWebhookHandler
             if (attempt < MaxRetries)
             {
                 var delayMs = (int)Math.Pow(2, attempt) * 1000;
-                await Task.Delay(delayMs);
+                await Task.Delay(delayMs).ConfigureAwait(false);
             }
         }
 

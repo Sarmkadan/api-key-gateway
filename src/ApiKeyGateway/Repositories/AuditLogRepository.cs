@@ -42,9 +42,9 @@ public class AuditLogRepository : IAuditLogRepository
             cmd.CommandText = query;
             AddParameters(cmd, log);
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogDebug("Audit log created: {ResourceType} {ResourceId} - {Action}",
                 log.ResourceType, log.ResourceId, log.GetActionDescription());
@@ -78,15 +78,15 @@ public class AuditLogRepository : IAuditLogRepository
             cmd.Parameters.Add(CreateParameter("@ResourceId", resourceId));
             cmd.Parameters.Add(CreateParameter("@Limit", limit));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 logs.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return logs;
         }
         catch (Exception ex)
@@ -115,15 +115,15 @@ public class AuditLogRepository : IAuditLogRepository
             cmd.Parameters.Add(CreateParameter("@StartDate", startDate));
             cmd.Parameters.Add(CreateParameter("@EndDate", endDate));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 logs.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return logs;
         }
         catch (Exception ex)
@@ -146,9 +146,9 @@ public class AuditLogRepository : IAuditLogRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@CutoffDate", cutoffDate));
 
-            await _connection.OpenAsync();
-            var deletedCount = await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            var deletedCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogInformation("Deleted {Count} audit logs older than {CutoffDate}", deletedCount, cutoffDate);
             return deletedCount;

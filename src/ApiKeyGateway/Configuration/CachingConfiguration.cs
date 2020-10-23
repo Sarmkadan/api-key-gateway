@@ -60,8 +60,8 @@ public static class CachingConfiguration
             var testKey = "health_check_test";
             var testValue = "test_value";
 
-            await cacheProvider.SetAsync(testKey, testValue, TimeSpan.FromSeconds(10));
-            var retrieved = await cacheProvider.GetAsync<string>(testKey);
+            await cacheProvider.SetAsync(testKey, testValue, TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+            var retrieved = await cacheProvider.GetAsync<string>(testKey).ConfigureAwait(false);
 
             if (retrieved == testValue)
             {
@@ -73,7 +73,7 @@ public static class CachingConfiguration
                 throw new InvalidOperationException("Cache health check failed");
             }
 
-            await cacheProvider.RemoveAsync(testKey);
+            await cacheProvider.RemoveAsync(testKey).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
