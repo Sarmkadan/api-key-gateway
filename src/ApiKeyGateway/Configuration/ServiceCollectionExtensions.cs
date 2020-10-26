@@ -124,4 +124,11 @@ public class GatewayConfiguration
     /// premature window resets when clocks differ by up to this value.
     /// </summary>
     public double ClockSkewToleranceSeconds { get; set; } = RateLimitingService.DefaultClockSkewToleranceSeconds;
+
+    /// <summary>
+    /// When true the gateway allows requests through unauthenticated if the key
+    /// store is unreachable (fail-open). When false (default) a 503 is returned
+    /// so clients know to retry once the store recovers (fail-closed).
+    /// </summary>
+    public bool FailOpenOnKeyStoreUnavailable { get; set; } = false;
 }
