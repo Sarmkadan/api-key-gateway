@@ -30,7 +30,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApiKeyService, ApiKeyService>();
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
-        services.AddScoped<IRateLimitingService, RateLimitingService>();
+        services.AddScoped<IRateLimitingService>(sp =>
+        {
+            var repo = sp.GetRequiredService<IRateLimitRepository>();
+            var logger = sp.GetRequiredService<ILogger<RateLimitingService>>();
+            var config = sp.GetRequiredService<GatewayConfiguration>();
+            return new RateLimitingService(repo, logger, config.ClockSkewToleranceSeconds);
+        });
 
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
@@ -111,4 +117,11 @@ public class GatewayConfiguration
     public bool EnableRateLimiting { get; set; } = true;
     public int DefaultRateLimitPerHour { get; set; } = 10000;
     public int MaxConcurrentRequests { get; set; } = 1000;
+
+    /// <summary>
+    /// Seconds added to the rate-limit window expiry threshold to guard against
+    /// clock skew between the gateway host and the backing store. Prevents
+    /// premature window resets when clocks differ by up to this value.
+    /// </summary>
+    public double ClockSkewToleranceSeconds { get; set; } = RateLimitingService.DefaultClockSkewToleranceSeconds;
 }
