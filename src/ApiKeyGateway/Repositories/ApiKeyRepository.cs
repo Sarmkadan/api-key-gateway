@@ -191,7 +191,8 @@ public class ApiKeyRepository : IApiKeyRepository
             const string query = @"
                 UPDATE ApiKeys
                 SET Status = @Status, ExpiresAt = @ExpiresAt, LastUsedAt = @LastUsedAt,
-                    DisabledAt = @DisabledAt, RequestCount = @RequestCount
+                    DisabledAt = @DisabledAt, RequestCount = @RequestCount,
+                    IpWhitelist = @IpWhitelist, AllowedScopes = @AllowedScopes
                 WHERE Id = @Id";
 
             using var cmd = _connection.CreateCommand();
@@ -201,6 +202,8 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.Parameters.Add(CreateParameter("@LastUsedAt", apiKey.LastUsedAt));
             cmd.Parameters.Add(CreateParameter("@DisabledAt", apiKey.DisabledAt));
             cmd.Parameters.Add(CreateParameter("@RequestCount", apiKey.RequestCount));
+            cmd.Parameters.Add(CreateParameter("@IpWhitelist", (object?)apiKey.IpWhitelist ?? DBNull.Value));
+            cmd.Parameters.Add(CreateParameter("@AllowedScopes", (object?)apiKey.AllowedScopes ?? DBNull.Value));
             cmd.Parameters.Add(CreateParameter("@Id", apiKey.Id));
 
             await _connection.OpenAsync();
@@ -242,6 +245,74 @@ public class ApiKeyRepository : IApiKeyRepository
         {
             _logger.LogError(ex, "Failed to delete API key {Id}", id);
             throw new DataAccessException("Failed to delete API key", "DELETE", "ApiKey");
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all API keys
+    /// </summary>
+    public async Task<List<ApiKey>> GetAllAsync()
+    {
+        try
+        {
+            const string query = "SELECT * FROM ApiKeys ORDER BY CreatedAt DESC";
+            var keys = new List<ApiKey>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                keys.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+            return keys;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve all API keys");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Retrieves API keys expiring before the given threshold date
+    /// </summary>
+    public async Task<List<ApiKey>> GetKeysExpiringBeforeAsync(DateTime threshold)
+    {
+        try
+        {
+            const string query = @"
+                SELECT * FROM ApiKeys
+                WHERE ExpiresAt IS NOT NULL AND ExpiresAt <= @Threshold
+                  AND Status = @ActiveStatus";
+
+            var keys = new List<ApiKey>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@Threshold", threshold));
+            cmd.Parameters.Add(CreateParameter("@ActiveStatus", (int)Domain.Enums.ApiKeyStatus.Active));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                keys.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+            return keys;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve expiring API keys");
+            return [];
         }
     }
 
