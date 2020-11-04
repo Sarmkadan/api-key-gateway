@@ -32,6 +32,7 @@ public class UsageTrackingService : IUsageTrackingService
     /// <summary>
     /// Records a new usage entry for an API key
     /// </summary>
+    /// <param name="record">The usage record to record.</param>
     public async Task RecordUsageAsync(UsageRecord record)
     {
         if (record == null)
