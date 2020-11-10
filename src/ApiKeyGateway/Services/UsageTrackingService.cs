@@ -62,22 +62,30 @@ public class UsageTrackingService : IUsageTrackingService
         if (endDate < startDate)
             throw new ArgumentException("End date must be after start date", nameof(endDate));
 
-        var records = await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
-
-        var stats = new UsageStatistics
+        try
         {
-            ApiKeyId = apiKeyId,
-            StartDate = startDate,
-            EndDate = endDate,
-            TotalRequests = records.Count,
-            SuccessfulRequests = UsageRecord.CountSuccessfulRequests(records),
-            FailedRequests = UsageRecord.CountErrorRequests(records),
-            TotalBytesTransferred = UsageRecord.CalculateTotalBytes(records),
-            AverageResponseTimeMs = UsageRecord.CalculateAverageResponseTime(records),
-            UniqueEndpoints = records.Select(r => r.Endpoint).Distinct().Count()
-        };
+            var records = await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
 
-        return stats;
+            var stats = new UsageStatistics
+            {
+                ApiKeyId = apiKeyId,
+                StartDate = startDate,
+                EndDate = endDate,
+                TotalRequests = records.Count,
+                SuccessfulRequests = UsageRecord.CountSuccessfulRequests(records),
+                FailedRequests = UsageRecord.CountErrorRequests(records),
+                TotalBytesTransferred = UsageRecord.CalculateTotalBytes(records),
+                AverageResponseTimeMs = UsageRecord.CalculateAverageResponseTime(records),
+                UniqueEndpoints = records.Select(r => r.Endpoint).Distinct().Count()
+            };
+
+            return stats;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get usage statistics for API key {ApiKeyId}", apiKeyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetUsageStatisticsAsync), nameof(UsageRecord));
+        }
     }
 
     /// <summary>
@@ -88,7 +96,15 @@ public class UsageTrackingService : IUsageTrackingService
         if (string.IsNullOrWhiteSpace(apiKeyId))
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
 
-        return await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
+        try
+        {
+            return await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get usage records for API key {ApiKeyId}", apiKeyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetUsageRecordsAsync), nameof(UsageRecord));
+        }
     }
 
     /// <summary>
@@ -99,8 +115,16 @@ public class UsageTrackingService : IUsageTrackingService
         if (string.IsNullOrWhiteSpace(consumerId))
             return 0;
 
-        var records = await _repository.GetByConsumerAndDateRangeAsync(consumerId, startDate, endDate);
-        return UsageRecord.CalculateTotalBytes(records);
+        try
+        {
+            var records = await _repository.GetByConsumerAndDateRangeAsync(consumerId, startDate, endDate);
+            return UsageRecord.CalculateTotalBytes(records);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to calculate total bytes used for consumer {ConsumerId}", consumerId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetTotalBytesUsedAsync), nameof(UsageRecord));
+        }
     }
 }
 
