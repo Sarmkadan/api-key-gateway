@@ -22,19 +22,19 @@ public class RateLimitBenchmarks
 
     [Benchmark(Baseline = true)]
     public DateTime GetWindowEnd_Minute() =>
-        RateLimitCalculationHelper.GetWindowEnd(Now, RateLimitUnit.MINUTE);
+        RateLimitCalculationHelper.GetWindowEnd(Now, RateLimitUnit.Minute);
 
     [Benchmark]
     public DateTime GetWindowEnd_Hour() =>
-        RateLimitCalculationHelper.GetWindowEnd(Now, RateLimitUnit.HOUR);
+        RateLimitCalculationHelper.GetWindowEnd(Now, RateLimitUnit.Hour);
 
     [Benchmark]
     public DateTime GetWindowStart_Minute() =>
-        RateLimitCalculationHelper.GetWindowStart(Now, RateLimitUnit.MINUTE);
+        RateLimitCalculationHelper.GetWindowStart(Now, RateLimitUnit.Minute);
 
     [Benchmark]
     public int GetSecondsUntilAllowed_Limited() =>
-        RateLimitCalculationHelper.GetSecondsUntilAllowed(100, 100, Now, RateLimitUnit.MINUTE);
+        RateLimitCalculationHelper.GetSecondsUntilAllowed(100, 100, Now, RateLimitUnit.Minute);
 
     [Benchmark]
     public int CalculateQuotagePercentage() =>

@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Utilities;
 using ApiKeyGateway.Validation;
 using FluentAssertions;

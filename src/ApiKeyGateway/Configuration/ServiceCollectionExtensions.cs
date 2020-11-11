@@ -69,38 +69,31 @@ public static class ServiceCollectionExtensions
         services.AddOpenApi();
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
             {
                 Title = "API Key Gateway",
                 Version = "v1",
                 Description = "Lightweight API key authentication gateway for self-hosted services",
-                Contact = new Microsoft.OpenApi.Models.OpenApiContact
+                Contact = new Microsoft.OpenApi.OpenApiContact
                 {
                     Name = "Vladyslav Zaiets",
                     Url = new Uri("https://sarmkadan.com")
                 }
             });
 
-            options.AddSecurityDefinition("ApiKeyAuth", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            options.AddSecurityDefinition("ApiKeyAuth", new Microsoft.OpenApi.OpenApiSecurityScheme
             {
-                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Type = Microsoft.OpenApi.SecuritySchemeType.ApiKey,
+                In = Microsoft.OpenApi.ParameterLocation.Header,
                 Name = "X-API-Key",
                 Description = "API Key for gateway authentication"
             });
 
-            options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+            options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
             {
                 {
-                    new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                    {
-                        Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                        {
-                            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                            Id = "ApiKeyAuth"
-                        }
-                    },
-                    Array.Empty<string>()
+                    new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKeyAuth", document),
+                    Array.Empty<string>().ToList()
                 }
             });
         });
