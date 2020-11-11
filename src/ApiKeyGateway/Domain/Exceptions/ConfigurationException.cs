@@ -1,6 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Thrown when gateway configuration is invalid or incomplete
 // =============================================================================
 
 namespace ApiKeyGateway.Domain.Exceptions;
@@ -19,6 +20,10 @@ public class ConfigurationException : ApiKeyGatewayException
         Setting = setting;
     }
 
-    public ConfigurationException(string message, Exception innerException)
-        : base(message, innerException) { }
+    public ConfigurationException(string message, Exception innerException) : base(message, innerException) { }
+
+    public ConfigurationException(string message, string setting, Exception innerException) : base(message, innerException)
+    {
+        Setting = setting;
+    }
 }
