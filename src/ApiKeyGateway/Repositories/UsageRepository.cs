@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Data;
+using System.Data.Common;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -94,6 +96,43 @@ public class UsageRepository : IUsageRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve usage records for API key {ApiKeyId}", apiKeyId);
+            throw new DataAccessException("Failed to retrieve usage records", "SELECT", "UsageRecord", ex);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all usage records within a date range, regardless of API key or consumer
+    /// </summary>
+    public async Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate)
+    {
+        try
+        {
+            const string query = @"
+                SELECT * FROM UsageRecords
+                WHERE RecordedAt >= @StartDate AND RecordedAt <= @EndDate
+                ORDER BY RecordedAt DESC";
+
+            var records = new List<UsageRecord>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@StartDate", startDate));
+            cmd.Parameters.Add(CreateParameter("@EndDate", endDate));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                records.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+            return records;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve usage records for range {StartDate}-{EndDate}", startDate, endDate);
             throw new DataAccessException("Failed to retrieve usage records", "SELECT", "UsageRecord", ex);
         }
     }

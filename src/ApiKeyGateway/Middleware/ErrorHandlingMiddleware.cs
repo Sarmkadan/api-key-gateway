@@ -5,6 +5,7 @@
 
 using System.Text.Json;
 using ApiKeyGateway.Domain.Exceptions;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Middleware;
 

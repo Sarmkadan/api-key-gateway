@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Exceptions;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.Middleware;

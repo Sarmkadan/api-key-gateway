@@ -24,11 +24,11 @@ public static class RateLimitCalculationHelper
     {
         return unit switch
         {
-            RateLimitUnit.SECOND => currentTime.AddSeconds(1),
-            RateLimitUnit.MINUTE => currentTime.AddMinutes(1).AddSeconds(-currentTime.Second).AddMilliseconds(-currentTime.Millisecond),
-            RateLimitUnit.HOUR => currentTime.AddHours(1).AddMinutes(-currentTime.Minute).AddSeconds(-currentTime.Second),
-            RateLimitUnit.DAY => currentTime.AddDays(1).Date,
-            RateLimitUnit.MONTH => currentTime.AddMonths(1).AddDays(-currentTime.Day + 1).Date,
+            RateLimitUnit.Second => currentTime.AddSeconds(1),
+            RateLimitUnit.Minute => currentTime.AddMinutes(1).AddSeconds(-currentTime.Second).AddMilliseconds(-currentTime.Millisecond),
+            RateLimitUnit.Hour => currentTime.AddHours(1).AddMinutes(-currentTime.Minute).AddSeconds(-currentTime.Second),
+            RateLimitUnit.Day => currentTime.AddDays(1).Date,
+            RateLimitUnit.Month => currentTime.AddMonths(1).AddDays(-currentTime.Day + 1).Date,
             _ => throw new ArgumentException($"Unknown rate limit unit: {unit}")
         };
     }
@@ -41,11 +41,11 @@ public static class RateLimitCalculationHelper
     {
         return unit switch
         {
-            RateLimitUnit.SECOND => currentTime.AddSeconds(-1),
-            RateLimitUnit.MINUTE => new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, currentTime.Minute, 0),
-            RateLimitUnit.HOUR => new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, 0, 0),
-            RateLimitUnit.DAY => currentTime.Date,
-            RateLimitUnit.MONTH => new DateTime(currentTime.Year, currentTime.Month, 1),
+            RateLimitUnit.Second => currentTime.AddSeconds(-1),
+            RateLimitUnit.Minute => new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, currentTime.Minute, 0),
+            RateLimitUnit.Hour => new DateTime(currentTime.Year, currentTime.Month, currentTime.Day, currentTime.Hour, 0, 0),
+            RateLimitUnit.Day => currentTime.Date,
+            RateLimitUnit.Month => new DateTime(currentTime.Year, currentTime.Month, 1),
             _ => throw new ArgumentException($"Unknown rate limit unit: {unit}")
         };
     }
@@ -95,7 +95,7 @@ public static class RateLimitCalculationHelper
     public static string GetReadableResetTime(DateTime windowEnd, DateTime? now = null)
     {
         now ??= DateTime.UtcNow;
-        var timespan = windowEnd - now;
+        var timespan = windowEnd - now.Value;
 
         return timespan.TotalSeconds < 0
             ? "immediately"

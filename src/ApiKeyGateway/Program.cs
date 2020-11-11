@@ -54,3 +54,9 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("API Key Gateway starting up");
 
 app.Run();
+
+/// <summary>
+/// Exposes the implicit top-level Program class publicly so integration tests
+/// can bootstrap the application via WebApplicationFactory&lt;Program&gt;.
+/// </summary>
+public partial class Program { }

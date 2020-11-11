@@ -9,6 +9,7 @@
 
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.BackgroundWorkers;
 
@@ -74,7 +75,7 @@ public sealed class UsageAggregationWorker : BackgroundService
                 g.Key.Endpoint,
                 Count = g.Count(),
                 AverageResponseTime = g.Average(u => u.ResponseTimeMs),
-                TotalDataTransferred = g.Sum(u => u.ResponseSizeBytes)
+                TotalDataTransferred = g.Sum(u => u.ResponseBytes)
             })
             .ToList();
 

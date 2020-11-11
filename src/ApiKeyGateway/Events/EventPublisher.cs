@@ -17,7 +17,7 @@ public interface IEventPublisher
     /// Publishes an event to all registered subscribers.
     /// Subscribers are notified synchronously (ordered by registration).
     /// </summary>
-    Task PublishAsync<T>(T @event) where T : ApiKeyEvent;
+    Task PublishAsync<T>(T @event) where T : notnull;
 }
 
 /// <summary>
@@ -39,7 +39,7 @@ public class InMemoryEventPublisher : IEventPublisher
     /// Registers a handler for a specific event type.
     /// Handlers are called in registration order.
     /// </summary>
-    public void Subscribe<T>(Func<T, Task> handler) where T : ApiKeyEvent
+    public void Subscribe<T>(Func<T, Task> handler) where T : notnull
     {
         var eventType = typeof(T);
         if (!_subscribers.ContainsKey(eventType))
@@ -55,7 +55,7 @@ public class InMemoryEventPublisher : IEventPublisher
     /// Publishes event to all registered subscribers.
     /// If a subscriber throws, we log and continue (fail-open pattern).
     /// </summary>
-    public async Task PublishAsync<T>(T @event) where T : ApiKeyEvent
+    public async Task PublishAsync<T>(T @event) where T : notnull
     {
         var eventType = typeof(T);
 

@@ -75,7 +75,7 @@ public static class ServiceRegistrationExtensions
     /// </summary>
     public static async Task ValidateServicesAsync(IServiceProvider serviceProvider)
     {
-        var logger = serviceProvider.GetRequiredService<ILogger<ServiceRegistrationExtensions>>();
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ServiceRegistrationExtensions).FullName!);
 
         try
         {
