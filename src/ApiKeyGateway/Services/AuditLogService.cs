@@ -1,8 +1,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Manages audit logging for compliance and security monitoring
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
@@ -42,11 +44,15 @@ public class AuditLogService : IAuditLogService
             await _repository.CreateAsync(log);
             _logger.LogInformation(
                 "Audit log: {Action} on {ResourceType} {ResourceId} by {PerformedBy}",
-                log.GetActionDescription(), log.ResourceType, log.ResourceId, log.PerformedBy);
+                log.GetActionDescription(),
+                log.ResourceType,
+                log.ResourceId,
+                log.PerformedBy);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to write audit log");
+            throw new DataAccessException("Failed to write audit log", nameof(LogAsync), nameof(AuditLog), ex);
         }
     }
 
@@ -56,7 +62,10 @@ public class AuditLogService : IAuditLogService
     public async Task<List<AuditLog>> GetLogsAsync(string resourceId, int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(resourceId))
-            return [];
+            throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
+
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
 
         return await _repository.GetByResourceIdAsync(resourceId, limit);
     }
@@ -89,6 +98,7 @@ public class AuditLogService : IAuditLogService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during audit log cleanup");
+            throw new DataAccessException("Failed to cleanup audit logs", nameof(CleanupOldLogsAsync), nameof(AuditLog), ex);
         }
     }
 }
