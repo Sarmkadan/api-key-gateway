@@ -94,7 +94,7 @@ public class UsageRepository : IUsageRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve usage records for API key {ApiKeyId}", apiKeyId);
-            return [];
+            throw new DataAccessException("Failed to retrieve usage records", "SELECT", "UsageRecord", ex);
         }
     }
 
@@ -135,7 +135,7 @@ public class UsageRepository : IUsageRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve usage records for consumer {ConsumerId}", consumerId);
-            return [];
+            throw new DataAccessException("Failed to retrieve usage records", "SELECT", "UsageRecord", ex);
         }
     }
 
