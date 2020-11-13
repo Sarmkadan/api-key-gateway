@@ -25,17 +25,7 @@ public static class ServiceRegistrationExtensions
         IConfiguration configuration)
     {
         // Core services
-        services.AddScoped<IApiKeyService, ApiKeyService>();
-        services.AddScoped<IUsageTrackingService, UsageTrackingService>();
-        services.AddScoped<IRateLimitingService, RateLimitingService>();
-        services.AddScoped<IAuditLogService, AuditLogService>();
-        services.AddScoped<IAuthenticationService, AuthenticationService>();
-
-        // Data access
-        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
-        services.AddScoped<IUsageRepository, UsageRepository>();
-        services.AddScoped<IRateLimitRepository, RateLimitRepository>();
-        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddGatewayCoreServices(configuration);
 
         // Caching
         services.AddGatewayCaching(configuration);

@@ -18,10 +18,10 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers all gateway services and repositories
     /// </summary>
-    public static IServiceCollection AddGatewayServices(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddGatewayCoreServices(this IServiceCollection services, IConfiguration configuration)
     {
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new ArgumentException("Connection string cannot be empty", nameof(connectionString));
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found in configuration.");
 
         services.AddScoped<IDbConnection>(sp =>
             new SqlServerConnection(connectionString, sp.GetRequiredService<ILogger<SqlServerConnection>>()));
