@@ -1,0 +1,146 @@
+# =============================================================================
+# Author: Vladyslav Zaiets | https://sarmkadan.com
+# CTO & Software Architect
+# =============================================================================
+
+# Complete Docker Compose setup for API Key Gateway with dependencies
+# Includes: API Gateway, SQL Server, Redis, monitoring
+#
+# Usage:
+#   docker-compose -f 06-docker-compose-setup.yml up -d
+#   docker-compose -f 06-docker-compose-setup.yml logs -f api-key-gateway
+
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: api-gateway-db
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'Strong!Pass123'
+      MSSQL_PID: 'Express'
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Strong!Pass123' -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-gateway-network
+
+  # Redis Cache (optional, for distributed caching)
+  redis:
+    image: redis:7-alpine
+    container_name: api-gateway-cache
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-gateway-network
+
+  # API Key Gateway
+  api-key-gateway:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: api-key-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: |
+        Server=sqlserver;
+        Database=ApiKeyGateway;
+        User Id=sa;
+        Password=Strong!Pass123;
+        Encrypt=false;
+        TrustServerCertificate=true;
+      GATEWAY__REQUIRESSL: "false"
+      GATEWAY__LOGLREQUESTS: "true"
+      GATEWAY__ENABLERATELIMITING: "true"
+      GATEWAY__ENABLECACHING: "true"
+      GATEWAY__CACHEDURATIONMINUTES: "30"
+      Serilog__MinimumLevel: Information
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - api-gateway-network
+
+  # Adminer - Database Management UI
+  adminer:
+    image: adminer
+    container_name: api-gateway-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: sqlserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - api-gateway-network
+
+networks:
+  api-gateway-network:
+    driver: bridge
+
+volumes:
+  sqldata:
+    driver: local
+
+# Post-deployment instructions:
+#
+# 1. Wait for all services to be healthy:
+#    docker-compose -f 06-docker-compose-setup.yml ps
+#
+# 2. Access the gateway:
+#    curl http://localhost:5000/health
+#
+# 3. Access Adminer (DB management):
+#    http://localhost:8080
+#    Server: sqlserver
+#    Username: sa
+#    Password: Strong!Pass123
+#
+# 4. Create your first API key:
+#    curl -X POST http://localhost:5000/api/apikeys \
+#      -H "X-API-Key: admin_key_example" \
+#      -H "Content-Type: application/json" \
+#      -d '{
+#        "consumerId": "test_consumer",
+#        "name": "Test Key"
+#      }'
+#
+# 5. View logs:
+#    docker-compose -f 06-docker-compose-setup.yml logs -f api-key-gateway
+#
+# 6. Stop all services:
+#    docker-compose -f 06-docker-compose-setup.yml down
+#
+# 7. Clean up (remove volumes):
+#    docker-compose -f 06-docker-compose-setup.yml down -v
