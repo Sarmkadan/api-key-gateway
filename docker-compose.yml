@@ -1,0 +1,176 @@
+# =============================================================================
+# Author: Vladyslav Zaiets | https://sarmkadan.com
+# CTO & Software Architect
+# =============================================================================
+
+# Docker Compose for API Key Gateway
+# Includes: API Gateway, SQL Server, optional Redis cache
+#
+# Usage:
+#   docker-compose up -d                    # Start all services
+#   docker-compose logs -f                  # View logs
+#   docker-compose down                     # Stop all services
+#   docker-compose down -v                  # Stop and remove volumes
+
+version: '3.8'
+
+services:
+  # SQL Server Container
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: api-gateway-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'Admin123!Secure'
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql/data
+    healthcheck:
+      test:
+        - CMD
+        - /opt/mssql-tools/bin/sqlcmd
+        - -S
+        - localhost
+        - -U
+        - sa
+        - -P
+        - Admin123!Secure
+        - -Q
+        - SELECT 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-gateway-network
+    restart: unless-stopped
+
+  # Redis Cache (optional, for distributed caching)
+  redis:
+    image: redis:7-alpine
+    container_name: api-gateway-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - api-gateway-network
+    restart: unless-stopped
+
+  # API Key Gateway
+  api-key-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-key-gateway
+    environment:
+      # ASP.NET Core configuration
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+
+      # Database connection
+      ConnectionStrings__DefaultConnection: |
+        Server=sqlserver;
+        Database=ApiKeyGateway;
+        User Id=sa;
+        Password=Admin123!Secure;
+        Encrypt=false;
+        TrustServerCertificate=true;
+        Connection Timeout=30;
+        Pooling=true;
+        Max Pool Size=100;
+
+      # Gateway configuration
+      GATEWAY__REQUIRESSL: "false"
+      GATEWAY__LOGLREQUESTS: "true"
+      GATEWAY__ENABLERATELIMITING: "true"
+      GATEWAY__ENABLECACHING: "true"
+      GATEWAY__CACHEDURATIONMINUTES: "30"
+      GATEWAY__DEFAULTRATELIMITPERHOUR: "10000"
+      GATEWAY__DEFAULTRATELIMITPERMINUTE: "500"
+      GATEWAY__MAXCONCURRENTREQUESTS: "1000"
+
+      # Logging configuration
+      Serilog__MinimumLevel: Information
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__ApiKeyGateway: Debug
+
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    networks:
+      - api-gateway-network
+
+    # Volume for logs (optional)
+    volumes:
+      - ./logs:/app/logs
+
+# Network definition
+networks:
+  api-gateway-network:
+    driver: bridge
+
+# Volume definitions
+volumes:
+  sqlserver_data:
+    driver: local
+
+# Post-deployment guide:
+#
+# 1. Start the services:
+#    docker-compose up -d
+#
+# 2. Wait for services to be healthy:
+#    docker-compose ps
+#    docker-compose logs api-key-gateway
+#
+# 3. Access the gateway:
+#    curl http://localhost:5000/health
+#
+# 4. Database credentials:
+#    Server: localhost
+#    Port: 1433
+#    Username: sa
+#    Password: Admin123!Secure
+#
+# 5. Create your first API key:
+#    curl -X POST http://localhost:5000/api/apikeys \
+#      -H "X-API-Key: admin_key_example" \
+#      -H "Content-Type: application/json" \
+#      -d '{"consumerId": "test", "name": "Test Key"}'
+#
+# 6. View logs:
+#    docker-compose logs -f api-key-gateway
+#
+# 7. Stop services:
+#    docker-compose down
+#
+# 8. Reset everything (remove volumes):
+#    docker-compose down -v
