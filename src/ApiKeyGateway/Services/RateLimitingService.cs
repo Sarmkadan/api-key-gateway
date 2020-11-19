@@ -23,14 +23,27 @@ public interface IRateLimitingService
 
 public class RateLimitingService : IRateLimitingService
 {
+    /// <summary>
+    /// Extra seconds added to the window expiry check to absorb clock skew between
+    /// the gateway host and the backing store (e.g. a remote Redis/SQL instance).
+    /// Prevents premature counter resets when clocks drift by up to this value.
+    /// Configurable via Gateway:ClockSkewToleranceSeconds (default 1 second).
+    /// </summary>
+    public const double DefaultClockSkewToleranceSeconds = 1.0;
+
     private readonly IRateLimitRepository _repository;
     private readonly ILogger<RateLimitingService> _logger;
     private readonly ConcurrentDictionary<string, DateTime> _windowResetCache = new();
+    private readonly double _clockSkewToleranceSeconds;
 
     public RateLimitingService(IRateLimitRepository repository, ILogger<RateLimitingService> logger)
+        : this(repository, logger, DefaultClockSkewToleranceSeconds) { }
+
+    public RateLimitingService(IRateLimitRepository repository, ILogger<RateLimitingService> logger, double clockSkewToleranceSeconds)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _clockSkewToleranceSeconds = clockSkewToleranceSeconds >= 0 ? clockSkewToleranceSeconds : DefaultClockSkewToleranceSeconds;
     }
 
     /// <summary>
@@ -127,7 +140,11 @@ public class RateLimitingService : IRateLimitingService
     }
 
     /// <summary>
-    /// Checks if window needs reset and resets if necessary
+    /// Checks if window needs reset and resets if necessary.
+    /// A tolerance buffer is added to the elapsed-time comparison so that
+    /// clock skew between the gateway host and the backing store cannot cause
+    /// the window to be reset prematurely, which would allow burst traffic
+    /// beyond the configured limit.
     /// </summary>
     private async Task CheckAndResetWindowAsync(RateLimit rateLimit)
     {
@@ -138,7 +155,14 @@ public class RateLimitingService : IRateLimitingService
         var lastReset = rateLimit.LastResetAt ?? rateLimit.CreatedAt;
         var now = DateTime.UtcNow;
 
-        if ((now - lastReset).TotalSeconds > windowSeconds)
+        var elapsed = (now - lastReset).TotalSeconds;
+
+        // If elapsed is negative the backing store has a clock ahead of ours;
+        // do not reset in that case.  Require the full window PLUS a skew
+        // tolerance to elapse before resetting the counter so that small clock
+        // differences between the gateway and a remote Redis/SQL host cannot
+        // trigger an early reset.
+        if (elapsed >= 0 && elapsed >= windowSeconds + _clockSkewToleranceSeconds)
         {
             rateLimit.ResetWindow();
             await _repository.UpdateAsync(rateLimit);
