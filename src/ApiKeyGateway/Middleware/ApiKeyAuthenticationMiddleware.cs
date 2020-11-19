@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Services;
 
@@ -20,19 +21,22 @@ public class ApiKeyAuthenticationMiddleware
     private readonly IAuthenticationService _authenticationService;
     private readonly IUsageTrackingService _usageTrackingService;
     private readonly IRateLimitingService _rateLimitingService;
+    private readonly bool _failOpenOnKeyStoreUnavailable;
 
     public ApiKeyAuthenticationMiddleware(
         RequestDelegate next,
         ILogger<ApiKeyAuthenticationMiddleware> logger,
         IAuthenticationService authenticationService,
         IUsageTrackingService usageTrackingService,
-        IRateLimitingService rateLimitingService)
+        IRateLimitingService rateLimitingService,
+        Configuration.GatewayConfiguration? gatewayConfig = null)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
         _usageTrackingService = usageTrackingService ?? throw new ArgumentNullException(nameof(usageTrackingService));
         _rateLimitingService = rateLimitingService ?? throw new ArgumentNullException(nameof(rateLimitingService));
+        _failOpenOnKeyStoreUnavailable = gatewayConfig?.FailOpenOnKeyStoreUnavailable ?? false;
     }
 
     /// <summary>
@@ -81,6 +85,24 @@ public class ApiKeyAuthenticationMiddleware
             _logger.LogWarning("Unauthorized access attempt from {SourceIp}: {Reason}", ex.SourceIp, ex.Reason);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
+        }
+        catch (KeyStoreUnavailableException ex)
+        {
+            _logger.LogError(ex, "Key store unavailable; fail-open={FailOpen}", _failOpenOnKeyStoreUnavailable);
+
+            if (_failOpenOnKeyStoreUnavailable)
+            {
+                // Fail-open: allow the request through without authentication.
+                _logger.LogWarning("Allowing request through unauthenticated due to fail-open policy");
+                await _next(context);
+            }
+            else
+            {
+                // Fail-closed (default): return 503 so clients know to retry.
+                context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                context.Response.Headers.Append("Retry-After", "30");
+                await context.Response.WriteAsJsonAsync(new { error = "Authentication service temporarily unavailable. Please retry." });
+            }
         }
         catch (Exception ex)
         {
