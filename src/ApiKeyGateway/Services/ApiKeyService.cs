@@ -105,7 +105,7 @@ public class ApiKeyService : IApiKeyService
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyNotFound, keyHash);
 
         if (apiKey.IsExpired)
-            throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyExpired);
+            throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyExpired, isExpired: true);
 
         if (!apiKey.CanBeUsed())
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyDisabled);
