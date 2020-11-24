@@ -71,6 +71,12 @@ API Key Gateway is a self-hosted authentication middleware designed for teams bu
 - **Circuit Breaker**: Automatically degrade gracefully when downstream services fail
 - **Correlation IDs**: Track requests across distributed systems with built-in correlation context
 
+### New Features
+
+- **API Key Rotation Scheduler**: Automatically rotates keys approaching expiry. A configurable background worker detects keys expiring within a look-ahead window, creates a replacement with the same metadata, IP restrictions, and scope, then revokes the original. Manual rotation is also available via `POST /api/apikeys/{id}/rotate`.
+- **Usage Analytics Endpoint**: Rich aggregated analytics over recorded usage data — high-level summaries, top endpoints ranked by request count, hourly trends, and daily trends — all queryable over custom date ranges via `GET /api/analytics/...`.
+- **IP Whitelist Per Key**: Restrict an individual API key to one or more IP addresses. Add, remove, or replace the whitelist at any time via dedicated REST endpoints. Requests from non-whitelisted IPs are rejected with `401 Unauthorized` before reaching any backend service.
+
 ## Architecture
 
 ### System Design
@@ -667,6 +673,27 @@ Response: 200 OK
 }
 ```
 
+#### Rotate API Key
+
+Creates a new replacement key and permanently revokes the original. The new key inherits the original's IP whitelist, scope restrictions, and metadata.
+
+```http
+POST /api/apikeys/{keyId}/rotate
+Content-Type: application/json
+
+{
+  "newExpirationDays": 365
+}
+
+Response: 200 OK
+{
+  "oldKeyId": "key_abc123",
+  "newKeyId": "key_xyz789",
+  "consumerId": "customer_001",
+  "newKeyExpiresAt": "2027-05-04T10:30:00Z"
+}
+```
+
 #### Delete API Key
 ```http
 DELETE /api/apikeys/{keyId}
@@ -675,6 +702,142 @@ Response: 204 No Content
 ```
 
 ### Usage & Analytics
+
+#### Get Analytics Summary
+```http
+GET /api/analytics/summary?keyId={keyId}&from=2026-01-01&to=2026-02-01
+
+Response: 200 OK
+{
+  "apiKeyId": "key_abc123",
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "totalRequests": 45000,
+  "successfulRequests": 44800,
+  "failedRequests": 200,
+  "successRatePercent": 99.56,
+  "errorRatePercent": 0.44,
+  "averageResponseTimeMs": 142.5,
+  "totalBytesTransferred": 12345678,
+  "uniqueEndpoints": 12,
+  "uniqueSourceIps": 4
+}
+```
+
+#### Get Top Endpoints
+```http
+GET /api/analytics/top-endpoints?keyId={keyId}&limit=5&from=2026-01-01&to=2026-02-01
+
+Response: 200 OK
+[
+  {
+    "endpoint": "/api/users",
+    "method": "GET",
+    "requestCount": 18000,
+    "averageResponseTimeMs": 98.2,
+    "errorCount": 15,
+    "errorRatePercent": 0.08
+  },
+  ...
+]
+```
+
+#### Get Hourly Trend
+```http
+GET /api/analytics/trends/hourly?keyId={keyId}&from=2026-05-04&to=2026-05-05
+
+Response: 200 OK
+[
+  {
+    "hour": "2026-05-04T10:00:00Z",
+    "requestCount": 320,
+    "errorCount": 2,
+    "averageResponseTimeMs": 135.6
+  },
+  ...
+]
+```
+
+#### Get Daily Trend
+```http
+GET /api/analytics/trends/daily?keyId={keyId}&from=2026-04-01&to=2026-05-01
+
+Response: 200 OK
+[
+  {
+    "date": "2026-04-01T00:00:00Z",
+    "requestCount": 9800,
+    "errorCount": 42,
+    "averageResponseTimeMs": 145.0,
+    "totalBytes": 4567890
+  },
+  ...
+]
+```
+
+### IP Whitelist Management
+
+#### Get IP Whitelist
+```http
+GET /api/apikeys/{keyId}/ip-whitelist
+
+Response: 200 OK
+{
+  "keyId": "key_abc123",
+  "allowedIps": ["10.0.0.1", "192.168.1.100"],
+  "isUnrestricted": false
+}
+```
+
+#### Replace IP Whitelist
+```http
+PUT /api/apikeys/{keyId}/ip-whitelist
+Content-Type: application/json
+
+{
+  "allowedIps": ["10.0.0.1", "10.0.0.2", "192.168.1.0"]
+}
+
+Response: 200 OK
+{
+  "keyId": "key_abc123",
+  "allowedIps": ["10.0.0.1", "10.0.0.2", "192.168.1.0"],
+  "isUnrestricted": false
+}
+```
+
+Send an empty `allowedIps` array to remove all IP restrictions.
+
+#### Add IP Address
+```http
+POST /api/apikeys/{keyId}/ip-whitelist
+Content-Type: application/json
+
+{
+  "ipAddress": "203.0.113.42"
+}
+
+Response: 200 OK  (409 Conflict if already present)
+{
+  "keyId": "key_abc123",
+  "allowedIps": ["10.0.0.1", "203.0.113.42"],
+  "isUnrestricted": false
+}
+```
+
+#### Remove IP Address
+```http
+DELETE /api/apikeys/{keyId}/ip-whitelist/{ip}
+
+Response: 200 OK  (404 if IP not in list)
+{
+  "keyId": "key_abc123",
+  "allowedIps": ["10.0.0.1"],
+  "isUnrestricted": false
+}
+```
+
+### Usage & Analytics (legacy)
 
 #### Get Usage Statistics
 ```http
@@ -782,6 +945,11 @@ Response: 200 OK
     "CacheExpirationMinutes": 30,
     "EnableCaching": true,
     "AllowKeyRotation": true
+  },
+  "KeyRotation": {
+    "CheckIntervalHours": 24,
+    "WarningDays": 7,
+    "NewExpirationDays": null
   },
   "ConnectionStrings": {
     "DefaultConnection": "Server=localhost;Database=ApiKeyGateway;Trusted_Connection=true;"
