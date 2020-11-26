@@ -8,7 +8,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Thrown when database or repository operations fail
 /// </summary>
-public class DataAccessException : Exception
+public class DataAccessException : ApiKeyGatewayException
 {
     public string? Operation { get; init; }
     public string? Entity { get; init; }

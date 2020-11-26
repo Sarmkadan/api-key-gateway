@@ -9,7 +9,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// Thrown when the key store (database or cache) is temporarily unreachable
 /// and the gateway cannot verify API key authenticity.
 /// </summary>
-public class KeyStoreUnavailableException : Exception
+public class KeyStoreUnavailableException : ApiKeyGatewayException
 {
     public string? Operation { get; init; }
 

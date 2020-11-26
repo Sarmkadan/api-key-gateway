@@ -8,7 +8,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Thrown when gateway configuration is invalid or incomplete
 /// </summary>
-public class ConfigurationException : Exception
+public class ConfigurationException : ApiKeyGatewayException
 {
     public string? Setting { get; init; }
 
