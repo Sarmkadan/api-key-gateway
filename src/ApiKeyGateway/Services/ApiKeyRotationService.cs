@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
