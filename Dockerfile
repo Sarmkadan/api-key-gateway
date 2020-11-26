@@ -47,10 +47,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD dotnet /app/ApiKeyGateway.dll --check-health || exit 1
 
 # Expose ports
-EXPOSE 5000 5001
+EXPOSE 8080
 
 # Environment configuration
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Start application

@@ -5,6 +5,25 @@
 [![Build Status](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Docker Usage
+
+This project includes a `docker-compose.yml` file to run the gateway and its dependencies (SQL Server and Redis).
+
+### Start services
+```bash
+docker-compose up -d
+```
+
+### View logs
+```bash
+docker-compose logs -f api-key-gateway
+```
+
+### Stop services
+```bash
+docker-compose down
+```
+
 ## Installation
 
 ```bash
