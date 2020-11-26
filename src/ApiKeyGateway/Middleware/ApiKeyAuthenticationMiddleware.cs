@@ -45,6 +45,7 @@ public class ApiKeyAuthenticationMiddleware
     /// <summary>
     /// Invokes the middleware to process the request
     /// </summary>
+    /// <param name="context">The HTTP context.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         var startTime = DateTime.UtcNow;
