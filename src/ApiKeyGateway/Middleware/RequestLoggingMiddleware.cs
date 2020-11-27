@@ -40,7 +40,7 @@ public sealed class RequestLoggingMiddleware
 
                 var maskedApiKey = string.IsNullOrEmpty(apiKeyHeader)
                     ? "NONE"
-                    : $"{apiKeyHeader[..4]}...";
+                    : $"{apiKeyHeader.ToString()[..4]}...";
 
                 _logger.LogInformation(
                     "HTTP {Method} {Path} started | API-Key: {ApiKey}",

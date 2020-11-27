@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 using System.Security.Cryptography;
 using System.Text;
 using System.Runtime.CompilerServices;
@@ -146,7 +147,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to disable API key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(DisableKeyAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, nameof(DisableKeyAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -173,7 +174,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to enable API key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(EnableKeyAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, nameof(EnableKeyAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -200,7 +201,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to revoke API key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(RevokeKeyAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, nameof(RevokeKeyAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -219,7 +220,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get keys for consumer {ConsumerId}", consumerId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetConsumerKeysAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetConsumerKeysAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -251,7 +252,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update metadata for key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(UpdateKeyMetadataAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, nameof(UpdateKeyMetadataAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -283,7 +284,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get IP whitelist for key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetIpWhitelistAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetIpWhitelistAsync), nameof(ApiKey), ex);
         }
     }
 
@@ -315,7 +316,7 @@ public class ApiKeyService : IApiKeyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to set IP whitelist for key {KeyId}", keyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(SetIpWhitelistAsync), nameof(ApiKey));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, nameof(SetIpWhitelistAsync), nameof(ApiKey), ex);
         }
     }
 

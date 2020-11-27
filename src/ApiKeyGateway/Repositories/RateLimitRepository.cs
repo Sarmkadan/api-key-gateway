@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Data;
+using System.Data.Common;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;

@@ -99,8 +99,8 @@ public sealed class DataExportService : IDataExportService
         _logger.LogInformation(
             "Exporting usage data in {Format} format from {StartDate} to {EndDate}",
             format,
-            startDate:O,
-            endDate:O);
+            startDate.ToString("O"),
+            endDate.ToString("O"));
 
         try
         {

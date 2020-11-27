@@ -4,6 +4,7 @@
 // =============================================================================
 
 using System.Data;
+using System.Data.Common;
 
 namespace ApiKeyGateway.Data;
 
@@ -50,7 +51,7 @@ public class SqlServerConnection : IDbConnection
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open database connection");
-            throw new DataAccessException("Failed to open database connection", ex);
+            throw new DbConnectionException("Failed to open database connection", ex);
         }
     }
 
@@ -83,7 +84,7 @@ public class SqlServerConnection : IDbConnection
         if (_connection == null)
             throw new InvalidOperationException("Connection is not initialized");
 
-        return _connection.CreateParameter();
+        return _connection.CreateCommand().CreateParameter();
     }
 
     public void Dispose()
@@ -96,8 +97,8 @@ public class SqlServerConnection : IDbConnection
 /// <summary>
 /// Exception for database operations
 /// </summary>
-public class DataAccessException : Exception
+public class DbConnectionException : Exception
 {
-    public DataAccessException(string message) : base(message) { }
-    public DataAccessException(string message, Exception innerException) : base(message, innerException) { }
+    public DbConnectionException(string message) : base(message) { }
+    public DbConnectionException(string message, Exception innerException) : base(message, innerException) { }
 }

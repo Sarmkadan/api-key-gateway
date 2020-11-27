@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
@@ -10,6 +11,7 @@ using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Tests;
 
@@ -178,7 +180,7 @@ public class AuthenticationServiceTests
     {
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
-            .ThrowsAsync(new DataAccessException("Connection failed", "ValidateKey", new Exception()));
+            .ThrowsAsync(new DataAccessException("Connection failed", "ValidateKey", "ApiKey", new Exception()));
 
         _auditLogServiceMock
             .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
@@ -307,7 +309,7 @@ public class AuthenticationServiceTests
         var results = await Task.WhenAll(tasks);
 
         results.Should().HaveCount(10);
-        results.Should().AllBe(key);
+        results.Should().AllSatisfy(r => r.Should().Be(key));
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.AtLeastOnce);
     }
 }
