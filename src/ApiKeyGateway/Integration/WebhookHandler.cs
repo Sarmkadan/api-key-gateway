@@ -1,12 +1,16 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Handles webhook subscriptions and deliveries for domain events.
+// When certain events occur (key created, quota exceeded), webhooks
+// are delivered to configured endpoints. This enables real-time integrations.
 // =============================================================================
 
 using System.Net;
 using System.Text.Json;
 using ApiKeyGateway.Events;
 using ApiKeyGateway.Utilities;
+using ApiKeyGateway.Domain.Exceptions;
 
 namespace ApiKeyGateway.Integration;
 
@@ -41,11 +45,17 @@ public sealed class WebhookHandler : IWebhookHandler
 
     public WebhookHandler(ILogger<WebhookHandler> logger)
     {
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public Task<string> RegisterWebhookAsync(string url, string[] eventTypes, string? secret = null)
     {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("URL cannot be empty", nameof(url));
+
+        if (eventTypes == null || eventTypes.Length == 0)
+            throw new ArgumentException("At least one event type must be specified", nameof(eventTypes));
+
         var subscription = new WebhookSubscription
         {
             Id = Guid.NewGuid().ToString(),
@@ -68,6 +78,9 @@ public sealed class WebhookHandler : IWebhookHandler
 
     public async Task DeliverWebhookAsync<T>(T @event) where T : ApiKeyEvent
     {
+        if (@event == null)
+            throw new ArgumentNullException(nameof(@event));
+
         var eventTypeName = typeof(T).Name;
 
         // Find all subscriptions interested in this event
@@ -91,6 +104,12 @@ public sealed class WebhookHandler : IWebhookHandler
 
     private async Task DeliverToEndpointAsync(WebhookSubscription subscription, string payload, Guid eventId)
     {
+        if (subscription == null)
+            throw new ArgumentNullException(nameof(subscription));
+
+        if (string.IsNullOrWhiteSpace(subscription.Url))
+            throw new InvalidOperationException("Webhook subscription has no URL");
+
         using var client = HttpClientFactory.CreateWebhookClient();
 
         for (int attempt = 0; attempt <= MaxRetries; attempt++)
@@ -116,6 +135,8 @@ public sealed class WebhookHandler : IWebhookHandler
 
                 if (response.IsSuccessStatusCode)
                 {
+                    subscription.TotalDeliveries++;
+                    subscription.LastDeliveryAt = DateTime.UtcNow;
                     _logger.LogInformation(
                         "Webhook delivered successfully: {SubscriptionId} to {Url}",
                         subscription.Id,
@@ -123,6 +144,7 @@ public sealed class WebhookHandler : IWebhookHandler
                     return;
                 }
 
+                subscription.FailedDeliveries++;
                 _logger.LogWarning(
                     "Webhook delivery failed: {SubscriptionId} - Status {StatusCode} (attempt {Attempt})",
                     subscription.Id,
@@ -131,9 +153,28 @@ public sealed class WebhookHandler : IWebhookHandler
             }
             catch (HttpRequestException ex)
             {
+                subscription.FailedDeliveries++;
                 _logger.LogError(
                     ex,
                     "Webhook delivery exception: {SubscriptionId} (attempt {Attempt})",
+                    subscription.Id,
+                    attempt + 1);
+            }
+            catch (TaskCanceledException ex)
+            {
+                subscription.FailedDeliveries++;
+                _logger.LogError(
+                    ex,
+                    "Webhook delivery timeout: {SubscriptionId} (attempt {Attempt})",
+                    subscription.Id,
+                    attempt + 1);
+            }
+            catch (Exception ex)
+            {
+                subscription.FailedDeliveries++;
+                _logger.LogError(
+                    ex,
+                    "Webhook delivery unexpected error: {SubscriptionId} (attempt {Attempt})",
                     subscription.Id,
                     attempt + 1);
             }
@@ -154,7 +195,7 @@ public sealed class WebhookHandler : IWebhookHandler
 
     private static string ComputeHmacSignature(string payload, string secret)
     {
-        using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
+        using var hmac = System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(payload));
         return $"sha256={Convert.ToHexString(hash).ToLower()}";
     }
@@ -167,5 +208,8 @@ public sealed class WebhookHandler : IWebhookHandler
         public string? Secret { get; set; }
         public DateTime RegisteredAt { get; set; }
         public bool IsActive { get; set; }
+        public DateTime? LastDeliveryAt { get; set; }
+        public int TotalDeliveries { get; set; }
+        public int FailedDeliveries { get; set; }
     }
 }
