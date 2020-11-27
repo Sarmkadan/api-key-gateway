@@ -1,6 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Repository implementation for audit log data persistence
 // =============================================================================
 
 using ApiKeyGateway.Domain.Exceptions;
@@ -8,6 +9,17 @@ using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.Repositories;
+
+/// <summary>
+/// Repository interface for audit log data access
+/// </summary>
+public interface IAuditLogRepository
+{
+    Task CreateAsync(AuditLog log);
+    Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100);
+    Task<List<AuditLog>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<int> DeleteOlderThanAsync(DateTime cutoffDate);
+}
 
 /// <summary>
 /// Repository implementation for audit log data persistence
@@ -34,9 +46,9 @@ public class AuditLogRepository : IAuditLogRepository
         try
         {
             const string query = @"
-                INSERT INTO AuditLogs
-                (Id, ResourceId, ResourceType, Action, PerformedBy, PerformedAt, HttpStatusCode, SourceIp, Reason, IsSuccess)
-                VALUES (@Id, @ResourceId, @ResourceType, @Action, @PerformedBy, @PerformedAt, @HttpStatusCode, @SourceIp, @Reason, @IsSuccess)";
+            INSERT INTO AuditLogs
+            (Id, ResourceId, ResourceType, Action, PerformedBy, PerformedAt, HttpStatusCode, SourceIp, Reason, IsSuccess)
+            VALUES (@Id, @ResourceId, @ResourceType, @Action, @PerformedBy, @PerformedAt, @HttpStatusCode, @SourceIp, @Reason, @IsSuccess)";
 
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = query;
@@ -52,7 +64,7 @@ public class AuditLogRepository : IAuditLogRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create audit log");
-            throw new DataAccessException("Failed to create audit log", "CREATE", "AuditLog");
+            throw new DataAccessException("Failed to create audit log", "CREATE", "AuditLog", ex);
         }
     }
 
@@ -62,14 +74,17 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(resourceId))
-            return [];
+            throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
+
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
 
         try
         {
             const string query = @"
-                SELECT TOP (@Limit) * FROM AuditLogs
-                WHERE ResourceId = @ResourceId
-                ORDER BY PerformedAt DESC";
+            SELECT TOP (@Limit) * FROM AuditLogs
+            WHERE ResourceId = @ResourceId
+            ORDER BY PerformedAt DESC";
 
             var logs = new List<AuditLog>();
 
@@ -92,7 +107,7 @@ public class AuditLogRepository : IAuditLogRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve audit logs for resource {ResourceId}", resourceId);
-            return [];
+            throw new DataAccessException("Failed to retrieve audit logs", "SELECT", "AuditLog", ex);
         }
     }
 
@@ -104,9 +119,9 @@ public class AuditLogRepository : IAuditLogRepository
         try
         {
             const string query = @"
-                SELECT * FROM AuditLogs
-                WHERE PerformedAt >= @StartDate AND PerformedAt <= @EndDate
-                ORDER BY PerformedAt DESC";
+            SELECT * FROM AuditLogs
+            WHERE PerformedAt >= @StartDate AND PerformedAt <= @EndDate
+            ORDER BY PerformedAt DESC";
 
             var logs = new List<AuditLog>();
 
@@ -129,7 +144,7 @@ public class AuditLogRepository : IAuditLogRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve audit logs for date range");
-            return [];
+            throw new DataAccessException("Failed to retrieve audit logs", "SELECT", "AuditLog", ex);
         }
     }
 
@@ -156,7 +171,7 @@ public class AuditLogRepository : IAuditLogRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete old audit logs");
-            return 0;
+            throw new DataAccessException("Failed to delete audit logs", "DELETE", "AuditLog", ex);
         }
     }
 
