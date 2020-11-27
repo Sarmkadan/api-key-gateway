@@ -45,3 +45,6 @@ appsettings.Development.json
 
 ## IDE user settings
 *.DotSettings.user
+
+# aider internal state - never commit
+.aider*
