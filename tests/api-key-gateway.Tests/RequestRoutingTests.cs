@@ -2,6 +2,7 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // =============================================================================
+using Xunit;
 using System.Net;
 using System.Web;
 using Microsoft.AspNetCore.Mvc.Testing;

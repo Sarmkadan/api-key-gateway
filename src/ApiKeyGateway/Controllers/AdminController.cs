@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiKeyGateway.Controllers;
 

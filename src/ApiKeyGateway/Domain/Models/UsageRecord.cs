@@ -14,11 +14,27 @@ public class UsageRecord
     public string ApiKeyId { get; init; } = string.Empty;
     public string ConsumerId { get; init; } = string.Empty;
     public DateTime RecordedAt { get; init; } = DateTime.UtcNow;
+
+    /// <summary>Alias for <see cref="RecordedAt"/> using request-timestamp naming</summary>
+    public DateTime RequestTimestampUtc
+    {
+        get => RecordedAt;
+        init => RecordedAt = value;
+    }
+
     public string Endpoint { get; init; } = string.Empty;
     public string Method { get; init; } = "GET";
     public int ResponseStatusCode { get; init; } = 200;
     public long RequestBytes { get; init; }
     public long ResponseBytes { get; init; }
+
+    /// <summary>Convenience alias for the payload size of the response</summary>
+    public long BytesTransferred
+    {
+        get => ResponseBytes;
+        init => ResponseBytes = value;
+    }
+
     public int ResponseTimeMs { get; init; }
     public string? ErrorCode { get; set; }
     public string? SourceIp { get; set; }

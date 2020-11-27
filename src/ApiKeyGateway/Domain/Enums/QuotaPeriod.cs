@@ -18,5 +18,25 @@ public enum QuotaPeriod
     /// <summary>
     /// Quota resets on the first day of every calendar month (midnight UTC)
     /// </summary>
-    Monthly = 2
+    Monthly = 2,
+
+    /// <summary>
+    /// Quota resets every calendar hour (top of the hour, UTC)
+    /// </summary>
+    Hour = 3,
+
+    /// <summary>
+    /// Quota resets every calendar day (midnight UTC)
+    /// </summary>
+    Day = 4,
+
+    /// <summary>
+    /// Quota resets every calendar week (Sunday midnight UTC)
+    /// </summary>
+    Week = 5,
+
+    /// <summary>
+    /// Quota resets on the first day of every calendar month (midnight UTC)
+    /// </summary>
+    Month = 6
 }

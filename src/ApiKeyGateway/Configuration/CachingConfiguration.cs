@@ -51,7 +51,7 @@ public static class CachingConfiguration
     /// </summary>
     public static async Task ValidateCacheConfiguration(IServiceProvider serviceProvider)
     {
-        var logger = serviceProvider.GetRequiredService<ILogger<CachingConfiguration>>();
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(CachingConfiguration).FullName!);
         var cacheProvider = serviceProvider.GetRequiredService<ICacheProvider>();
 
         try

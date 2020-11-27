@@ -4,6 +4,7 @@
 // =============================================================================
 
 using ApiKeyGateway.Domain.Exceptions;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;

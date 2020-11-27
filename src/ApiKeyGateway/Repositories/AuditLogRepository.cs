@@ -4,6 +4,8 @@
 // Repository implementation for audit log data persistence
 // =============================================================================
 
+using ApiKeyGateway.Data;
+using System.Data.Common;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;

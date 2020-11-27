@@ -41,10 +41,12 @@ public class UsageQuota
     /// </summary>
     public DateTime GetPeriodEndUtc() => Period switch
     {
-        Enums.QuotaPeriod.Monthly => new DateTime(
+        Enums.QuotaPeriod.Monthly or Enums.QuotaPeriod.Month => new DateTime(
             PeriodStartAt.Year,
             PeriodStartAt.Month,
             1, 0, 0, 0, DateTimeKind.Utc).AddMonths(1),
+        Enums.QuotaPeriod.Hour => PeriodStartAt.AddHours(1),
+        Enums.QuotaPeriod.Week => PeriodStartAt.Date.AddDays(7),
         _ => PeriodStartAt.Date.AddDays(1)
     };
 
@@ -53,7 +55,9 @@ public class UsageQuota
     /// </summary>
     public static DateTime GetPeriodStart(DateTime utcNow, Enums.QuotaPeriod period) => period switch
     {
-        Enums.QuotaPeriod.Monthly => new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+        Enums.QuotaPeriod.Monthly or Enums.QuotaPeriod.Month => new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+        Enums.QuotaPeriod.Hour => new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, 0, 0, DateTimeKind.Utc),
+        Enums.QuotaPeriod.Week => utcNow.Date.AddDays(-(int)utcNow.DayOfWeek).ToUniversalTime(),
         _ => utcNow.Date.ToUniversalTime()
     };
 

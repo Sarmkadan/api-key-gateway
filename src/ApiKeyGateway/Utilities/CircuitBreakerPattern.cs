@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace ApiKeyGateway.Utilities;
 
 /// <summary>
