@@ -48,3 +48,4 @@ appsettings.Development.json
 
 # aider internal state - never commit
 .aider*
+BenchmarkDotNet.Artifacts/
