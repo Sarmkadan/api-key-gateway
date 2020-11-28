@@ -5,6 +5,7 @@
 
 using System.Data;
 using System.Data.Common;
+using Microsoft.Extensions.Logging; // Added for structured logging
 
 namespace ApiKeyGateway.Data;
 
@@ -40,12 +41,13 @@ public class SqlServerConnection : IDbConnection
 
     public async Task OpenAsync()
     {
+        _logger.LogDebug("Opening database connection");
         try
         {
             if (_connection?.State != ConnectionState.Open)
             {
                 await _connection!.OpenAsync();
-                _logger.LogDebug("Database connection opened");
+                _logger.LogInformation("Database connection opened");
             }
         }
         catch (Exception ex)
@@ -57,12 +59,13 @@ public class SqlServerConnection : IDbConnection
 
     public async Task CloseAsync()
     {
+        _logger.LogDebug("Closing database connection");
         try
         {
             if (_connection?.State == ConnectionState.Open)
             {
                 await _connection.CloseAsync();
-                _logger.LogDebug("Database connection closed");
+                _logger.LogInformation("Database connection closed");
             }
         }
         catch (Exception ex)
@@ -73,6 +76,7 @@ public class SqlServerConnection : IDbConnection
 
     public DbCommand CreateCommand()
     {
+        _logger.LogDebug("Creating DB command");
         if (_connection == null)
             throw new InvalidOperationException("Connection is not initialized");
 
@@ -81,6 +85,7 @@ public class SqlServerConnection : IDbConnection
 
     public DbParameter CreateParameter()
     {
+        _logger.LogDebug("Creating DB parameter");
         if (_connection == null)
             throw new InvalidOperationException("Connection is not initialized");
 

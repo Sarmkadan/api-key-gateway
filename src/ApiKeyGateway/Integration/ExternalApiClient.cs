@@ -8,6 +8,7 @@
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Caching;
 using ApiKeyGateway.Utilities;
+using Microsoft.Extensions.Logging; // Ensure logging namespace is available
 
 namespace ApiKeyGateway.Integration;
 
@@ -61,6 +62,7 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         if (string.IsNullOrWhiteSpace(endpoint))
             throw new ArgumentException("Endpoint cannot be empty", nameof(endpoint));
 
+        _logger.LogDebug("Starting GET request to {Endpoint} for API {ApiName}", endpoint, _apiName);
         var cacheKey = CacheKeyGenerator.GetExternalApiCacheKey(_apiName, endpoint);
 
         // Check cache first if caching is enabled
@@ -96,6 +98,7 @@ public sealed class HttpExternalApiClient : IExternalApiClient
                     cacheDuration);
             }
 
+            _logger.LogInformation("GET request succeeded for {Endpoint} on API {ApiName}", endpoint, _apiName);
             return result;
         }
         catch (HttpRequestException ex)
@@ -132,6 +135,8 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         if (payload == null)
             throw new ArgumentNullException(nameof(payload));
 
+        _logger.LogDebug("Starting POST request to {Endpoint} for API {ApiName}", endpoint, _apiName);
+
         try
         {
             var jsonContent = JsonSerializationHelper.SerializeCompact(payload);
@@ -146,6 +151,7 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             if (result == null)
                 throw new ConfigurationException($"External API {_apiName} returned null response for POST to {endpoint}");
 
+            _logger.LogInformation("POST request succeeded for {Endpoint} on API {ApiName}", endpoint, _apiName);
             return result;
         }
         catch (HttpRequestException ex)
@@ -179,6 +185,8 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
+        _logger.LogDebug("Starting custom request for API {ApiName}", _apiName);
+
         try
         {
             var response = await _httpClient.SendAsync(request);
@@ -190,6 +198,7 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             if (result == null)
                 throw new ConfigurationException($"External API {_apiName} returned null response for custom request");
 
+            _logger.LogInformation("Custom request succeeded for API {ApiName}", _apiName);
             return result;
         }
         catch (HttpRequestException ex)
