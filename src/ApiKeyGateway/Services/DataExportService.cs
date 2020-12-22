@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Utilities;
 
@@ -44,6 +46,9 @@ public sealed class DataExportService : IDataExportService
 
     public async Task<string> ExportApiKeysAsync(string format)
     {
+        if (string.IsNullOrWhiteSpace(format))
+            throw new ValidationException("Format cannot be empty", nameof(format), format);
+
         _logger.LogInformation("Exporting API keys in {Format} format", format);
 
         try
@@ -59,15 +64,23 @@ public sealed class DataExportService : IDataExportService
                 _ => CsvExportHelper.ToCsv(apiKeys)
             };
         }
+        catch (DataAccessException)
+        {
+            // Re-throw DataAccessException as-is
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting API keys");
-            throw;
+            throw new DataAccessException("Failed to export API keys", nameof(ExportApiKeysAsync), nameof(ApiKey), ex);
         }
     }
 
     public async Task<string> ExportAuditLogsAsync(string format, DateTime? since = null)
     {
+        if (string.IsNullOrWhiteSpace(format))
+            throw new ValidationException("Format cannot be empty", nameof(format), format);
+
         _logger.LogInformation(
             "Exporting audit logs in {Format} format since {Since}",
             format,
@@ -87,15 +100,26 @@ public sealed class DataExportService : IDataExportService
                 _ => CsvExportHelper.ToCsv(auditLogs)
             };
         }
+        catch (DataAccessException)
+        {
+            // Re-throw DataAccessException as-is
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting audit logs");
-            throw;
+            throw new DataAccessException("Failed to export audit logs", nameof(ExportAuditLogsAsync), nameof(AuditLog), ex);
         }
     }
 
     public async Task<string> ExportUsageAsync(string format, DateTime startDate, DateTime endDate)
     {
+        if (string.IsNullOrWhiteSpace(format))
+            throw new ValidationException("Format cannot be empty", nameof(format), format);
+
+        if (endDate < startDate)
+            throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
+
         _logger.LogInformation(
             "Exporting usage data in {Format} format from {StartDate} to {EndDate}",
             format,
@@ -114,10 +138,15 @@ public sealed class DataExportService : IDataExportService
                 _ => CsvExportHelper.ToCsv(usageRecords)
             };
         }
+        catch (DataAccessException)
+        {
+            // Re-throw DataAccessException as-is
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting usage data");
-            throw;
+            throw new DataAccessException("Failed to export usage data", nameof(ExportUsageAsync), nameof(UsageRecord), ex);
         }
     }
 }

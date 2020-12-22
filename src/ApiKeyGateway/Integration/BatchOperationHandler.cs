@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
+
 namespace ApiKeyGateway.Integration;
 
 /// <summary>
@@ -68,6 +70,12 @@ public sealed class BatchOperationHandler : IBatchOperationHandler
 
     public async Task<BatchOperationResult> ExecuteAsync(BatchOperation operation)
     {
+        if (operation == null)
+            throw new ArgumentNullException(nameof(operation));
+
+        if (operation.ApiKeyIds == null || operation.ApiKeyIds.Count == 0)
+            throw new ValidationException("At least one API key ID must be specified", nameof(operation.ApiKeyIds), operation.ApiKeyIds);
+
         _logger.LogInformation(
             "Starting batch operation {OperationId} of type {OperationType} for {Count} keys",
             operation.Id,

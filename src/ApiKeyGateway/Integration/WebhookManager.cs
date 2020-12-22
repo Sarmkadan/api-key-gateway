@@ -4,7 +4,7 @@
 // Manager for webhook subscriptions and delivery coordination.
 // Handles the lifecycle of webhooks: registration, subscription, delivery tracking.
 // Provides API for users to configure which events they want to receive.
-// =============================================================================
+// =====================================================================
 
 using ApiKeyGateway.Domain.Exceptions;
 
@@ -90,15 +90,23 @@ public sealed class WebhookManager : IWebhookManager
             RegisteredAt = DateTime.UtcNow
         };
 
-        _subscriptions[subscription.Id] = subscription;
+        try
+        {
+            _subscriptions[subscription.Id] = subscription;
 
-        _logger.LogInformation(
-            "Webhook registered: {Id} for API key {ApiKeyId} - {EventCount} events",
-            subscription.Id,
-            apiKeyId,
-            eventTypes.Length);
+            _logger.LogInformation(
+                "Webhook registered: {Id} for API key {ApiKeyId} - {EventCount} events",
+                subscription.Id,
+                apiKeyId,
+                eventTypes.Length);
 
-        return Task.FromResult(subscription.Id);
+            return Task.FromResult(subscription.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to register webhook for API key {ApiKeyId}", apiKeyId);
+            throw new DataAccessException("Failed to register webhook", nameof(RegisterWebhookAsync), nameof(WebhookSubscription), ex);
+        }
     }
 
     public Task UnregisterWebhookAsync(string webhookId)
@@ -106,12 +114,20 @@ public sealed class WebhookManager : IWebhookManager
         if (string.IsNullOrWhiteSpace(webhookId))
             throw new ArgumentException("Webhook ID cannot be empty", nameof(webhookId));
 
-        if (_subscriptions.Remove(webhookId))
+        try
         {
-            _logger.LogInformation("Webhook unregistered: {Id}", webhookId);
-        }
+            if (_subscriptions.Remove(webhookId))
+            {
+                _logger.LogInformation("Webhook unregistered: {Id}", webhookId);
+            }
 
-        return Task.CompletedTask;
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to unregister webhook {Id}", webhookId);
+            throw new DataAccessException("Failed to unregister webhook", nameof(UnregisterWebhookAsync), nameof(WebhookSubscription), ex);
+        }
     }
 
     public Task<IEnumerable<WebhookSubscription>> GetWebhooksForKeyAsync(string apiKeyId)
@@ -119,11 +135,19 @@ public sealed class WebhookManager : IWebhookManager
         if (string.IsNullOrWhiteSpace(apiKeyId))
             throw new ArgumentException("API key ID cannot be empty", nameof(apiKeyId));
 
-        var webhooks = _subscriptions.Values
-            .Where(s => s.ApiKeyId == apiKeyId && s.IsActive)
-            .ToList();
+        try
+        {
+            var webhooks = _subscriptions.Values
+                .Where(s => s.ApiKeyId == apiKeyId && s.IsActive)
+                .ToList();
 
-        return Task.FromResult<IEnumerable<WebhookSubscription>>(webhooks);
+            return Task.FromResult<IEnumerable<WebhookSubscription>>(webhooks);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get webhooks for API key {ApiKeyId}", apiKeyId);
+            throw new DataAccessException("Failed to retrieve webhooks", nameof(GetWebhooksForKeyAsync), nameof(WebhookSubscription), ex);
+        }
     }
 
     public Task<int> GetDeliveryCountAsync(string webhookId)
@@ -131,11 +155,19 @@ public sealed class WebhookManager : IWebhookManager
         if (string.IsNullOrWhiteSpace(webhookId))
             throw new ArgumentException("Webhook ID cannot be empty", nameof(webhookId));
 
-        if (_subscriptions.TryGetValue(webhookId, out var subscription))
+        try
         {
-            return Task.FromResult(subscription.TotalDeliveries);
-        }
+            if (_subscriptions.TryGetValue(webhookId, out var subscription))
+            {
+                return Task.FromResult(subscription.TotalDeliveries);
+            }
 
-        return Task.FromResult(0);
+            return Task.FromResult(0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get delivery count for webhook {Id}", webhookId);
+            throw new DataAccessException("Failed to get delivery count", nameof(GetDeliveryCountAsync), nameof(WebhookSubscription), ex);
+        }
     }
 }

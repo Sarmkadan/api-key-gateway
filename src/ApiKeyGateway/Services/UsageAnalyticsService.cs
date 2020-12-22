@@ -109,7 +109,11 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     /// <inheritdoc/>
     public async Task<AnalyticsSummary> GetSummaryAsync(string apiKeyId, DateTime from, DateTime to)
     {
-        ValidateArguments(apiKeyId, from, to);
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -142,7 +146,12 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     public async Task<List<EndpointStat>> GetTopEndpointsAsync(
         string apiKeyId, DateTime from, DateTime to, int limit = 10)
     {
-        ValidateArguments(apiKeyId, from, to);
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
+
         if (limit <= 0) limit = 10;
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
@@ -172,7 +181,11 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     public async Task<List<HourlyBucket>> GetHourlyTrendAsync(
         string apiKeyId, DateTime from, DateTime to)
     {
-        ValidateArguments(apiKeyId, from, to);
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -199,7 +212,11 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     public async Task<List<DailyBucket>> GetDailyTrendAsync(
         string apiKeyId, DateTime from, DateTime to)
     {
-        ValidateArguments(apiKeyId, from, to);
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -228,5 +245,17 @@ public class UsageAnalyticsService : IUsageAnalyticsService
 
         if (to < from)
             throw new ArgumentException("End date must be after start date", nameof(to));
+    }
+
+    private static void ValidateArguments(string apiKeyId, DateTime from, DateTime to, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
+
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
     }
 }
