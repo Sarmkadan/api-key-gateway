@@ -11,7 +11,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 public class InvalidApiKeyException : ApiKeyGatewayException
 {
     public string? ApiKeyHash { get; init; }
-    public DateTime? OccurredAt { get; init; }
+    public new DateTime OccurredAt { get; init; }
     public bool IsExpired { get; init; }
 
     public InvalidApiKeyException(string message) : base(message)
