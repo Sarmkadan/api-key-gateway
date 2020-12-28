@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiKeyGateway.Caching;
@@ -55,11 +57,14 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<InMemoryCacheProvider> _logger;
-    private static readonly object _lockObj = new();
-    private static readonly Dictionary<string, long> _counters = new();
+    private readonly ConcurrentDictionary<string, long> _counters = new();
+    private readonly ConcurrentDictionary<string, byte> _trackedKeys = new();
 
     public InMemoryCacheProvider(IMemoryCache cache, ILogger<InMemoryCacheProvider> logger)
     {
+        ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _cache = cache;
         _logger = logger;
     }
@@ -81,10 +86,26 @@ public sealed class InMemoryCacheProvider : ICacheProvider
         var cacheOptions = new MemoryCacheEntryOptions();
         if (expiration.HasValue)
         {
-            cacheOptions.SlidingExpiration = expiration;
+            // Absolute expiration: a TTL passed by callers (API key cache, external
+            // API responses) must be a hard deadline. Sliding expiration would let
+            // frequently accessed entries live forever, so revoked keys or stale
+            // upstream data would keep being served under constant traffic.
+            cacheOptions.AbsoluteExpirationRelativeToNow = expiration;
         }
 
+        cacheOptions.RegisterPostEvictionCallback(static (evictedKey, _, reason, state) =>
+        {
+            // On Replaced the key still holds a live entry, so it must stay tracked.
+            if (reason != EvictionReason.Replaced
+                && state is ConcurrentDictionary<string, byte> tracked
+                && evictedKey is string stringKey)
+            {
+                tracked.TryRemove(stringKey, out byte _);
+            }
+        }, _trackedKeys);
+
         _cache.Set(key, value, cacheOptions);
+        _trackedKeys[key] = 0;
         _logger.LogDebug("Cache SET for key: {Key} with expiration: {Expiration}", key, expiration?.TotalSeconds);
         return ValueTask.CompletedTask;
     }
@@ -92,6 +113,7 @@ public sealed class InMemoryCacheProvider : ICacheProvider
     public ValueTask RemoveAsync(string key)
     {
         _cache.Remove(key);
+        _trackedKeys.TryRemove(key, out _);
         _logger.LogDebug("Cache REMOVE for key: {Key}", key);
         return ValueTask.CompletedTask;
     }
@@ -101,26 +123,45 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 
     public ValueTask<long> IncrementAsync(string key, long increment = 1)
     {
-        // In-memory implementation needs manual locking for counters
-        lock (_lockObj)
-        {
-            if (!_counters.ContainsKey(key))
-            {
-                _counters[key] = 0;
-            }
-
-            _counters[key] += increment;
-            var newValue = _counters[key];
-            _logger.LogDebug("Counter incremented: {Key} = {Value}", key, newValue);
-            return ValueTask.FromResult(newValue);
-        }
+        var newValue = _counters.AddOrUpdate(key, increment, (_, current) => current + increment);
+        _logger.LogDebug("Counter incremented: {Key} = {Value}", key, newValue);
+        return ValueTask.FromResult(newValue);
     }
 
     public ValueTask<int> RemoveByPatternAsync(string pattern)
     {
-        // In-memory cache doesn't have pattern matching built-in
-        // This is a simplified implementation
-        _logger.LogWarning("RemoveByPattern not fully implemented for in-memory cache");
-        return ValueTask.FromResult(0);
+        if (string.IsNullOrWhiteSpace(pattern))
+            return ValueTask.FromResult(0);
+
+        var regex = BuildPatternRegex(pattern);
+        var removed = 0;
+
+        foreach (var key in _trackedKeys.Keys)
+        {
+            if (regex.IsMatch(key) && _trackedKeys.TryRemove(key, out _))
+            {
+                _cache.Remove(key);
+                removed++;
+            }
+        }
+
+        foreach (var key in _counters.Keys)
+        {
+            if (regex.IsMatch(key) && _counters.TryRemove(key, out _))
+                removed++;
+        }
+
+        _logger.LogDebug("Cache REMOVE by pattern {Pattern}: {Count} entries", pattern, removed);
+        return ValueTask.FromResult(removed);
+    }
+
+    /// <summary>
+    /// Translates a glob-style pattern ('*' matches any run of characters,
+    /// '?' matches a single character) into an anchored regular expression.
+    /// </summary>
+    private static Regex BuildPatternRegex(string pattern)
+    {
+        var escaped = Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".");
+        return new Regex($"^{escaped}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
     }
 }

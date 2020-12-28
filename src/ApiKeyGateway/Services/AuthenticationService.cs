@@ -69,7 +69,7 @@ public class AuthenticationService : IAuthenticationService
                 {
                     await LogAuthenticationAttemptAsync(validKey.Id, false, $"IP not whitelisted: {ipAddress}");
                     throw new UnauthorizedAccessException(
-                        "Access denied",
+                        $"Access denied: IP address {ipAddress} is not whitelisted",
                         $"IP address {ipAddress} is not whitelisted",
                         ipAddress);
                 }

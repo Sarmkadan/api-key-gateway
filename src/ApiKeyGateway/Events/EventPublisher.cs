@@ -71,14 +71,16 @@ public class InMemoryEventPublisher : IEventPublisher
             eventType.Name,
             handlers.Count);
 
-        // Call all handlers in sequence, error in one doesn't stop others
+        // Call all handlers in sequence, error in one doesn't stop others.
+        // Invoke through the typed delegate rather than DynamicInvoke so handler
+        // exceptions surface directly instead of wrapped in TargetInvocationException.
         foreach (var handler in handlers)
         {
             try
             {
-                if (handler is Delegate del)
+                if (handler is Func<T, Task> typedHandler)
                 {
-                    await (Task)del.DynamicInvoke(@event)!;
+                    await typedHandler(@event);
                 }
             }
             catch (Exception ex)

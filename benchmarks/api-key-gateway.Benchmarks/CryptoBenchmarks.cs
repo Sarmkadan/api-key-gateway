@@ -11,7 +11,7 @@ namespace ApiKeyGateway.Benchmarks;
 
 /// <summary>
 /// Benchmarks for cryptographic helpers.
-/// GenerateSecureRandomString uses stackalloc + RandomNumberGenerator.Fill to avoid heap buffers.
+/// GenerateSecureRandomString uses RandomNumberGenerator.GetString for unbiased character selection.
 /// ComputeSha256Hash and ComputeHmacSha256 use ArrayPool for encoding and stackalloc for hash output.
 /// </summary>
 [MemoryDiagnoser]

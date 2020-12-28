@@ -455,14 +455,15 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-    /// Generates a random string of specified length
+    /// Generates a cryptographically secure random string of the specified length.
+    /// Key material must come from a CSPRNG; <see cref="Random"/> is seeded from
+    /// the system clock and produces predictable, guessable key values.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string GenerateRandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        var random = new Random();
-        return new string(Enumerable.Range(0, length).Select(_ => chars[random.Next(chars.Length)]).ToArray());
+        return RandomNumberGenerator.GetString(chars, length);
     }
 }
 

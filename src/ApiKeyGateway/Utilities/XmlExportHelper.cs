@@ -76,7 +76,7 @@ public static class XmlExportHelper
     {
         writer.WriteStartElement(elementName);
 
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.IgnoreCase);
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         foreach (var prop in properties)
         {
             var value = prop.GetValue(obj);
@@ -88,25 +88,38 @@ public static class XmlExportHelper
 
             if (value is string || value is IFormattable)
             {
-                writer.WriteElementString(safeElementName, value?.ToString() ?? string.Empty);
+                writer.WriteElementString(safeElementName, FormatValue(value));
             }
             else if (value is System.Collections.IEnumerable enumerable && value is not string)
             {
                 writer.WriteStartElement(safeElementName + "Items");
                 foreach (var item in enumerable)
                 {
-                    writer.WriteElementString("Item", item?.ToString() ?? string.Empty);
+                    writer.WriteElementString("Item", item == null ? string.Empty : FormatValue(item));
                 }
                 writer.WriteEndElement();
             }
             else
             {
-                writer.WriteElementString(safeElementName, value?.ToString() ?? string.Empty);
+                writer.WriteElementString(safeElementName, FormatValue(value));
             }
         }
 
         writer.WriteEndElement();
     }
+
+    /// <summary>
+    /// Formats a value for machine-facing XML output. Dates use the round-trip
+    /// format and all other formattable values use the invariant culture so the
+    /// output does not vary with the host's regional settings.
+    /// </summary>
+    private static string FormatValue(object value) => value switch
+    {
+        DateTime dt => dt.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        DateTimeOffset dto => dto.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+        _ => value.ToString() ?? string.Empty
+    };
 
     /// <summary>
     /// Ensures element names are valid XML identifiers.

@@ -54,15 +54,17 @@ public class UsageQuotaService : IUsageQuotaService
         var now = DateTime.UtcNow;
 
         // Roll over the period if we have moved into a new calendar window.
+        // The reset is persisted together with the recorded request below so the
+        // repository is written at most once per check.
         var expectedStart = UsageQuota.GetPeriodStart(now, quota.Period);
-        if (quota.PeriodStartAt < expectedStart)
+        var rolledOver = quota.PeriodStartAt < expectedStart;
+        if (rolledOver)
         {
             _logger.LogInformation(
                 "Quota period rolled over for API key {ApiKeyId} ({Period}). Resetting counter from {Count}",
                 apiKeyId, quota.Period, quota.CurrentUsage);
 
             quota.ResetPeriod(now);
-            await _repository.UpdateAsync(quota);
         }
 
         if (quota.IsExceeded)
@@ -70,6 +72,11 @@ public class UsageQuotaService : IUsageQuotaService
             _logger.LogWarning(
                 "Quota exceeded for API key {ApiKeyId}: {Usage}/{Limit} in {Period} period",
                 apiKeyId, quota.CurrentUsage, quota.QuotaLimit, quota.Period);
+
+            // Persist the rollover even when the request is rejected (possible
+            // with a zero limit) so the stored period start does not go stale.
+            if (rolledOver)
+                await _repository.UpdateAsync(quota);
 
             return new UsageQuotaResult(true, 0, quota.QuotaLimit, quota.GetPeriodEndUtc());
         }

@@ -127,7 +127,7 @@ public sealed class BatchOperationHandler : IBatchOperationHandler
         string apiKeyId,
         BatchOperation operation)
     {
-        return operation.OperationType.ToLower() switch
+        return operation.OperationType.ToLowerInvariant() switch
         {
             "disable" => new()
             {
