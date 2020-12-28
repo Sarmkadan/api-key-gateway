@@ -1,13 +1,16 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using ApiKeyGateway.BackgroundWorkers;
 using ApiKeyGateway.Caching;
 using ApiKeyGateway.Events;
 using ApiKeyGateway.Integration;
 using ApiKeyGateway.Services;
+using Microsoft.Extensions.DependencyInjection;
+
+using System;
 
 namespace ApiKeyGateway.Configuration;
 
@@ -19,12 +22,21 @@ namespace ApiKeyGateway.Configuration;
 public static class ServiceRegistrationExtensions
 {
     /// <summary>
-    /// Registers all gateway services in the DI container.
+    /// Registers all gateway services in the dependency injection container.
     /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="configuration">The <see cref="IConfiguration"/> containing gateway settings.</param>
+    /// <returns>The <see cref="IServiceCollection"/> for fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.
+    /// </exception>
     public static IServiceCollection AddGatewayServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         // Core services
         services.AddGatewayCoreServices(configuration);
 
@@ -73,9 +85,18 @@ public static class ServiceRegistrationExtensions
     /// Validates all critical services during startup.
     /// Fails fast if dependencies are misconfigured.
     /// </summary>
+    /// <param name="serviceProvider">The service provider to validate.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous validation operation.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="serviceProvider"/> is <see langword="null"/>.
+    /// </exception>
     public static async Task ValidateServicesAsync(IServiceProvider serviceProvider)
     {
-        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ServiceRegistrationExtensions).FullName!);
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        var logger = serviceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger(typeof(ServiceRegistrationExtensions).FullName!);
 
         try
         {
