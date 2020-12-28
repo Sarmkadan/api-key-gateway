@@ -52,6 +52,8 @@ public class DataExportServiceTests
         var act = async () => await _sut.ExportApiKeysAsync("json");
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("DB Error");
+        (await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.DataAccessException>())
+            .WithInnerException<Exception>()
+            .WithMessage("DB Error");
     }
 }

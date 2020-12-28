@@ -207,9 +207,9 @@ public class ApiKeyRotationServiceTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public async Task RotateKeyAsync_EmptyId_ThrowsArgumentException(string? keyId)
+    public async Task RotateKeyAsync_EmptyId_ThrowsValidationException(string? keyId)
     {
         var act = async () => await _sut.RotateKeyAsync(keyId!);
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 }

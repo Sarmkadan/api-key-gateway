@@ -155,10 +155,10 @@ public class IpWhitelistTests
     }
 
     [Fact]
-    public async Task AddIpToWhitelistAsync_EmptyIp_ThrowsArgumentException()
+    public async Task AddIpToWhitelistAsync_EmptyIp_ThrowsValidationException()
     {
         var act = async () => await _sut.AddIpToWhitelistAsync("k1", "");
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
     // ── Service: RemoveIpFromWhitelistAsync ───────────────────────────────

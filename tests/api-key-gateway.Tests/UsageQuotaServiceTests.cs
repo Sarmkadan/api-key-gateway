@@ -128,7 +128,8 @@ public class UsageQuotaServiceTests
             Period = QuotaPeriod.Hour,
             CurrentUsage = 100,
             IsEnabled = true,
-            PeriodStartAt = DateTime.UtcNow.AddHours(-1)
+            // Start of the current calendar hour: still inside the active window.
+            PeriodStartAt = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Hour)
         };
 
         _repositoryMock
@@ -313,7 +314,8 @@ public class UsageQuotaServiceTests
             Period = QuotaPeriod.Hour,
             CurrentUsage = 100,
             IsEnabled = true,
-            PeriodStartAt = DateTime.UtcNow.AddHours(-1)
+            // Start of the current calendar hour: still inside the active window.
+            PeriodStartAt = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Hour)
         };
 
         _repositoryMock

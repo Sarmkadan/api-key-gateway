@@ -70,7 +70,7 @@ public class UsageTrackingServiceTests
     }
 
     [Fact]
-    public async Task RecordUsageAsync_RepositoryThrows_PropagatesException()
+    public async Task RecordUsageAsync_RepositoryThrows_WrapsInDataAccessException()
     {
         var record = new UsageRecord { ApiKeyId = "key-123" };
 
@@ -79,27 +79,29 @@ public class UsageTrackingServiceTests
             .ThrowsAsync(new InvalidOperationException("DB error"));
 
         var act = async () => await _sut.RecordUsageAsync(record);
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        (await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.DataAccessException>())
+            .WithInnerException<InvalidOperationException>()
+            .WithMessage("DB error");
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(null)]
     [InlineData("   ")]
-    public async Task GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsArgumentException(string? keyId)
+    public async Task GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
         var act = async () => await _sut.GetUsageStatisticsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
     [Fact]
-    public async Task GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsArgumentException()
+    public async Task GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsValidationException()
     {
         var startDate = DateTime.UtcNow;
         var endDate = startDate.AddDays(-1);
 
         var act = async () => await _sut.GetUsageStatisticsAsync("key-123", startDate, endDate);
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
     [Fact]
@@ -155,10 +157,10 @@ public class UsageTrackingServiceTests
     [InlineData("")]
     [InlineData(null)]
     [InlineData("   ")]
-    public async Task GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsArgumentException(string? keyId)
+    public async Task GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
         var act = async () => await _sut.GetUsageRecordsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
     [Fact]

@@ -221,7 +221,7 @@ public class IntegrationTests
         result1.Id.Should().Be("key-auth");
 
         var act = async () => await authService.AuthenticateAsync("sk_testkey", "203.0.113.50");
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException>();
     }
 
     [Fact]
