@@ -19,35 +19,36 @@ public class ApiKeyAuthenticationMiddleware
     private const string ApiKeyQueryName = "api_key";
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiKeyAuthenticationMiddleware> _logger;
-    private readonly IAuthenticationService _authenticationService;
-    private readonly IUsageTrackingService _usageTrackingService;
-    private readonly IRateLimitingService _rateLimitingService;
-    private readonly IUsageQuotaService _usageQuotaService;
     private readonly bool _failOpenOnKeyStoreUnavailable;
 
     public ApiKeyAuthenticationMiddleware(
         RequestDelegate next,
         ILogger<ApiKeyAuthenticationMiddleware> logger,
-        IAuthenticationService authenticationService,
-        IUsageTrackingService usageTrackingService,
-        IRateLimitingService rateLimitingService,
-        IUsageQuotaService usageQuotaService,
         Configuration.GatewayConfiguration? gatewayConfig = null)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
-        _usageTrackingService = usageTrackingService ?? throw new ArgumentNullException(nameof(usageTrackingService));
-        _rateLimitingService = rateLimitingService ?? throw new ArgumentNullException(nameof(rateLimitingService));
-        _usageQuotaService = usageQuotaService ?? throw new ArgumentNullException(nameof(usageQuotaService));
         _failOpenOnKeyStoreUnavailable = gatewayConfig?.FailOpenOnKeyStoreUnavailable ?? false;
     }
 
     /// <summary>
-    /// Invokes the middleware to process the request
+    /// Invokes the middleware to process the request. The gateway services are
+    /// method-injected rather than constructor-injected because conventional
+    /// middleware is constructed once from the root provider, while these
+    /// services are scoped; resolving them per request keeps their lifetimes
+    /// correct (one repository/connection scope per request).
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    public async Task InvokeAsync(HttpContext context)
+    /// <param name="authenticationService">Scoped authentication service for the current request.</param>
+    /// <param name="usageTrackingService">Scoped usage tracking service for the current request.</param>
+    /// <param name="rateLimitingService">Scoped rate limiting service for the current request.</param>
+    /// <param name="usageQuotaService">Scoped usage quota service for the current request.</param>
+    public async Task InvokeAsync(
+        HttpContext context,
+        IAuthenticationService authenticationService,
+        IUsageTrackingService usageTrackingService,
+        IRateLimitingService rateLimitingService,
+        IUsageQuotaService usageQuotaService)
     {
         var startTime = DateTime.UtcNow;
         var apiKey = ExtractApiKey(context.Request);
@@ -57,11 +58,11 @@ public class ApiKeyAuthenticationMiddleware
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 var clientIp = ExtractClientIp(context);
-                var authenticatedKey = await _authenticationService.AuthenticateAsync(apiKey, clientIp);
+                var authenticatedKey = await authenticationService.AuthenticateAsync(apiKey, clientIp);
 
                 if (authenticatedKey != null)
                 {
-                    await _rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
+                    await rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
 
                     // Enforce route-scope restrictions
                     var requestPath = context.Request.Path.ToString();
@@ -79,7 +80,7 @@ public class ApiKeyAuthenticationMiddleware
                     }
 
                     // Check per-key usage quota (daily/monthly hard cap)
-                    var quotaResult = await _usageQuotaService.CheckAndRecordAsync(authenticatedKey.Id);
+                    var quotaResult = await usageQuotaService.CheckAndRecordAsync(authenticatedKey.Id);
                     if (quotaResult.Limit != long.MaxValue)
                     {
                         context.Response.Headers.Append("X-RateLimit-Quota-Limit", quotaResult.Limit.ToString());
@@ -108,7 +109,7 @@ public class ApiKeyAuthenticationMiddleware
             await _next(context);
 
             var duration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-            await RecordUsageAsync(context, apiKey, duration);
+            await RecordUsageAsync(context, usageTrackingService, rateLimitingService, duration);
         }
         catch (RateLimitExceededException ex)
         {
@@ -186,7 +187,11 @@ public class ApiKeyAuthenticationMiddleware
     /// <summary>
     /// Records usage metrics for analytics
     /// </summary>
-    private async Task RecordUsageAsync(HttpContext context, string? apiKey, int durationMs)
+    private async Task RecordUsageAsync(
+        HttpContext context,
+        IUsageTrackingService usageTrackingService,
+        IRateLimitingService rateLimitingService,
+        int durationMs)
     {
         try
         {
@@ -208,8 +213,8 @@ public class ApiKeyAuthenticationMiddleware
                     SourceIp = ExtractClientIp(context)
                 };
 
-                await _usageTrackingService.RecordUsageAsync(record);
-                await _rateLimitingService.RecordRequestAsync(key.Id);
+                await usageTrackingService.RecordUsageAsync(record);
+                await rateLimitingService.RecordRequestAsync(key.Id);
             }
         }
         catch (Exception ex)
