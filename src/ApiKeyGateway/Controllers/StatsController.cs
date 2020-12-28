@@ -39,7 +39,7 @@ public sealed class StatsController : ControllerBase
 
         _logger.LogInformation("Usage statistics requested for {ApiKeyId}", apiKeyId);
 
-        var stats = period.ToLower() switch
+        var stats = period.ToLowerInvariant() switch
         {
             "hour" => GetHourlyStats(apiKeyId),
             "day" => GetDailyStats(apiKeyId),

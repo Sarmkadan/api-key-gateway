@@ -4,7 +4,6 @@
 // =============================================================================
 
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -17,27 +16,18 @@ public static class CryptoHelpers
 {
     /// <summary>
     /// Generates a cryptographically secure random string.
-    /// Uses stackalloc for the 4-byte RNG buffer and RandomNumberGenerator.Fill
-    /// to avoid per-call heap allocations.
+    /// Delegates to <see cref="RandomNumberGenerator.GetString"/>, which performs
+    /// unbiased (rejection-sampled) selection; a plain modulo over the RNG output
+    /// would skew the distribution because 2^32 is not divisible by the alphabet size.
     /// </summary>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="length"/> is not positive.</exception>
     public static string GenerateSecureRandomString(int length)
     {
         if (length <= 0)
             throw new ArgumentException("Length must be positive", nameof(length));
 
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        var result = new char[length];
-
-        Span<byte> buffer = stackalloc byte[sizeof(uint)];
-
-        for (int i = 0; i < length; i++)
-        {
-            RandomNumberGenerator.Fill(buffer);
-            uint randomValue = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
-            result[i] = chars[(int)(randomValue % (uint)chars.Length)];
-        }
-
-        return new string(result);
+        return RandomNumberGenerator.GetString(chars, length);
     }
 
     /// <summary>
@@ -66,7 +56,8 @@ public static class CryptoHelpers
     }
 
     /// <summary>
-    /// Verifies a hash against an input value
+    /// Verifies a hash against an input value using a fixed-time comparison
+    /// so the check does not leak how many leading characters matched.
     /// </summary>
     public static bool VerifyHash(string input, string hash)
     {
@@ -74,7 +65,9 @@ public static class CryptoHelpers
             return false;
 
         var computedHash = ComputeSha256Hash(input);
-        return computedHash == hash;
+        var computedBytes = Encoding.UTF8.GetBytes(computedHash);
+        var expectedBytes = Encoding.UTF8.GetBytes(hash);
+        return CryptographicOperations.FixedTimeEquals(computedBytes, expectedBytes);
     }
 
     /// <summary>

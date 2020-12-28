@@ -82,7 +82,7 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
             P95LatencyMs = p95Latency,
             TotalRateLimitExceeded = _rateLimitCounters.Values.Sum(),
             RequestsByEndpoint = _requestCounters
-                .GroupBy(x => x.Key.Split(':')[1])
+                .GroupBy(x => x.Key.Split(':', 2)[1])
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.Value)),
             ErrorsByCode = _errorCounters.ToDictionary(x => x.Key, x => x.Value)
         };

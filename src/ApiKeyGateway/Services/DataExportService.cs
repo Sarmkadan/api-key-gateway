@@ -56,7 +56,7 @@ public sealed class DataExportService : IDataExportService
             // In production, use streaming for large datasets
             var apiKeys = await _apiKeyRepository.GetAllAsync();
 
-            return format.ToLower() switch
+            return format.ToLowerInvariant() switch
             {
                 "csv" => CsvExportHelper.ToCsv(apiKeys),
                 "xml" => XmlExportHelper.ToXml(apiKeys, "apiKeys", "apiKey"),
@@ -92,7 +92,7 @@ public sealed class DataExportService : IDataExportService
             // In production, query audit logs from date range
             var auditLogs = new List<object>();
 
-            return format.ToLower() switch
+            return format.ToLowerInvariant() switch
             {
                 "csv" => CsvExportHelper.ToCsv(auditLogs),
                 "xml" => XmlExportHelper.ToXml(auditLogs, "auditLogs", "log"),
@@ -130,7 +130,7 @@ public sealed class DataExportService : IDataExportService
         {
             var usageRecords = await _usageRepository.GetUsageAsync(startDate, endDate);
 
-            return format.ToLower() switch
+            return format.ToLowerInvariant() switch
             {
                 "csv" => CsvExportHelper.ToCsv(usageRecords),
                 "xml" => XmlExportHelper.ToXml(usageRecords, "usageRecords", "record"),
