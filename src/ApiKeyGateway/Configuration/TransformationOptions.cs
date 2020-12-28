@@ -239,8 +239,12 @@ public static class TransformationServiceExtensions
         services.AddSingleton(options);
         services.AddSingleton(options.Lua);
 
-        // Register the database-backed rule repository.
-        services.AddSingleton<ITransformationRuleRepository, DatabaseTransformationRuleRepository>();
+        // Register the built-in configuration-backed rule repository as the default.
+        // It has no scoped dependencies, so it is safe to consume from the singleton
+        // pipeline. The database-backed DatabaseTransformationRuleRepository depends
+        // on the scoped IDbConnection and must be registered per-scope by the caller
+        // (see remarks) when dynamic rule management is required.
+        services.AddSingleton<ITransformationRuleRepository, ConfigurationTransformationRuleRepository>();
 
         services.AddSingleton<ILuaScriptExecutor, LuaScriptExecutor>();
         services.AddSingleton<ITransformationPipeline, TransformationPipelineService>();

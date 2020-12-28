@@ -14,6 +14,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddControllers();
 builder.Services.AddGatewayServices(builder.Configuration);
 builder.Services.AddGatewayDocumentation();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddCors(options =>
 {
