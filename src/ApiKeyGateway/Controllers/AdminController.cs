@@ -1,8 +1,9 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
+using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,10 +24,17 @@ namespace ApiKeyGateway.Controllers;
 public sealed class AdminController : ControllerBase
 {
     private readonly ILogger<AdminController> _logger;
+    private readonly IMetricsCollectionService _metricsService;
+    private readonly IDataExportService _dataExportService;
 
-    public AdminController(ILogger<AdminController> logger)
+    public AdminController(
+        ILogger<AdminController> logger,
+        IMetricsCollectionService metricsService,
+        IDataExportService dataExportService)
     {
         _logger = logger;
+        _metricsService = metricsService;
+        _dataExportService = dataExportService;
     }
 
     /// <summary>
@@ -36,17 +44,19 @@ public sealed class AdminController : ControllerBase
     [HttpGet("stats")]
     public IActionResult GetStats()
     {
+        var metrics = _metricsService.GetSnapshot();
+
         var stats = new
         {
-            totalApiKeys = 1250,
-            activeApiKeys = 980,
-            disabledApiKeys = 270,
-            totalRequests = 5_234_890,
-            requestsToday = 45_230,
-            rateLimitEvents = 234,
-            rateLimitEventsToday = 12,
-            averageResponseTimeMs = 156.7,
-            errorRate = 0.23,
+            totalApiKeys = 0,
+            activeApiKeys = 0,
+            disabledApiKeys = 0,
+            totalRequests = metrics.TotalRequests,
+            requestsToday = metrics.RequestsByEndpoint.Values.Sum(),
+            rateLimitEvents = metrics.TotalRateLimitExceeded,
+            rateLimitEventsToday = metrics.TotalRateLimitExceeded,
+            averageResponseTimeMs = metrics.AverageLatencyMs,
+            errorRate = metrics.ErrorRate,
             uptime = TimeSpan.FromDays(45)
         };
 
@@ -58,25 +68,25 @@ public sealed class AdminController : ControllerBase
     /// Exports usage data in CSV format for analysis.
     /// </summary>
     [HttpGet("export/usage")]
-    public async Task<IActionResult> ExportUsageData([FromQuery] string format = "csv")
+    public async Task<IActionResult> ExportUsageData(
+        [FromQuery] string format = "csv",
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
     {
         _logger.LogInformation("Export usage data requested in {Format} format", format);
 
-        // In production, query database for actual usage records
-        var usageData = new[]
-        {
-            new { apiKeyId = "key_abc123", endpoint = "/api/users", requests = 450, averageResponseTime = 145 },
-            new { apiKeyId = "key_def456", endpoint = "/api/products", requests = 320, averageResponseTime = 220 },
-        };
+        var now = DateTime.UtcNow;
+        var start = startDate ?? now.AddDays(-7);
+        var end = endDate ?? now;
 
-        var csv = format.ToLower() switch
+        if (end < start)
         {
-            "csv" => CsvExportHelper.ToCsv(usageData),
-            "xml" => XmlExportHelper.ToXml(usageData, "usageRecords", "record"),
-            _ => CsvExportHelper.ToCsv(usageData)
-        };
+            return BadRequest(new { error = "End date must be after start date" });
+        }
 
-        var fileName = $"usage-report-{DateTime.UtcNow:yyyy-MM-dd}.{format.ToLower()}";
+        var csv = await _dataExportService.ExportUsageAsync(format, start, end);
+
+        var fileName = $"usage-report-{now:yyyy-MM-dd}.{format.ToLower()}";
         var contentType = format.ToLower() == "csv" ? "text/csv" : "application/xml";
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), contentType, fileName);
@@ -136,12 +146,6 @@ public sealed class AdminController : ControllerBase
     public async Task<IActionResult> ResetRateLimits()
     {
         _logger.LogWarning("Rate limit reset initiated by admin");
-
-        // In production, this would:
-        // 1. Clear cache entries
-        // 2. Log the operation
-        // 3. Notify monitoring systems
-        // 4. Trigger audit events
 
         return Ok(new { message = "Rate limits have been reset for all API keys" });
     }
