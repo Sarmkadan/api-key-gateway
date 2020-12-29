@@ -4,6 +4,7 @@
 // =============================================================================
 
 using ApiKeyGateway.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiKeyGateway.Configuration;
 
@@ -17,7 +18,7 @@ public static class RequestCoalescingExtensions
     /// Adds <see cref="IRequestCoalescingService"/> to the service collection as a singleton.
     /// </summary>
     /// <remarks>
-    /// The service must be singleton because it maintains a shared dictionary of in-flight
+    /// The service must be registered as a singleton because it maintains a shared dictionary of in-flight
     /// requests that spans all HTTP scopes. Registering it as scoped or transient would prevent
     /// concurrent requests from finding each other's in-flight tasks and defeat the purpose of
     /// coalescing.
@@ -40,4 +41,5 @@ public static class RequestCoalescingExtensions
 
         return services;
     }
+
 }
