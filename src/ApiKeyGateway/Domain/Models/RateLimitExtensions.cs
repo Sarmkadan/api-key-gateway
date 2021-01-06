@@ -1,0 +1,50 @@
+// =============================================================================
+// Author: 
+// =============================================================================
+
+namespace ApiKeyGateway.Domain.Models;
+
+/// <summary>
+/// Extension methods for <see cref="RateLimit"/> to enhance rate limiting capabilities.
+/// </summary>
+public static class RateLimitExtensions
+{
+    /// <summary>
+    /// Determines if the rate limit has been violated based on the current request count and settings.
+    /// </summary>
+    /// <param name="rateLimit">The rate limit instance to check.</param>
+    /// <returns>True if the rate limit has been violated; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="rateLimit"/> is null.</exception>
+    public static bool IsViolated(this RateLimit rateLimit)
+    {
+        ArgumentNullException.ThrowIfNull(rateLimit);
+
+        return rateLimit.CurrentRequestCount >= rateLimit.RequestsPerUnit && rateLimit.IsEnabled;
+    }
+
+    /// <summary>
+    /// Calculates the number of remaining requests within the current window.
+    /// </summary>
+    /// <param name="rateLimit">The rate limit instance to check.</param>
+    /// <returns>The number of remaining requests.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="rateLimit"/> is null.</exception>
+    public static int GetRemainingRequests(this RateLimit rateLimit)
+    {
+        ArgumentNullException.ThrowIfNull(rateLimit);
+
+        return Math.Max(0, rateLimit.RequestsPerUnit - rateLimit.CurrentRequestCount);
+    }
+
+    /// <summary>
+    /// Checks if a request should be allowed based on the rate limit settings.
+    /// </summary>
+    /// <param name="rateLimit">The rate limit instance to check.</param>
+    /// <returns>True if the request should be allowed; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="rateLimit"/> is null.</exception>
+    public static bool ShouldAllowRequest(this RateLimit rateLimit)
+    {
+        ArgumentNullException.ThrowIfNull(rateLimit);
+
+        return !rateLimit.IsEnabled || rateLimit.Unit == Enums.RateLimitUnit.Unlimited || rateLimit.CurrentRequestCount < rateLimit.RequestsPerUnit;
+    }
+}
