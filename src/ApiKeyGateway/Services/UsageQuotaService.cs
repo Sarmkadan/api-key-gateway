@@ -17,17 +17,39 @@ public interface IUsageQuotaService
     /// Resets the counter if the period has rolled over.
     /// Returns the quota state so callers can attach response headers.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>Quota check result with status and remaining requests.</returns>
     Task<UsageQuotaResult> CheckAndRecordAsync(string apiKeyId);
 
+    /// <summary>
+    /// Retrieves the usage quota configuration for an API key
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>The usage quota if found; otherwise, null.</returns>
     Task<UsageQuota?> GetQuotaAsync(string apiKeyId);
+
+    /// <summary>
+    /// Configures a usage quota for an API key
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="quotaLimit">Maximum number of requests allowed per period.</param>
+    /// <param name="period">Calendar period for quota reset.</param>
+    /// <returns>True if the quota was set; otherwise, false.</returns>
     Task<bool> SetQuotaAsync(string apiKeyId, long quotaLimit, Domain.Enums.QuotaPeriod period);
 }
 
 /// <summary>Result from a quota check</summary>
 public record UsageQuotaResult(
+    /// <summary>Indicates if the quota has been exceeded</summary>
     bool IsExceeded,
+
+    /// <summary>Number of remaining requests before quota is hit</summary>
     long Remaining,
+
+    /// <summary>Total quota limit</summary>
     long Limit,
+
+    /// <summary>When the current quota period ends</summary>
     DateTime PeriodEnd);
 
 public class UsageQuotaService : IUsageQuotaService

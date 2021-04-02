@@ -14,10 +14,39 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IRateLimitingService
 {
+    /// <summary>
+    /// Checks if a request is allowed under the rate limit
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>True if the request is allowed; otherwise, false.</returns>
     Task<bool> CheckLimitAsync(string apiKeyId);
+
+    /// <summary>
+    /// Records a request for rate limit tracking
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
     Task RecordRequestAsync(string apiKeyId);
+
+    /// <summary>
+    /// Retrieves the rate limit configuration for an API key
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>The rate limit configuration if found; otherwise, null.</returns>
     Task<RateLimit?> GetLimitAsync(string apiKeyId);
+
+    /// <summary>
+    /// Updates the rate limit configuration
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="requestsPerUnit">Maximum requests per time unit.</param>
+    /// <param name="unit">Time unit for rate limiting.</param>
+    /// <returns>True if the limit was updated; otherwise, false.</returns>
     Task<bool> UpdateLimitAsync(string apiKeyId, int requestsPerUnit, Domain.Enums.RateLimitUnit unit);
+
+    /// <summary>
+    /// Manually resets the rate limit window
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
     Task ResetWindowAsync(string apiKeyId);
 }
 

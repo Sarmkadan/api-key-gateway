@@ -14,9 +14,32 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IAuditLogService
 {
+    /// <summary>
+    /// Logs an audit event
+    /// </summary>
+    /// <param name="log">The audit log entry to record.</param>
     Task LogAsync(AuditLog log);
+
+    /// <summary>
+    /// Retrieves audit logs for a specific resource
+    /// </summary>
+    /// <param name="resourceId">ID of the resource to get logs for.</param>
+    /// <param name="limit">Maximum number of logs to return.</param>
+    /// <returns>List of audit logs for the resource.</returns>
     Task<List<AuditLog>> GetLogsAsync(string resourceId, int limit = 100);
+
+    /// <summary>
+    /// Retrieves audit logs for a time period
+    /// </summary>
+    /// <param name="startDate">Start of the time period.</param>
+    /// <param name="endDate">End of the time period.</param>
+    /// <returns>List of audit logs within the time period.</returns>
     Task<List<AuditLog>> GetLogsForPeriodAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Removes old audit logs based on retention policy
+    /// </summary>
+    /// <param name="retentionDays">Number of days to retain logs.</param>
     Task CleanupOldLogsAsync(int retentionDays);
 }
 

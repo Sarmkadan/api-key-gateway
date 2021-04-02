@@ -22,6 +22,8 @@ public static class CacheKeyGenerator
     /// <summary>
     /// Generates cache key for an API key entity.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>Cache key string for the API key.</returns>
     public static string GetApiKeyKey(string apiKeyId) =>
         $"{Prefix}{Separator}apikey{Separator}{apiKeyId}";
 
@@ -29,6 +31,8 @@ public static class CacheKeyGenerator
     /// Generates cache key for API key permissions/metadata.
     /// Separate from actual key for granular invalidation.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>Cache key string for the API key metadata.</returns>
     public static string GetApiKeyMetadataKey(string apiKeyId) =>
         $"{Prefix}{Separator}apikey_meta{Separator}{apiKeyId}";
 
@@ -36,18 +40,26 @@ public static class CacheKeyGenerator
     /// Generates cache key for rate limit tracking.
     /// Used to store current usage within a time window.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="endpoint">The API endpoint being rate limited (default: "*").</param>
+    /// <returns>Cache key string for the rate limit.</returns>
     public static string GetRateLimitKey(string apiKeyId, string endpoint = "*") =>
         $"{Prefix}{Separator}ratelimit{Separator}{apiKeyId}{Separator}{endpoint}";
 
     /// <summary>
     /// Generates cache key for usage statistics.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="date">The date for the usage statistics.</param>
+    /// <returns>Cache key string for the usage statistics.</returns>
     public static string GetUsageStatsKey(string apiKeyId, DateTime date) =>
         $"{Prefix}{Separator}usage{Separator}{apiKeyId}{Separator}{date:yyyy-MM-dd}";
 
     /// <summary>
     /// Generates cache key for quota limits.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>Cache key string for the quota.</returns>
     public static string GetQuotaKey(string apiKeyId) =>
         $"{Prefix}{Separator}quota{Separator}{apiKeyId}";
 
@@ -55,6 +67,8 @@ public static class CacheKeyGenerator
     /// Generates cache key for webhook delivery status.
     /// Prevents duplicate webhook deliveries.
     /// </summary>
+    /// <param name="eventId">The event ID for the webhook.</param>
+    /// <returns>Cache key string for the webhook delivery status.</returns>
     public static string GetWebhookDeliveryKey(Guid eventId) =>
         $"{Prefix}{Separator}webhook{Separator}delivery{Separator}{eventId}";
 
@@ -62,6 +76,10 @@ public static class CacheKeyGenerator
     /// Generates cache key for external API responses.
     /// Used for caching third-party API calls with TTL.
     /// </summary>
+    /// <param name="apiName">Name of the external API.</param>
+    /// <param name="endpoint">API endpoint path.</param>
+    /// <param name="parameters">Optional query parameters for cache key differentiation.</param>
+    /// <returns>Cache key string for the external API response.</returns>
     public static string GetExternalApiCacheKey(string apiName, string endpoint, Dictionary<string, string>? parameters = null)
     {
         var key = $"{Prefix}{Separator}external{Separator}{apiName}{Separator}{endpoint}";
@@ -79,12 +97,15 @@ public static class CacheKeyGenerator
     /// <summary>
     /// Generates pattern for invalidating all cache entries for an API key.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>Cache key pattern string for invalidation.</returns>
     public static string GetApiKeyInvalidationPattern(string apiKeyId) =>
         $"{Prefix}{Separator}*{Separator}{apiKeyId}{Separator}*";
 
     /// <summary>
     /// Generates pattern for invalidating all rate limit entries.
     /// </summary>
+    /// <returns>Cache key pattern string for rate limit invalidation.</returns>
     public static string GetRateLimitInvalidationPattern() =>
         $"{Prefix}{Separator}ratelimit{Separator}*";
 
@@ -95,6 +116,8 @@ public static class CacheKeyGenerator
     /// creating an intermediate List&lt;string&gt;, a joined string, and a
     /// heap-allocated byte array on every external-API cache lookup.
     /// </summary>
+    /// <param name="parameters">Dictionary of parameters to hash.</param>
+    /// <returns>8-character hexadecimal hash string.</returns>
     private static string ComputeParameterHash(Dictionary<string, string> parameters)
     {
         var keys = parameters.Keys.ToArray();

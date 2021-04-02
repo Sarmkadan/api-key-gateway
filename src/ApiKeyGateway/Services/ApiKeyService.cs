@@ -18,19 +18,98 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IApiKeyService
 {
+    /// <summary>
+    /// Creates a new API key for a consumer with optional expiration
+    /// </summary>
+    /// <param name="consumerId">The ID of the consumer.</param>
+    /// <param name="name">The name of the key.</param>
+    /// <param name="expirationDays">Optional expiration days.</param>
+    /// <returns>The created <see cref="ApiKey"/>.</returns>
     Task<ApiKey> CreateKeyAsync(string consumerId, string name, int? expirationDays = null);
+
+    /// <summary>
+    /// Retrieves an API key by its ID
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <returns>The API key if found; otherwise, null.</returns>
     Task<ApiKey?> GetByIdAsync(string keyId);
+
+    /// <summary>
+    /// Validates an API key and returns it if valid
+    /// </summary>
+    /// <param name="keyValue">The raw API key value to validate.</param>
+    /// <returns>The validated API key if valid; otherwise, null.</returns>
     Task<ApiKey?> ValidateKeyAsync(string keyValue);
+
+    /// <summary>
+    /// Disables an API key
+    /// </summary>
+    /// <param name="keyId">The ID of the API key to disable.</param>
+    /// <returns>True if the key was disabled; otherwise, false.</returns>
     Task<bool> DisableKeyAsync(string keyId);
+
+    /// <summary>
+    /// Enables a previously disabled API key
+    /// </summary>
+    /// <param name="keyId">The ID of the API key to enable.</param>
+    /// <returns>True if the key was enabled; otherwise, false.</returns>
     Task<bool> EnableKeyAsync(string keyId);
+
+    /// <summary>
+    /// Permanently revokes an API key
+    /// </summary>
+    /// <param name="keyId">The ID of the API key to revoke.</param>
+    /// <returns>True if the key was revoked; otherwise, false.</returns>
     Task<bool> RevokeKeyAsync(string keyId);
+
+    /// <summary>
+    /// Retrieves all API keys for a consumer
+    /// </summary>
+    /// <param name="consumerId">The ID of the consumer.</param>
+    /// <returns>List of API keys for the consumer.</returns>
     Task<List<ApiKey>> GetConsumerKeysAsync(string consumerId);
+
+    /// <summary>
+    /// Updates metadata for an API key
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="metadata">Dictionary of metadata key-value pairs.</param>
+    /// <returns>True if the metadata was updated; otherwise, false.</returns>
     Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata);
 
-    // IP whitelist management
+    /// <summary>
+    /// Returns the IP whitelist for a key as a list of individual addresses.
+    /// An empty list means the key has no IP restriction.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <returns>List of allowed IP addresses.</returns>
     Task<List<string>> GetIpWhitelistAsync(string keyId);
+
+    /// <summary>
+    /// Replaces the IP whitelist for a key with the provided set of IPs.
+    /// Pass an empty collection to remove all IP restrictions.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="ips">Collection of IP addresses to whitelist.</param>
+    /// <returns>True if the whitelist was updated; otherwise, false.</returns>
     Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips);
+
+    /// <summary>
+    /// Adds a single IP address to a key's whitelist.
+    /// Returns <c>false</c> when the key does not exist or the IP is already present.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="ip">IP address to add.</param>
+    /// <returns>True if the IP was added; otherwise, false.</returns>
     Task<bool> AddIpToWhitelistAsync(string keyId, string ip);
+
+    /// <summary>
+    /// Removes a single IP address from a key's whitelist.
+    /// Returns <c>false</c> when the key does not exist or the IP was not in the list.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="ip">IP address to remove.</param>
+    /// <returns>True if the IP was removed; otherwise, false.</returns>
     Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip);
 }
 
