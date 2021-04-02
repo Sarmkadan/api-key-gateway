@@ -13,6 +13,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ApiKeyGateway.Repositories;
 
+/// <summary>
+/// Database-backed repository implementation for managing transformation rules.
+/// Provides CRUD operations for <see cref="TransformationRule"/> entities stored in a relational database.
+/// </summary>
 public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRepository
 {
     private readonly IDbConnection _dbConnection;
@@ -26,7 +30,14 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IReadOnlyList<TransformationRule>> GetByApiKeyAsync(string apiKeyId, CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Retrieves all enabled transformation rules associated with a specific API key.
+	/// </summary>
+	/// <param name="apiKeyId">The unique identifier of the API key to retrieve rules for.</param>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>A read-only list of <see cref="TransformationRule"/> objects associated with the specified API key, ordered by priority.</returns>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<IReadOnlyList<TransformationRule>> GetByApiKeyAsync(string apiKeyId, CancellationToken cancellationToken = default)
     {
         var rules = new List<TransformationRule>();
         await _dbConnection.OpenAsync();
@@ -62,7 +73,14 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         return rules;
     }
 
-    public async Task<IReadOnlyList<TransformationRule>> GetByConsumerAsync(string consumerId, CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Retrieves all enabled transformation rules associated with a specific consumer.
+	/// </summary>
+	/// <param name="consumerId">The unique identifier of the consumer to retrieve rules for.</param>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>A read-only list of <see cref="TransformationRule"/> objects associated with the specified consumer, ordered by priority.</returns>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<IReadOnlyList<TransformationRule>> GetByConsumerAsync(string consumerId, CancellationToken cancellationToken = default)
     {
         var rules = new List<TransformationRule>();
         await _dbConnection.OpenAsync();
@@ -98,7 +116,13 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         return rules;
     }
 
-    public async Task<IReadOnlyList<TransformationRule>> GetGlobalRulesAsync(CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Retrieves all enabled global transformation rules.
+	/// </summary>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>A read-only list of <see cref="TransformationRule"/> objects that are global in scope, ordered by priority.</returns>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<IReadOnlyList<TransformationRule>> GetGlobalRulesAsync(CancellationToken cancellationToken = default)
     {
         var rules = new List<TransformationRule>();
         await _dbConnection.OpenAsync();
@@ -134,7 +158,14 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         return rules;
     }
 
-    public async Task<string> CreateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Creates a new transformation rule in the database.
+	/// </summary>
+	/// <param name="rule">The transformation rule to create. If null or empty, a new GUID will be assigned.</param>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>The unique identifier of the newly created transformation rule.</returns>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<string> CreateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
     {
         rule.Id = rule.Id ?? Guid.NewGuid().ToString();
         rule.CreatedAt = DateTime.UtcNow;
@@ -166,7 +197,15 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         return rule.Id;
     }
 
-    public async Task<bool> UpdateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Updates an existing transformation rule in the database.
+	/// </summary>
+	/// <param name="rule">The transformation rule to update. Must have a non-empty Id.</param>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>True if the rule was successfully updated; otherwise false.</returns>
+	/// <exception cref="ArgumentException">Thrown when the rule Id is empty.</exception>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<bool> UpdateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(rule.Id))
         {
@@ -207,7 +246,14 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         }
     }
 
-    public async Task<bool> DeleteAsync(string ruleId, CancellationToken cancellationToken = default)
+    	/// <summary>
+	/// Deletes a transformation rule by marking it as disabled in the database.
+	/// </summary>
+	/// <param name="ruleId">The unique identifier of the transformation rule to delete.</param>
+	/// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+	/// <returns>True if the rule was successfully marked as disabled; otherwise false.</returns>
+	/// <exception cref="DataAccessException">Thrown when database access fails.</exception>
+	public async Task<bool> DeleteAsync(string ruleId, CancellationToken cancellationToken = default)
     {
         await _dbConnection.OpenAsync();
         try
@@ -242,7 +288,12 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         }
     }
 
-    private TransformationRule MapToTransformationRule(DbDataReader reader)
+    	/// <summary>
+	/// Maps a database data reader row to a <see cref="TransformationRule"/> object.
+	/// </summary>
+	/// <param name="reader">The database data reader containing rule data.</param>
+	/// <returns>A populated <see cref="TransformationRule"/> object.</returns>
+	private TransformationRule MapToTransformationRule(DbDataReader reader)
     {
         var parametersJson = reader["Parameters"] as string;
         var parameters = parametersJson != null
@@ -269,7 +320,12 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         };
     }
 
-    private void AddRuleParameters(DbCommand command, TransformationRule rule)
+    	/// <summary>
+	/// Adds all transformation rule parameters to a database command as parameters.
+	/// </summary>
+	/// <param name="command">The database command to add parameters to.</param>
+	/// <param name="rule">The transformation rule containing the parameter values to add.</param>
+	private void AddRuleParameters(DbCommand command, TransformationRule rule)
     {
         command.Parameters.Add(CreateParam(command, "@Id", rule.Id));
         command.Parameters.Add(CreateParam(command, "@Name", rule.Name));
@@ -288,7 +344,14 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         command.Parameters.Add(CreateParam(command, "@CreatedBy", rule.CreatedBy));
     }
 
-    private DbParameter CreateParam(DbCommand command, string name, object? value)
+    	/// <summary>
+	/// Creates a database parameter with the specified name and value.
+	/// </summary>
+	/// <param name="command">The database command to create the parameter for.</param>
+	/// <param name="name">The parameter name.</param>
+	/// <param name="value">The parameter value. Can be null, which will be converted to DBNull.Value.</param>
+	/// <returns>A configured database parameter.</returns>
+	private DbParameter CreateParam(DbCommand command, string name, object? value)
     {
         var param = command.CreateParameter();
         param.ParameterName = name;
