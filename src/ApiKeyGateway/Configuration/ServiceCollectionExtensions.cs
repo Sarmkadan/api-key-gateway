@@ -119,14 +119,49 @@ public static class ServiceCollectionExtensions
 /// </summary>
 public sealed class GatewayConfiguration
 {
+    /// <summary>
+    /// Whether SSL/TLS is required for all requests. When true, requests are redirected to HTTPS.
+    /// </summary>
     public bool RequireSsl { get; set; } = true;
+
+    /// <summary>
+    /// Whether to log all incoming requests for debugging and analytics purposes.
+    /// </summary>
     public bool LogAllRequests { get; set; } = true;
+
+    /// <summary>
+    /// Maximum allowed length for API keys in characters.
+    /// </summary>
     public int MaxKeyLength { get; set; } = 256;
+
+    /// <summary>
+    /// Minimum allowed length for API keys in characters.
+    /// </summary>
     public int MinKeyLength { get; set; } = 16;
+
+    /// <summary>
+    /// Default number of days before API keys expire if no expiration is specified.
+    /// </summary>
     public int DefaultKeyExpirationDays { get; set; } = 365;
+
+    /// <summary>
+    /// Number of days to retain audit logs before automatic cleanup.
+    /// </summary>
     public int AuditLogRetentionDays { get; set; } = 90;
+
+    /// <summary>
+    /// Whether rate limiting is enabled by default for all API keys.
+    /// </summary>
     public bool EnableRateLimiting { get; set; } = true;
+
+    /// <summary>
+    /// Default rate limit per hour for API keys without explicit limits.
+    /// </summary>
     public int DefaultRateLimitPerHour { get; set; } = 10000;
+
+    /// <summary>
+    /// Maximum number of concurrent requests the gateway will handle.
+    /// </summary>
     public int MaxConcurrentRequests { get; set; } = 1000;
 
     /// <summary>
