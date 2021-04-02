@@ -13,12 +13,22 @@ using GatewayUnauthorizedException = ApiKeyGateway.Domain.Exceptions.Unauthorize
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ApiKeyService"/> class.
+/// Tests various scenarios including key creation, validation, disabling, revocation,
+/// and consumer key retrieval with proper error handling and repository interactions.
+/// </summary>
 public class ApiKeyServiceTests
 {
     private readonly Mock<IApiKeyRepository> _repositoryMock;
     private readonly Mock<ILogger<ApiKeyService>> _loggerMock;
     private readonly ApiKeyService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyServiceTests"/> class.
+    /// Sets up mocks for <see cref="IApiKeyRepository"/> and <see cref="ILogger{ApiKeyService}"/>
+    /// to test the <see cref="ApiKeyService"/> class in isolation.
+    /// </summary>
     public ApiKeyServiceTests()
     {
         _repositoryMock = new Mock<IApiKeyRepository>();
@@ -26,9 +36,13 @@ public class ApiKeyServiceTests
         _sut = new ApiKeyService(_repositoryMock.Object, _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.CreateKeyAsync"/> throws a <see cref="ValidationException"/> when consumer ID is null, empty, or whitespace.
+    /// </summary>
+    /// <param name="consumerId">The consumer ID to test with (null, empty, or whitespace).</param>
     [Theory]
     [InlineData("")]
-    [InlineData("   ")]
+    [InlineData(" ")]
     [InlineData(null)]
     public async Task CreateKeyAsync_EmptyOrNullConsumerId_ThrowsValidationException(string? consumerId)
     {
@@ -40,9 +54,13 @@ public class ApiKeyServiceTests
             .WithMessage("*Consumer ID*");
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.CreateKeyAsync"/> throws a <see cref="ValidationException"/> when key name is null, empty, or whitespace.
+    /// </summary>
+    /// <param name="name">The key name to test with (null, empty, or whitespace).</param>
     [Theory]
     [InlineData("")]
-    [InlineData("   ")]
+    [InlineData(" ")]
     [InlineData(null)]
     public async Task CreateKeyAsync_EmptyOrNullName_ThrowsValidationException(string? name)
     {
@@ -54,6 +72,11 @@ public class ApiKeyServiceTests
             .WithMessage("*name*");
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.CreateKeyAsync"/> creates a valid API key with the expected prefix when provided with valid arguments.
+    /// Verifies that the created key has the correct consumer ID, name, prefix, and a non-empty key hash.
+    /// Also ensures the repository's CreateAsync method is called exactly once.
+    /// </summary>
     [Fact]
     public async Task CreateKeyAsync_ValidArguments_CreatesKeyWithExpectedPrefix()
     {
@@ -79,9 +102,14 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<ApiKey>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.GetByIdAsync"/> throws a <see cref="ValidationException"/> when key ID is null, empty, or whitespace.
+    /// Verifies that the repository's GetByIdAsync method is never called in these error cases.
+    /// </summary>
+    /// <param name="keyId">The key ID to test with (null, empty, or whitespace).</param>
     [Theory]
     [InlineData("")]
-    [InlineData("   ")]
+    [InlineData(" ")]
     [InlineData(null)]
     public async Task GetByIdAsync_NullOrEmptyKeyId_ThrowsValidationException(string? keyId)
     {
@@ -94,6 +122,10 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.DisableKeyAsync"/> returns false when attempting to disable a non-existent key.
+    /// Verifies that the repository's UpdateAsync method is never called when the key is not found.
+    /// </summary>
     [Fact]
     public async Task DisableKeyAsync_KeyNotFoundInRepository_ReturnsFalse()
     {
@@ -110,6 +142,10 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<ApiKey>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.DisableKeyAsync"/> successfully disables an existing active key and persists the change.
+    /// Verifies that the key status is updated to Disabled and the repository's UpdateAsync method is called exactly once.
+    /// </summary>
     [Fact]
     public async Task DisableKeyAsync_ExistingKey_DisablesAndPersists()
     {
@@ -131,6 +167,9 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.UpdateAsync(key), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.ValidateKeyAsync"/> throws an <see cref="UnauthorizedAccessException"/> when an empty key value is provided.
+    /// </summary>
     [Fact]
     public async Task ValidateKeyAsync_EmptyKeyValue_ThrowsUnauthorizedException()
     {
@@ -141,6 +180,10 @@ public class ApiKeyServiceTests
         await act.Should().ThrowAsync<GatewayUnauthorizedException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.GetConsumerKeysAsync"/> returns an empty list without querying the repository when an empty consumer ID is provided.
+    /// Verifies that the repository's GetByConsumerIdAsync method is never called in this case.
+    /// </summary>
     [Fact]
     public async Task GetConsumerKeysAsync_EmptyConsumerId_ReturnsEmptyListWithoutQueryingRepository()
     {
@@ -152,6 +195,11 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.GetByConsumerIdAsync(It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ApiKeyService.RevokeKeyAsync"/> successfully revokes an existing active key and persists the change.
+    /// Verifies that the key status is updated to Revoked, that CanBeUsed() returns false,
+    /// and that the repository's UpdateAsync method is called exactly once.
+    /// </summary>
     [Fact]
     public async Task RevokeKeyAsync_ExistingKey_SetsRevokedStatusAndPersists()
     {
