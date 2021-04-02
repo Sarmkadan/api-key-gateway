@@ -2,7 +2,10 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // =============================================================================
-
+/// <summary>
+/// Integration tests for the API Key Gateway system, covering end-to-end workflows
+/// across authentication, rate limiting, usage tracking, quota management, and audit logging.
+/// </summary>
 using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
@@ -14,39 +17,35 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
-/// <summary>
-/// Integration tests for the API Key Gateway system, covering end-to-end workflows
-/// across authentication, rate limiting, usage tracking, quota management, and audit logging.
-/// </summary>
 public class IntegrationTests
 {
-    	/// <summary>
-	/// Mock repository for API key data access operations.
-	/// </summary>
-	private readonly Mock<IApiKeyRepository> _apiKeyRepositoryMock;
-    	/// <summary>
-	/// Mock repository for rate limiting configuration and tracking.
-	/// </summary>
-	private readonly Mock<IRateLimitRepository> _rateLimitRepositoryMock;
-    	/// <summary>
-	/// Mock repository for usage record storage and retrieval.
-	/// </summary>
-	private readonly Mock<IUsageRepository> _usageRepositoryMock;
-    	/// <summary>
-	/// Mock repository for usage quota management and enforcement.
-	/// </summary>
-	private readonly Mock<IUsageQuotaRepository> _usageQuotaRepositoryMock;
-    	/// <summary>
-	/// Mock repository for audit logging of all system operations.
-	/// </summary>
-	private readonly Mock<IAuditLogRepository> _auditLogRepositoryMock;
+    /// <summary>
+    /// Mock repository for API key data access operations.
+    /// </summary>
+    private readonly Mock<IApiKeyRepository> _apiKeyRepositoryMock;
+    /// <summary>
+    /// Mock repository for rate limiting configuration and tracking.
+    /// </summary>
+    private readonly Mock<IRateLimitRepository> _rateLimitRepositoryMock;
+    /// <summary>
+    /// Mock repository for usage record storage and retrieval.
+    /// </summary>
+    private readonly Mock<IUsageRepository> _usageRepositoryMock;
+    /// <summary>
+    /// Mock repository for usage quota management and enforcement.
+    /// </summary>
+    private readonly Mock<IUsageQuotaRepository> _usageQuotaRepositoryMock;
+    /// <summary>
+    /// Mock repository for audit logging of all system operations.
+    /// </summary>
+    private readonly Mock<IAuditLogRepository> _auditLogRepositoryMock;
 
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="IntegrationTests"/> class.
-	/// Sets up mock repositories for API key, rate limiting, usage tracking, quota management,
-	/// and audit logging services to enable isolated integration testing.
-	/// </summary>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="IntegrationTests"/> class.
+    /// Sets up mock repositories for API key, rate limiting, usage tracking, quota management,
+    /// and audit logging services to enable isolated integration testing.
+    /// </summary>
     public IntegrationTests()
     {
         _apiKeyRepositoryMock = new Mock<IApiKeyRepository>();
@@ -56,9 +55,11 @@ public class IntegrationTests
         _auditLogRepositoryMock = new Mock<IAuditLogRepository>();
     }
 
-	/// <summary>
-	/// Integration test verifying the complete workflow from API key creation through usage tracking. Validates that keys can be created, audit logs can be written, and the system maintains proper state.
-	/// </summary>
+    /// <summary>
+    /// Integration test verifying the complete workflow from API key creation through usage tracking. 
+    /// Validates that keys can be created, audit logs can be written, and the system maintains proper state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task FullWorkflow_CreateKeyToUsageTracking_CompletesSuccessfully()
     {
@@ -106,9 +107,11 @@ public class IntegrationTests
         _auditLogRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
-	/// <summary>
-	/// Integration test for rate limiting functionality. Validates that rate limits are properly enforced and requests are tracked.
-	/// </summary>
+    /// <summary>
+    /// Integration test for rate limiting functionality. 
+    /// Validates that rate limits are properly enforced and requests are tracked.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task RateLimiting_FullWorkflow_EnforcesAndRecords()
     {
@@ -143,9 +146,11 @@ public class IntegrationTests
         await act.Should().ThrowAsync<Domain.Exceptions.RateLimitExceededException>();
     }
 
-	/// <summary>
-	/// Integration test for usage tracking functionality. Validates that usage records can be created and statistics can be retrieved.
-	/// </summary>
+    /// <summary>
+    /// Integration test for usage tracking functionality. 
+    /// Validates that usage records can be created and statistics can be retrieved.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task UsageTracking_RecordMultipleAndGetStatistics()
     {
@@ -186,9 +191,11 @@ public class IntegrationTests
         stats.SuccessRate.Should().Be(75);
     }
 
-	/// <summary>
-	/// Integration test for usage quota enforcement. Validates that quota limits are properly enforced and reset.
-	/// </summary>
+    /// <summary>
+    /// Integration test for usage quota enforcement. 
+    /// Validates that quota limits are properly enforced and reset.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task UsageQuota_EnforceAndReset_WorksCorrectly()
     {
@@ -224,9 +231,11 @@ public class IntegrationTests
         exceededResult.Remaining.Should().Be(0);
     }
 
-	/// <summary>
-	/// Integration test for IP whitelist authentication. Validates that API keys can only be used from whitelisted IP addresses.
-	/// </summary>
+    /// <summary>
+    /// Integration test for IP whitelist authentication. 
+    /// Validates that API keys can only be used from whitelisted IP addresses.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task Authentication_IpWhitelist_ValidatesCorrectly()
     {
@@ -264,9 +273,11 @@ public class IntegrationTests
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException>();
     }
 
-	/// <summary>
-	/// Integration test for concurrent audit logging. Validates that multiple concurrent operations are all properly logged.
-	/// </summary>
+    /// <summary>
+    /// Integration test for concurrent audit logging. 
+    /// Validates that multiple concurrent operations are all properly logged.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task AuditLogging_ConcurrentOperations_AllLogged()
     {
@@ -299,9 +310,11 @@ public class IntegrationTests
         _auditLogRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Exactly(50));
     }
 
-	/// <summary>
-	/// Integration test for the complete end-to-end flow. Validates that keys can be created, used, and tracked in a single workflow.
-	/// </summary>
+    /// <summary>
+    /// Integration test for the complete end-to-end flow. 
+    /// Validates that keys can be created, used, and tracked in a single workflow.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task CompleteFlow_CreateKeyAuthenticateAndTrack_Works()
     {
