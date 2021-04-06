@@ -26,12 +26,12 @@ public class UsageAnalyticsServiceTests
 	private readonly Mock<IUsageTrackingService> _trackingMock;
 
 	/// <summary>
-	/// Mock logger for the UsageAnalyticsService.
+	/// Mock logger for the <see cref="UsageAnalyticsService"/>.
 	/// </summary>
 	private readonly Mock<ILogger<UsageAnalyticsService>> _loggerMock;
 
 	/// <summary>
-	/// System under test - the UsageAnalyticsService instance being tested.
+	/// System under test - the <see cref="UsageAnalyticsService"/> instance being tested.
 	/// </summary>
 	private readonly UsageAnalyticsService _sut;
 
@@ -46,8 +46,9 @@ public class UsageAnalyticsServiceTests
 	private static readonly DateTime To = new(2025, 1, 8, 0, 0, 0, DateTimeKind.Utc);
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="UsageAnalyticsServiceTests"/> class.
-	/// Sets up mock dependencies for testing the UsageAnalyticsService.
+	/// Initializes a new instance of the <see cref="UsageAnalyticsServiceTests"/> class,
+	/// setting up mock dependencies for <see cref="IUsageTrackingService"/> and
+	/// <see cref="ILogger{UsageAnalyticsService}"/>.
 	/// </summary>
 	public UsageAnalyticsServiceTests()
 	{
@@ -58,8 +59,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that calling GetSummaryAsync with an empty API key ID throws an ArgumentException.
+	/// Verifies that calling <c>GetSummaryAsync</c> with an empty API key ID throws an <see cref="ArgumentException"/>.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_EmptyKeyId_ThrowsArgumentException()
 	{
 		var act = async () => await _sut.GetSummaryAsync(string.Empty, From, To);
@@ -68,8 +70,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that calling GetSummaryAsync with end date before start date throws an ArgumentException.
+	/// Verifies that calling <c>GetSummaryAsync</c> with end date before start date throws an <see cref="ArgumentException"/>.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_EndBeforeStart_ThrowsArgumentException()
 	{
 		var act = async () => await _sut.GetSummaryAsync("key-1", To, From);
@@ -78,8 +81,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetSummaryAsync returns zero metrics when no usage records exist for the specified period.
+	/// Verifies that <c>GetSummaryAsync</c> returns zero metrics when no usage records exist for the specified period.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_NoRecords_ReturnsZeroMetrics()
 	{
 		// Arrange
@@ -103,8 +107,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetSummaryAsync correctly calculates metrics from mixed success and failure records.
+	/// Verifies that <c>GetSummaryAsync</c> correctly calculates metrics from mixed success and failure records.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_MixedRecords_CalculatesMetricsCorrectly()
 	{
 		// Arrange
@@ -136,8 +141,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetTopEndpointsAsync returns endpoints ordered by request count in descending order.
+	/// Verifies that <c>GetTopEndpointsAsync</c> returns endpoints ordered by request count in descending order.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetTopEndpointsAsync_ReturnsEndpointsOrderedByCount()
 	{
 		// Arrange
@@ -171,8 +177,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetTopEndpointsAsync respects the limit parameter and returns at most the specified number of endpoints.
+	/// Verifies that <c>GetTopEndpointsAsync</c> respects the <c>limit</c> parameter and returns at most the specified number of endpoints.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetTopEndpointsAsync_LimitRespected()
 	{
 		// Arrange
@@ -196,8 +203,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetHourlyTrendAsync groups usage records by hour and returns hourly buckets with aggregated metrics.
+	/// Verifies that <c>GetHourlyTrendAsync</c> groups usage records by hour and returns hourly buckets with aggregated metrics.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetHourlyTrendAsync_GroupsByHour()
 	{
 		// Arrange
@@ -229,8 +237,9 @@ public class UsageAnalyticsServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Verifies that GetDailyTrendAsync groups usage records by day and returns daily buckets with aggregated metrics including byte totals.
+	/// Verifies that <c>GetDailyTrendAsync</c> groups usage records by day and returns daily buckets with aggregated metrics including byte totals.
 	/// </summary>
+	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetDailyTrendAsync_GroupsByDay()
 	{
 		// Arrange
@@ -263,10 +272,10 @@ public class UsageAnalyticsServiceTests
 	// ── Helpers ──────────────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Builds a list of UsageRecord objects from tuples for testing purposes.
+	/// Builds a list of <see cref="UsageRecord"/> objects from tuples for testing purposes.
 	/// </summary>
 	/// <param name="tuples">Array of tuples containing record parameters.</param>
-	/// <returns>List of UsageRecord objects.</returns>
+	/// <returns>List of <see cref="UsageRecord"/> objects.</returns>
 	private static List<UsageRecord> BuildRecords(
 		(int statusCode, int responseTimeMs, string endpoint, string method, string ip)[] tuples)
 	{
@@ -278,7 +287,7 @@ public class UsageAnalyticsServiceTests
 	}
 
 	/// <summary>
-	/// Creates a single UsageRecord with the specified parameters for testing.
+	/// Creates a single <see cref="UsageRecord"/> with the specified parameters for testing.
 	/// </summary>
 	/// <param name="statusCode">HTTP status code of the response.</param>
 	/// <param name="responseTimeMs">Response time in milliseconds.</param>
@@ -288,7 +297,7 @@ public class UsageAnalyticsServiceTests
 	/// <param name="sourceIp">Optional source IP address.</param>
 	/// <param name="requestBytes">Optional request size in bytes.</param>
 	/// <param name="responseBytes">Optional response size in bytes.</param>
-	/// <returns>New UsageRecord instance.</returns>
+	/// <returns>New <see cref="UsageRecord"/> instance.</returns>
 	private static UsageRecord MakeRecord(
 		int statusCode, int responseTimeMs, string endpoint, string method, DateTime recordedAt,
 		string? sourceIp = null, long requestBytes = 0, long responseBytes = 0) => new()
