@@ -12,13 +12,22 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for IP whitelist functionality in API keys.
+/// Tests the <see cref="ApiKey.IsIpAllowed"/> method and related service methods
+/// for managing IP whitelist entries.
+/// </summary>
 public class IpWhitelistTests
 {
     private readonly Mock<IApiKeyRepository> _repositoryMock;
     private readonly Mock<ILogger<ApiKeyService>> _loggerMock;
     private readonly ApiKeyService _sut;
 
-    public IpWhitelistTests()
+    /// <summary>
+/// Initializes a new instance of the <see cref="IpWhitelistTests"/> class.
+/// Sets up mock dependencies for testing IP whitelist functionality.
+/// </summary>
+public IpWhitelistTests()
     {
         _repositoryMock = new Mock<IApiKeyRepository>();
         _loggerMock = new Mock<ILogger<ApiKeyService>>();
