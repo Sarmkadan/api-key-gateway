@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using Xunit;
 using ApiKeyGateway.Utilities;
@@ -10,8 +10,19 @@ using FluentAssertions;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ValidationHelpers"/> utility class methods.
+/// Tests various validation scenarios including email validation, API key format validation,
+/// IP address validation, and input sanitization.
+/// </summary>
 public class ValidationHelpersTests
 {
+    /// <summary>
+    /// Tests the <see cref="ValidationHelpers.IsValidEmail"/> method with various email formats.
+    /// Validates that the method correctly identifies valid and invalid email addresses.
+    /// </summary>
+    /// <param name="email">The email address to validate.</param>
+    /// <param name="expected">The expected validation result (true for valid, false for invalid).</param>
     [Theory]
     [InlineData("user@example.com", true)]
     [InlineData("name.surname@domain.org", true)]
@@ -27,6 +38,10 @@ public class ValidationHelpersTests
         result.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelpers.IsValidApiKeyFormat"/> returns true for a valid API key.
+    /// Valid API keys must have the "sk_" prefix followed by exactly 32 alphanumeric characters.
+    /// </summary>
     [Fact]
     public void IsValidApiKeyFormat_ValidSkPrefixWith32Chars_ReturnsTrue()
     {
@@ -40,6 +55,12 @@ public class ValidationHelpersTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelpers.IsValidApiKeyFormat"/> returns false for various invalid API key formats.
+    /// Validates that keys without "sk_" prefix, keys with wrong prefix, empty strings,
+    /// and keys without proper prefix are rejected.
+    /// </summary>
+    /// <param name="key">The API key to validate.</param>
     [Theory]
     [InlineData("sk_short")]
     [InlineData("pk_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef")]
@@ -54,6 +75,12 @@ public class ValidationHelpersTests
         result.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests the <see cref="ValidationHelpers.IsValidIpAddress"/> method with various IP address formats.
+    /// Validates that valid IPv4 addresses are accepted and invalid formats are rejected.
+    /// </summary>
+    /// <param name="ip">The IP address to validate.</param>
+    /// <param name="expected">The expected validation result (true for valid, false for invalid).</param>
     [Theory]
     [InlineData("192.168.1.100", true)]
     [InlineData("10.0.0.1", true)]
@@ -71,6 +98,10 @@ public class ValidationHelpersTests
         result.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelpers.SanitizeInput"/> truncates strings exceeding the maximum length.
+    /// Validates that input strings longer than the specified limit are truncated to the limit.
+    /// </summary>
     [Fact]
     public void SanitizeInput_StringExceedingMaxLength_TruncatesToLimit()
     {
@@ -84,11 +115,15 @@ public class ValidationHelpersTests
         result.Length.Should().Be(100);
     }
 
+    /// <summary>
+    /// Tests that <see cref="ValidationHelpers.SanitizeInput"/> trims leading and trailing whitespace from input strings.
+    /// Validates that whitespace-only strings are properly trimmed.
+    /// </summary>
     [Fact]
     public void SanitizeInput_StringWithLeadingAndTrailingWhitespace_ReturnsTrimmedValue()
     {
         // Arrange
-        var input = "  hello world  ";
+        var input = " hello world ";
 
         // Act
         var result = ValidationHelpers.SanitizeInput(input);
