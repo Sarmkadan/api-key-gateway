@@ -9,8 +9,16 @@ using FluentAssertions;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for validating request data using the <see cref="RequestValidator"/> class.
+/// </summary>
 public class RequestValidatorTests
 {
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateEmail(string)"/> method with various email inputs.
+    /// </summary>
+    /// <param name="email">The email string to validate.</param>
+    /// <param name="expected">The expected validation result (true if valid, false otherwise).</param>
     [Theory]
     [InlineData("test@example.com", true)]
     [InlineData("invalid-email", false)]
@@ -22,6 +30,11 @@ public class RequestValidatorTests
         result.IsValid.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateUrl(string)"/> method with various URL inputs.
+    /// </summary>
+    /// <param name="url">The URL string to validate.</param>
+    /// <param name="expected">The expected validation result (true if valid, false otherwise).</param>
     [Theory]
     [InlineData("https://example.com", true)]
     [InlineData("http://example.com", false)] // defaults to require https
@@ -33,6 +46,11 @@ public class RequestValidatorTests
         result.IsValid.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateIpAddress(string)"/> method with various IP address inputs.
+    /// </summary>
+    /// <param name="ip">The IP address string to validate.</param>
+    /// <param name="expected">The expected validation result (true if valid, false otherwise).</param>
     [Theory]
     [InlineData("192.168.1.1", true)]
     [InlineData("invalid-ip", false)]
@@ -43,6 +61,9 @@ public class RequestValidatorTests
         result.IsValid.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateLength(string, int, int)"/> method with valid length input.
+    /// </summary>
     [Fact]
     public void ValidateLength_ValidLength_ReturnsTrue()
     {
@@ -50,6 +71,9 @@ public class RequestValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateLength(string, int, int)"/> method with input that is too short.
+    /// </summary>
     [Fact]
     public void ValidateLength_TooShort_ReturnsFalse()
     {
@@ -58,6 +82,9 @@ public class RequestValidatorTests
         result.Message.Should().Contain("at least 3");
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateRange(int, int, int)"/> method with a value within the valid range.
+    /// </summary>
     [Fact]
     public void ValidateRange_ValidValue_ReturnsTrue()
     {
@@ -65,6 +92,9 @@ public class RequestValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateRange(int, int, int)"/> method with a value outside the valid range.
+    /// </summary>
     [Fact]
     public void ValidateRange_ValueOutOfRange_ReturnsFalse()
     {
@@ -73,6 +103,9 @@ public class RequestValidatorTests
         result.Message.Should().Contain("between 1 and 10");
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateGuid(Guid)"/> method with a valid GUID.
+    /// </summary>
     [Fact]
     public void ValidateGuid_ValidGuid_ReturnsTrue()
     {
@@ -81,6 +114,9 @@ public class RequestValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests the <see cref="RequestValidator.ValidateGuid(Guid)"/> method with an empty GUID.
+    /// </summary>
     [Fact]
     public void ValidateGuid_EmptyGuid_ReturnsFalse()
     {
