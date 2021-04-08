@@ -12,12 +12,20 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Unit tests for <see cref="UsageTrackingService"/> which tracks and analyzes API key usage metrics.
+/// Tests verify recording usage records, retrieving statistics, and handling edge cases.
+/// </summary>
 public class UsageTrackingServiceTests
 {
     private readonly Mock<IUsageRepository> _repositoryMock;
     private readonly Mock<ILogger<UsageTrackingService>> _loggerMock;
     private readonly UsageTrackingService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageTrackingServiceTests"/> class.
+    /// Sets up mock dependencies for repository and logger.
+    /// </summary>
     public UsageTrackingServiceTests()
     {
         _repositoryMock = new Mock<IUsageRepository>();
@@ -25,6 +33,10 @@ public class UsageTrackingServiceTests
         _sut = new UsageTrackingService(_repositoryMock.Object, _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Tests that constructor throws <see cref="ArgumentNullException"/> when repository is null.
+    /// Ensures proper validation of required dependencies.
+    /// </summary>
     [Fact]
     public void Constructor_NullRepository_ThrowsArgumentNullException()
     {
@@ -32,6 +44,10 @@ public class UsageTrackingServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
     }
 
+    /// <summary>
+    /// Tests that constructor throws <see cref="ArgumentNullException"/> when logger is null.
+    /// Ensures proper validation of required dependencies.
+    /// </summary>
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
@@ -39,6 +55,10 @@ public class UsageTrackingServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.RecordUsageAsync(UsageRecord)"/> throws <see cref="ArgumentNullException"/> when record is null.
+    /// Validates null input handling for usage record creation.
+    /// </summary>
     [Fact]
     public async Task RecordUsageAsync_NullRecord_ThrowsArgumentNullException()
     {
@@ -46,6 +66,10 @@ public class UsageTrackingServiceTests
         await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("record");
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.RecordUsageAsync(UsageRecord)"/> successfully records valid usage record in repository.
+    /// Verifies that the service creates the record with correct parameters.
+    /// </summary>
     [Fact]
     public async Task RecordUsageAsync_ValidRecord_CreatesInRepository()
     {
@@ -69,6 +93,10 @@ public class UsageTrackingServiceTests
         _repositoryMock.Verify(r => r.CreateAsync(record), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.RecordUsageAsync(UsageRecord)"/> wraps repository exceptions in <see cref="DataAccessException"/>.
+    /// Validates proper exception handling when repository operations fail.
+    /// </summary>
     [Fact]
     public async Task RecordUsageAsync_RepositoryThrows_WrapsInDataAccessException()
     {
@@ -84,16 +112,24 @@ public class UsageTrackingServiceTests
             .WithMessage("DB error");
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageStatisticsAsync(string, DateTime, DateTime)"/> throws <see cref="ValidationException"/> when keyId is empty, null, or whitespace.
+    /// Validates input validation for API key identifier.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    [InlineData("   ")]
+    [InlineData(" ")]
     public async Task GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
         var act = async () => await _sut.GetUsageStatisticsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageStatisticsAsync(string, DateTime, DateTime)"/> throws <see cref="ValidationException"/> when end date is before start date.
+    /// Validates date range validation logic.
+    /// </summary>
     [Fact]
     public async Task GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsValidationException()
     {
@@ -104,6 +140,10 @@ public class UsageTrackingServiceTests
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageStatisticsAsync(string, DateTime, DateTime)"/> returns correct statistics for valid date range.
+    /// Verifies aggregation of usage data including total requests, unique endpoints, success/failure rates, and average response time.
+    /// </summary>
     [Fact]
     public async Task GetUsageStatisticsAsync_ValidDateRange_ReturnsStatisticsWithCorrectAggregates()
     {
@@ -135,6 +175,10 @@ public class UsageTrackingServiceTests
         result.SuccessRate.Should().Be(75);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageStatisticsAsync(string, DateTime, DateTime)"/> returns zeroed statistics when no records exist.
+    /// Validates handling of empty result sets.
+    /// </summary>
     [Fact]
     public async Task GetUsageStatisticsAsync_NoRecords_ReturnsZeroedStatistics()
     {
@@ -153,16 +197,24 @@ public class UsageTrackingServiceTests
         result.SuccessRate.Should().Be(0);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageRecordsAsync(string, DateTime, DateTime)"/> throws <see cref="ValidationException"/> when keyId is empty, null, or whitespace.
+    /// Validates input validation for API key identifier.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    [InlineData("   ")]
+    [InlineData(" ")]
     public async Task GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
         var act = async () => await _sut.GetUsageRecordsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetUsageRecordsAsync(string, DateTime, DateTime)"/> returns usage records from repository.
+    /// Verifies retrieval of raw usage data for a specific API key and date range.
+    /// </summary>
     [Fact]
     public async Task GetUsageRecordsAsync_ValidDateRange_ReturnsRecordsFromRepository()
     {
@@ -184,6 +236,10 @@ public class UsageTrackingServiceTests
         result.Should().BeEquivalentTo(records);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetTotalBytesUsedAsync(string, DateTime, DateTime)"/> returns 0 when consumerId is empty, null, or whitespace.
+    /// Validates input validation and ensures repository is not called for invalid input.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -194,6 +250,10 @@ public class UsageTrackingServiceTests
         _repositoryMock.Verify(r => r.GetByConsumerAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetTotalBytesUsedAsync(string, DateTime, DateTime)"/> returns aggregated bytes transferred for valid consumer.
+    /// Verifies calculation of total bytes from multiple usage records.
+    /// </summary>
     [Fact]
     public async Task GetTotalBytesUsedAsync_ValidConsumerId_ReturnsAggregatedBytes()
     {
@@ -216,6 +276,10 @@ public class UsageTrackingServiceTests
         result.Should().Be(3584);
     }
 
+    /// <summary>
+    /// Tests that <see cref="UsageTrackingService.GetTotalBytesUsedAsync(string, DateTime, DateTime)"/> returns 0 when no records exist.
+    /// Validates handling of empty result sets for byte usage calculation.
+    /// </summary>
     [Fact]
     public async Task GetTotalBytesUsedAsync_NoRecords_ReturnsZero()
     {
