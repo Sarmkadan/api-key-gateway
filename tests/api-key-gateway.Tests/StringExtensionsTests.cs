@@ -9,12 +9,18 @@ using FluentAssertions;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Provides unit tests for the <see cref="StringExtensions"/> class extension methods.
+/// </summary>
 public class StringExtensionsTests
 {
     // -------------------------------------------------------------------------
     // Truncate
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> returns null when the input string is null.
+    /// </summary>
     [Fact]
     public void Truncate_NullString_ReturnsNull()
     {
@@ -22,30 +28,45 @@ public class StringExtensionsTests
         value!.Truncate(10).Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> returns an empty string when the input string is empty.
+    /// </summary>
     [Fact]
     public void Truncate_EmptyString_ReturnsEmpty()
     {
         "".Truncate(5).Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> returns the original string when it is shorter than the maximum length.
+    /// </summary>
     [Fact]
     public void Truncate_ShorterThanMax_ReturnsOriginal()
     {
         "abc".Truncate(10).Should().Be("abc");
     }
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> returns the original string when its length equals the maximum length.
+    /// </summary>
     [Fact]
     public void Truncate_ExactlyMaxLength_ReturnsOriginal()
     {
         "abcde".Truncate(5).Should().Be("abcde");
     }
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> truncates the string to the specified maximum length when it exceeds that length.
+    /// </summary>
     [Fact]
     public void Truncate_LongerThanMax_TruncatesToMaxLength()
     {
         "abcdefghij".Truncate(5).Should().Be("abcde");
     }
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.Truncate(int)"/> returns an empty string when the maximum length is zero.
+    /// </summary>
     [Fact]
     public void Truncate_ZeroMaxLength_ReturnsEmptyString()
     {
@@ -56,6 +77,9 @@ public class StringExtensionsTests
     // TruncateWithEllipsis
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Tests that <see cref="StringExtensions.TruncateWithEllipsis(int)"/> returns null when the input string is null.
+    /// </summary>
     [Fact]
     public void TruncateWithEllipsis_NullString_ReturnsNull()
     {
