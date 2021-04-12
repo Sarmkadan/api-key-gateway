@@ -15,6 +15,9 @@ using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.Unauthorized
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Tests for the AuthenticationService class.
+/// </summary>
 public class AuthenticationServiceTests
 {
     private readonly Mock<IApiKeyService> _apiKeyServiceMock;
@@ -22,6 +25,9 @@ public class AuthenticationServiceTests
     private readonly Mock<ILogger<AuthenticationService>> _loggerMock;
     private readonly AuthenticationService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the AuthenticationServiceTests class.
+    /// </summary>
     public AuthenticationServiceTests()
     {
         _apiKeyServiceMock = new Mock<IApiKeyService>();
@@ -30,6 +36,9 @@ public class AuthenticationServiceTests
         _sut = new AuthenticationService(_apiKeyServiceMock.Object, _auditLogServiceMock.Object, _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Tests that the constructor throws an ArgumentNullException when the apiKeyService parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_NullApiKeyService_ThrowsArgumentNullException()
     {
@@ -37,6 +46,9 @@ public class AuthenticationServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("apiKeyService");
     }
 
+    /// <summary>
+    /// Tests that the constructor throws an ArgumentNullException when the auditLogService parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_NullAuditLogService_ThrowsArgumentNullException()
     {
@@ -44,6 +56,9 @@ public class AuthenticationServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("auditLogService");
     }
 
+    /// <summary>
+    /// Tests that the constructor throws an ArgumentNullException when the logger parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
@@ -51,6 +66,10 @@ public class AuthenticationServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the apiKey parameter is empty or null.
+    /// </summary>
+    /// <param name="apiKey">The API key to test.</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -62,6 +81,9 @@ public class AuthenticationServiceTests
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns the API key and logs a success when the key is valid.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_ValidKey_ReturnsKeyAndLogsSuccess()
     {
@@ -83,6 +105,9 @@ public class AuthenticationServiceTests
         )), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the key is invalid.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_InvalidKey_ThrowsUnauthorizedExceptionAndLogsFailure()
     {
@@ -98,6 +123,9 @@ public class AuthenticationServiceTests
         )), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the IP address is not whitelisted.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_IpNotWhitelisted_ThrowsUnauthorizedException()
     {
@@ -126,6 +154,9 @@ public class AuthenticationServiceTests
         )), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method allows authentication when the IP address is whitelisted.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_IpWhitelisted_AllowsAuthentication()
     {
@@ -151,6 +182,9 @@ public class AuthenticationServiceTests
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method allows authentication without IP check when no IP address is provided.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_NoIpAddressProvided_AllowsAuthenticationWithoutIpCheck()
     {
@@ -175,6 +209,9 @@ public class AuthenticationServiceTests
         result.Should().Be(key);
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method throws a KeyStoreUnavailableException when the API key service throws a DataAccessException.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_ApiKeyServiceThrowsDataAccessException_ThrowsKeyStoreUnavailable()
     {
@@ -191,6 +228,9 @@ public class AuthenticationServiceTests
         await act.Should().ThrowAsync<KeyStoreUnavailableException>();
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when an unexpected exception occurs.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_UnexpectedException_ThrowsUnauthorizedException()
     {
@@ -207,6 +247,9 @@ public class AuthenticationServiceTests
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
+    /// <summary>
+    /// Tests that the ValidateIpAsync method throws an ArgumentNullException when the key parameter is null.
+    /// </summary>
     [Fact]
     public async Task ValidateIpAsync_NullKey_ThrowsArgumentNullException()
     {
@@ -214,6 +257,9 @@ public class AuthenticationServiceTests
         await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("key");
     }
 
+    /// <summary>
+    /// Tests that the ValidateIpAsync method returns true when the IP address is empty.
+    /// </summary>
     [Fact]
     public async Task ValidateIpAsync_EmptyIpAddress_ReturnsTrue()
     {
@@ -224,6 +270,9 @@ public class AuthenticationServiceTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that the ValidateIpAsync method returns true when the IP address is in the whitelist.
+    /// </summary>
     [Fact]
     public async Task ValidateIpAsync_IpInWhitelist_ReturnsTrue()
     {
@@ -234,6 +283,9 @@ public class AuthenticationServiceTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that the ValidateIpAsync method returns false and logs a failure when the IP address is not in the whitelist.
+    /// </summary>
     [Fact]
     public async Task ValidateIpAsync_IpNotInWhitelist_ReturnsFalseAndLogsFailure()
     {
@@ -249,6 +301,12 @@ public class AuthenticationServiceTests
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the LogAuthenticationAttemptAsync method logs a successful authentication attempt.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="isSuccess">Whether the authentication attempt was successful.</param>
+    /// <param name="message">The message to log.</param>
     [Fact]
     public async Task LogAuthenticationAttemptAsync_SuccessfulAttempt_LogsKeyUsedAction()
     {
@@ -263,6 +321,12 @@ public class AuthenticationServiceTests
         )), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the LogAuthenticationAttemptAsync method logs a failed authentication attempt.
+    /// </summary>
+    /// <param name="keyId">The ID of the API key.</param>
+    /// <param name="isSuccess">Whether the authentication attempt was successful.</param>
+    /// <param name="message">The message to log.</param>
     [Fact]
     public async Task LogAuthenticationAttemptAsync_FailedAttempt_LogsUnauthorizedAttemptAction()
     {
@@ -277,6 +341,9 @@ public class AuthenticationServiceTests
         )), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that the LogAuthenticationAttemptAsync method does not propagate exceptions from the audit log service.
+    /// </summary>
     [Fact]
     public async Task LogAuthenticationAttemptAsync_AuditServiceThrows_DoesNotPropagate()
     {
@@ -289,6 +356,9 @@ public class AuthenticationServiceTests
         await act.Should().NotThrowAsync();
     }
 
+    /// <summary>
+    /// Tests that the AuthenticateAsync method allows concurrent authentication attempts.
+    /// </summary>
     [Fact]
     public async Task AuthenticateAsync_ConcurrentCalls_AllAuthenticate()
     {
