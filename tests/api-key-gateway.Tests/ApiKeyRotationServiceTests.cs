@@ -12,6 +12,11 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="ApiKeyRotationService"/> class.
+/// Tests the key rotation functionality including validation, key status checks,
+/// and preservation of IP whitelists during rotation.
+/// </summary>
 public class ApiKeyRotationServiceTests
 {
     private readonly Mock<IApiKeyService> _apiKeyServiceMock;
@@ -19,6 +24,10 @@ public class ApiKeyRotationServiceTests
     private readonly Mock<ILogger<ApiKeyRotationService>> _loggerMock;
     private readonly ApiKeyRotationService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyRotationServiceTests"/> class.
+    /// Sets up mock dependencies for testing key rotation scenarios.
+    /// </summary>
     public ApiKeyRotationServiceTests()
     {
         _apiKeyServiceMock = new Mock<IApiKeyService>();
@@ -30,6 +39,9 @@ public class ApiKeyRotationServiceTests
             _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Tests that rotating a non-existent key returns a failure result with appropriate error message.
+    /// </summary>
     [Fact]
     public async Task RotateKeyAsync_KeyNotFound_ReturnsFailureResult()
     {
@@ -48,6 +60,9 @@ public class ApiKeyRotationServiceTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that rotating an inactive key (e.g., revoked or expired) returns a failure result.
+    /// </summary>
     [Fact]
     public async Task RotateKeyAsync_InactiveKey_ReturnsFailureResult()
     {
@@ -71,6 +86,10 @@ public class ApiKeyRotationServiceTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that rotating an active key creates a new key and revokes the old one.
+    /// Verifies the success result contains the old and new key IDs and consumer information.
+    /// </summary>
     [Fact]
     public async Task RotateKeyAsync_ActiveKey_CreatesNewKeyAndRevokesOld()
     {
@@ -116,6 +135,10 @@ public class ApiKeyRotationServiceTests
         _apiKeyServiceMock.Verify(s => s.CreateKeyAsync("consumer-1", It.IsAny<string>(), It.IsAny<int?>()), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that rotating a key preserves the IP whitelist on the new key.
+    /// Verifies that the IP whitelist from the old key is copied to the new key.
+    /// </summary>
     [Fact]
     public async Task RotateKeyAsync_PreservesIpWhitelistOnNewKey()
     {
@@ -152,6 +175,9 @@ public class ApiKeyRotationServiceTests
         _repositoryMock.Verify(r => r.UpdateAsync(It.Is<ApiKey>(k => k.IpWhitelist == "10.0.0.1,192.168.1.100")), Times.Once);
     }
 
+    /// <summary>
+    /// Tests that rotating expiring keys returns an empty list when no keys are expiring soon.
+    /// </summary>
     [Fact]
     public async Task RotateExpiringSoonAsync_NoExpiringKeys_ReturnsEmptyList()
     {
@@ -169,6 +195,10 @@ public class ApiKeyRotationServiceTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
     }
 
+    /// <summary>
+    /// Tests that rotating expiring keys processes each expiring key and creates replacements.
+    /// Verifies that all expiring keys are rotated and success results are returned.
+    /// </summary>
     [Fact]
     public async Task RotateExpiringSoonAsync_WithExpiringKeys_RotatesEachKey()
     {
@@ -204,6 +234,10 @@ public class ApiKeyRotationServiceTests
         results.Should().AllSatisfy(r => r.Success.Should().BeTrue());
     }
 
+    /// <summary>
+    /// Tests that rotating a key with empty or null ID throws a validation exception.
+    /// </summary>
+    /// <param name="keyId">The key ID to test with (empty string or null).</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
