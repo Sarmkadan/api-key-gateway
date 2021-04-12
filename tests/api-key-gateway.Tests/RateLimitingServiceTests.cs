@@ -14,12 +14,20 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="RateLimitingService"/> class.
+/// </summary>
 public class RateLimitingServiceTests
 {
     private readonly Mock<IRateLimitRepository> _repositoryMock;
     private readonly Mock<ILogger<RateLimitingService>> _loggerMock;
     private readonly RateLimitingService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitingServiceTests"/> class,
+    /// creating mocks for <see cref="IRateLimitRepository"/> and <see cref="ILogger{RateLimitingService}"/>
+    /// and the system under test.
+    /// </summary>
     public RateLimitingServiceTests()
     {
         _repositoryMock = new Mock<IRateLimitRepository>();
@@ -31,6 +39,11 @@ public class RateLimitingServiceTests
     // Constructor guards
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that constructing <see cref="RateLimitingService"/> with a null repository
+    /// throws an <see cref="ArgumentNullException"/> with parameter name "repository".
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public void Constructor_NullRepository_ThrowsArgumentNullException()
     {
@@ -38,6 +51,11 @@ public class RateLimitingServiceTests
         act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
     }
 
+    /// <summary>
+    /// Verifies that constructing <see cref="RateLimitingService"/> with a null logger
+    /// throws an <see cref="ArgumentNullException"/> with parameter name "logger".
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
@@ -49,6 +67,12 @@ public class RateLimitingServiceTests
     // CheckLimitAsync
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that calling <see cref="RateLimitingService.CheckLimitAsync"/> with an empty,
+    /// whitespace, or null API key identifier throws an <see cref="ArgumentException"/>.
+    /// </summary>
+    /// <param name="apiKeyId">The API key identifier to test; may be empty, whitespace, or null.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -59,6 +83,11 @@ public class RateLimitingServiceTests
         await act.Should().ThrowAsync<ArgumentException>();
     }
 
+    /// <summary>
+    /// Verifies that when no rate‑limit configuration exists for a given key,
+    /// <see cref="RateLimitingService.CheckLimitAsync"/> returns <c>true</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_NoRateLimitConfigured_ReturnsTrue()
     {
@@ -70,6 +99,11 @@ public class RateLimitingServiceTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that when the current request count is below the configured limit,
+    /// <see cref="RateLimitingService.CheckLimitAsync"/> returns <c>true</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_BelowLimit_ReturnsTrue()
     {
@@ -89,6 +123,11 @@ public class RateLimitingServiceTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that when the request count equals the allowed limit,
+    /// <see cref="RateLimitingService.CheckLimitAsync"/> throws a <see cref="RateLimitExceededException"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_AtLimit_ThrowsRateLimitExceededException()
     {
@@ -108,6 +147,11 @@ public class RateLimitingServiceTests
         await act.Should().ThrowAsync<RateLimitExceededException>();
     }
 
+    /// <summary>
+    /// Verifies that when the rate‑limit window has expired,
+    /// <see cref="RateLimitingService.CheckLimitAsync"/> resets the counter and returns <c>true</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_ExpiredWindow_ResetsCounterAndAllows()
     {
@@ -134,6 +178,11 @@ public class RateLimitingServiceTests
     // RecordRequestAsync
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that calling <see cref="RateLimitingService.RecordRequestAsync"/> with an empty
+    /// API key identifier does not query the repository.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task RecordRequestAsync_EmptyKeyId_DoesNotQueryRepository()
     {
@@ -141,6 +190,11 @@ public class RateLimitingServiceTests
         _repositoryMock.Verify(r => r.GetByApiKeyIdAsync(It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that when no rate‑limit configuration exists for a given key,
+    /// <see cref="RateLimitingService.RecordRequestAsync"/> performs no update.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task RecordRequestAsync_NoRateLimitConfigured_DoesNothing()
     {
@@ -152,6 +206,11 @@ public class RateLimitingServiceTests
         _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<RateLimit>()), Times.Never);
     }
 
+    /// <summary>
+    /// Verifies that a valid API key causes the request count to be incremented
+    /// and the updated <see cref="RateLimit"/> to be persisted.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task RecordRequestAsync_ValidKey_IncrementsCountAndPersists()
     {
@@ -180,6 +239,10 @@ public class RateLimitingServiceTests
     // UpdateLimitAsync
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that attempting to update the limit for a non‑existent key returns <c>false</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task UpdateLimitAsync_NonExistentKey_ReturnsFalse()
     {
@@ -191,6 +254,11 @@ public class RateLimitingServiceTests
         result.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that updating an existing key modifies the request limit and unit,
+    /// persists the change, and returns <c>true</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue()
     {
@@ -221,6 +289,10 @@ public class RateLimitingServiceTests
     // ResetWindowAsync
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that resetting the window for a non‑existent key does not throw an exception.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task ResetWindowAsync_NonExistentKey_DoesNotThrow()
     {
@@ -232,6 +304,11 @@ public class RateLimitingServiceTests
         await act.Should().NotThrowAsync();
     }
 
+    /// <summary>
+    /// Verifies that resetting the window for an existing key sets the request count to zero
+    /// and persists the change.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task ResetWindowAsync_ExistingKey_ResetsCounterAndPersists()
     {
@@ -259,6 +336,11 @@ public class RateLimitingServiceTests
     // Concurrency / thread-safety
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that concurrent calls to <see cref="RateLimitingService.CheckLimitAsync"/>
+    /// when the limit is already reached cause all calls to throw <see cref="RateLimitExceededException"/>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsAtLimit_AllThrowRateLimitExceededException()
     {
@@ -287,6 +369,11 @@ public class RateLimitingServiceTests
         exceptions.Should().AllSatisfy(ex => ex.Should().BeOfType<RateLimitExceededException>());
     }
 
+    /// <summary>
+    /// Verifies that concurrent calls to <see cref="RateLimitingService.CheckLimitAsync"/>
+    /// on a key whose window has expired allow all requests.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsOnExpiredWindow_AllRequestsAllowed()
     {
@@ -317,6 +404,11 @@ public class RateLimitingServiceTests
         exceptions.Should().BeEmpty("all requests should be allowed after window expires");
     }
 
+    /// <summary>
+    /// Verifies that concurrent calls to <see cref="RateLimitingService.ResetWindowAsync"/>
+    /// do not throw and correctly reset the request count.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task ResetWindowAsync_ConcurrentCalls_DoesNotThrowAndUpdatesCache()
     {
@@ -347,6 +439,11 @@ public class RateLimitingServiceTests
         rateLimit.CurrentRequestCount.Should().Be(0);
     }
 
+    /// <summary>
+    /// Verifies that concurrent calls to <see cref="RateLimitingService.CheckLimitAsync"/>
+    /// when the current count is well below the limit all return <c>true</c>.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsBelowLimit_AllReturnTrue()
     {
