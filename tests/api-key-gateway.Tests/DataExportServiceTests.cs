@@ -7,14 +7,40 @@ using Moq;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains unit tests for the DataExportService class, verifying correct behavior of API key export functionality.
+/// </summary>
 public class DataExportServiceTests
 {
+    /// <summary>
+    /// Mock repository for API key data access.
+    /// </summary>
     private readonly Mock<IApiKeyRepository> _apiKeyRepositoryMock;
+
+    /// <summary>
+    /// Mock repository for audit log data access.
+    /// </summary>
     private readonly Mock<IAuditLogRepository> _auditLogRepositoryMock;
+
+    /// <summary>
+    /// Mock repository for usage data access.
+    /// </summary>
     private readonly Mock<IUsageRepository> _usageRepositoryMock;
+
+    /// <summary>
+    /// Mock logger for DataExportService.
+    /// </summary>
     private readonly Mock<ILogger<DataExportService>> _loggerMock;
+
+    /// <summary>
+    /// System under test (DataExportService instance) configured with mocked dependencies.
+    /// </summary>
     private readonly DataExportService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DataExportServiceTests"/> class.
+    /// Sets up all required mocks and the system under test.
+    /// </summary>
     public DataExportServiceTests()
     {
         _apiKeyRepositoryMock = new Mock<IApiKeyRepository>();
@@ -29,6 +55,9 @@ public class DataExportServiceTests
             _loggerMock.Object);
     }
 
+    /// <summary>
+    /// Verifies that ExportApiKeysAsync returns non-null data when provided with a valid format.
+    /// </summary>
     [Fact]
     public async Task ExportApiKeysAsync_ValidFormat_ReturnsData()
     {
@@ -42,6 +71,9 @@ public class DataExportServiceTests
         result.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifies that ExportApiKeysAsync throws DataAccessException when the repository throws an exception.
+    /// </summary>
     [Fact]
     public async Task ExportApiKeysAsync_RepositoryThrows_ThrowsException()
     {
