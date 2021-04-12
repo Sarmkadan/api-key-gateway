@@ -1,20 +1,22 @@
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 using Xunit;
 using ApiKeyGateway.Caching;
 using FluentAssertions;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Tests for the <see cref="CacheKeyGenerator"/> utility class.
+/// </summary>
 public class CacheKeyGeneratorTests
 {
     // -------------------------------------------------------------------------
     // Key format consistency
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetApiKeyKey(string)"/> returns the expected
+    /// key format for a given API key identifier.
+    /// </summary>
     [Fact]
     public void GetApiKeyKey_ReturnsExpectedFormat()
     {
@@ -22,6 +24,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:apikey:key-001");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetApiKeyMetadataKey(string)"/> returns the
+    /// expected key format for a given API key identifier.
+    /// </summary>
     [Fact]
     public void GetApiKeyMetadataKey_ReturnsExpectedFormat()
     {
@@ -29,6 +35,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:apikey_meta:key-001");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetRateLimitKey(string)"/> returns a wildcard
+    /// endpoint key when no specific endpoint is supplied.
+    /// </summary>
     [Fact]
     public void GetRateLimitKey_DefaultEndpoint_ReturnsWildcard()
     {
@@ -36,6 +46,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:ratelimit:key-001:*");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetRateLimitKey(string,string)"/> includes the
+    /// specified endpoint in the generated key.
+    /// </summary>
     [Fact]
     public void GetRateLimitKey_SpecificEndpoint_IncludesEndpoint()
     {
@@ -43,6 +57,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:ratelimit:key-001:/api/users");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetUsageStatsKey(string,DateTime)"/> formats
+    /// the date component of the key correctly.
+    /// </summary>
     [Fact]
     public void GetUsageStatsKey_FormatsDateCorrectly()
     {
@@ -51,6 +69,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:usage:key-001:2026-05-21");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetQuotaKey(string)"/> returns the expected
+    /// quota key format for a given API key identifier.
+    /// </summary>
     [Fact]
     public void GetQuotaKey_ReturnsExpectedFormat()
     {
@@ -58,6 +80,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:quota:key-001");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetWebhookDeliveryKey(Guid)"/> includes the
+    /// supplied <see cref="Guid"/> in the generated key.
+    /// </summary>
     [Fact]
     public void GetWebhookDeliveryKey_UsesGuidInKey()
     {
@@ -70,6 +96,10 @@ public class CacheKeyGeneratorTests
     // External API cache key - parameter hash determinism
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetExternalApiCacheKey(string,string)"/>
+    /// omits the hash component when no parameters are supplied.
+    /// </summary>
     [Fact]
     public void GetExternalApiCacheKey_NoParameters_OmitsHash()
     {
@@ -77,6 +107,10 @@ public class CacheKeyGeneratorTests
         key.Should().Be("apigw:external:stripe:/charges");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetExternalApiCacheKey(string,string,Dictionary{string,string})"/>
+    /// appends a hash derived from the supplied parameters.
+    /// </summary>
     [Fact]
     public void GetExternalApiCacheKey_WithParameters_AppendsHash()
     {
@@ -90,6 +124,9 @@ public class CacheKeyGeneratorTests
         key.Split(':').Last().Should().HaveLength(8); // 4 bytes = 8 hex chars
     }
 
+    /// <summary>
+    /// Verifies that the order of parameters does not affect the generated hash.
+    /// </summary>
     [Fact]
     public void GetExternalApiCacheKey_ParameterOrderDoesNotAffectHash()
     {
@@ -112,6 +149,9 @@ public class CacheKeyGeneratorTests
         key1.Should().Be(key2, "parameter order should not affect the cache key hash");
     }
 
+    /// <summary>
+    /// Verifies that different parameter values produce distinct cache keys.
+    /// </summary>
     [Fact]
     public void GetExternalApiCacheKey_DifferentParameterValues_ProduceDifferentKeys()
     {
@@ -124,6 +164,9 @@ public class CacheKeyGeneratorTests
         key1.Should().NotBe(key2);
     }
 
+    /// <summary>
+    /// Verifies that an empty parameter dictionary results in no hash component.
+    /// </summary>
     [Fact]
     public void GetExternalApiCacheKey_EmptyParameterDictionary_OmitsHash()
     {
@@ -135,6 +178,10 @@ public class CacheKeyGeneratorTests
     // Invalidation patterns
     // -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetApiKeyInvalidationPattern(string)"/> returns a pattern
+    /// that includes wildcards for all relevant key segments.
+    /// </summary>
     [Fact]
     public void GetApiKeyInvalidationPattern_IncludesWildcards()
     {
@@ -142,6 +189,10 @@ public class CacheKeyGeneratorTests
             .Should().Be("apigw:*:key-001:*");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="CacheKeyGenerator.GetRateLimitInvalidationPattern()"/> returns a pattern
+    /// that matches all rate limit keys.
+    /// </summary>
     [Fact]
     public void GetRateLimitInvalidationPattern_MatchesAllRateLimitKeys()
     {
