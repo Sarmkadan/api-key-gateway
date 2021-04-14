@@ -103,6 +103,39 @@ Console.WriteLine($"Quota valid: {quotaValid.IsValid}");
 
 Make sure the `ApiKeyGateway.Benchmarks` project is referenced when compiling the example.
 
+## RateLimitBenchmarks
+
+The `RateLimitBenchmarks` class contains a set of BenchmarkDotNet benchmarks that measure the performance of rate‑limit calculation helpers. Each benchmark method invokes a specific helper (e.g., getting window boundaries, calculating wait time, or computing quota usage) and returns the result, allowing you to see both the execution time and the returned value.
+
+**Example usage (outside of a benchmark run):**
+
+```csharp
+using System;
+using ApiKeyGateway.Benchmarks;
+
+class Program
+{
+    static void Main()
+    {
+        var benchmarks = new RateLimitBenchmarks();
+
+        DateTime endMinute = benchmarks.GetWindowEnd_Minute();
+        DateTime endHour   = benchmarks.GetWindowEnd_Hour();
+        DateTime startMinute = benchmarks.GetWindowStart_Minute();
+        int secondsUntilAllowed = benchmarks.GetSecondsUntilAllowed_Limited();
+        int quotage = benchmarks.CalculateQuotagePercentage();
+
+        Console.WriteLine($"Window end (minute): {endMinute}");
+        Console.WriteLine($"Window end (hour):   {endHour}");
+        Console.WriteLine($"Window start (minute): {startMinute}");
+        Console.WriteLine($"Seconds until allowed (limited): {secondsUntilAllowed}");
+        Console.WriteLine($"Quotage percentage: {quotage}%");
+    }
+}
+```
+
+Make sure the `ApiKeyGateway.Benchmarks` project is referenced when compiling the example.
+
 ## License
 
 MIT - Copyright (c) 2026 Vladyslav Zaiets
