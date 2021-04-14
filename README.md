@@ -70,6 +70,39 @@ You can also run specific benchmarks by passing the class name as an argument:
 dotnet run -c Release --project benchmarks/api-key-gateway.Benchmarks/api-key-gateway.Benchmarks.csproj -- ApiKeyValidationBenchmarks
 ```
 
+## ApiKeyValidationBenchmarks
+
+The `ApiKeyValidationBenchmarks` class contains a set of BenchmarkDotNet benchmarks that measure the performance of the API‑key validation logic. Each benchmark method invokes a specific validation scenario (valid 32‑char key, valid 64‑char key, weak entropy, too short, name validation, and quota validation) and returns a `ValidationResult`.
+
+**Example usage (outside of a benchmark run):**
+
+```csharp
+using ApiKeyGateway.Benchmarks;
+using ApiKeyGateway.Validation;
+
+var benchmarks = new ApiKeyValidationBenchmarks();
+
+ValidationResult result32   = benchmarks.ValidateFormat_32Char_Valid();
+ValidationResult result64   = benchmarks.ValidateFormat_64Char_Valid();
+ValidationResult weak       = benchmarks.ValidateFormat_WeakEntropy();
+ValidationResult shortKey   = benchmarks.ValidateFormat_TooShort();
+
+ValidationResult nameValid  = benchmarks.ValidateName_Valid();
+ValidationResult nameTooLong = benchmarks.ValidateName_TooLong();
+
+ValidationResult quotaValid = benchmarks.ValidateQuota_Valid();
+
+Console.WriteLine($"32‑char valid: {result32.IsValid}");
+Console.WriteLine($"64‑char valid: {result64.IsValid}");
+Console.WriteLine($"Weak entropy: {weak.IsValid}");
+Console.WriteLine($"Too short: {shortKey.IsValid}");
+Console.WriteLine($"Name valid: {nameValid.IsValid}");
+Console.WriteLine($"Name too long: {nameTooLong.IsValid}");
+Console.WriteLine($"Quota valid: {quotaValid.IsValid}");
+```
+
+Make sure the `ApiKeyGateway.Benchmarks` project is referenced when compiling the example.
+
 ## License
 
 MIT - Copyright (c) 2026 Vladyslav Zaiets
