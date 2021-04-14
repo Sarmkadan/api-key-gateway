@@ -101,8 +101,6 @@ Console.WriteLine($"Name too long: {nameTooLong.IsValid}");
 Console.WriteLine($"Quota valid: {quotaValid.IsValid}");
 ```
 
-Make sure the `ApiKeyGateway.Benchmarks` project is referenced when compiling the example.
-
 ## RateLimitBenchmarks
 
 The `RateLimitBenchmarks` class contains a set of BenchmarkDotNet benchmarks that measure the performance of rate‑limit calculation helpers. Each benchmark method invokes a specific helper (e.g., getting window boundaries, calculating wait time, or computing quota usage) and returns the result, allowing you to see both the execution time and the returned value.
@@ -134,7 +132,33 @@ class Program
 }
 ```
 
-Make sure the `ApiKeyGateway.Benchmarks` project is referenced when compiling the example.
+## CacheKeyGenerationBenchmarks
+
+The `CacheKeyGenerationBenchmarks` class measures the speed of generating cache keys used by the gateway on every authenticated request. It exposes methods that return the string representation of keys for rate limits, API keys, metadata, quotas, and external API calls with varying parameter counts.
+
+**Example usage (outside of a benchmark run):**
+
+```csharp
+using ApiKeyGateway.Benchmarks;
+
+var benchmarks = new CacheKeyGenerationBenchmarks();
+
+string rateLimitKey      = benchmarks.RateLimitKey();
+string apiKeyKey         = benchmarks.ApiKeyKey();
+string apiKeyMetadataKey = benchmarks.ApiKeyMetadataKey();
+string quotaKey          = benchmarks.QuotaKey();
+string externalNoParams  = benchmarks.ExternalApiKey_NoParams();
+string externalThreeParams = benchmarks.ExternalApiKey_ThreeParams();
+string externalSixParams   = benchmarks.ExternalApiKey_SixParams();
+
+Console.WriteLine($"RateLimitKey: {rateLimitKey}");
+Console.WriteLine($"ApiKeyKey: {apiKeyKey}");
+Console.WriteLine($"ApiKeyMetadataKey: {apiKeyMetadataKey}");
+Console.WriteLine($"QuotaKey: {quotaKey}");
+Console.WriteLine($"ExternalApiKey_NoParams: {externalNoParams}");
+Console.WriteLine($"ExternalApiKey_ThreeParams: {externalThreeParams}");
+Console.WriteLine($"ExternalApiKey_SixParams: {externalSixParams}");
+```
 
 ## License
 
