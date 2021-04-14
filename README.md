@@ -1,165 +1,41 @@
-# API Key Gateway
+// =============================================================================
+// Author: Vladyslav Zaiets | https://sarmkadan.com
+// CTO & Software Architect
+// =============================================================================
 
-> A lightweight, production-grade API key authentication gateway for self-hosted services.
+// ...
 
-[![Build Status](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/api-key-gateway/actions/workflows/build.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## AuditLogEventHandler
 
-## Docker Usage
+The `AuditLogEventHandler` class is responsible for logging key events to the audit trail. It handles three types of events: API key creation, rotation, and disablement. This class is designed to be used in conjunction with the `IServiceScopeFactory` to create a scope for logging and persisting audit logs.
 
-This project includes a `docker-compose.yml` file to run the gateway and its dependencies (SQL Server and Redis).
-
-### Start services
-```bash
-docker-compose up -d
-```
-
-### View logs
-```bash
-docker-compose logs -f api-key-gateway
-```
-
-### Stop services
-```bash
-docker-compose down
-```
-
-## Installation
-
-```bash
-git clone https://github.com/sarmkadan/api-key-gateway.git
-cd api-key-gateway
-docker-compose up -d
-```
-
-## Quick Start
+### Example Usage
 
 ```csharp
-// Example: Creating an API key
-var key = await apiKeyService.CreateKeyAsync("consumer_001", "DevKey", expirationDays: 365);
-Console.WriteLine($"Key: {key.Id}");
-```
+using ApiKeyGateway.Events;
+using ApiKeyGateway.Services;
 
-## Examples
-
-For more comprehensive usage scenarios, see the [examples/](examples/) directory:
-
-- [BasicUsage.cs](examples/BasicUsage.cs): Minimal setup and first call.
-- [AdvancedUsage.cs](examples/AdvancedUsage.cs): Configuration, custom options, and error handling.
-- [IntegrationExample.cs](examples/IntegrationExample.cs): Wiring into ASP.NET Core DI container.
-
-## Configuration
-
-Update `appsettings.json` with your SQL Server `ConnectionStrings:DefaultConnection`.
-
-## Benchmarks
-
-This project includes a performance testing suite using [BenchmarkDotNet](https://benchmarkdotnet.org/) to measure hot paths and critical operations.
-
-### Running Benchmarks
-
-To run the full benchmark suite in Release mode:
-
-```bash
-dotnet run -c Release --project benchmarks/api-key-gateway.Benchmarks/api-key-gateway.Benchmarks.csproj
-```
-
-You can also run specific benchmarks by passing the class name as an argument:
-
-```bash
-dotnet run -c Release --project benchmarks/api-key-gateway.Benchmarks/api-key-gateway.Benchmarks.csproj -- ApiKeyValidationBenchmarks
-```
-
-## ApiKeyValidationBenchmarks
-
-The `ApiKeyValidationBenchmarks` class contains a set of BenchmarkDotNet benchmarks that measure the performance of the API‑key validation logic. Each benchmark method invokes a specific validation scenario (valid 32‑char key, valid 64‑char key, weak entropy, too short, name validation, and quota validation) and returns a `ValidationResult`.
-
-**Example usage (outside of a benchmark run):**
-
-```csharp
-using ApiKeyGateway.Benchmarks;
-using ApiKeyGateway.Validation;
-
-var benchmarks = new ApiKeyValidationBenchmarks();
-
-ValidationResult result32   = benchmarks.ValidateFormat_32Char_Valid();
-ValidationResult result64   = benchmarks.ValidateFormat_64Char_Valid();
-ValidationResult weak       = benchmarks.ValidateFormat_WeakEntropy();
-ValidationResult shortKey   = benchmarks.ValidateFormat_TooShort();
-
-ValidationResult nameValid  = benchmarks.ValidateName_Valid();
-ValidationResult nameTooLong = benchmarks.ValidateName_TooLong();
-
-ValidationResult quotaValid = benchmarks.ValidateQuota_Valid();
-
-Console.WriteLine($"32‑char valid: {result32.IsValid}");
-Console.WriteLine($"64‑char valid: {result64.IsValid}");
-Console.WriteLine($"Weak entropy: {weak.IsValid}");
-Console.WriteLine($"Too short: {shortKey.IsValid}");
-Console.WriteLine($"Name valid: {nameValid.IsValid}");
-Console.WriteLine($"Name too long: {nameTooLong.IsValid}");
-Console.WriteLine($"Quota valid: {quotaValid.IsValid}");
-```
-
-## RateLimitBenchmarks
-
-The `RateLimitBenchmarks` class contains a set of BenchmarkDotNet benchmarks that measure the performance of rate‑limit calculation helpers. Each benchmark method invokes a specific helper (e.g., getting window boundaries, calculating wait time, or computing quota usage) and returns the result, allowing you to see both the execution time and the returned value.
-
-**Example usage (outside of a benchmark run):**
-
-```csharp
-using System;
-using ApiKeyGateway.Benchmarks;
-
-class Program
+public class Program
 {
-    static void Main()
+    public static async Task Main(string[] args)
     {
-        var benchmarks = new RateLimitBenchmarks();
+        var scopeFactory = new ServiceScopeFactory();
+        var logger = new Logger<AuditLogEventHandler>();
+        var auditLogEventHandler = new AuditLogEventHandler(scopeFactory, logger);
 
-        DateTime endMinute = benchmarks.GetWindowEnd_Minute();
-        DateTime endHour   = benchmarks.GetWindowEnd_Hour();
-        DateTime startMinute = benchmarks.GetWindowStart_Minute();
-        int secondsUntilAllowed = benchmarks.GetSecondsUntilAllowed_Limited();
-        int quotage = benchmarks.CalculateQuotagePercentage();
+        // Log API key creation event
+        var apiKeyCreatedEvent = new ApiKeyCreatedEvent("consumer_001", "DevKey");
+        await auditLogEventHandler.HandleApiKeyCreatedAsync(apiKeyCreatedEvent);
 
-        Console.WriteLine($"Window end (minute): {endMinute}");
-        Console.WriteLine($"Window end (hour):   {endHour}");
-        Console.WriteLine($"Window start (minute): {startMinute}");
-        Console.WriteLine($"Seconds until allowed (limited): {secondsUntilAllowed}");
-        Console.WriteLine($"Quotage percentage: {quotage}%");
+        // Log API key rotation event
+        var apiKeyRotatedEvent = new ApiKeyRotatedEvent("consumer_001", "RotatedKey");
+        await auditLogEventHandler.HandleApiKeyRotatedAsync(apiKeyRotatedEvent);
+
+        // Log API key disablement event
+        var apiKeyDisabledEvent = new ApiKeyDisabledEvent("consumer_001", "DisabledKey");
+        await auditLogEventHandler.HandleApiKeyDisabledAsync(apiKeyDisabledEvent);
     }
 }
 ```
 
-## CacheKeyGenerationBenchmarks
-
-The `CacheKeyGenerationBenchmarks` class measures the speed of generating cache keys used by the gateway on every authenticated request. It exposes methods that return the string representation of keys for rate limits, API keys, metadata, quotas, and external API calls with varying parameter counts.
-
-**Example usage (outside of a benchmark run):**
-
-```csharp
-using ApiKeyGateway.Benchmarks;
-
-var benchmarks = new CacheKeyGenerationBenchmarks();
-
-string rateLimitKey      = benchmarks.RateLimitKey();
-string apiKeyKey         = benchmarks.ApiKeyKey();
-string apiKeyMetadataKey = benchmarks.ApiKeyMetadataKey();
-string quotaKey          = benchmarks.QuotaKey();
-string externalNoParams  = benchmarks.ExternalApiKey_NoParams();
-string externalThreeParams = benchmarks.ExternalApiKey_ThreeParams();
-string externalSixParams   = benchmarks.ExternalApiKey_SixParams();
-
-Console.WriteLine($"RateLimitKey: {rateLimitKey}");
-Console.WriteLine($"ApiKeyKey: {apiKeyKey}");
-Console.WriteLine($"ApiKeyMetadataKey: {apiKeyMetadataKey}");
-Console.WriteLine($"QuotaKey: {quotaKey}");
-Console.WriteLine($"ExternalApiKey_NoParams: {externalNoParams}");
-Console.WriteLine($"ExternalApiKey_ThreeParams: {externalThreeParams}");
-Console.WriteLine($"ExternalApiKey_SixParams: {externalSixParams}");
-```
-
-## License
-
-MIT - Copyright (c) 2026 Vladyslav Zaiets
+// ...
