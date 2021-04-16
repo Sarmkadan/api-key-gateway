@@ -77,3 +77,49 @@ foreach (var item in result.Items)
     Console.WriteLine($"Key {item.ApiKeyId}: {(item.Success ? "Success" : $"Error: {item.ErrorMessage}")}");
 }
 ```
+
+## CollectionExtensions
+
+The `CollectionExtensions` class provides a set of extension methods for common collection operations, such as pagination, grouping, and filtering.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+
+var numbers = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+// Paginate the collection
+var paginatedNumbers = numbers.Paginate(2, 3);
+foreach (var number in paginatedNumbers)
+{
+    Console.WriteLine(number);
+}
+
+// Check if the collection is empty
+Console.WriteLine(numbers.IsEmpty()); // Output: False
+
+// Count occurrences of each number
+var counts = numbers.CountBy(x => x % 2);
+foreach (var pair in counts)
+{
+    Console.WriteLine($"{pair.Key}: {pair.Value}");
+}
+
+// Batch the collection
+var batchedNumbers = numbers.Batch(3);
+foreach (var batch in batchedNumbers)
+{
+    Console.WriteLine(string.Join(", ", batch));
+}
+
+// Get distinct numbers
+var distinctNumbers = numbers.DistinctBy(x => x);
+foreach (var number in distinctNumbers)
+{
+    Console.WriteLine(number);
+}
+
+// Safely execute an action for each number
+numbers.ForEachSafe(x => Console.WriteLine(x));
+```
