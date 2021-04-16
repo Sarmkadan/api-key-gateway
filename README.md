@@ -3,8 +3,6 @@
 // CTO & Software Architect
 // =============================================================================
 
-// ...
-
 ## IWebhookHandler
 
 The `IWebhookHandler` interface manages webhook subscriptions and event delivery with retry logic and HMAC signing. It supports registering webhooks for specific event types, tracking delivery statistics, and ensuring reliable delivery through exponential backoff.
@@ -49,4 +47,33 @@ public class SampleEvent : ApiKeyEvent
 }
 ```
 
-// ...
+## IBatchOperationHandler
+
+The `IBatchOperationHandler` interface enables bulk management of API keys by executing operations like disabling/enabling keys, setting quotas, or rotating keys in a single transaction. It tracks success/failure counts and provides detailed per-key results.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Integration;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+var batchHandler = new BatchOperationHandler();
+
+// Create a batch operation to disable multiple API keys
+var operation = new BatchOperation
+{
+    OperationType = "disable",
+    ApiKeyIds = new List<string> { "key_001", "key_002", "key_003" }
+};
+
+// Execute the batch operation
+var result = await batchHandler.ExecuteAsync(operation);
+
+// Process results
+Console.WriteLine($"Operation {result.OperationId} completed: {result.SuccessCount} succeeded, {result.FailureCount} failed");
+foreach (var item in result.Items)
+{
+    Console.WriteLine($"Key {item.ApiKeyId}: {(item.Success ? "Success" : $"Error: {item.ErrorMessage}")}");
+}
+```
