@@ -5,6 +5,31 @@
 
 // ...
 
+## UsageEvent
+
+The `UsageEvent` is an abstract base class for tracking API key usage events (successful requests, rate limits, quotas, etc.). It captures metadata like event ID, timestamp, API key ID, endpoint, HTTP status, and usage metrics, enabling consumption analysis and policy enforcement. Concrete events like `ApiKeyUsedEvent` and `RateLimitExceededEvent` extend this base class.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Events;
+
+var usageEvent = new ApiKeyUsedEvent
+{
+    ApiKeyId = "key_123",
+    Endpoint = "/api/v1/data",
+    HttpStatusCode = 200,
+    ResponseTimeMs = 150,
+    ResponseSizeBytes = 2048
+};
+
+Console.WriteLine($"Event ID: {usageEvent.EventId}");
+Console.WriteLine($"Occurred at: {usageEvent.Timestamp}");
+Console.WriteLine($"API Key: {usageEvent.ApiKeyId}");
+Console.WriteLine($"Endpoint: {usageEvent.Endpoint}");
+Console.WriteLine($"Status Code: {usageEvent.HttpStatusCode}");
+```
+
 ## ApiKeyEvent
 
 The `ApiKeyEvent` is an abstract base class for all API key lifecycle events (creation, rotation, disablement, etc.). It provides metadata like event ID, timestamp, and API key ID, enabling system-wide reactions to key changes without tight coupling. Concrete events extend this base class to add operation-specific details.
