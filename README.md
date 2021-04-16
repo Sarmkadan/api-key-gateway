@@ -5,32 +5,48 @@
 
 // ...
 
-## IWebhookManager
+## IWebhookHandler
 
-The `IWebhookManager` interface is responsible for managing webhook subscriptions and delivery coordination. It provides methods for registering, unregistering, and retrieving webhook subscriptions, as well as tracking delivery counts.
+The `IWebhookHandler` interface manages webhook subscriptions and event delivery with retry logic and HMAC signing. It supports registering webhooks for specific event types, tracking delivery statistics, and ensuring reliable delivery through exponential backoff.
 
 ### Example Usage
 
 ```csharp
 using ApiKeyGateway.Integration;
+using ApiKeyGateway.Events;
 
-var webhookManager = new WebhookManager();
+var webhookHandler = new WebhookHandler();
 
-// Register a new webhook subscription
-var webhookId = await webhookManager.RegisterWebhookAsync(
-    "key_123",
-    "https://example.com/webhook",
-    new[] { "ApiKeyUsedEvent", "RateLimitExceededEvent" },
-    "my_secret");
+// Register a webhook subscription
+var subscriptionId = await webhookHandler.RegisterWebhookAsync(
+    url: "https://example.com/webhook-endpoint",
+    eventTypes: new[] { "ApiKeyCreated", "QuotaExceeded" },
+    secret: "my-webhook-secret");
 
-// Get all webhook subscriptions for a given API key
-var webhooks = await webhookManager.GetWebhooksForKeyAsync("key_123");
+// Create a sample event to deliver
+var sampleEvent = new SampleEvent
+{
+    EventId = Guid.NewGuid(),
+    Timestamp = DateTime.UtcNow,
+    ApiKeyId = "key_123"
+};
 
-// Unregister a webhook subscription
-await webhookManager.UnregisterWebhookAsync(webhookId);
+// Deliver the event to all matching subscriptions
+await webhookHandler.DeliverWebhookAsync(sampleEvent);
 
-// Get the delivery count for a webhook subscription
-var deliveryCount = await webhookManager.GetDeliveryCountAsync(webhookId);
+// Access subscription metadata
+var subscription = webhookHandler.GetSubscription(subscriptionId); // Hypothetical helper method
+Console.WriteLine($"Webhook {subscription.Id} has {subscription.TotalDeliveries} successful deliveries");
+```
+
+Where `SampleEvent` is a custom event implementing `ApiKeyEvent`:
+```csharp
+public class SampleEvent : ApiKeyEvent
+{
+    public Guid EventId { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string ApiKeyId { get; set; }
+}
 ```
 
 // ...
