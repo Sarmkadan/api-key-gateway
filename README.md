@@ -197,4 +197,26 @@ catch (RateLimitExceededException ex)
 }
 ```
 
-This example demonstrates how to catch and handle a `RateLimitExceededException` in your code. The exception provides information about the API key that exceeded the rate limit, the limit that was exceeded, and the recommended time to wait before retrying.
+## DataAccessException
+
+Thrown when database or repository operations fail.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+
+try
+{
+    // Simulate a database operation that fails
+    await DatabaseOperationAsync();
+}
+catch (DataAccessException ex)
+{
+    Console.WriteLine($"Database operation failed: {ex.Message}");
+    Console.WriteLine($"Operation: {ex.Operation}");
+    Console.WriteLine($"Entity: {ex.Entity}");
+}
+```
+
+This example demonstrates how to catch and handle a `DataAccessException` in your code. The exception provides information about the operation that failed, the entity type involved, and the error message.
