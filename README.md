@@ -3,6 +3,26 @@
 // CTO & Software Architect
 // =============================================================================
 
+## InvalidApiKeyException
+
+Thrown when an API key is invalid, expired, or disabled. This exception provides information about the invalid API key, including its hash, the timestamp when the exception occurred, and whether the key was expired.
+
+### Example Usage
+
+```csharp
+try
+{
+    // Simulate a request with an invalid API key
+    await DoSomethingAsync();
+}
+catch (InvalidApiKeyException ex)
+{
+    Console.WriteLine($"Invalid API key: {ex.ApiKeyHash}");
+    Console.WriteLine($"Exception occurred at: {ex.OccurredAt}");
+    Console.WriteLine($"Key was expired: {ex.IsExpired}");
+}
+```
+
 ## IWebhookHandler
 
 The `IWebhookHandler` interface manages webhook subscriptions and event delivery with retry logic and HMAC signing. It supports registering webhooks for specific event types, tracking delivery statistics, and ensuring reliable delivery through exponential backoff.
@@ -218,5 +238,3 @@ catch (DataAccessException ex)
     Console.WriteLine($"Entity: {ex.Entity}");
 }
 ```
-
-This example demonstrates how to catch and handle a `DataAccessException` in your code. The exception provides information about the operation that failed, the entity type involved, and the error message.
