@@ -123,3 +123,55 @@ foreach (var number in distinctNumbers)
 // Safely execute an action for each number
 numbers.ForEachSafe(x => Console.WriteLine(x));
 ```
+
+## StringExtensions
+
+The `StringExtensions` class provides a set of extension methods for common string operations, such as truncation, slug generation, and validation.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+
+var originalString = "This is a very long string that needs to be truncated.";
+
+// Truncate the string to a maximum length of 20 characters
+var truncatedString = originalString.Truncate(20);
+Console.WriteLine(truncatedString); // Output: "This is a very long..."
+
+// Truncate the string with an ellipsis suffix
+var truncatedWithEllipsis = originalString.TruncateWithEllipsis(20);
+Console.WriteLine(truncatedWithEllipsis); // Output: "This is a very long... "
+
+// Check if the string contains any of the provided values
+var containsAny = originalString.ContainsAny("very", "long");
+Console.WriteLine(containsAny); // Output: True
+
+// Check if the string starts with any of the provided values
+var startsWithAny = originalString.StartsWithAny("This", "is");
+Console.WriteLine(startsWithAny); // Output: True
+
+// Generate a slug from the original string
+var slug = originalString.ToSlug();
+Console.WriteLine(slug); // Output: "this-is-a-very-long-string-that-needs-to-be-truncated"
+
+// Capitalize the first character of the string
+var capitalizedString = originalString.CapitalizeFirst();
+Console.WriteLine(capitalizedString); // Output: "This is a very long string that needs to be truncated."
+
+// Convert the string to a list of substrings
+var list = originalString.ToList(',');
+Console.WriteLine(string.Join(", ", list)); // Output: "This, is, a, very, long, string, that, needs, to, be, truncated."
+
+// Check if the string is numeric
+var isNumeric = originalString.IsNumeric();
+Console.WriteLine(isNumeric); // Output: False
+
+// Safely parse the string to an integer
+var parsedInt = originalString.TryParseInt();
+Console.WriteLine(parsedInt); // Output: null
+
+// Safely parse the string to a long
+var parsedLong = originalString.TryParseLong();
+Console.WriteLine(parsedLong); // Output: null
+```
