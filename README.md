@@ -175,3 +175,26 @@ Console.WriteLine(parsedInt); // Output: null
 var parsedLong = originalString.TryParseLong();
 Console.WriteLine(parsedLong); // Output: null
 ```
+
+## RateLimitExceededException
+
+Thrown when a request exceeds the configured rate limit for an API key.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+
+try
+{
+    // Simulate a request that exceeds the rate limit
+    await DoSomethingAsync();
+}
+catch (RateLimitExceededException ex)
+{
+    Console.WriteLine($"Rate limit exceeded for API key {ex.ApiKeyId} with limit {ex.Limit} and window {ex.WindowInSeconds} seconds.");
+    Console.WriteLine($"Retry after {ex.RetryAfter?.ToString("yyyy-MM-dd HH:mm:ss") ?? "never"}");
+}
+```
+
+This example demonstrates how to catch and handle a `RateLimitExceededException` in your code. The exception provides information about the API key that exceeded the rate limit, the limit that was exceeded, and the recommended time to wait before retrying.
