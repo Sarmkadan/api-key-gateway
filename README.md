@@ -3,6 +3,25 @@
 // CTO & Software Architect
 // =============================================================================
 
+## ConfigurationException
+
+Thrown when gateway configuration is invalid or incomplete. This exception provides information about the setting that caused the error.
+
+### Example Usage
+
+```csharp
+try
+{
+    // Simulate a request with invalid configuration
+    await DoSomethingAsync();
+}
+catch (ConfigurationException ex)
+{
+    Console.WriteLine($"Configuration error for setting {ex.Setting}.");
+    Console.WriteLine($"Error message: {ex.Message}");
+}
+```
+
 ## InvalidApiKeyException
 
 Thrown when an API key is invalid, expired, or disabled. This exception provides information about the invalid API key, including its hash, the timestamp when the exception occurred, and whether the key was expired.
