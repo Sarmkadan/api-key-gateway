@@ -855,3 +855,88 @@ quota.ResetPeriod(DateTime.UtcNow);
 var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
 Console.WriteLine($"Current period started: {periodStart}");
 ```
+
+## TransformationRule
+
+The `TransformationRule` class defines a single step in the API request transformation pipeline. Rules are evaluated in ascending `Priority` order and can mutate headers, query parameters, the request path, or body. Rules support two implementation types: built-in actions (like adding/removing headers or rewriting paths) or custom Lua scripts for advanced transformations. Rules can target specific API keys, specific consumers, or apply globally to all requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a global transformation rule that adds a custom header to all requests
+var globalRule = new TransformationRule
+{
+    Id = "rule_global_add_header",
+    Name = "Add Global Header",
+    Description = "Adds X-Request-Source header to all API requests",
+    Scope = TransformationScope.Global,
+    Type = TransformationRuleType.BuiltIn,
+    Action = BuiltInAction.AddHeader,
+    Parameters = new Dictionary<string, string>
+    {
+        ["HeaderName"] = "X-Request-Source",
+        ["HeaderValue"] = "api-key-gateway"
+    },
+    Priority = 10,
+    IsEnabled = true,
+    CreatedBy = "admin@example.com"
+};
+
+// Create a consumer-specific rule that rewrites the request path
+var consumerRule = new TransformationRule
+{
+    Id = "rule_consumer_rewrite_path",
+    Name = "Rewrite Consumer Path",
+    Description = "Rewrites path for consumer-specific API versioning",
+    Scope = TransformationScope.Consumer,
+    ConsumerId = "consumer_001",
+    Type = TransformationRuleType.BuiltIn,
+    Action = BuiltInAction.RewritePath,
+    Parameters = new Dictionary<string, string>
+    {
+        ["PathTemplate"] = "/v2/{path}"
+    },
+    Priority = 20,
+    IsEnabled = true
+};
+
+// Create an API key-specific rule that removes a query parameter
+var apiKeyRule = new TransformationRule
+{
+    Id = "rule_apikey_remove_param",
+    Name = "Remove Debug Parameter",
+    Description = "Removes debug query parameter from production API keys",
+    Scope = TransformationScope.ApiKey,
+    ApiKeyId = "key_prod_001",
+    Type = TransformationRuleType.BuiltIn,
+    Action = BuiltInAction.RemoveQueryParam,
+    Parameters = new Dictionary<string, string>
+    {
+        ["ParamName"] = "debug"
+    },
+    Priority = 30,
+    IsEnabled = true
+};
+
+// Create a Lua script rule for advanced transformation
+var luaRule = new TransformationRule
+{
+    Id = "rule_lua_custom_transform",
+    Name = "Custom Lua Transformation",
+    Description = "Applies custom transformation logic using Lua script",
+    Scope = TransformationScope.Global,
+    Type = TransformationRuleType.LuaScript,
+    LuaScript = @"
+        -- Add timestamp header
+        context.Request.Headers["X-Request-Timestamp"] = os.date("%Y-%m-%dT%H:%M:%SZ")
+        
+        -- Log the transformation
+        print("Applied custom transformation for request: " .. context.Request.Path)
+    ",
+    Priority = 40,
+    IsEnabled = true
+};
+```
