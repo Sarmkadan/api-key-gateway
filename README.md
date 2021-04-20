@@ -12,13 +12,13 @@ Thrown when gateway configuration is invalid or incomplete. This exception provi
 ```csharp
 try
 {
-    // Simulate a request with invalid configuration
-    await DoSomethingAsync();
+  // Simulate a request with invalid configuration
+  await DoSomethingAsync();
 }
 catch (ConfigurationException ex)
 {
-    Console.WriteLine($"Configuration error for setting {ex.Setting}.");
-    Console.WriteLine($"Error message: {ex.Message}");
+  Console.WriteLine($"Configuration error for setting {ex.Setting}.");
+  Console.WriteLine($"Error message: {ex.Message}");
 }
 ```
 
@@ -31,14 +31,14 @@ Thrown when an API key is invalid, expired, or disabled. This exception provides
 ```csharp
 try
 {
-    // Simulate a request with an invalid API key
-    await DoSomethingAsync();
+  // Simulate a request with an invalid API key
+  await DoSomethingAsync();
 }
 catch (InvalidApiKeyException ex)
 {
-    Console.WriteLine($"Invalid API key: {ex.ApiKeyHash}");
-    Console.WriteLine($"Exception occurred at: {ex.OccurredAt}");
-    Console.WriteLine($"Key was expired: {ex.IsExpired}");
+  Console.WriteLine($"Invalid API key: {ex.ApiKeyHash}");
+  Console.WriteLine($"Exception occurred at: {ex.OccurredAt}");
+  Console.WriteLine($"Key was expired: {ex.IsExpired}");
 }
 ```
 
@@ -56,16 +56,16 @@ var webhookHandler = new WebhookHandler();
 
 // Register a webhook subscription
 var subscriptionId = await webhookHandler.RegisterWebhookAsync(
-    url: "https://example.com/webhook-endpoint",
-    eventTypes: new[] { "ApiKeyCreated", "QuotaExceeded" },
-    secret: "my-webhook-secret");
+  url: "https://example.com/webhook-endpoint",
+  eventTypes: new[] { "ApiKeyCreated", "QuotaExceeded" },
+  secret: "my-webhook-secret");
 
 // Create a sample event to deliver
 var sampleEvent = new SampleEvent
 {
-    EventId = Guid.NewGuid(),
-    Timestamp = DateTime.UtcNow,
-    ApiKeyId = "key_123"
+  EventId = Guid.NewGuid(),
+  Timestamp = DateTime.UtcNow,
+  ApiKeyId = "key_123"
 };
 
 // Deliver the event to all matching subscriptions
@@ -77,12 +77,13 @@ Console.WriteLine($"Webhook {subscription.Id} has {subscription.TotalDeliveries}
 ```
 
 Where `SampleEvent` is a custom event implementing `ApiKeyEvent`:
+
 ```csharp
 public class SampleEvent : ApiKeyEvent
 {
-    public Guid EventId { get; set; }
-    public DateTime Timestamp { get; set; }
-    public string ApiKeyId { get; set; }
+  public Guid EventId { get; set; }
+  public DateTime Timestamp { get; set; }
+  public string ApiKeyId { get; set; }
 }
 ```
 
@@ -102,8 +103,8 @@ var batchHandler = new BatchOperationHandler();
 // Create a batch operation to disable multiple API keys
 var operation = new BatchOperation
 {
-    OperationType = "disable",
-    ApiKeyIds = new List<string> { "key_001", "key_002", "key_003" }
+  OperationType = "disable",
+  ApiKeyIds = new List<string> { "key_001", "key_002", "key_003" }
 };
 
 // Execute the batch operation
@@ -113,7 +114,7 @@ var result = await batchHandler.ExecuteAsync(operation);
 Console.WriteLine($"Operation {result.OperationId} completed: {result.SuccessCount} succeeded, {result.FailureCount} failed");
 foreach (var item in result.Items)
 {
-    Console.WriteLine($"Key {item.ApiKeyId}: {(item.Success ? "Success" : $"Error: {item.ErrorMessage}")}");
+  Console.WriteLine($"Key {item.ApiKeyId}: {(item.Success ? "Success" : $"Error: {item.ErrorMessage}")}");
 }
 ```
 
@@ -132,7 +133,7 @@ var numbers = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 var paginatedNumbers = numbers.Paginate(2, 3);
 foreach (var number in paginatedNumbers)
 {
-    Console.WriteLine(number);
+  Console.WriteLine(number);
 }
 
 // Check if the collection is empty
@@ -142,21 +143,21 @@ Console.WriteLine(numbers.IsEmpty()); // Output: False
 var counts = numbers.CountBy(x => x % 2);
 foreach (var pair in counts)
 {
-    Console.WriteLine($"{pair.Key}: {pair.Value}");
+  Console.WriteLine($"{pair.Key}: {pair.Value}");
 }
 
 // Batch the collection
 var batchedNumbers = numbers.Batch(3);
 foreach (var batch in batchedNumbers)
 {
-    Console.WriteLine(string.Join(", ", batch));
+  Console.WriteLine(string.Join(", ", batch));
 }
 
 // Get distinct numbers
 var distinctNumbers = numbers.DistinctBy(x => x);
 foreach (var number in distinctNumbers)
 {
-    Console.WriteLine(number);
+  Console.WriteLine(number);
 }
 
 // Safely execute an action for each number
@@ -226,13 +227,13 @@ using ApiKeyGateway.Domain.Exceptions;
 
 try
 {
-    // Simulate a request that exceeds the rate limit
-    await DoSomethingAsync();
+  // Simulate a request that exceeds the rate limit
+  await DoSomethingAsync();
 }
 catch (RateLimitExceededException ex)
 {
-    Console.WriteLine($"Rate limit exceeded for API key {ex.ApiKeyId} with limit {ex.Limit} and window {ex.WindowInSeconds} seconds.");
-    Console.WriteLine($"Retry after {ex.RetryAfter?.ToString("yyyy-MM-dd HH:mm:ss") ?? "never"}");
+  Console.WriteLine($"Rate limit exceeded for API key {ex.ApiKeyId} with limit {ex.Limit} and window {ex.WindowInSeconds} seconds.");
+  Console.WriteLine($"Retry after {ex.RetryAfter?.ToString("yyyy-MM-dd HH:mm:ss") ?? "never"}");
 }
 ```
 
@@ -247,14 +248,14 @@ using ApiKeyGateway.Domain.Exceptions;
 
 try
 {
-    // Simulate a database operation that fails
-    await DatabaseOperationAsync();
+  // Simulate a database operation that fails
+  await DatabaseOperationAsync();
 }
 catch (DataAccessException ex)
 {
-    Console.WriteLine($"Database operation failed: {ex.Message}");
-    Console.WriteLine($"Operation: {ex.Operation}");
-    Console.WriteLine($"Entity: {ex.Entity}");
+  Console.WriteLine($"Database operation failed: {ex.Message}");
+  Console.WriteLine($"Operation: {ex.Operation}");
+  Console.WriteLine($"Entity: {ex.Entity}");
 }
 ```
 
@@ -269,19 +270,18 @@ using ApiKeyGateway.Domain.Exceptions;
 
 try
 {
-    // Simulate a request with invalid credentials
-    await AuthenticateAsync();
+  // Simulate a request with invalid credentials
+  await AuthenticateAsync();
 }
 catch (UnauthorizedAccessException ex)
 {
-    Console.WriteLine($"Authentication failed: {ex.Message}");
-    Console.WriteLine($"Reason: {ex.Reason}");
-    Console.WriteLine($"Source IP: {ex.SourceIp}");
+  Console.WriteLine($"Authentication failed: {ex.Message}");
+  Console.WriteLine($"Reason: {ex.Reason}");
+  Console.WriteLine($"Source IP: {ex.SourceIp}");
 }
 ```
 
 ## ValidationException
-
 Thrown when validation of input parameters fails. This exception provides information about the failed validation, including the name of the parameter that failed, the attempted value, and a collection of validation error messages.
 
 ### Example Usage
@@ -289,13 +289,58 @@ Thrown when validation of input parameters fails. This exception provides inform
 ```csharp
 try
 {
-    // Simulate a request with invalid input parameters
-    await DoSomethingAsync();
+  // Simulate a request with invalid input parameters
+  await DoSomethingAsync();
 }
 catch (ValidationException ex)
 {
-    Console.WriteLine($"Validation failed for parameter {ex.ParameterName} with attempted value {ex.AttemptedValue}.");
-    Console.WriteLine($"Validation errors: {string.Join(", ", ex.ValidationErrors ?? new string[0])}");
+  Console.WriteLine($"Validation failed for parameter {ex.ParameterName} with attempted value {ex.AttemptedValue}.");
+  Console.WriteLine($"Validation errors: {string.Join(", ", ex.ValidationErrors ?? new string[0])}");
 }
 ```
+
+## ApiKeyGatewayException
+
+Base exception class for all api-key-gateway specific exceptions. This exception provides a standardized way to handle gateway-specific errors with an optional error code and timestamp of when the exception occurred.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+
+try
+{
+  // Simulate a gateway operation that fails
+  await GatewayOperationAsync();
+}
+catch (ApiKeyGatewayException ex)
+{
+  Console.WriteLine($"Gateway exception occurred at {ex.OccurredAt:yyyy-MM-dd HH:mm:ss}.");
+  if (ex.ErrorCode != null)
+  {
+    Console.WriteLine($"Error code: {ex.ErrorCode}");
+  }
+  Console.WriteLine($"Message: {ex.Message}");
+}
+
+// Example with error code
+try
+{
+  throw new ApiKeyGatewayException("Invalid gateway configuration", "GATEWAY_CONFIG_ERROR");
+}
+catch (ApiKeyGatewayException ex)
+{
+  Console.WriteLine($"Gateway error: {ex.ErrorCode} - {ex.Message}");
+  Console.WriteLine($"Occurred at: {ex.OccurredAt}");
+}
+
+// Example wrapping another exception
+try
+{
+  await GatewayOperationAsync();
+}
+catch (Exception ex)
+{
+  throw new ApiKeyGatewayException("Gateway operation failed", "GATEWAY_OPERATION_FAILED", ex);
+}
 ```
