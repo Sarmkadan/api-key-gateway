@@ -238,3 +238,24 @@ catch (DataAccessException ex)
     Console.WriteLine($"Entity: {ex.Entity}");
 }
 ```
+
+## UnauthorizedAccessException
+
+Thrown when authentication fails or credentials are missing.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+
+try
+{
+    // Simulate a request with invalid credentials
+    await AuthenticateAsync();
+}
+catch (UnauthorizedAccessException ex)
+{
+    Console.WriteLine($"Authentication failed: {ex.Message}");
+    Console.WriteLine($"Reason: {ex.Reason}");
+    Console.WriteLine($"Source IP: {ex.SourceIp}");
+}
