@@ -344,3 +344,54 @@ catch (Exception ex)
   throw new ApiKeyGatewayException("Gateway operation failed", "GATEWAY_OPERATION_FAILED", ex);
 }
 ```
+
+## KeyStoreUnavailableException
+
+Thrown when the key store (database or cache) is temporarily unreachable and the gateway cannot verify API key authenticity. This exception provides information about the operation that failed, if available.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+
+
+
+try
+{
+    // Simulate a key verification operation
+    await VerifyApiKeyAsync("test-key-123");
+}
+catch (KeyStoreUnavailableException ex)
+{
+    Console.WriteLine($"Key store unavailable: {ex.Message}");
+    if (ex.Operation != null)
+    {
+        Console.WriteLine($"Failed operation: {ex.Operation}");
+    }
+}
+
+// Example with operation context
+try
+{
+    await LoadKeyFromStoreAsync("key_abc123");
+}
+catch (KeyStoreUnavailableException ex) when (ex.Operation == "LoadKeyFromStore")
+{
+    Console.WriteLine($"Failed to load key from store during {ex.Operation}: {ex.Message}");
+    // Implement retry logic or fallback behavior
+}
+
+// Example wrapping the underlying exception
+try
+{
+    await Database.GetApiKeyAsync("key_123");
+}
+catch (Exception ex)
+{
+    throw new KeyStoreUnavailableException(
+        "Database connection failed while retrieving API key",
+        "GetApiKeyAsync",
+        ex
+    );
+}
+```
