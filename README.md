@@ -259,3 +259,24 @@ catch (UnauthorizedAccessException ex)
     Console.WriteLine($"Reason: {ex.Reason}");
     Console.WriteLine($"Source IP: {ex.SourceIp}");
 }
+```
+
+## ValidationException
+
+Thrown when validation of input parameters fails. This exception provides information about the failed validation, including the name of the parameter that failed, the attempted value, and a collection of validation error messages.
+
+### Example Usage
+
+```csharp
+try
+{
+    // Simulate a request with invalid input parameters
+    await DoSomethingAsync();
+}
+catch (ValidationException ex)
+{
+    Console.WriteLine($"Validation failed for parameter {ex.ParameterName} with attempted value {ex.AttemptedValue}.");
+    Console.WriteLine($"Validation errors: {string.Join(", ", ex.ValidationErrors ?? new string[0])}");
+}
+```
+```
