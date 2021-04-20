@@ -22,6 +22,52 @@ catch (ConfigurationException ex)
 }
 ```
 
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
+```
+
 ## InvalidApiKeyException
 
 Thrown when an API key is invalid, expired, or disabled. This exception provides information about the invalid API key, including its hash, the timestamp when the exception occurred, and whether the key was expired.
@@ -40,6 +86,52 @@ catch (InvalidApiKeyException ex)
   Console.WriteLine($"Exception occurred at: {ex.OccurredAt}");
   Console.WriteLine($"Key was expired: {ex.IsExpired}");
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
 
 ## IWebhookHandler
@@ -87,6 +179,52 @@ public class SampleEvent : ApiKeyEvent
 }
 ```
 
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
+```
+
 ## IBatchOperationHandler
 
 The `IBatchOperationHandler` interface enables bulk management of API keys by executing operations like disabling/enabling keys, setting quotas, or rotating keys in a single transaction. It tracks success/failure counts and provides detailed per-key results.
@@ -116,6 +254,52 @@ foreach (var item in result.Items)
 {
   Console.WriteLine($"Key {item.ApiKeyId}: {(item.Success ? "Success" : $"Error: {item.ErrorMessage}")}");
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
 
 ## CollectionExtensions
@@ -237,6 +421,52 @@ catch (RateLimitExceededException ex)
 }
 ```
 
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
+```
+
 ## DataAccessException
 
 Thrown when database or repository operations fail.
@@ -257,6 +487,52 @@ catch (DataAccessException ex)
   Console.WriteLine($"Operation: {ex.Operation}");
   Console.WriteLine($"Entity: {ex.Entity}");
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
 
 ## UnauthorizedAccessException
@@ -281,6 +557,52 @@ catch (UnauthorizedAccessException ex)
 }
 ```
 
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
+```
+
 ## ValidationException
 Thrown when validation of input parameters fails. This exception provides information about the failed validation, including the name of the parameter that failed, the attempted value, and a collection of validation error messages.
 
@@ -297,6 +619,52 @@ catch (ValidationException ex)
   Console.WriteLine($"Validation failed for parameter {ex.ParameterName} with attempted value {ex.AttemptedValue}.");
   Console.WriteLine($"Validation errors: {string.Join(", ", ex.ValidationErrors ?? new string[0])}");
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
 
 ## ApiKeyGatewayException
@@ -343,6 +711,52 @@ catch (Exception ex)
 {
   throw new ApiKeyGatewayException("Gateway operation failed", "GATEWAY_OPERATION_FAILED", ex);
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
 
 ## KeyStoreUnavailableException
@@ -394,4 +808,50 @@ catch (Exception ex)
         ex
     );
 }
+```
+
+## UsageQuota
+
+The `UsageQuota` class defines a hard usage quota for an API key that resets on a calendar basis (daily or monthly). Unlike rate limits, quotas enforce a total request cap over a billing-style period rather than a rolling window. It tracks request usage and provides methods to check quota status, reset periods, and record requests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new usage quota for an API key
+var quota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_123",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = QuotaPeriod.Daily,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+// Record a request
+quota.RecordRequest();
+
+// Check remaining requests
+Console.WriteLine($"Remaining requests: {quota.RemainingRequests}"); // 999
+
+// Check if quota is exceeded
+if (quota.IsExceeded)
+{
+    Console.WriteLine("Quota exceeded!");
+}
+
+// Get the period end time
+var periodEnd = quota.GetPeriodEndUtc();
+Console.WriteLine($"Period ends at: {periodEnd}");
+
+// Reset the period (e.g., at midnight)
+quota.ResetPeriod(DateTime.UtcNow);
+
+// Static method to get period start
+var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly);
+Console.WriteLine($"Current period started: {periodStart}");
 ```
