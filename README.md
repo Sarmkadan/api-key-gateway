@@ -1030,3 +1030,82 @@ Console.WriteLine($"Average response time: {avgResponseTime:F2}ms");
 Console.WriteLine($"Successful requests: {successfulRequests}");
 Console.WriteLine($"Error requests: {errorRequests}");
 ```
+
+## GatewayConfiguration
+
+The `GatewayConfiguration` class represents the central configuration for an API key gateway instance. It defines security policies, rate limiting, logging behavior, key generation rules, JWT signing, and database connectivity settings. This configuration is typically loaded at startup and controls all operational aspects of the gateway.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using System;
+using System.Collections.Generic;
+
+// Create a production-ready gateway configuration
+var config = new GatewayConfiguration
+{
+    Id = "gateway_prod_001",
+    RequireSsl = true,
+    LogAllRequests = true,
+    MaxKeyLength = 64,
+    MinKeyLength = 32,
+    DefaultKeyExpirationDays = 365,
+    AuditLogRetentionDays = 90,
+    EnableRateLimiting = true,
+    DefaultRateLimitPerHour = 1000,
+    EnableIpWhitelisting = true,
+    MaxConcurrentRequests = 100,
+    JwtSecret = "your-secure-jwt-secret-key-here-change-in-production",
+    DatabaseConnectionString = "Host=localhost;Port=5432;Database=api_key_gateway;Username=gateway_user;Password=secure_password_123;",
+    CustomSettings = new Dictionary<string, string>
+    {
+        ["CustomRateLimitHeader"] = "X-Custom-Rate-Limit",
+        ["EnableCaching"] = "true",
+        ["CacheDurationMinutes"] = "5"
+    },
+    UpdatedAt = DateTime.UtcNow,
+    UpdatedBy = "admin@example.com",
+    IsValid = true
+};
+
+// Access configuration properties
+Console.WriteLine($"Gateway ID: {config.Id}");
+Console.WriteLine($"SSL Required: {config.RequireSsl}");
+Console.WriteLine($"Max Key Length: {config.MaxKeyLength}");
+Console.WriteLine($"Rate Limiting Enabled: {config.EnableRateLimiting}");
+Console.WriteLine($"Default Rate Limit: {config.DefaultRateLimitPerHour}/hour");
+
+// Get a custom setting
+var customRateLimitHeader = config.GetSetting("CustomRateLimitHeader");
+Console.WriteLine($"Custom Rate Limit Header: {customRateLimitHeader}");
+
+// Update a setting
+config.SetSetting("EnableCaching", "false");
+config.SetSetting("CacheDurationMinutes", "0");
+
+// Check if configuration is valid
+if (config.IsValid)
+{
+    Console.WriteLine("Configuration is valid and ready for use.");
+}
+
+// Example with minimal required settings
+var minimalConfig = new GatewayConfiguration
+{
+    Id = "gateway_minimal",
+    RequireSsl = false,
+    LogAllRequests = false,
+    MaxKeyLength = 48,
+    MinKeyLength = 24,
+    DefaultKeyExpirationDays = 90,
+    AuditLogRetentionDays = 30,
+    EnableRateLimiting = false,
+    EnableIpWhitelisting = false,
+    MaxConcurrentRequests = 50,
+    JwtSecret = Guid.NewGuid().ToString("N"),
+    DatabaseConnectionString = "Host=localhost;Database=test_db;",
+    IsValid = true,
+    UpdatedAt = DateTime.UtcNow
+};
+```
