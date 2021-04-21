@@ -1031,6 +1031,69 @@ Console.WriteLine($"Successful requests: {successfulRequests}");
 Console.WriteLine($"Error requests: {errorRequests}");
 ```
 
+## AuditLog
+
+The `AuditLog` class records security and administrative actions for compliance and debugging purposes. It captures details about who performed an action, when it occurred, which resource was affected, and what changes were made. Audit logs support tracking API key lifecycle events, configuration changes, and security-related operations.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create an audit log entry for a successful API key creation
+var auditLog = new AuditLog
+{
+  Id = "log_001",
+  ResourceId = "key_prod_001",
+  ResourceType = "ApiKey",
+  Action = AuditAction.KeyCreated,
+  PerformedBy = "admin@example.com",
+  PerformedAt = DateTime.UtcNow,
+  HttpStatusCode = 201,
+  SourceIp = "192.168.1.100",
+  Reason = "Production API key created for external partner",
+  IsSuccess = true
+};
+
+// Record changes made during the action
+var oldKeyName = "Old Production Key";
+auditLog.RecordChange("Name", oldKeyName, "Production Key v2");
+auditLog.RecordChange("RateLimitPerHour", 1000, 5000);
+auditLog.RecordChange("ExpirationDate", null, DateTime.UtcNow.AddYears(1));
+
+// Add error information if the action failed
+if (!auditLog.IsSuccess)
+{
+  auditLog.ErrorMessage = "Failed to update API key: key not found in database";
+}
+
+// Get a human-readable description of the action
+Console.WriteLine($"Action: {auditLog.GetActionDescription()}"); // "API key created"
+
+// Access the changes dictionary to review what was modified
+foreach (var change in auditLog.Changes)
+{
+  Console.WriteLine($"{change.Key}: {change.Value}");
+}
+
+// Create an audit log for a failed authentication attempt
+var failedAuthLog = new AuditLog
+{
+  Id = "log_002",
+  ResourceId = "key_expired_001",
+  ResourceType = "ApiKey",
+  Action = AuditAction.UnauthorizedAttempt,
+  PerformedBy = "unauthenticated_user",
+  PerformedAt = DateTime.UtcNow,
+  HttpStatusCode = 401,
+  SourceIp = "203.0.113.45",
+  Reason = "Expired API key used in request",
+  IsSuccess = false,
+  ErrorMessage = "API key has expired"
+};
+```
+
 ## GatewayConfiguration
 
 The `GatewayConfiguration` class represents the central configuration for an API key gateway instance. It defines security policies, rate limiting, logging behavior, key generation rules, JWT signing, and database connectivity settings. This configuration is typically loaded at startup and controls all operational aspects of the gateway.
