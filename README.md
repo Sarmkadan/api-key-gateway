@@ -940,3 +940,93 @@ var luaRule = new TransformationRule
     IsEnabled = true
 };
 ```
+
+## UsageRecord
+
+The `UsageRecord` class tracks detailed API usage metrics for billing, analytics, and monitoring purposes. It captures comprehensive information about each API request including timing, payload sizes, response status, and contextual metadata like source IP and user agent. The class provides static utility methods for aggregating usage statistics across collections of records.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using System.Linq;
+
+// Create a usage record for a successful API request
+var usageRecord = new UsageRecord
+{
+    Id = "record_001",
+    ApiKeyId = "key_prod_001",
+    ConsumerId = "consumer_001",
+    Endpoint = "/api/v1/users",
+    Method = "GET",
+    ResponseStatusCode = 200,
+    RequestBytes = 128,
+    ResponseBytes = 2048,
+    ResponseTimeMs = 45,
+    SourceIp = "192.168.1.100",
+    UserAgent = "MyApp/1.0",
+    Tags = new Dictionary<string, string>
+    {
+        ["region"] = "us-east-1",
+        ["environment"] = "production"
+    }
+};
+
+// Access record properties
+Console.WriteLine($"Request to {usageRecord.Endpoint} took {usageRecord.ResponseTimeMs}ms");
+Console.WriteLine($"Transferred {usageRecord.TotalBytes} bytes");
+Console.WriteLine($"Status: {(usageRecord.IsError ? "Error" : "Success")}");
+
+// Create multiple usage records for analytics
+var records = new List<UsageRecord>
+{
+    new UsageRecord
+    {
+        ApiKeyId = "key_001",
+        ConsumerId = "consumer_001",
+        Endpoint = "/api/v1/data",
+        Method = "POST",
+        ResponseStatusCode = 201,
+        RequestBytes = 512,
+        ResponseBytes = 1024,
+        ResponseTimeMs = 89,
+        Tags = new Dictionary<string, string> { ["operation"] = "create" }
+    },
+    new UsageRecord
+    {
+        ApiKeyId = "key_002",
+        ConsumerId = "consumer_002",
+        Endpoint = "/api/v1/data/123",
+        Method = "GET",
+        ResponseStatusCode = 200,
+        RequestBytes = 64,
+        ResponseBytes = 2048,
+        ResponseTimeMs = 32,
+        Tags = new Dictionary<string, string> { ["operation"] = "read" }
+    },
+    new UsageRecord
+    {
+        ApiKeyId = "key_001",
+        ConsumerId = "consumer_001",
+        Endpoint = "/api/v1/data/123",
+        Method = "PUT",
+        ResponseStatusCode = 400,
+        RequestBytes = 256,
+        ResponseBytes = 128,
+        ResponseTimeMs = 22,
+        ErrorCode = "VALIDATION_ERROR",
+        Tags = new Dictionary<string, string> { ["operation"] = "update" }
+    }
+};
+
+// Use static utility methods to aggregate data
+var totalBytes = UsageRecord.CalculateTotalBytes(records);
+var avgResponseTime = UsageRecord.CalculateAverageResponseTime(records);
+var successfulRequests = UsageRecord.CountSuccessfulRequests(records);
+var errorRequests = UsageRecord.CountErrorRequests(records);
+
+Console.WriteLine($"Total bytes transferred: {totalBytes}");
+Console.WriteLine($"Average response time: {avgResponseTime:F2}ms");
+Console.WriteLine($"Successful requests: {successfulRequests}");
+Console.WriteLine($"Error requests: {errorRequests}");
+```
