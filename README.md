@@ -993,6 +993,87 @@ var minimalConsumer = new ApiKeyConsumer
 };
 ```
 
+## ApiEndpoint
+
+The `ApiEndpoint` class represents a configurable API endpoint that can be protected and routed through the gateway. It defines routing rules, access controls, caching behavior, and timeout settings for API requests. Endpoints can be configured to require API keys, restrict access to specific consumers, and apply custom headers or caching policies.
+
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using System;
+using System.Collections.Generic;
+
+// Create a new API endpoint for a public service
+var endpoint = new ApiEndpoint
+{
+    Id = "endpoint_public_api",
+    Path = "/api/v1/public/data",
+    Method = "GET",
+    TargetUrl = "https://api.example.com/v1/data",
+    Description = "Public data endpoint for external partners",
+    RequireApiKey = true,
+    TimeoutMs = 15000,
+    MaxPayloadBytes = 1048576,
+    CacheEnabled = true,
+    CacheTtlSeconds = 600,
+    AllowedConsumers = new List<string> { "consumer_001", "consumer_002" },
+    Headers = new Dictionary<string, string>
+    {
+        ["X-Service-Version"] = "1.2.3",
+        ["X-Environment"] = "production"
+    }
+};
+
+// Check if endpoint is accessible
+if (endpoint.IsAccessible())
+{
+    Console.WriteLine("Endpoint is accessible and ready to route requests.");
+}
+
+// Check if a specific consumer is allowed
+bool isAllowed = endpoint.IsConsumerAllowed("consumer_001");
+Console.WriteLine($"Consumer allowed: {isAllowed}");
+
+// Validate payload size
+bool isValidSize = endpoint.IsPayloadSizeValid(512000);
+Console.WriteLine($"Payload size valid: {isValidSize}");
+
+// Get the endpoint signature for logging
+string signature = endpoint.GetEndpointSignature();
+Console.WriteLine($"Endpoint signature: {signature}");
+
+// Create a global endpoint without consumer restrictions
+var globalEndpoint = new ApiEndpoint
+{
+    Id = "endpoint_global_health",
+    Path = "/health",
+    Method = "GET",
+    TargetUrl = "https://status.example.com/health",
+    Description = "Health check endpoint",
+    RequireApiKey = false,
+    TimeoutMs = 5000,
+    MaxPayloadBytes = 10240,
+    CacheEnabled = false
+};
+
+// Access endpoint properties
+Console.WriteLine($"Endpoint ID: {endpoint.Id}");
+Console.WriteLine($"Path: {endpoint.Path}");
+Console.WriteLine($"Method: {endpoint.Method}");
+Console.WriteLine($"Target URL: {endpoint.TargetUrl}");
+Console.WriteLine($"Is Active: {endpoint.IsActive}");
+Console.WriteLine($"Created At: {endpoint.CreatedAt:yyyy-MM-dd HH:mm:ss}");
+Console.WriteLine($"Require API Key: {endpoint.RequireApiKey}");
+Console.WriteLine($"Timeout (ms): {endpoint.TimeoutMs}");
+Console.WriteLine($"Max Payload (bytes): {endpoint.MaxPayloadBytes}");
+Console.WriteLine($"Description: {endpoint.Description}");
+Console.WriteLine($"Cache Enabled: {endpoint.CacheEnabled}");
+Console.WriteLine($"Cache TTL (seconds): {endpoint.CacheTtlSeconds}");
+```
+
 ## TransformationRule
 
 The `TransformationRule` class defines a single step in the API request transformation pipeline. Rules are evaluated in ascending `Priority` order and can mutate headers, query parameters, the request path, or body. Rules support two implementation types: built-in actions (like adding/removing headers or rewriting paths) or custom Lua scripts for advanced transformations. Rules can target specific API keys, specific consumers, or apply globally to all requests.
