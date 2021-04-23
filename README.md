@@ -856,6 +856,78 @@ var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly
 Console.WriteLine($"Current period started: {periodStart}");
 ```
 
+## ApiKeyConsumer
+
+The `ApiKeyConsumer` class represents an API consumer - a user or service using the API key gateway. It tracks consumer metadata, organization details, tier information, and provides methods to manage consumer lifecycle and activity.
+
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using System;
+using System.Collections.Generic;
+
+// Create a new API consumer
+var consumer = new ApiKeyConsumer
+{
+    Id = "consumer_001",
+    Name = "Acme Corporation",
+    Email = "api@acme-corp.com",
+    Organization = "Acme Corp",
+    Tier = "enterprise",
+    ContactPerson = "John Doe",
+    Notes = "Premium customer with custom rate limits",
+    WebhookUrl = "https://acme-corp.com/webhook/api-events",
+    CustomProperties = new Dictionary<string, string>
+    {
+        ["department"] = "engineering",
+        ["contractId"] = "CTR-2024-001",
+        ["maxConcurrentRequests"] = "100"
+    }
+};
+
+// Access consumer properties
+Console.WriteLine($"Consumer: {consumer.Name} ({consumer.Email})");
+Console.WriteLine($"Organization: {consumer.Organization}");
+Console.WriteLine($"Tier: {consumer.Tier}");
+Console.WriteLine($"Status: {(consumer.IsActive ? "Active" : "Inactive")}");
+Console.WriteLine($"Created: {consumer.CreatedAt:yyyy-MM-dd}");
+Console.WriteLine($"Total API keys: {consumer.TotalApiKeys}");
+
+// Check if consumer is valid
+if (consumer.IsValid())
+{
+    Console.WriteLine("Consumer information is valid.");
+}
+
+// Update last activity
+consumer.UpdateLastActivity();
+Console.WriteLine($"Last activity: {consumer.LastActivityAt}");
+
+// Deactivate the consumer (e.g., when contract expires)
+consumer.Deactivate();
+Console.WriteLine($"Consumer deactivated at: {consumer.InactiveSince}");
+
+// Reactivate the consumer (e.g., when contract renewed)
+consumer.Activate();
+Console.WriteLine($"Consumer reactivated. InactiveSince is now: {consumer.InactiveSince}");
+
+// Access custom properties
+var department = consumer.CustomProperties.GetValueOrDefault("department");
+Console.WriteLine($"Department: {department}");
+
+// Create a minimal consumer
+var minimalConsumer = new ApiKeyConsumer
+{
+    Id = "consumer_minimal",
+    Name = "Test User",
+    Email = "test@example.com",
+    Organization = "Test Org"
+};
+```
+
 ## TransformationRule
 
 The `TransformationRule` class defines a single step in the API request transformation pipeline. Rules are evaluated in ascending `Priority` order and can mutate headers, query parameters, the request path, or body. Rules support two implementation types: built-in actions (like adding/removing headers or rewriting paths) or custom Lua scripts for advanced transformations. Rules can target specific API keys, specific consumers, or apply globally to all requests.
