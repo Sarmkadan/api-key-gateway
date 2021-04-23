@@ -856,6 +856,71 @@ var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly
 Console.WriteLine($"Current period started: {periodStart}");
 ```
 
+## ApiKey
+
+The `ApiKey` class represents an API key entity used for authentication and authorization in the API key gateway. It tracks usage metrics, expiration status, IP restrictions, and provides methods to manage key lifecycle and validate access.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new API key for a consumer
+var apiKey = new ApiKey
+{
+    Id = "key_prod_001",
+    ConsumerId = "consumer_001",
+    Name = "Production API Key",
+    KeyHash = "hashed_value_here",
+    Prefix = "prod_abc123",
+    Status = ApiKeyStatus.Active,
+    ExpiresAt = DateTime.UtcNow.AddYears(1),
+    Description = "Production API key for external partner",
+    IpWhitelist = "192.168.1.100,192.168.1.101",
+    RateLimitId = "rate_limit_prod",
+    AllowedScopes = "/api/v1/metrics,/api/v1/stats",
+    Metadata = new Dictionary<string, string>
+    {
+        ["partnerId"] = "partner_001",
+        ["environment"] = "production"
+    }
+};
+
+// Check if the key can be used
+if (apiKey.CanBeUsed())
+{
+    Console.WriteLine("API key is valid and can be used for authentication");
+}
+
+// Record a successful usage
+apiKey.RecordUsage(bytes: 1024);
+Console.WriteLine($"Request count: {apiKey.RequestCount}");
+Console.WriteLine($"Bytes transferred: {apiKey.BytesTransferred}");
+
+// Check if IP is allowed
+bool isIpAllowed = apiKey.IsIpAllowed("192.168.1.100");
+Console.WriteLine($"IP allowed: {isIpAllowed}");
+
+// Check if scope is allowed
+bool isScopeAllowed = apiKey.IsScopeAllowed("/api/v1/metrics/usage");
+Console.WriteLine($"Scope allowed: {isScopeAllowed}");
+
+// Disable the key
+apiKey.Disable();
+Console.WriteLine($"Key disabled at: {apiKey.DisabledAt}");
+
+// Create a minimal API key
+var minimalKey = new ApiKey
+{
+    Id = "key_minimal",
+    ConsumerId = "consumer_001",
+    Name = "Minimal Key",
+    KeyHash = "hashed_value",
+    Prefix = "min_abc"
+};
+```
+
 ## ApiKeyConsumer
 
 The `ApiKeyConsumer` class represents an API consumer - a user or service using the API key gateway. It tracks consumer metadata, organization details, tier information, and provides methods to manage consumer lifecycle and activity.
