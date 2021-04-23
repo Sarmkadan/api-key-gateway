@@ -400,6 +400,65 @@ var parsedLong = originalString.TryParseLong();
 Console.WriteLine(parsedLong); // Output: null
 ```
 
+## RateLimit
+
+The `RateLimit` class defines a rolling window rate limit for an API key that tracks request counts and enforces limits based on time windows. It supports different rate limit units (seconds, minutes, hours) and provides methods to check if requests can be processed, record requests, and reset the rate limit window.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Create a new rate limit for an API key with 100 requests per minute
+var rateLimit = new RateLimit
+{
+    Id = "rate_limit_prod_001",
+    ApiKeyId = "key_prod_001",
+    RequestsPerUnit = 100,
+    Unit = RateLimitUnit.Minute,
+    IsEnabled = true,
+    CreatedAt = DateTime.UtcNow,
+    LastResetAt = null,
+    CurrentRequestCount = 0
+};
+
+// Check if a request can be processed
+if (rateLimit.CanProcessRequest())
+{
+    Console.WriteLine("Request can be processed - rate limit not exceeded.");
+    
+    // Record the request
+    rateLimit.RecordRequest();
+    Console.WriteLine($"Current request count: {rateLimit.CurrentRequestCount}");
+    Console.WriteLine($"Window in seconds: {rateLimit.GetWindowInSeconds()}");
+}
+else
+{
+    Console.WriteLine("Rate limit exceeded - cannot process request.");
+}
+
+// Check window information
+Console.WriteLine($"Rate limit: {rateLimit.RequestsPerUnit} requests per {rateLimit.Unit}");
+Console.WriteLine($"Current count: {rateLimit.CurrentRequestCount}");
+
+// Reset the window (e.g., at the start of a new minute)
+rateLimit.ResetWindow();
+Console.WriteLine($"Window reset at: {rateLimit.LastResetAt}");
+Console.WriteLine($"Current count after reset: {rateLimit.CurrentRequestCount}");
+
+// Create a rate limit with 10 requests per second for high-frequency endpoints
+var highFrequencyLimit = new RateLimit
+{
+    Id = "rate_limit_high_freq",
+    ApiKeyId = "key_high_freq",
+    RequestsPerUnit = 10,
+    Unit = RateLimitUnit.Second,
+    IsEnabled = true,
+    CreatedAt = DateTime.UtcNow
+};
+```
+
 ## RateLimitExceededException
 
 Thrown when a request exceeds the configured rate limit for an API key.
