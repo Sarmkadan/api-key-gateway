@@ -1052,6 +1052,105 @@ var minimalConsumer = new ApiKeyConsumer
 };
 ```
 
+## IApiKeyService
+
+The `IApiKeyService` interface manages the complete lifecycle of API keys including creation, validation, status changes, and security configuration. It provides methods for generating new keys, retrieving existing keys, validating key authenticity, managing key lifecycle (enable/disable/revoke), and controlling IP-based access restrictions. The service handles key hashing, expiration tracking, and comprehensive logging for security auditing.
+
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+// Create an instance of the API key service
+// In a real application, this would be injected via dependency injection
+var apiKeyService = new ApiKeyService(repository, logger);
+
+// Create a new API key for a consumer
+var newKey = await apiKeyService.CreateKeyAsync(
+    consumerId: "consumer_001",
+    name: "Production API Key",
+    expirationDays: 365
+);
+
+Console.WriteLine($"Created API key: {newKey.Id}");
+Console.WriteLine($"Key prefix: {newKey.Prefix}");
+Console.WriteLine($"Expires at: {newKey.ExpiresAt?.ToString("yyyy-MM-dd")}");
+
+// Retrieve an API key by its ID
+var retrievedKey = await apiKeyService.GetByIdAsync(newKey.Id);
+if (retrievedKey != null)
+{
+    Console.WriteLine($"Retrieved key: {retrievedKey.Name}");
+}
+
+// Validate an API key (e.g., during authentication)
+try
+{
+    var validatedKey = await apiKeyService.ValidateKeyAsync("sk_abc123...");
+    if (validatedKey != null)
+    {
+        Console.WriteLine("API key is valid and can be used for authentication");
+    }
+}
+catch (InvalidApiKeyException ex)
+{
+    Console.WriteLine($"Invalid API key: {ex.Message}");
+}
+
+// Disable an API key temporarily
+var disableResult = await apiKeyService.DisableKeyAsync(newKey.Id);
+Console.WriteLine($"Key disabled: {disableResult}");
+
+// Re-enable the API key
+var enableResult = await apiKeyService.EnableKeyAsync(newKey.Id);
+Console.WriteLine($"Key enabled: {enableResult}");
+
+// Permanently revoke an API key
+var revokeResult = await apiKeyService.RevokeKeyAsync(newKey.Id);
+Console.WriteLine($"Key revoked: {revokeResult}");
+
+// Get all API keys for a consumer
+var consumerKeys = await apiKeyService.GetConsumerKeysAsync("consumer_001");
+Console.WriteLine($"Consumer has {consumerKeys.Count} API keys");
+
+// Update metadata for an API key
+var updateResult = await apiKeyService.UpdateKeyMetadataAsync(
+    newKey.Id,
+    new Dictionary<string, string>
+    {
+        ["environment"] = "production",
+        ["partnerId"] = "partner_001",
+        ["maxRequestsPerMinute"] = "1000"
+    }
+);
+Console.WriteLine($"Metadata updated: {updateResult}");
+
+// Manage IP whitelisting for enhanced security
+var ipWhitelist = await apiKeyService.GetIpWhitelistAsync(newKey.Id);
+Console.WriteLine($"Current whitelist has {ipWhitelist.Count} IPs");
+
+// Set a new IP whitelist (replace all existing entries)
+var setWhitelistResult = await apiKeyService.SetIpWhitelistAsync(
+    newKey.Id,
+    new List<string> { "192.168.1.100", "192.168.1.101", "10.0.0.5" }
+);
+Console.WriteLine($"Whitelist set: {setWhitelistResult}");
+
+// Add a single IP address to the whitelist
+var addIpResult = await apiKeyService.AddIpToWhitelistAsync(newKey.Id, "192.168.1.200");
+Console.WriteLine($"IP added to whitelist: {addIpResult}");
+
+// Remove an IP address from the whitelist
+var removeIpResult = await apiKeyService.RemoveIpFromWhitelistAsync(newKey.Id, "192.168.1.100");
+Console.WriteLine($"IP removed from whitelist: {removeIpResult}");
+```
+
 ## IUsageTrackingService
 
 The `IUsageTrackingService` interface tracks API usage metrics for analytics, billing, and monitoring purposes. It records detailed usage records for each API request and provides methods to retrieve usage statistics and historical data filtered by API key and date range.
