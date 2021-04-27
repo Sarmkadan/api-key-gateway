@@ -1052,6 +1052,60 @@ var minimalConsumer = new ApiKeyConsumer
 };
 ```
 
+## CorrelationContextMiddleware
+
+The `CorrelationContextMiddleware` establishes correlation context for request tracing across distributed systems. It generates or extracts correlation IDs from incoming requests, stores them in the `HttpContext` for access by downstream handlers, and adds them to response headers. This middleware also extracts and stores the API key ID and client IP address for comprehensive request tracking.
+
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Middleware;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+
+// Configure the middleware in your application startup
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpContextAccessor();
+
+var app = builder.Build();
+
+// Add CorrelationContextMiddleware to the pipeline
+app.UseMiddleware<CorrelationContextMiddleware>();
+
+// Your other middleware and endpoints
+app.MapGet("/api/test", (HttpContext context) => 
+{
+    // Access correlation context from HttpContext
+    var correlationId = context.GetCorrelationId();
+    var apiKeyId = context.GetApiKeyId();
+    var clientIp = context.GetClientIp();
+    
+    return Results.Ok(new {
+        Message = "Request processed successfully",
+        CorrelationId = correlationId,
+        ApiKeyId = apiKeyId,
+        ClientIp = clientIp
+    });
+});
+
+app.Run();
+
+// Example HTTP request with correlation ID header:
+// GET /api/test
+// Headers:
+//   X-Correlation-ID: abc-123-def-456
+// Response will include:
+//   X-Correlation-ID: abc-123-def-456
+
+// In a downstream service or logging middleware, you can access:
+// var correlationId = httpContext.GetCorrelationId();
+// var apiKeyId = httpContext.GetApiKeyId();
+// var clientIp = httpContext.GetClientIp();
+```
+
 ## ApiEndpoint
 
 The `ApiEndpoint` class represents a configurable API endpoint that can be protected and routed through the gateway. It defines routing rules, access controls, caching behavior, and timeout settings for API requests. Endpoints can be configured to require API keys, restrict access to specific consumers, and apply custom headers or caching policies.
