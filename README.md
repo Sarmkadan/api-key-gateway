@@ -1052,6 +1052,80 @@ var minimalConsumer = new ApiKeyConsumer
 };
 ```
 
+## IUsageTrackingService
+
+The `IUsageTrackingService` interface tracks API usage metrics for analytics, billing, and monitoring purposes. It records detailed usage records for each API request and provides methods to retrieve usage statistics and historical data filtered by API key and date range.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Services;
+using System;
+using System.Threading.Tasks;
+
+// Create a usage record for a successful API request
+var usageRecord = new UsageRecord
+{
+Id = "usage_001",
+ApiKeyId = "key_prod_001",
+ConsumerId = "consumer_001",
+Endpoint = "/api/v1/users",
+Method = "GET",
+ResponseStatusCode = 200,
+RequestBytes = 128,
+ResponseBytes = 2048,
+ResponseTimeMs = 45,
+SourceIp = "192.168.1.100",
+UserAgent = "MyApp/1.0",
+Timestamp = DateTime.UtcNow,
+Tags = new Dictionary<string, string>
+{
+["region"] = "us-east-1",
+["environment"] = "production"
+}
+};
+
+// Record the usage
+var usageTrackingService = new UsageTrackingService(repository, logger);
+await usageTrackingService.RecordUsageAsync(usageRecord);
+
+// Retrieve usage statistics for a specific API key over the last 7 days
+var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
+var stats = await usageTrackingService.GetUsageStatisticsAsync(
+apiKeyId: "key_prod_001",
+startDate: sevenDaysAgo,
+endDate: DateTime.UtcNow
+);
+
+Console.WriteLine($"Usage for key {stats.ApiKeyId}:");
+Console.WriteLine($"  Total requests: {stats.TotalRequests}");
+Console.WriteLine($"  Successful: {stats.SuccessfulRequests}");
+Console.WriteLine($"  Failed: {stats.FailedRequests}");
+Console.WriteLine($"  Success rate: {stats.SuccessRate:P}");
+Console.WriteLine($"  Total bytes: {stats.TotalBytesTransferred:N0}");
+Console.WriteLine($"  Avg response time: {stats.AverageResponseTimeMs:F2}ms");
+Console.WriteLine($"  Unique endpoints: {stats.UniqueEndpoints}");
+
+// Get detailed usage records for billing purposes
+var records = await usageTrackingService.GetUsageRecordsAsync(
+apiKeyId: "key_prod_001",
+startDate: sevenDaysAgo,
+endDate: DateTime.UtcNow
+);
+
+Console.WriteLine($"Retrieved {records.Count} usage records");
+
+// Calculate total bandwidth used by a consumer
+var totalBytes = await usageTrackingService.GetTotalBytesUsedAsync(
+consumerId: "consumer_001",
+startDate: DateTime.UtcNow.AddMonths(-1),
+endDate: DateTime.UtcNow
+);
+
+Console.WriteLine($"Consumer used {totalBytes:N0} bytes in the last month");
+```
+
 ## CorrelationContextMiddleware
 
 The `CorrelationContextMiddleware` establishes correlation context for request tracing across distributed systems. It generates or extracts correlation IDs from incoming requests, stores them in the `HttpContext` for access by downstream handlers, and adds them to response headers. This middleware also extracts and stores the API key ID and client IP address for comprehensive request tracking.
