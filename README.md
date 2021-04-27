@@ -1218,6 +1218,79 @@ var luaRule = new TransformationRule
 };
 ```
 
+## ITransformationPipeline
+
+The `ITransformationPipeline` interface orchestrates the complete request transformation workflow. It evaluates all enabled transformation rules in ascending priority order, applying header modifications, query parameter changes, path rewrites, body transformations, and Lua script execution to in-flight HTTP requests before they reach their destination handlers. The pipeline can block requests based on rule evaluation and provides detailed execution metrics.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Transformation;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+
+// Create a transformation pipeline with required dependencies
+var ruleRepository = new TransformationRuleRepository(); // Your implementation
+var luaScriptExecutor = new LuaScriptExecutor(
+    new LuaExecutionOptions { MaxExecutionMs = 100 },
+    new Logger<LuaScriptExecutor>()
+);
+var pipeline = new TransformationPipeline(ruleRepository, luaScriptExecutor);
+
+// Create a sample HTTP request context
+var httpContext = new DefaultHttpContext();
+httpContext.Request.Method = "GET";
+httpContext.Request.Path = "/api/v1/users";
+httpContext.Request.QueryString = new QueryString("?format=json&debug=true");
+httpContext.Request.Headers["X-Forwarded-For"] = "192.168.1.100";
+httpContext.Request.Headers["Accept"] = "application/json";
+
+// Create transformation context from the HTTP request
+var context = new TransformationContext(
+    httpContext.Request,
+    apiKeyId: "key_prod_001",
+    consumerId: "consumer_001"
+);
+
+// Execute the transformation pipeline
+var result = await pipeline.ApplyAsync(context);
+
+// Process the transformation result
+if (result.IsBlocked)
+{
+    Console.WriteLine($"Request blocked: {result.BlockReason}");
+    return Results.Forbid();
+}
+
+if (!result.Success)
+{
+    Console.WriteLine("Transformation pipeline failed:");
+    foreach (var error in result.Errors)
+    {
+        Console.WriteLine($"- Rule {error.Key}: {error.Value}");
+    }
+    return Results.BadRequest("Request transformation failed");
+}
+
+Console.WriteLine($"Pipeline executed successfully in {result.Elapsed.TotalMilliseconds}ms");
+Console.WriteLine($"Rules evaluated: {result.RulesEvaluated}, rules applied: {result.RulesApplied}");
+
+// Access the transformed request data
+Console.WriteLine($"Transformed method: {context.Method}");
+Console.WriteLine($"Transformed path: {context.Path}");
+Console.WriteLine("Modified headers:");
+foreach (var header in context.Headers)
+{
+    Console.WriteLine($"  {header.Key}: {header.Value}");
+}
+Console.WriteLine("Modified query parameters:");
+foreach (var param in context.QueryParameters)
+{
+    Console.WriteLine($"  {param.Key}: {param.Value}");
+}
+```
+
 ## ILuaScriptExecutor
 
 The `ILuaScriptExecutor` interface executes sandboxed Lua scripts within the request transformation pipeline. Each invocation receives an isolated MoonSharp environment populated with the current `TransformationContext`; mutations made inside the script are reflected back into the context after execution completes. Scripts can modify headers, query parameters, request path, method, and body content. The executor runs scripts in a secure sandbox that prevents file-system access, process execution, and network I/O, and enforces configurable timeouts.
