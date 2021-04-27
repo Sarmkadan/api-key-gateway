@@ -1218,6 +1218,87 @@ var luaRule = new TransformationRule
 };
 ```
 
+## ILuaScriptExecutor
+
+The `ILuaScriptExecutor` interface executes sandboxed Lua scripts within the request transformation pipeline. Each invocation receives an isolated MoonSharp environment populated with the current `TransformationContext`; mutations made inside the script are reflected back into the context after execution completes. Scripts can modify headers, query parameters, request path, method, and body content. The executor runs scripts in a secure sandbox that prevents file-system access, process execution, and network I/O, and enforces configurable timeouts.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Transformation;
+using ApiKeyGateway.Domain.Models;
+using System.Threading.Tasks;
+
+// Create a Lua script executor with execution options
+var options = new LuaExecutionOptions
+{
+    MaxExecutionMs = 100,
+    MaxScriptSizeBytes = 1024
+};
+var logger = new Logger<LuaScriptExecutor>(); // Use actual logger in real code
+var scriptExecutor = new LuaScriptExecutor(options, logger);
+
+// Create a transformation context
+var context = new TransformationContext
+{
+    Headers = new Dictionary<string, string>
+    {
+        ["X-Original-Header"] = "original-value"
+    },
+    QueryParameters = new Dictionary<string, string>
+    {
+        ["param1"] = "value1"
+    },
+    Body = "{\"test\": \"data\"}",
+    Method = "GET",
+    Path = "/api/v1/resource",
+    SourceIp = "192.168.1.100",
+    ConsumerId = "consumer_001",
+    ApiKeyId = "key_001"
+};
+
+// Define a Lua script that adds a custom header
+var luaScript = @"
+-- Add custom header
+request.headers["X-Custom-Header"] = "custom-value"
+
+-- Modify query parameter
+request.query.param1 = "modified-value"
+
+-- Log the transformation
+print("Transformed request for " .. request.path)
+";
+
+// Execute the script
+bool shouldContinue = await scriptExecutor.ExecuteAsync(luaScript, context);
+
+if (shouldContinue)
+{
+    Console.WriteLine("Script executed successfully");
+    Console.WriteLine($"Modified headers: {string.Join(", ", context.Headers.Select(h => h.Key))}");
+    Console.WriteLine($"Modified query params: {string.Join(", ", context.QueryParameters.Select(q => q.Key))}");
+}
+else
+{
+    Console.WriteLine("Script blocked the request");
+}
+
+// Validate a script before execution
+var validationResult = scriptExecutor.Validate(luaScript);
+if (validationResult.IsValid)
+{
+    Console.WriteLine("Script is valid and safe to execute");
+}
+else
+{
+    Console.WriteLine("Script validation failed:");
+    foreach (var error in validationResult.Errors)
+    {
+        Console.WriteLine($"- {error}");
+    }
+}
+```
+
 ## UsageRecord
 
 The `UsageRecord` class tracks detailed API usage metrics for billing, analytics, and monitoring purposes. It captures comprehensive information about each API request including timing, payload sizes, response status, and contextual metadata like source IP and user agent. The class provides static utility methods for aggregating usage statistics across collections of records.
