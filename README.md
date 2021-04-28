@@ -1331,6 +1331,78 @@ foreach (var kvp in snapshot.ErrorsByCode)
 }
 ```
 
+## IRateLimitingService
+
+The `IRateLimitingService` interface manages rate limiting enforcement and tracking for API keys. It provides methods to check if requests are allowed under configured limits, record request usage, retrieve rate limit configurations, update limits, and manually reset rate limit windows. This service is essential for preventing abuse and ensuring fair usage of API resources.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the rate limiting service
+// In a real application, this would be injected via dependency injection
+var loggerFactory = LoggerFactory.Create(builder => {});
+var logger = loggerFactory.CreateLogger<RateLimitingService>();
+var rateLimitRepository = new RateLimitRepository(); // Your implementation
+var rateLimitingService = new RateLimitingService(rateLimitRepository, logger);
+
+// Check if a request is allowed under the rate limit
+bool isAllowed = await rateLimitingService.CheckLimitAsync("key_prod_001");
+Console.WriteLine($"Request allowed: {isAllowed}");
+
+// Record a request for rate limit tracking
+await rateLimitingService.RecordRequestAsync("key_prod_001");
+Console.WriteLine("Request recorded for rate limiting");
+
+// Retrieve the rate limit configuration for an API key
+var rateLimit = await rateLimitingService.GetLimitAsync("key_prod_001");
+if (rateLimit != null)
+{
+    Console.WriteLine($"Rate limit: {rateLimit.RequestsPerUnit} requests per {rateLimit.Unit}");
+    Console.WriteLine($"Current usage: {rateLimit.CurrentRequestCount}");
+}
+
+// Update the rate limit configuration
+bool updated = await rateLimitingService.UpdateLimitAsync(
+    apiKeyId: "key_prod_001",
+    requestsPerUnit: 1000,
+    unit: RateLimitUnit.Minute
+);
+Console.WriteLine($"Rate limit updated: {updated}");
+
+// Manually reset the rate limit window
+await rateLimitingService.ResetWindowAsync("key_prod_001");
+Console.WriteLine("Rate limit window reset");
+
+// Example with a new API key that needs rate limiting setup
+var newRateLimit = new RateLimit
+{
+    Id = "rate_limit_new_key",
+    ApiKeyId = "key_new_001",
+    RequestsPerUnit = 100,
+    Unit = RateLimitUnit.Second,
+    IsEnabled = true,
+    CreatedAt = DateTime.UtcNow
+};
+
+// Save the new rate limit
+await rateLimitRepository.CreateAsync(newRateLimit);
+
+// Check and record requests for the new key
+bool canProcess = await rateLimitingService.CheckLimitAsync("key_new_001");
+if (canProcess)
+{
+    await rateLimitingService.RecordRequestAsync("key_new_001");
+    Console.WriteLine("New API key request processed successfully");
+}
+```
+
 ## IUsageTrackingService
 
 The `IUsageTrackingService` interface tracks API usage metrics for analytics, billing, and monitoring purposes. It records detailed usage records for each API request and provides methods to retrieve usage statistics and historical data filtered by API key and date range.
