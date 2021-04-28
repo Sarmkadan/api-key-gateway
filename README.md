@@ -1104,6 +1104,78 @@ var minimalConsumer = new ApiKeyConsumer
 };
 ```
 
+## IAuditLogService
+
+The `IAuditLogService` interface manages audit logging for compliance and security monitoring. It provides methods to record audit events, retrieve logs by resource ID or time period, and clean up old logs based on retention policies. This service ensures all administrative actions, security events, and API key lifecycle changes are properly documented for regulatory compliance and debugging purposes.
+
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Services;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the audit log service
+// In a real application, this would be injected via dependency injection
+var logger = new Logger<AuditLogService>(new LoggerFactory());
+var auditLogService = new AuditLogService(repository, logger);
+
+// Create an audit log entry for a successful API key creation
+var auditLog = new AuditLog
+{
+    Id = "log_001",
+    ResourceId = "key_prod_001",
+    ResourceType = "ApiKey",
+    Action = AuditAction.KeyCreated,
+    PerformedBy = "admin@example.com",
+    PerformedAt = DateTime.UtcNow,
+    HttpStatusCode = 201,
+    SourceIp = "192.168.1.100",
+    Reason = "Production API key created for external partner",
+    IsSuccess = true
+};
+
+// Record the audit event
+await auditLogService.LogAsync(auditLog);
+
+// Retrieve audit logs for a specific API key
+var apiKeyLogs = await auditLogService.GetLogsAsync("key_prod_001", limit: 50);
+Console.WriteLine($"Found {apiKeyLogs.Count} logs for API key key_prod_001");
+
+// Retrieve audit logs for the last 24 hours
+var twentyFourHoursAgo = DateTime.UtcNow.AddHours(-24);
+var recentLogs = await auditLogService.GetLogsForPeriodAsync(twentyFourHoursAgo, DateTime.UtcNow);
+Console.WriteLine($"Found {recentLogs.Count} logs in the last 24 hours");
+
+// Clean up old audit logs (e.g., logs older than 90 days)
+await auditLogService.CleanupOldLogsAsync(retentionDays: 90);
+Console.WriteLine("Old audit logs cleanup completed");
+
+// Example with failed authentication attempt
+var failedAuthLog = new AuditLog
+{
+    Id = "log_002",
+    ResourceId = "key_expired_001",
+    ResourceType = "ApiKey",
+    Action = AuditAction.UnauthorizedAttempt,
+    PerformedBy = "unauthenticated_user",
+    PerformedAt = DateTime.UtcNow,
+    HttpStatusCode = 401,
+    SourceIp = "203.0.113.45",
+    Reason = "Expired API key used in request",
+    IsSuccess = false,
+    ErrorMessage = "API key has expired"
+};
+
+// Record the failed authentication
+await auditLogService.LogAsync(failedAuthLog);
+```
+
 ## IApiKeyService
 
 The `IApiKeyService` interface manages the complete lifecycle of API keys including creation, validation, status changes, and security configuration. It provides methods for generating new keys, retrieving existing keys, validating key authenticity, managing key lifecycle (enable/disable/revoke), and controlling IP-based access restrictions. The service handles key hashing, expiration tracking, and comprehensive logging for security auditing.
