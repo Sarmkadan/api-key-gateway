@@ -1275,6 +1275,62 @@ var removeIpResult = await apiKeyService.RemoveIpFromWhitelistAsync(newKey.Id, "
 Console.WriteLine($"IP removed from whitelist: {removeIpResult}");
 ```
 
+## IMetricsCollectionService
+
+The `IMetricsCollectionService` interface collects and aggregates metrics for monitoring and observability. It tracks request counts, error rates, latencies, and quota usage across all API operations. These metrics feed into dashboards, alerting systems, and performance monitoring tools to provide visibility into gateway performance and usage patterns.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the metrics collection service
+// In a real application, this would be injected via dependency injection
+var loggerFactory = LoggerFactory.Create(builder => {});
+var logger = loggerFactory.CreateLogger<MetricsCollectionService>();
+var metricsService = new MetricsCollectionService(logger);
+
+// Record a successful API request
+metricsService.RecordRequest(
+    apiKeyId: "key_prod_001",
+    endpoint: "/api/v1/users",
+    statusCode: 200,
+    latencyMs: 45
+);
+
+// Record a rate limit exceeded event
+metricsService.RecordRateLimitExceeded("key_prod_001");
+
+// Record an error
+metricsService.RecordError("key_prod_001", "VALIDATION_ERROR");
+
+// Get current metrics snapshot
+var snapshot = metricsService.GetSnapshot();
+
+Console.WriteLine($"Metrics collected at: {snapshot.Timestamp:yyyy-MM-dd HH:mm:ss}");
+Console.WriteLine($"Total requests: {snapshot.TotalRequests}");
+Console.WriteLine($"Total errors: {snapshot.TotalErrors}");
+Console.WriteLine($"Error rate: {snapshot.ErrorRate:F2}%");
+Console.WriteLine($"Average latency: {snapshot.AverageLatencyMs:F2}ms");
+Console.WriteLine($"P95 latency: {snapshot.P95LatencyMs}ms");
+Console.WriteLine($"Rate limit exceeded: {snapshot.TotalRateLimitExceeded}");
+
+Console.WriteLine("Requests by endpoint:");
+foreach (var kvp in snapshot.RequestsByEndpoint)
+{
+    Console.WriteLine($"  {kvp.Key}: {kvp.Value} requests");
+}
+
+Console.WriteLine("Errors by code:");
+foreach (var kvp in snapshot.ErrorsByCode)
+{
+    Console.WriteLine($"  {kvp.Key}: {kvp.Value} errors");
+}
+```
+
 ## IUsageTrackingService
 
 The `IUsageTrackingService` interface tracks API usage metrics for analytics, billing, and monitoring purposes. It records detailed usage records for each API request and provides methods to retrieve usage statistics and historical data filtered by API key and date range.
