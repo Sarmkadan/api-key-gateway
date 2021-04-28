@@ -1954,3 +1954,53 @@ var minimalConfig = new GatewayConfiguration
     UpdatedAt = DateTime.UtcNow
 };
 ```
+
+## IRequestCoalescingService
+
+The `IRequestCoalescingService` interface manages request coalescing to prevent duplicate concurrent requests for the same resource. It provides methods to execute a function while automatically coalescing identical concurrent requests into a single execution, returning the same result to all callers. This is particularly useful for expensive operations like API key validation or rate limit calculations where multiple identical requests arrive simultaneously.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the request coalescing service
+// In a real application, this would be injected via dependency injection
+var coalescingService = new RequestCoalescingService();
+
+// Execute a function with request coalescing
+// Multiple concurrent calls with the same cacheKey will only execute once
+var result = await coalescingService.ExecuteAsync(
+    cacheKey: "validate_key_abc123",
+    asyncFunc: async () => 
+    {
+        // Expensive operation - only runs once for identical cache keys
+        var apiKey = await ValidateApiKeyAsync("abc123");
+        return apiKey;
+    }
+);
+
+Console.WriteLine($"Result: {result}");
+
+// Get current coalescing metrics
+var metrics = coalescingService.GetMetrics();
+Console.WriteLine($"Active coalescers: {metrics.ActiveCoalescers}");
+Console.WriteLine($"Total coalesced requests: {metrics.TotalCoalescedRequests}");
+Console.WriteLine($"Total executions: {metrics.TotalExecutions}");
+Console.WriteLine($"Cache hits: {metrics.CacheHits}");
+Console.WriteLine($"Cache misses: {metrics.CacheMisses}");
+
+// The same cache key will reuse the existing result
+var cachedResult = await coalescingService.ExecuteAsync(
+    cacheKey: "validate_key_abc123",
+    asyncFunc: async () => 
+    {
+        // This won't execute - result is cached from previous call
+        throw new InvalidOperationException("Should not execute!");
+    }
+);
+
+Console.WriteLine($"Cached result: {cachedResult}");
+```
