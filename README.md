@@ -980,6 +980,58 @@ var minimalKey = new ApiKey
 };
 ```
 
+## RotationResult
+
+The `RotationResult` class represents the outcome of a single API key rotation operation. It contains information about both the old and new keys, the consumer affected, success status, and any failure reasons. This type is returned by `IApiKeyRotationService.RotateKeyAsync` and `IApiKeyRotationService.RotateExpiringSoonAsync` methods.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the rotation service
+var rotationService = new ApiKeyRotationService(apiKeyService, repository, logger);
+
+// Rotate a single API key
+var rotationResult = await rotationService.RotateKeyAsync(
+    keyId: "key_prod_001",
+    newExpirationDays: 365
+);
+
+// Process the rotation result
+if (rotationResult.Success)
+{
+    Console.WriteLine($"Successfully rotated key {rotationResult.OldKeyId} → {rotationResult.NewKeyId}");
+    Console.WriteLine($"Consumer: {rotationResult.ConsumerId}");
+    Console.WriteLine($"New key expires at: {rotationResult.NewKeyExpiresAt?.ToString("yyyy-MM-dd")}");
+}
+else
+{
+    Console.WriteLine($"Failed to rotate key {rotationResult.OldKeyId}: {rotationResult.FailureReason}");
+}
+
+// Batch rotate all keys expiring within 7 days
+var batchResults = await rotationService.RotateExpiringSoonAsync(
+    warningDays: 7,
+    newExpirationDays: 365
+);
+
+Console.WriteLine($"Batch rotation completed: {batchResults.Count(r => r.Success)}/{batchResults.Count} succeeded");
+foreach (var result in batchResults)
+{
+    if (result.Success)
+    {
+        Console.WriteLine($"✓ Rotated {result.OldKeyId} → {result.NewKeyId} for {result.ConsumerId}");
+    }
+    else
+    {
+        Console.WriteLine($"✗ Failed to rotate {result.OldKeyId}: {result.FailureReason}");
+    }
+}
+```
+
 ## ApiKeyConsumer
 
 The `ApiKeyConsumer` class represents an API consumer - a user or service using the API key gateway. It tracks consumer metadata, organization details, tier information, and provides methods to manage consumer lifecycle and activity.
