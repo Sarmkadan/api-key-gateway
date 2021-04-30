@@ -1467,6 +1467,55 @@ if (canProcess)
 }
 ```
 
+## AnalyticsSummary
+
+The `AnalyticsSummary` class provides aggregated usage analytics for a single API key over a specified date range. It includes high-level metrics such as total requests, success/failure rates, response times, bandwidth usage, and unique endpoints/IPs. This type is returned by `IUsageAnalyticsService.GetSummaryAsync` and is useful for generating dashboards, billing reports, and usage analytics.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the usage analytics service
+// In a real application, this would be injected via dependency injection
+var loggerFactory = LoggerFactory.Create(builder => {});
+var logger = loggerFactory.CreateLogger<UsageAnalyticsService>();
+var usageTrackingService = new UsageTrackingService(repository, logger); // Your implementation
+var analyticsService = new UsageAnalyticsService(usageTrackingService, logger);
+
+// Get analytics summary for an API key over the last 7 days
+var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
+var summary = await analyticsService.GetSummaryAsync(
+    apiKeyId: "key_prod_001",
+    from: sevenDaysAgo,
+    to: DateTime.UtcNow
+);
+
+// Access the aggregated metrics
+Console.WriteLine($"Analytics for API key: {summary.ApiKeyId}");
+Console.WriteLine($"Period: {summary.From:yyyy-MM-dd} to {summary.To:yyyy-MM-dd}");
+Console.WriteLine($"Total requests: {summary.TotalRequests}");
+Console.WriteLine($"Successful: {summary.SuccessfulRequests} ({summary.SuccessRatePercent}%)");
+Console.WriteLine($"Failed: {summary.FailedRequests} ({summary.ErrorRatePercent}%)");
+Console.WriteLine($"Average response time: {summary.AverageResponseTimeMs:F2}ms");
+Console.WriteLine($"Total bytes transferred: {summary.TotalBytesTransferred:N0}");
+Console.WriteLine($"Unique endpoints: {summary.UniqueEndpoints}");
+Console.WriteLine($"Unique source IPs: {summary.UniqueSourceIps}");
+
+// Use the data for reporting or monitoring
+if (summary.SuccessRatePercent < 95.0)
+{
+    Console.WriteLine("Warning: Low success rate detected!");
+}
+
+if (summary.AverageResponseTimeMs > 500)
+{
+    Console.WriteLine("Warning: High average response time detected!");
+}
+```
+
 ## IUsageTrackingService
 
 The `IUsageTrackingService` interface tracks API usage metrics for analytics, billing, and monitoring purposes. It records detailed usage records for each API request and provides methods to retrieve usage statistics and historical data filtered by API key and date range.
