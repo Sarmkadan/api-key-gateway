@@ -225,6 +225,74 @@ var periodStart = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Monthly
 Console.WriteLine($"Current period started: {periodStart}");
 ```
 
+## TransformationPipelineOptions
+
+The `TransformationPipelineOptions` class configures the behavior of the request transformation pipeline. It controls whether transformations are enabled, limits on rule processing, caching behavior, Lua script execution parameters, and static rule definitions. These options are typically configured during application startup and influence how API requests are modified before reaching their destination handlers.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Configuration;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+
+// Configure transformation pipeline options in Startup.cs or Program.cs
+var transformationOptions = new TransformationPipelineOptions
+{
+    IsEnabled = true,
+    MaxRulesPerRequest = 20,
+    StopOnError = false,
+    EnableBodyCapture = true,
+    MaxBodySizeBytes = 1048576, // 1MB
+    RuleCacheTtl = TimeSpan.FromMinutes(5)
+};
+
+// Add static rules directly in configuration
+transformationOptions.StaticRules = new List<TransformationRule>
+{
+    new TransformationRule
+    {
+        Id = "static_add_header",
+        Name = "Add Static Header",
+        Description = "Adds custom header to all requests",
+        Scope = TransformationScope.Global,
+        Type = TransformationRuleType.BuiltIn,
+        Action = BuiltInAction.AddHeader,
+        Parameters = new Dictionary<string, string>
+        {
+            ["HeaderName"] = "X-Custom-Header",
+            ["HeaderValue"] = "api-gateway-transformed"
+        },
+        Priority = 10,
+        IsEnabled = true
+    }
+};
+
+// Configure Lua execution options
+transformationOptions.Lua = new LuaExecutionOptions
+{
+    IsEnabled = true,
+    MaxExecutionMs = 100,
+    MaxScriptSizeBytes = 2048
+};
+
+// Register the transformation pipeline in DI container
+services.AddRequestTransformationPipeline(transformationOptions);
+
+// Example with minimal configuration
+var minimalOptions = new TransformationPipelineOptions
+{
+    IsEnabled = false, // Pipeline disabled
+    MaxRulesPerRequest = 10,
+    StopOnError = true,
+    EnableBodyCapture = false,
+    MaxBodySizeBytes = 10240,
+    RuleCacheTtl = TimeSpan.FromMinutes(1)
+};
+```
+
 ## IBatchOperationHandler
 
 The `IBatchOperationHandler` interface enables bulk management of API keys by executing operations like disabling/enabling keys, setting quotas, or rotating keys in a single transaction. It tracks success/failure counts and provides detailed per-key results.
