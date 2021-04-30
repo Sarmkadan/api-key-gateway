@@ -1339,9 +1339,89 @@ bool monthlyQuotaSet = await usageQuotaService.SetQuotaAsync(
 Console.WriteLine($"Monthly quota set successfully: {monthlyQuotaSet}");
 ```
 
+## IDbConnection
+
+The `IDbConnection` interface represents a connection to a database and is the primary abstraction for database connectivity in .NET applications. It provides methods for opening and closing connections, creating commands and parameters, and managing connection lifecycle. This interface is part of ADO.NET and is implemented by database-specific providers like `SqlConnection`, `NpgsqlConnection`, and `MySqlConnection`.
+
+
+### Example Usage
+
+```csharp
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+
+// Create a new database connection
+using (var connection = new SqlConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;"))
+{
+    // Open the connection asynchronously
+    await connection.OpenAsync();
+    
+    // Create a command for executing SQL queries
+    using (var command = connection.CreateCommand())
+    {
+        command.CommandText = "SELECT COUNT(*) FROM ApiKeys WHERE Status = @status";
+        
+        // Create and add parameters
+        var statusParam = command.CreateParameter();
+        statusParam.ParameterName = "@status";
+        statusParam.Value = "Active";
+        command.Parameters.Add(statusParam);
+        
+        // Execute the command
+        var count = await command.ExecuteScalarAsync();
+        Console.WriteLine($"Active API keys: {count}");
+    }
+    
+    // Close the connection explicitly (optional - Dispose() will close it)
+    await connection.CloseAsync();
+}
+
+// Example with exception handling and connection pooling
+try
+{
+    using (var connection = new SqlConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;"))
+    {
+        await connection.OpenAsync();
+        
+        // Create a parameterized query
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT * FROM ApiKeys WHERE Id = @id AND Status = @status";
+            
+            var idParam = command.CreateParameter();
+            idParam.ParameterName = "@id";
+            idParam.Value = "key_123";
+            command.Parameters.Add(idParam);
+            
+            var statusParam = command.CreateParameter();
+            statusParam.ParameterName = "@status";
+            statusParam.Value = "Active";
+            command.Parameters.Add(statusParam);
+            
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var keyId = reader.GetString(0);
+                    var keyHash = reader.GetString(1);
+                    Console.WriteLine($"Found key: {keyId}");
+                }
+            }
+        }
+    }
+}
+catch (DbConnectionException ex)
+{
+    Console.WriteLine($"Database connection failed: {ex.Message}");
+}
+```
+
 ## IMetricsCollectionService
 
 The `IMetricsCollectionService` interface collects and aggregates metrics for monitoring and observability. It tracks request counts, error rates, latencies, and quota usage across all API operations. These metrics feed into dashboards, alerting systems, and performance monitoring tools to provide visibility into gateway performance and usage patterns.
+
 
 ### Example Usage
 
