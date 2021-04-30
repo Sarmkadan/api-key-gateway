@@ -1275,6 +1275,70 @@ var removeIpResult = await apiKeyService.RemoveIpFromWhitelistAsync(newKey.Id, "
 Console.WriteLine($"IP removed from whitelist: {removeIpResult}");
 ```
 
+## IUsageQuotaService
+
+The `IUsageQuotaService` interface enforces per-key hard usage quotas with calendar-based reset periods. It provides methods to check quota status, record request usage, retrieve quota configurations, and set new quotas. This service is essential for implementing billing-style limits that reset daily or monthly rather than rolling window rate limits.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Enums;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+// Create an instance of the usage quota service
+// In a real application, this would be injected via dependency injection
+var loggerFactory = LoggerFactory.Create(builder => {});
+var logger = loggerFactory.CreateLogger<UsageQuotaService>();
+var quotaRepository = new UsageQuotaRepository(); // Your implementation
+var usageQuotaService = new UsageQuotaService(quotaRepository, logger);
+
+// Set a daily quota of 1000 requests for an API key
+bool quotaSet = await usageQuotaService.SetQuotaAsync(
+    apiKeyId: "key_prod_001",
+    quotaLimit: 1000,
+    period: QuotaPeriod.Daily
+);
+
+Console.WriteLine($"Quota set successfully: {quotaSet}");
+
+// Check if a request would exceed the quota and record the usage
+var result = await usageQuotaService.CheckAndRecordAsync("key_prod_001");
+
+if (result.IsExceeded)
+{
+    Console.WriteLine($"Quota exceeded! Remaining: {result.Remaining}/{result.Limit}");
+    Console.WriteLine($"Period ends at: {result.PeriodEnd:yyyy-MM-dd HH:mm:ss}");
+}
+else
+{
+    Console.WriteLine($"Request allowed. Remaining: {result.Remaining}/{result.Limit}");
+    Console.WriteLine($"Period ends at: {result.PeriodEnd:yyyy-MM-dd HH:mm:ss}");
+}
+
+// Retrieve the quota configuration for an API key
+var quota = await usageQuotaService.GetQuotaAsync("key_prod_001");
+if (quota != null)
+{
+    Console.WriteLine($"Quota limit: {quota.QuotaLimit}");
+    Console.WriteLine($"Current usage: {quota.CurrentUsage}");
+    Console.WriteLine($"Period: {quota.Period}");
+    Console.WriteLine($"Period start: {quota.PeriodStartAt:yyyy-MM-dd HH:mm:ss}");
+    Console.WriteLine($"Remaining requests: {quota.RemainingRequests}");
+}
+
+// Set a monthly quota of 5000 requests
+bool monthlyQuotaSet = await usageQuotaService.SetQuotaAsync(
+    apiKeyId: "key_enterprise_001",
+    quotaLimit: 5000,
+    period: QuotaPeriod.Monthly
+);
+
+Console.WriteLine($"Monthly quota set successfully: {monthlyQuotaSet}");
+```
+
 ## IMetricsCollectionService
 
 The `IMetricsCollectionService` interface collects and aggregates metrics for monitoring and observability. It tracks request counts, error rates, latencies, and quota usage across all API operations. These metrics feed into dashboards, alerting systems, and performance monitoring tools to provide visibility into gateway performance and usage patterns.
