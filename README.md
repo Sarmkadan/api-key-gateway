@@ -2393,3 +2393,60 @@ var cachedResult = await coalescingService.ExecuteAsync(
 
 Console.WriteLine($"Cached result: {cachedResult}");
 ```
+
+## ServiceCollectionExtensions
+
+The `ServiceCollectionExtensions` class provides extension methods for configuring API Key Gateway services in the dependency injection container. It includes methods for registering core gateway services, repositories, and API documentation with Swagger/OpenAPI.
+
+
+
+### Configuration Properties
+
+The `GatewayConfiguration` class defines the following configuration properties:
+
+- **RequireSsl**: Whether SSL/TLS is required for all requests (default: `true`)
+- **LogAllRequests**: Whether to log all incoming requests for debugging and analytics (default: `true`)
+- **MaxKeyLength**: Maximum allowed length for API keys in characters (default: `256`)
+- **MinKeyLength**: Minimum allowed length for API keys in characters (default: `16`)
+- **DefaultKeyExpirationDays**: Default number of days before API keys expire (default: `365`)
+- **AuditLogRetentionDays**: Number of days to retain audit logs before automatic cleanup (default: `90`)
+- **EnableRateLimiting**: Whether rate limiting is enabled by default for all API keys (default: `true`)
+- **DefaultRateLimitPerHour**: Default rate limit per hour for API keys without explicit limits (default: `10000`)
+- **MaxConcurrentRequests**: Maximum number of concurrent requests the gateway will handle (default: `1000`)
+- **ClockSkewToleranceSeconds**: Seconds added to the rate-limit window expiry threshold to guard against clock skew (default: `30`)
+- **FailOpenOnKeyStoreUnavailable**: When `true`, allows requests through unauthenticated if the key store is unreachable; when `false`, returns 503 (default: `false`)
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using System;
+
+// Configure services in your application startup
+var services = new ServiceCollection();
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+// Register core gateway services
+services.AddGatewayCoreServices(configuration);
+
+// Register API documentation with Swagger/OpenAPI
+services.AddGatewayDocumentation();
+
+// Build the service provider
+var serviceProvider = services.BuildServiceProvider();
+
+// Resolve services for use
+var apiKeyService = serviceProvider.GetRequiredService<IApiKeyService>();
+var rateLimitingService = serviceProvider.GetRequiredService<IRateLimitingService>();
+var gatewayConfiguration = serviceProvider.GetRequiredService<GatewayConfiguration>();
+
+// Access configuration properties
+Console.WriteLine($"SSL Required: {gatewayConfiguration.RequireSsl}");
+Console.WriteLine($"Max Key Length: {gatewayConfiguration.MaxKeyLength}");
+Console.WriteLine($"Default Rate Limit: {gatewayConfiguration.DefaultRateLimitPerHour}/hour");
+Console.WriteLine($"Clock Skew Tolerance: {gatewayConfiguration.ClockSkewToleranceSeconds}s");
+```
