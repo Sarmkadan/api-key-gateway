@@ -101,3 +101,50 @@ var recentLogs = await auditRepo.GetByDateRangeAsync(
 var deletedCount = await auditRepo.DeleteOlderThanAsync(DateTime.UtcNow.AddDays(-30));
 Console.WriteLine($"Deleted {deletedCount} old audit logs");
 ```
+
+## RateLimitRepository
+
+The `RateLimitRepository` class provides data access and persistence for rate limit configurations. It supports CRUD operations on rate limits.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Models;
+
+// Create a rate limit repository instance
+var connection = new SqlServerConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;");
+var logger = new Logger<RateLimitRepository>(new LoggerFactory());
+var rateLimitRepo = new RateLimitRepository(connection, logger);
+
+// Create a new rate limit
+var newRateLimit = new RateLimit
+{
+    Id = "rl_001",
+    ApiKeyId = "key_001",
+    RequestsPerUnit = 100,
+    Unit = Domain.Enums.RateLimitUnit.Minute,
+    IsEnabled = true,
+    CreatedAt = DateTime.UtcNow,
+    LastResetAt = DateTime.UtcNow,
+    CurrentRequestCount = 0
+};
+
+var createdRateLimit = await rateLimitRepo.CreateAsync(newRateLimit);
+Console.WriteLine($"Created rate limit: {createdRateLimit.Id}");
+
+// Retrieve a rate limit by API key ID
+var retrievedRateLimit = await rateLimitRepo.GetByApiKeyIdAsync("key_001");
+if (retrievedRateLimit != null)
+{
+    Console.WriteLine($"Retrieved rate limit: {retrievedRateLimit.RequestsPerUnit} requests per {retrievedRateLimit.Unit}");
+}
+
+// Update the rate limit
+retrievedRateLimit.RequestsPerUnit = 200;
+await rateLimitRepo.UpdateAsync(retrievedRateLimit);
+
+// Delete the rate limit
+await rateLimitRepo.DeleteAsync("rl_001");
+```
