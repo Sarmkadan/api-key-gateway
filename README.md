@@ -148,3 +148,50 @@ await rateLimitRepo.UpdateAsync(retrievedRateLimit);
 // Delete the rate limit
 await rateLimitRepo.DeleteAsync("rl_001");
 ```
+
+## UsageQuotaRepository
+
+The `UsageQuotaRepository` class provides data access and persistence for usage quotas. It supports CRUD operations on usage quotas.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Models;
+
+// Create a usage quota repository instance
+var connection = new SqlServerConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;");
+var logger = new Logger<UsageQuotaRepository>(new LoggerFactory());
+var usageQuotaRepo = new UsageQuotaRepository(connection, logger);
+
+// Create a new usage quota
+var newUsageQuota = new UsageQuota
+{
+    Id = "quota_001",
+    ApiKeyId = "key_001",
+    QuotaLimit = 1000,
+    IsEnabled = true,
+    Period = Domain.Enums.QuotaPeriod.Day,
+    CreatedAt = DateTime.UtcNow,
+    PeriodStartAt = DateTime.UtcNow,
+    CurrentUsage = 0
+};
+
+var createdUsageQuota = await usageQuotaRepo.CreateAsync(newUsageQuota);
+Console.WriteLine($"Created usage quota: {createdUsageQuota.Id}");
+
+// Retrieve a usage quota by API key ID
+var retrievedUsageQuota = await usageQuotaRepo.GetByApiKeyIdAsync("key_001");
+if (retrievedUsageQuota != null)
+{
+    Console.WriteLine($"Retrieved usage quota: {retrievedUsageQuota.QuotaLimit} for {retrievedUsageQuota.Period}");
+}
+
+// Update the usage quota
+retrievedUsageQuota.CurrentUsage = 500;
+await usageQuotaRepo.UpdateAsync(retrievedUsageQuota);
+
+// Delete the usage quota
+await usageQuotaRepo.DeleteAsync("quota_001");
+```
