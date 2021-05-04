@@ -195,3 +195,65 @@ await usageQuotaRepo.UpdateAsync(retrievedUsageQuota);
 // Delete the usage quota
 await usageQuotaRepo.DeleteAsync("quota_001");
 ```
+
+## DatabaseTransformationRuleRepository
+
+`DatabaseTransformationRuleRepository` is a concrete repository that stores and manages `TransformationRule` entities in a relational database. It provides methods to query rules by API key, consumer, or globally, as well as to create, update, and soft‑delete rules.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.Logging;
+
+// Set up dependencies
+var connection = new SqlServerConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;");
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<DatabaseTransformationRuleRepository>();
+
+// Create the repository instance
+var ruleRepo = new DatabaseTransformationRuleRepository(connection, logger);
+
+// Retrieve rules for a specific API key
+var apiKeyRules = await ruleRepo.GetByApiKeyAsync("key_001");
+
+// Retrieve rules for a specific consumer
+var consumerRules = await ruleRepo.GetByConsumerAsync("consumer_001");
+
+// Retrieve all global rules
+var globalRules = await ruleRepo.GetGlobalRulesAsync();
+
+// Create a new transformation rule
+var newRule = new TransformationRule
+{
+    Name = "AddCustomHeader",
+    Description = "Adds a custom header to responses",
+    Scope = TransformationScope.ApiKey,
+    ApiKeyId = "key_001",
+    ConsumerId = null,
+    Type = TransformationRuleType.BuiltIn,
+    Action = BuiltInAction.AddHeader,
+    LuaScript = null,
+    Parameters = new Dictionary<string, string>
+    {
+        ["HeaderName"] = "X-Custom-Header",
+        ["HeaderValue"] = "MyValue"
+    },
+    Priority = 10,
+    CreatedBy = "admin"
+};
+
+var newRuleId = await ruleRepo.CreateAsync(newRule);
+Console.WriteLine($"Created rule with Id: {newRuleId}");
+
+// Update the rule
+newRule.Description = "Updated description";
+var updated = await ruleRepo.UpdateAsync(newRule);
+Console.WriteLine($"Rule updated: {updated}");
+
+// Delete (soft‑delete) the rule
+var deleted = await ruleRepo.DeleteAsync(newRuleId);
+Console.WriteLine($"Rule deleted: {deleted}");
+```
