@@ -257,3 +257,66 @@ Console.WriteLine($"Rule updated: {updated}");
 var deleted = await ruleRepo.DeleteAsync(newRuleId);
 Console.WriteLine($"Rule deleted: {deleted}");
 ```
+
+## UsageRepository
+
+The `UsageRepository` class provides data access and persistence for API usage tracking records. It supports creating usage records, querying usage data by API key, consumer, or date range, and cleaning up old records based on retention policies.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Models;
+
+// Create a usage repository instance
+var connection = new SqlServerConnection("Server=localhost;Database=api_key_gateway;User Id=sa;Password=your_password;");
+var logger = new Logger<UsageRepository>(new LoggerFactory());
+var usageRepo = new UsageRepository(connection, logger);
+
+// Create a new usage record
+var newUsageRecord = new UsageRecord
+{
+    Id = Guid.NewGuid().ToString(),
+    ApiKeyId = "key_001",
+    ConsumerId = "consumer_001",
+    RecordedAt = DateTime.UtcNow,
+    Endpoint = "/api/users",
+    Method = "GET",
+    ResponseStatusCode = 200,
+    RequestBytes = 1250,
+    ResponseBytes = 4096,
+    ResponseTimeMs = 42,
+    SourceIp = "192.168.1.100"
+};
+
+await usageRepo.CreateAsync(newUsageRecord);
+Console.WriteLine("Usage record created successfully");
+
+// Retrieve usage records for an API key within a date range
+var apiKeyUsage = await usageRepo.GetByApiKeyAndDateRangeAsync(
+    apiKeyId: "key_001",
+    startDate: DateTime.UtcNow.AddDays(-7),
+    endDate: DateTime.UtcNow
+);
+Console.WriteLine($"Found {apiKeyUsage.Count} usage records for API key");
+
+// Retrieve usage records for a consumer within a date range
+var consumerUsage = await usageRepo.GetByConsumerAndDateRangeAsync(
+    consumerId: "consumer_001",
+    startDate: DateTime.UtcNow.AddDays(-7),
+    endDate: DateTime.UtcNow
+);
+Console.WriteLine($"Found {consumerUsage.Count} usage records for consumer");
+
+// Retrieve all usage records within a date range
+var allUsage = await usageRepo.GetUsageAsync(
+    startDate: DateTime.UtcNow.AddDays(-7),
+    endDate: DateTime.UtcNow
+);
+Console.WriteLine($"Found {allUsage.Count} total usage records");
+
+// Delete usage records older than 30 days
+var deletedCount = await usageRepo.DeleteOldRecordsAsync(30);
+Console.WriteLine($"Deleted {deletedCount} old usage records");
+```
