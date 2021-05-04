@@ -320,3 +320,55 @@ Console.WriteLine($"Found {allUsage.Count} total usage records");
 var deletedCount = await usageRepo.DeleteOldRecordsAsync(30);
 Console.WriteLine($"Deleted {deletedCount} old usage records");
 ```
+
+## ICacheProvider
+
+The `ICacheProvider` interface defines an abstraction for cache operations, enabling different caching backends (in-memory, Redis, Memcached) to be used interchangeably. It provides asynchronous methods for common cache operations including get, set, remove, existence checks, atomic increments, and pattern-based removal. This abstraction is critical for supporting both single-instance and distributed deployments without changing calling code.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Caching;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+
+// Set up dependencies
+var memoryCache = new MemoryCache(new MemoryCacheOptions());
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<InMemoryCacheProvider>();
+
+// Create the cache provider instance
+var cacheProvider = new InMemoryCacheProvider(memoryCache, logger);
+
+// Store a value in cache with 5-minute expiration
+await cacheProvider.SetAsync("api_key:key_001:metadata", new
+{
+    Id = "key_001",
+    ConsumerId = "consumer_001",
+    Name = "Production Key",
+    Status = "Active",
+    CreatedAt = DateTime.UtcNow
+}, expiration: TimeSpan.FromMinutes(5));
+
+// Retrieve a value from cache
+var cachedValue = await cacheProvider.GetAsync<ApiKeyMetadata>("api_key:key_001:metadata");
+if (cachedValue != null)
+{
+    Console.WriteLine($"Retrieved cached metadata for key: {cachedValue.Name}");
+}
+
+// Check if a key exists in cache
+var exists = await cacheProvider.ExistsAsync("api_key:key_001:metadata");
+Console.WriteLine($"Cache contains key: {exists}");
+
+// Atomically increment a counter for rate limiting
+var requestCount = await cacheProvider.IncrementAsync("rate_limit:key_001:192.168.1.100", increment: 1);
+Console.WriteLine($"Current request count: {requestCount}");
+
+// Remove a specific key from cache
+await cacheProvider.RemoveAsync("api_key:key_001:metadata");
+
+// Remove all keys matching a pattern (e.g., all keys for a specific consumer)
+var removedCount = await cacheProvider.RemoveByPatternAsync("api_key:consumer_001:*");
+Console.WriteLine($"Removed {removedCount} matching cache entries");
+```
