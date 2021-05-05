@@ -321,6 +321,106 @@ var deletedCount = await usageRepo.DeleteOldRecordsAsync(30);
 Console.WriteLine($"Deleted {deletedCount} old usage records");
 ```
 
+## CacheKeyGenerator
+
+The `CacheKeyGenerator` class provides a centralized way to generate consistent cache keys across the entire API Key Gateway application. By using a single source for key generation, the system prevents cache miss issues caused by inconsistent naming conventions and makes it easy to change key structure globally. All cache keys follow a consistent `apigw:<type>:<identifier>` format with appropriate separators for different cache entry types.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Caching;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+
+// Create cache provider instance
+var memoryCache = new MemoryCache(new MemoryCacheOptions());
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<InMemoryCacheProvider>();
+var cacheProvider = new InMemoryCacheProvider(memoryCache, logger);
+
+// Generate and use cache keys for API key operations
+string apiKeyId = "key_abc123";
+string endpoint = "/api/v1/users";
+DateTime today = DateTime.UtcNow.Date;
+
+// Store API key entity
+string apiKeyCacheKey = CacheKeyGenerator.GetApiKeyKey(apiKeyId);
+await cacheProvider.SetAsync(apiKeyCacheKey, new
+{
+    Id = apiKeyId,
+    ConsumerId = "consumer_xyz789",
+    Name = "Production API Key",
+    Status = "Active",
+    CreatedAt = DateTime.UtcNow
+}, expiration: TimeSpan.FromMinutes(5));
+
+// Store API key metadata separately for granular invalidation
+string metadataCacheKey = CacheKeyGenerator.GetApiKeyMetadataKey(apiKeyId);
+await cacheProvider.SetAsync(metadataCacheKey, new
+{
+    Permissions = new[] { "read", "write" },
+    RateLimit = 1000,
+    Quota = 50000
+}, expiration: TimeSpan.FromHours(1));
+
+// Store rate limit tracking for a specific endpoint
+string rateLimitCacheKey = CacheKeyGenerator.GetRateLimitKey(apiKeyId, endpoint);
+await cacheProvider.SetAsync(rateLimitCacheKey, new
+{
+    CurrentCount = 42,
+    WindowStart = DateTime.UtcNow,
+    Limit = 1000
+}, expiration: TimeSpan.FromMinutes(1));
+
+// Store usage statistics for reporting
+string usageStatsCacheKey = CacheKeyGenerator.GetUsageStatsKey(apiKeyId, today);
+await cacheProvider.SetAsync(usageStatsCacheKey, new
+{
+    RequestCount = 1500,
+    ResponseBytes = 2_500_000,
+    ResponseTimeMs = 12500
+}, expiration: TimeSpan.FromDays(1));
+
+// Store quota information
+string quotaCacheKey = CacheKeyGenerator.GetQuotaKey(apiKeyId);
+await cacheProvider.SetAsync(quotaCacheKey, new
+{
+    Limit = 50000,
+    CurrentUsage = 12500,
+    Period = "Daily"
+}, expiration: TimeSpan.FromDays(1));
+
+// Store webhook delivery status to prevent duplicates
+string webhookCacheKey = CacheKeyGenerator.GetWebhookDeliveryKey(Guid.NewGuid());
+await cacheProvider.SetAsync(webhookCacheKey, new
+{
+    Status = "Delivered",
+    Retries = 0,
+    LastAttempt = DateTime.UtcNow
+}, expiration: TimeSpan.FromDays(7));
+
+// Store external API response cache
+var externalParams = new Dictionary<string, string>
+{
+    ["param1"] = "value1",
+    ["param2"] = "value2"
+};
+string externalApiCacheKey = CacheKeyGenerator.GetExternalApiCacheKey(
+    "stripe",
+    "/v1/customers",
+    externalParams
+);
+await cacheProvider.SetAsync(externalApiCacheKey, stripeCustomerData, expiration: TimeSpan.FromMinutes(30));
+
+// Invalidate all cache entries for a specific API key
+string invalidationPattern = CacheKeyGenerator.GetApiKeyInvalidationPattern(apiKeyId);
+await cacheProvider.RemoveByPatternAsync(invalidationPattern);
+
+// Invalidate all rate limit entries across all API keys
+string rateLimitInvalidationPattern = CacheKeyGenerator.GetRateLimitInvalidationPattern();
+await cacheProvider.RemoveByPatternAsync(rateLimitInvalidationPattern);
+```
+
 ## ICacheProvider
 
 The `ICacheProvider` interface defines an abstraction for cache operations, enabling different caching backends (in-memory, Redis, Memcached) to be used interchangeably. It provides asynchronous methods for common cache operations including get, set, remove, existence checks, atomic increments, and pattern-based removal. This abstraction is critical for supporting both single-instance and distributed deployments without changing calling code.
