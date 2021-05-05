@@ -321,6 +321,58 @@ var deletedCount = await usageRepo.DeleteOldRecordsAsync(30);
 Console.WriteLine($"Deleted {deletedCount} old usage records");
 ```
 
+## ResponseFormatterExtensions
+
+The `ResponseFormatterExtensions` class provides extension methods for formatting HTTP responses with a consistent structure across the API. It includes methods for creating successful responses, error responses, and paginated responses, all following a standard envelope pattern with data, metadata, and error information.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System.Net;
+
+// Create a successful response with data
+var userData = new { Id = 1, Name = "John Doe", Email = "john@example.com" };
+var successResponse = ResponseFormatterExtensions.Success(userData, "User retrieved successfully");
+
+Console.WriteLine($"Success: {successResponse.Success}");
+Console.WriteLine($"Status: {successResponse.StatusCode}");
+Console.WriteLine($"Message: {successResponse.Message}");
+Console.WriteLine($"Data: {successResponse.Data?.Name}");
+Console.WriteLine($"Timestamp: {successResponse.Timestamp}");
+
+// Create an error response for validation failure
+var validationError = ResponseFormatterExtensions.Error<ApiResponse<object>>(
+    (int)HttpStatusCode.BadRequest,
+    "Validation failed: email is required",
+    "VALIDATION_ERROR",
+    new { Field = "email", Error = "Required field" }
+);
+
+Console.WriteLine($"Error Success: {validationError.Success}");
+Console.WriteLine($"Error Status: {validationError.StatusCode}");
+Console.WriteLine($"Error Message: {validationError.Message}");
+Console.WriteLine($"Error Code: {validationError.ErrorCode}");
+Console.WriteLine($"Error Details: {validationError.Details}");
+
+// Create a paginated response for list endpoints
+var allItems = Enumerable.Range(1, 100).Select(i => new { Id = i, Name = $"Item {i}" });
+var paginatedResponse = ResponseFormatterExtensions.Paginated(
+    allItems.Skip(20).Take(10),  // Items for page 3
+    pageNumber: 3,
+    pageSize: 10,
+    totalCount: 100
+);
+
+Console.WriteLine($"Paginated Items: {paginatedResponse.Items.Count}");
+Console.WriteLine($"Page: {paginatedResponse.PageNumber}");
+Console.WriteLine($"Page Size: {paginatedResponse.PageSize}");
+Console.WriteLine($"Total Count: {paginatedResponse.TotalCount}");
+Console.WriteLine($"Total Pages: {paginatedResponse.TotalPages}");
+Console.WriteLine($"Has More: {paginatedResponse.HasMore}");
+Console.WriteLine($"Timestamp: {paginatedResponse.Timestamp}");
+```
+
 ## CacheKeyGenerator
 
 The `CacheKeyGenerator` class provides a centralized way to generate consistent cache keys across the entire API Key Gateway application. By using a single source for key generation, the system prevents cache miss issues caused by inconsistent naming conventions and makes it easy to change key structure globally. All cache keys follow a consistent `apigw:<type>:<identifier>` format with appropriate separators for different cache entry types.
