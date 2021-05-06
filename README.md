@@ -515,6 +515,60 @@ string humanTime = oneHourAgo.ToHumanReadableTime();
 Console.WriteLine($"Time ago: {humanTime}");
 ```
 
+## RateLimitCalculationHelper
+
+The `RateLimitCalculationHelper` class provides utility methods for rate limit calculations and window management. It encapsulates the logic for determining if requests are within quota, calculating reset times, and providing human-readable information about rate limit status. This helper is separated from business logic to allow easy testing and reuse across different components.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using ApiKeyGateway.Domain.Enums;
+using System;
+
+// Calculate rate limit window boundaries
+DateTime now = DateTime.UtcNow;
+DateTime windowStart = RateLimitCalculationHelper.GetWindowStart(now, RateLimitUnit.Minute);
+DateTime windowEnd = RateLimitCalculationHelper.GetWindowEnd(now, RateLimitUnit.Minute);
+Console.WriteLine($"Current window: {windowStart:yyyy-MM-dd HH:mm:ss} to {windowEnd:yyyy-MM-dd HH:mm:ss}");
+
+// Check if a request is allowed based on current usage
+int currentUsage = 45;
+int limit = 100;
+int secondsUntilAllowed = RateLimitCalculationHelper.GetSecondsUntilAllowed(currentUsage, limit, windowStart, RateLimitUnit.Minute);
+if (secondsUntilAllowed > 0)
+{
+    Console.WriteLine($"Rate limit exceeded. Try again in {secondsUntilAllowed} seconds.");
+}
+else
+{
+    Console.WriteLine("Request allowed - within rate limit.");
+}
+
+// Calculate quota percentage for monitoring
+int percentage = RateLimitCalculationHelper.CalculateQuotagePercentage(currentUsage, limit);
+Console.WriteLine($"Quota usage: {percentage}%");
+
+// Check if warning should be shown to user
+bool shouldWarn = RateLimitCalculationHelper.ShouldWarnAboutLimit(percentage);
+if (shouldWarn)
+{
+    Console.WriteLine("Warning: Approaching rate limit!");
+}
+
+// Get human-readable reset time for API responses
+string resetTime = RateLimitCalculationHelper.GetReadableResetTime(windowEnd);
+Console.WriteLine($"Time until reset: {resetTime}");
+
+// Example with different rate limit units
+foreach (RateLimitUnit unit in Enum.GetValues<RateLimitUnit>())
+{
+    DateTime unitStart = RateLimitCalculationHelper.GetWindowStart(now, unit);
+    DateTime unitEnd = RateLimitCalculationHelper.GetWindowEnd(now, unit);
+    Console.WriteLine($"{unit}: {unitStart:yyyy-MM-dd HH:mm:ss} to {unitEnd:yyyy-MM-dd HH:mm:ss}");
+}
+```
+
 ## ICircuitBreaker
 
 The `ICircuitBreaker` interface provides a simple circuit breaker pattern implementation for fault tolerance. It prevents cascading failures by monitoring operation failures and stopping requests to failing services when a configurable failure threshold is exceeded. The circuit breaker automatically transitions through states (Closed → Open → Half-Open → Closed) and recovers when the service becomes healthy again. This pattern is particularly useful for external API calls, database operations, or any remote service integration where transient failures should not cascade through the entire system.
