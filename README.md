@@ -515,6 +515,76 @@ string humanTime = oneHourAgo.ToHumanReadableTime();
 Console.WriteLine($"Time ago: {humanTime}");
 ```
 
+## ICircuitBreaker
+
+The `ICircuitBreaker` interface provides a simple circuit breaker pattern implementation for fault tolerance. It prevents cascading failures by monitoring operation failures and stopping requests to failing services when a configurable failure threshold is exceeded. The circuit breaker automatically transitions through states (Closed → Open → Half-Open → Closed) and recovers when the service becomes healthy again. This pattern is particularly useful for external API calls, database operations, or any remote service integration where transient failures should not cascade through the entire system.
+
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+// Create a circuit breaker with 5 failures threshold and 30-second timeout
+var circuitBreaker = new CircuitBreaker(
+    failureThreshold: 5,
+    timeout: TimeSpan.FromSeconds(30),
+    logger: new Logger<CircuitBreaker>(new LoggerFactory())
+);
+
+// Execute an operation that might fail
+try
+{
+    var result = await circuitBreaker.ExecuteAsync(async () =>
+    {
+        // Simulate an external API call or database operation
+        var response = await externalService.GetDataAsync("some_endpoint");
+        return response;
+    });
+    
+    Console.WriteLine("Operation succeeded!");
+    circuitBreaker.RecordSuccess();
+}
+catch (InvalidOperationException ex) when (ex.Message.Contains("Circuit breaker is open"))
+{
+    Console.WriteLine("Circuit breaker is open - request blocked");
+    // Return cached response or degraded functionality
+}
+
+// Track operation failures
+try
+{
+    await circuitBreaker.ExecuteAsync(async () => await failingOperation());
+}
+catch
+{
+    circuitBreaker.RecordFailure();
+    Console.WriteLine("Operation failed, failure recorded");
+}
+
+// Check circuit breaker state
+var state = circuitBreaker.GetState();
+Console.WriteLine($"Current state: {state}");
+
+// When service recovers, failures reset automatically
+// After failure threshold reached, circuit opens and blocks requests for timeout period
+for (int i = 0; i < 5; i++)
+{
+    try
+    {
+        await circuitBreaker.ExecuteAsync(async () => await failingOperation());
+    }
+    catch { circuitBreaker.RecordFailure(); }
+}
+
+// Circuit opens after 5 failures
+Console.WriteLine($"Circuit breaker state after failures: {circuitBreaker.GetState()}");
+
+// After timeout period, circuit transitions to Half-Open and allows one test request
+
 ## RequestContextHelper
 
 The `RequestContextHelper` class provides utility methods for extracting and validating information from HTTP requests. It centralizes request parsing logic to ensure consistency across the application, handling API key extraction, correlation ID generation, pagination parameters, client IP address resolution, request scope identification, and content negotiation checks.
