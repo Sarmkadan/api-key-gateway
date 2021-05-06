@@ -515,6 +515,63 @@ string humanTime = oneHourAgo.ToHumanReadableTime();
 Console.WriteLine($"Time ago: {humanTime}");
 ```
 
+## RequestContextHelper
+
+The `RequestContextHelper` class provides utility methods for extracting and validating information from HTTP requests. It centralizes request parsing logic to ensure consistency across the application, handling API key extraction, correlation ID generation, pagination parameters, client IP address resolution, request scope identification, and content negotiation checks.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+
+// Example ASP.NET Core minimal API endpoint using RequestContextHelper
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/api/protected", (HttpRequest request) => {
+    // Extract API key from either X-API-Key header or Authorization: Bearer header
+    string? apiKey = RequestContextHelper.ExtractApiKey(request);
+    if (apiKey == null)
+    {
+        return Results.Unauthorized();
+    }
+    
+    // Get or create correlation ID for request tracing
+    string correlationId = RequestContextHelper.GetOrCreateCorrelationId(request);
+    Console.WriteLine($"Processing request with correlation ID: {correlationId}");
+    
+    // Extract pagination parameters from query string
+    var (pageNumber, pageSize) = RequestContextHelper.ExtractPaginationParams(request);
+    Console.WriteLine($"Pagination: page {pageNumber}, size {pageSize}");
+    
+    // Get client IP address (handles X-Forwarded-For and X-Real-IP headers)
+    string clientIp = RequestContextHelper.GetClientIpAddress(request);
+    Console.WriteLine($"Request from IP: {clientIp}");
+    
+    // Get request scope (API key or "anonymous")
+    string scope = RequestContextHelper.GetRequestScope(request);
+    Console.WriteLine($"Request scope: {scope}");
+    
+    // Check if client accepts JSON responses
+    bool acceptsJson = RequestContextHelper.AcceptsJson(request);
+    Console.WriteLine($"Client accepts JSON: {acceptsJson}");
+    
+    return Results.Ok(new {
+        Message = "API key validated successfully",
+        ApiKey = apiKey,
+        CorrelationId = correlationId,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        ClientIp = clientIp,
+        Scope = scope
+    });
+});
+
+app.Run();
+```
+
 ## ICacheProvider
 
 The `ICacheProvider` interface defines an abstraction for cache operations, enabling different caching backends (in-memory, Redis, Memcached) to be used interchangeably. It provides asynchronous methods for common cache operations including get, set, remove, existence checks, atomic increments, and pattern-based removal. This abstraction is critical for supporting both single-instance and distributed deployments without changing calling code.
