@@ -473,6 +473,48 @@ string rateLimitInvalidationPattern = CacheKeyGenerator.GetRateLimitInvalidation
 await cacheProvider.RemoveByPatternAsync(rateLimitInvalidationPattern);
 ```
 
+## DateTimeExtensions
+
+The `DateTimeExtensions` class provides a set of utility extension methods for working with `DateTime` values. It includes methods for finding the start/end of days, weeks, and months, checking if dates are in the past or future, calculating days until a date, and formatting dates as human-readable time strings. These extensions simplify common date manipulation tasks throughout the application.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System;
+
+// Get the start and end of the current day
+DateTime now = DateTime.UtcNow;
+DateTime startOfDay = now.StartOfDay();
+DateTime endOfDay = now.EndOfDay();
+Console.WriteLine($"Today runs from {startOfDay:yyyy-MM-dd HH:mm:ss} to {endOfDay:yyyy-MM-dd HH:mm:ss}");
+
+// Get the start of the current week (Monday)
+DateTime startOfWeek = now.StartOfWeek();
+Console.WriteLine($"Week started on: {startOfWeek:yyyy-MM-dd}");
+
+// Get the start and end of the current month
+DateTime startOfMonth = now.StartOfMonth();
+DateTime endOfMonth = now.EndOfMonth();
+Console.WriteLine($"Month runs from {startOfMonth:yyyy-MM-dd} to {endOfMonth:yyyy-MM-dd}");
+
+// Check if a date is in the past or future
+DateTime yesterday = DateTime.UtcNow.AddDays(-1);
+DateTime tomorrow = DateTime.UtcNow.AddDays(1);
+Console.WriteLine($"Yesterday is in past: {yesterday.IsInPast()}");
+Console.WriteLine($"Tomorrow is in future: {tomorrow.IsInFuture()}");
+
+// Calculate days until a future date
+DateTime nextMonth = DateTime.UtcNow.AddMonths(1);
+int daysUntil = nextMonth.DaysUntil();
+Console.WriteLine($"Days until next month: {daysUntil}");
+
+// Format a date as human-readable time
+DateTime oneHourAgo = DateTime.UtcNow.AddHours(-1);
+string humanTime = oneHourAgo.ToHumanReadableTime();
+Console.WriteLine($"Time ago: {humanTime}");
+```
+
 ## ICacheProvider
 
 The `ICacheProvider` interface defines an abstraction for cache operations, enabling different caching backends (in-memory, Redis, Memcached) to be used interchangeably. It provides asynchronous methods for common cache operations including get, set, remove, existence checks, atomic increments, and pattern-based removal. This abstraction is critical for supporting both single-instance and distributed deployments without changing calling code.
