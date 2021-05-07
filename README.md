@@ -766,6 +766,47 @@ Console.WriteLine($"Circuit breaker state after failures: {circuitBreaker.GetSta
 
 // After timeout period, circuit transitions to Half-Open and allows one test request
 
+## ValidationHelpers
+
+The `ValidationHelpers` class provides a collection of static utility methods for validating common input patterns such as email addresses, API keys, IP addresses, GUIDs, and URLs. These validation methods use regular expressions and .NET's built-in parsing capabilities to ensure data integrity before processing. The `SanitizeInput` method helps prevent injection attacks and enforces length limits on user-provided strings.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System;
+
+// Validate an email address
+string email = "user@example.com";
+bool isValidEmail = ValidationHelpers.IsValidEmail(email);
+Console.WriteLine($"Email '{email}' is valid: {isValidEmail}");
+
+// Validate an API key format (sk_ prefix followed by 32+ alphanumeric characters)
+string apiKey = "sk_ABC123def456GHI789jkl012MNO345pqr678";
+bool isValidApiKey = ValidationHelpers.IsValidApiKeyFormat(apiKey);
+Console.WriteLine($"API key format is valid: {isValidApiKey}");
+
+// Validate an IP address
+string ipAddress = "192.168.1.100";
+bool isValidIp = ValidationHelpers.IsValidIpAddress(ipAddress);
+Console.WriteLine($"IP address '{ipAddress}' is valid: {isValidIp}");
+
+// Validate a GUID
+string guidValue = "550e8400-e29b-41d4-a716-446655440000";
+bool isValidGuid = ValidationHelpers.IsValidGuid(guidValue);
+Console.WriteLine($"GUID '{guidValue}' is valid: {isValidGuid}");
+
+// Validate a URL
+string url = "https://api.example.com/v1/users";
+bool isValidUrl = ValidationHelpers.IsValidUrl(url);
+Console.WriteLine($"URL '{url}' is valid: {isValidUrl}");
+
+// Sanitize user input to prevent injection attacks
+string maliciousInput = "  <script>alert('xss')</script>  ";
+string sanitized = ValidationHelpers.SanitizeInput(maliciousInput, maxLength: 200);
+Console.WriteLine($"Sanitized input: '{sanitized}'");
+```
+
 ## RequestContextHelper
 
 The `RequestContextHelper` class provides utility methods for extracting and validating information from HTTP requests. It centralizes request parsing logic to ensure consistency across the application, handling API key extraction, correlation ID generation, pagination parameters, client IP address resolution, request scope identification, and content negotiation checks.
