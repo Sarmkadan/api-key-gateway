@@ -600,6 +600,77 @@ var serverErrorResponse = ApiResponseBuilderFactory.InternalServerError("Databas
 Console.WriteLine($"Server Error: {serverErrorResponse.statusCode} - {serverErrorResponse.message}");
 ```
 
+## AdminController
+
+The `AdminController` provides administrative endpoints for managing the API Key Gateway. It offers system statistics, configuration management, usage data export, system diagnostics, and emergency operations like rate limit resets. These endpoints are protected and intended for administrative use only.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Set up services
+var services = new ServiceCollection();
+services.AddLogging(configure => configure.AddConsole());
+services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
+services.AddSingleton<IDataExportService, DataExportService>();
+
+var serviceProvider = services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+var metricsService = serviceProvider.GetRequiredService<IMetricsCollectionService>();
+var dataExportService = serviceProvider.GetRequiredService<IDataExportService>();
+
+// Create controller instance
+var controller = new AdminController(
+    loggerFactory.CreateLogger<AdminController>(),
+    metricsService,
+    dataExportService
+);
+
+// Get system statistics
+var statsResult = controller.GetStats();
+if (statsResult is OkObjectResult okResult)
+{
+    var stats = okResult.Value as dynamic;
+    Console.WriteLine($"Total requests: {stats.totalRequests}");
+    Console.WriteLine($"Active keys: {stats.activeApiKeys}");
+}
+
+// Export usage data (last 7 days)
+var exportResult = await controller.ExportUsageData(format: "csv");
+if (exportResult is FileResult fileResult)
+{
+    Console.WriteLine($"Exported file: {fileResult.FileDownloadName}");
+}
+
+// Get current configuration
+var configResult = controller.GetConfiguration();
+if (configResult is OkObjectResult configOkResult)
+{
+    var config = configOkResult.Value as dynamic;
+    Console.WriteLine($"Max API keys: {config.maxApiKeys}");
+    Console.WriteLine($"Cache enabled: {config.cacheEnabled}");
+}
+
+// Run system diagnostics
+var diagnosticsResult = await controller.RunDiagnostics();
+if (diagnosticsResult is OkObjectResult diagnosticsOkResult)
+{
+    var diagnostics = diagnosticsOkResult.Value as dynamic;
+    Console.WriteLine($"Overall status: {diagnostics.overallStatus}");
+}
+
+// Reset rate limits (emergency operation)
+var resetResult = await controller.ResetRateLimits();
+if (resetResult is OkObjectResult resetOkResult)
+{
+    Console.WriteLine($"Rate limits reset: {resetOkResult.Value}");
+}
+```
+
 ## DateTimeExtensions
 
 The `DateTimeExtensions` class provides a set of utility extension methods for working with `DateTime` values. It includes methods for finding the start/end of days, weeks, and months, checking if dates are in the past or future, calculating days until a date, and formatting dates as human-readable time strings. These extensions simplify common date manipulation tasks throughout the application.
