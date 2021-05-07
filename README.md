@@ -696,6 +696,49 @@ app.MapGet("/api/protected", (HttpRequest request) => {
 app.Run();
 ```
 
+## JsonSerializationHelper
+
+The `JsonSerializationHelper` class provides centralized JSON serialization and deserialization utilities that enforce consistent formatting and naming conventions across the application. It handles conversion between C# PascalCase properties and API camelCase responses, manages null value handling, and includes safe deserialization methods that prevent exceptions on invalid JSON input. This helper ensures that all API responses follow the same serialization pattern and provides both compact and formatted output options.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System.Text.Json;
+
+// Serialize an object to compact JSON (camelCase, no whitespace)
+var user = new { Id = 1, UserName = "john_doe", EmailAddress = "john@example.com" };
+string compactJson = JsonSerializationHelper.SerializeCompact(user);
+Console.WriteLine(compactJson);
+// Output: {"userName":"john_doe","emailAddress":"john@example.com"}
+
+// Serialize an object to formatted JSON (pretty-printed)
+string formattedJson = JsonSerializationHelper.SerializeFormatted(user);
+Console.WriteLine(formattedJson);
+/* Output:
+{
+  "userName": "john_doe",
+  "emailAddress": "john@example.com"
+}
+*/
+
+// Deserialize JSON back to an object
+string jsonInput = "{\"userName\":\"jane_doe\",\"emailAddress\":\"jane@example.com\"}";
+var deserializedUser = JsonSerializationHelper.Deserialize<Dictionary<string, object>>(jsonInput);
+Console.WriteLine(deserializedUser["userName"]); // Output: jane_doe
+
+// Safely deserialize with error handling (returns null on failure)
+string invalidJson = "{ invalid json }";
+var safeResult = JsonSerializationHelper.SafeDeserialize<Dictionary<string, object>>(invalidJson);
+Console.WriteLine(safeResult == null ? "Deserialization failed safely" : "Success"); // Output: Deserialization failed safely
+
+// Validate JSON without full deserialization
+bool isValid = JsonSerializationHelper.IsValidJson("{\"key\":\"value\"}");
+Console.WriteLine(isValid); // Output: True
+bool isInvalid = JsonSerializationHelper.IsValidJson("not valid json");
+Console.WriteLine(isInvalid); // Output: False
+```
+
 ## ICacheProvider
 
 The `ICacheProvider` interface defines an abstraction for cache operations, enabling different caching backends (in-memory, Redis, Memcached) to be used interchangeably. It provides asynchronous methods for common cache operations including get, set, remove, existence checks, atomic increments, and pattern-based removal. This abstraction is critical for supporting both single-instance and distributed deployments without changing calling code.
