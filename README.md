@@ -473,6 +473,71 @@ string rateLimitInvalidationPattern = CacheKeyGenerator.GetRateLimitInvalidation
 await cacheProvider.RemoveByPatternAsync(rateLimitInvalidationPattern);
 ```
 
+## RetryPolicyBuilder
+
+The `RetryPolicyBuilder` class provides a fluent interface for creating retry policies with exponential backoff. This is useful for making operations resilient to transient failures such as network issues, temporary service unavailability, or rate limiting. The builder allows configuration of maximum retry attempts, initial delay, backoff multiplier, maximum delay, and specific exception types that should trigger retries.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System;
+using System.Net;
+using System.Net.Http;
+
+// Create a retry policy for transient HTTP errors
+var retryPolicy = new RetryPolicyBuilder()
+    .WithMaxRetries(5)
+    .WithInitialDelay(200)
+    .WithBackoffMultiplier(2.5)
+    .WithMaxDelay(30000)
+    .RetryOn<HttpRequestException>()
+    .RetryOn<TimeoutException>();
+
+// Use the retry policy to execute an HTTP request with resilience
+var httpClient = new HttpClient();
+var apiUrl = "https://api.example.com/data";
+
+var result = await retryPolicy.Build<HttpResponseMessage>()(async () =>
+{
+    var response = await httpClient.GetAsync(apiUrl);
+    response.EnsureSuccessStatusCode();
+    return response;
+});
+
+Console.WriteLine($"Successfully retrieved data: {result.StatusCode}");
+
+// Create a retry policy for database operations
+var dbRetryPolicy = new RetryPolicyBuilder()
+    .WithMaxRetries(3)
+    .WithInitialDelay(100)
+    .WithBackoffMultiplier(2.0)
+    .RetryOn<InvalidOperationException>();
+
+// Use the retry policy for database operations
+var userData = await dbRetryPolicy.Build<ApiKey>()(async () =>
+{
+    // Database operation that might fail transiently
+    return await apiKeyRepository.GetByIdAsync("key_001");
+});
+
+Console.WriteLine($"Retrieved user data: {userData?.Name}");
+
+// Create a simple retry policy with default settings
+var simpleRetry = new RetryPolicyBuilder()
+    .WithMaxRetries(2)
+    .WithInitialDelay(500);
+
+// Use the simple retry policy
+var success = await simpleRetry.Build<bool>()(async () =>
+{
+    // Operation that might fail
+    return true;
+});
+
+Console.WriteLine($"Operation completed successfully: {success}");
+```
+
 ## DateTimeExtensions
 
 The `DateTimeExtensions` class provides a set of utility extension methods for working with `DateTime` values. It includes methods for finding the start/end of days, weeks, and months, checking if dates are in the past or future, calculating days until a date, and formatting dates as human-readable time strings. These extensions simplify common date manipulation tasks throughout the application.
