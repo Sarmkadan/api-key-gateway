@@ -538,6 +538,68 @@ var success = await simpleRetry.Build<bool>()(async () =>
 Console.WriteLine($"Operation completed successfully: {success}");
 ```
 
+## ApiResponseBuilder
+
+The `ApiResponseBuilder<T>` class provides a fluent interface for constructing consistent API responses across all endpoints. It allows you to build responses with data, status codes, success/failure states, metadata, and error collections using a clean builder pattern. This ensures uniform response structure throughout the application while maintaining flexibility for different scenarios.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System.Net;
+
+// Create a successful response with data
+var userData = new { Id = 1, Name = "John Doe", Email = "john@example.com" };
+var successResponse = ApiResponseBuilderFactory.Success(userData, "User retrieved successfully");
+
+Console.WriteLine($"Success: {successResponse.success}");
+Console.WriteLine($"Status: {successResponse.statusCode}");
+Console.WriteLine($"Message: {successResponse.message}");
+Console.WriteLine($"Data: {successResponse.data?.Name}");
+Console.WriteLine($"Timestamp: {successResponse.timestamp}");
+
+// Create a response using the builder pattern
+var builder = new ApiResponseBuilder<object>()
+    .WithData(userData)
+    .Success("User data retrieved");
+
+// Add metadata to the response
+builder.WithMetadata("pagination", new { Page = 1, PageSize = 10, Total = 100 });
+builder.WithMetadata("cache", new { Hit = true, DurationMs = 42 });
+
+var builtResponse = builder.Build();
+Console.WriteLine($"Metadata: {builtResponse.metadata}");
+
+// Create an error response for validation failure
+var validationError = ApiResponseBuilderFactory.BadRequest(
+    "Validation failed",
+    "Email is required",
+    "Name must be at least 3 characters"
+);
+
+Console.WriteLine($"Error Success: {validationError.success}");
+Console.WriteLine($"Error Status: {validationError.statusCode}");
+Console.WriteLine($"Error Message: {validationError.message}");
+Console.WriteLine($"Error Code: {validationError.errorCode}");
+Console.WriteLine($"Error Details: {validationError.errors}");
+
+// Create a 404 Not Found response
+var notFoundResponse = ApiResponseBuilderFactory.NotFound("User");
+Console.WriteLine($"Not Found: {notFoundResponse.statusCode} - {notFoundResponse.message}");
+
+// Create a 401 Unauthorized response
+var unauthorizedResponse = ApiResponseBuilderFactory.Unauthorized("Invalid API key");
+Console.WriteLine($"Unauthorized: {unauthorizedResponse.statusCode} - {unauthorizedResponse.message}");
+
+// Create a 429 Too Many Requests response
+var rateLimitResponse = ApiResponseBuilderFactory.TooManyRequests("API key rate limit exceeded");
+Console.WriteLine($"Rate Limit: {rateLimitResponse.statusCode} - {rateLimitResponse.message}");
+
+// Create a 500 Internal Server Error response
+var serverErrorResponse = ApiResponseBuilderFactory.InternalServerError("Database connection failed");
+Console.WriteLine($"Server Error: {serverErrorResponse.statusCode} - {serverErrorResponse.message}");
+```
+
 ## DateTimeExtensions
 
 The `DateTimeExtensions` class provides a set of utility extension methods for working with `DateTime` values. It includes methods for finding the start/end of days, weeks, and months, checking if dates are in the past or future, calculating days until a date, and formatting dates as human-readable time strings. These extensions simplify common date manipulation tasks throughout the application.
