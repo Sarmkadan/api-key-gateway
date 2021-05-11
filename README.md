@@ -1232,6 +1232,54 @@ Console.WriteLine($"Circuit breaker state after failures: {circuitBreaker.GetSta
 
 // After timeout period, circuit transitions to Half-Open and allows one test request
 
+## ApiKeyValidator
+
+The `ApiKeyValidator` class provides validation methods for API key format, strength, and metadata. It ensures API keys meet security and format requirements before creation, helping to prevent weak or predictable keys that could compromise security. The validator separates validation logic from business logic for reusability across the application.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Validation;
+
+// Validate API key format (length, character diversity)
+var keyFormatResult = ApiKeyValidator.ValidateKeyFormat("sk_ABC123def456GHI789jkl012MNO345pqr678");
+if (!keyFormatResult.IsValid)
+{
+    Console.WriteLine($"Key format validation failed: {keyFormatResult.Message}");
+}
+
+// Validate API key name/description
+var nameResult = ApiKeyValidator.ValidateKeyName("Production API Key - Web Service");
+if (!nameResult.IsValid)
+{
+    Console.WriteLine($"Name validation failed: {nameResult.Message}");
+}
+
+// Validate quota limits
+var quotaResult = ApiKeyValidator.ValidateQuotaLimit(10000);
+if (!quotaResult.IsValid)
+{
+    Console.WriteLine($"Quota validation failed: {quotaResult.Message}");
+}
+
+// Check if validation was successful
+bool isKeyValid = keyFormatResult.IsValid && nameResult.IsValid && quotaResult.IsValid;
+Console.WriteLine($"Overall validation result: {(isKeyValid ? "PASSED" : "FAILED")}");
+
+// Access error messages and errors collection
+if (!keyFormatResult.IsValid)
+{
+    Console.WriteLine($"Error: {keyFormatResult.Message}");
+    if (keyFormatResult.Errors.Any())
+    {
+        foreach (var error in keyFormatResult.Errors)
+        {
+            Console.WriteLine($" - {error}");
+        }
+    }
+}
+```
+
 ## ValidationHelpers
 
 The `ValidationHelpers` class provides a collection of static utility methods for validating common input patterns such as email addresses, API keys, IP addresses, GUIDs, and URLs. These validation methods use regular expressions and .NET's built-in parsing capabilities to ensure data integrity before processing. The `SanitizeInput` method helps prevent injection attacks and enforces length limits on user-provided strings.
