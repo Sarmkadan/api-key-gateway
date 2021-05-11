@@ -671,6 +671,87 @@ if (resetResult is OkObjectResult resetOkResult)
 }
 ```
 
+## UsageController
+
+The `UsageController` provides endpoints for retrieving API usage statistics and tracking records. It allows consumers to monitor their API consumption patterns by retrieving aggregated statistics for API keys, detailed usage records, and total usage for consumers. The controller supports date range filtering and provides comprehensive metrics including request counts, success rates, data transfer volumes, and response time statistics.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Set up services
+var services = new ServiceCollection();
+services.AddLogging(configure => configure.AddConsole());
+services.AddSingleton<IUsageTrackingService, UsageTrackingService>();
+
+var serviceProvider = services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+var usageService = serviceProvider.GetRequiredService<IUsageTrackingService>();
+
+// Create controller instance
+var controller = new UsageController(
+  usageService,
+  loggerFactory.CreateLogger<UsageController>()
+);
+
+// Get usage statistics for an API key (last 30 days)
+var statsResult = await controller.GetKeyStatistics(
+  apiKeyId: "sk_prod_abc123xyz",
+  startDate: DateTime.UtcNow.AddDays(-30),
+  endDate: DateTime.UtcNow
+);
+if (statsResult is OkObjectResult statsOkResult)
+{
+  var stats = statsOkResult.Value as UsageStatisticsResponse;
+  Console.WriteLine($"API Key: {stats.ApiKeyId}");
+  Console.WriteLine($"Period: {stats.StartDate:yyyy-MM-dd} to {stats.EndDate:yyyy-MM-dd}");
+  Console.WriteLine($"Total requests: {stats.TotalRequests}");
+  Console.WriteLine($"Successful: {stats.SuccessfulRequests}");
+  Console.WriteLine($"Failed: {stats.FailedRequests}");
+  Console.WriteLine($"Success rate: {stats.SuccessRate:P}");
+  Console.WriteLine($"Total bytes: {stats.TotalBytesTransferred}");
+  Console.WriteLine($"Average response time: {stats.AverageResponseTimeMs}ms");
+  Console.WriteLine($"Unique endpoints: {stats.UniqueEndpoints}");
+}
+
+// Get detailed usage records for an API key (last 7 days, max 50 records)
+var recordsResult = await controller.GetKeyRecords(
+  apiKeyId: "sk_prod_abc123xyz",
+  startDate: DateTime.UtcNow.AddDays(-7),
+  endDate: DateTime.UtcNow,
+  limit: 50
+);
+if (recordsResult is OkObjectResult recordsOkResult)
+{
+  var records = recordsOkResult.Value as List<UsageRecordResponse>;
+  Console.WriteLine($"Found {records.Count} usage records");
+  foreach (var record in records.Take(5))
+  {
+    Console.WriteLine($" - {record.RecordedAt:yyyy-MM-dd HH:mm:ss}: {record.Method} {record.Endpoint} ({record.StatusCode})");
+    Console.WriteLine($"   Request: {record.RequestBytes} bytes, Response: {record.ResponseBytes} bytes, {record.ResponseTimeMs}ms");
+  }
+}
+
+// Get total usage for a consumer (last 30 days)
+var consumerResult = await controller.GetConsumerUsage(
+  consumerId: "consumer_prod_xyz789",
+  startDate: DateTime.UtcNow.AddDays(-30),
+  endDate: DateTime.UtcNow
+);
+if (consumerResult is OkObjectResult consumerOkResult)
+{
+  var consumerUsage = consumerOkResult.Value as ConsumerUsageResponse;
+  Console.WriteLine($"Consumer: {consumerUsage.ConsumerId}");
+  Console.WriteLine($"Period: {consumerUsage.StartDate:yyyy-MM-dd} to {consumerUsage.EndDate:yyyy-MM-dd}");
+  Console.WriteLine($"Total bytes: {consumerUsage.TotalBytesTransferred} bytes");
+  Console.WriteLine($"Total GB: {consumerUsage.TotalGBTransferred} GB");
+}
+```
+
 ## AnalyticsController
 
 The `AnalyticsController` provides aggregated usage analytics for API keys, allowing consumers to monitor their API consumption patterns. It offers endpoints for retrieving high-level summaries, top endpoints by usage, and time-series trends (hourly and daily). All date parameters are treated as UTC and sensible defaults are applied when not provided.
