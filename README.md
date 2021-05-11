@@ -886,6 +886,144 @@ string humanTime = oneHourAgo.ToHumanReadableTime();
 Console.WriteLine($"Time ago: {humanTime}");
 ```
 
+## ApiKeysController
+
+The `ApiKeysController` provides endpoints for managing API keys throughout their lifecycle. It allows consumers to create, retrieve, update, and delete API keys, as well as manage IP whitelists and rotate keys for security. The controller supports enabling/disabling keys, revoking keys, and managing IP restrictions to control where API keys can be used from.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Set up services
+var services = new ServiceCollection();
+services.AddLogging(configure => configure.AddConsole());
+services.AddSingleton<IApiKeyService, ApiKeyService>();
+services.AddSingleton<IApiKeyRotationService, ApiKeyRotationService>();
+
+var serviceProvider = services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+var apiKeyService = serviceProvider.GetRequiredService<IApiKeyService>();
+var rotationService = serviceProvider.GetRequiredService<IApiKeyRotationService>();
+
+// Create controller instance
+var controller = new ApiKeysController(
+    apiKeyService,
+    rotationService,
+    loggerFactory.CreateLogger<ApiKeysController>()
+);
+
+// Create a new API key
+var createResult = await controller.CreateKey(new CreateKeyRequest
+{
+    ConsumerId = "consumer_prod_xyz789",
+    Name = "Production API Key",
+    ExpirationDays = 90
+});
+
+if (createResult is CreatedAtActionResult createdResult)
+{
+    var response = createdResult.Value as CreateKeyResponse;
+    Console.WriteLine($"Created API key: {response?.KeyId}");
+    Console.WriteLine($"Consumer: {response?.ConsumerId}");
+    Console.WriteLine($"Expires at: {response?.ExpiresAt}");
+}
+
+// Retrieve an API key by ID
+var getResult = await controller.GetKeyById("sk_prod_abc123xyz");
+if (getResult is OkObjectResult okResult)
+{
+    var key = okResult.Value as GetKeyResponse;
+    Console.WriteLine($"Key: {key?.Name}, Status: {key?.Status}");
+    Console.WriteLine($"Created: {key?.CreatedAt}, Expires: {key?.ExpiresAt}");
+}
+
+// List all API keys for a consumer
+var listResult = await controller.GetConsumerKeys("consumer_prod_xyz789");
+if (listResult is OkObjectResult listOkResult)
+{
+    var keys = listOkResult.Value as List<GetKeyResponse>;
+    Console.WriteLine($"Found {keys?.Count} keys for consumer");
+}
+
+// Disable an API key
+await controller.DisableKey("sk_prod_abc123xyz");
+Console.WriteLine("API key disabled");
+
+// Enable an API key
+await controller.EnableKey("sk_prod_abc123xyz");
+Console.WriteLine("API key enabled");
+
+// Revoke an API key permanently
+await controller.RevokeKey("sk_prod_abc123xyz");
+Console.WriteLine("API key revoked");
+
+// Get IP whitelist for an API key
+var whitelistResult = await controller.GetIpWhitelist("sk_prod_abc123xyz");
+if (whitelistResult is OkObjectResult whitelistOkResult)
+{
+    var whitelist = whitelistResult.Value as IpWhitelistResponse;
+    Console.WriteLine($"Whitelist unrestricted: {whitelist?.IsUnrestricted}");
+    if (!whitelist?.IsUnrestricted == true)
+    {
+        Console.WriteLine("Allowed IPs:");
+        foreach (var ip in whitelist?.AllowedIps ?? new List<string>())
+        {
+            Console.WriteLine($" - {ip}");
+        }
+    }
+}
+
+// Set IP whitelist (replace all entries)
+var setWhitelistResult = await controller.SetIpWhitelist("sk_prod_abc123xyz", new SetIpWhitelistRequest
+{
+    AllowedIps = new List<string> { "192.168.1.100", "10.0.0.5" }
+});
+if (setWhitelistResult is OkObjectResult setOkResult)
+{
+    var response = setOkResult.Value as IpWhitelistResponse;
+    Console.WriteLine($"Set whitelist with {response?.AllowedIps?.Count} entries");
+}
+
+// Add IP to whitelist
+var addIpResult = await controller.AddIpToWhitelist("sk_prod_abc123xyz", new IpAddressRequest
+{
+    IpAddress = "192.168.1.200"
+});
+if (addIpResult is OkObjectResult addOkResult)
+{
+    var response = addOkResult.Value as IpWhitelistResponse;
+    Console.WriteLine($"Added IP, total whitelist entries: {response?.AllowedIps?.Count}");
+}
+
+// Remove IP from whitelist
+var removeIpResult = await controller.RemoveIpFromWhitelist("sk_prod_abc123xyz", "192.168.1.100");
+if (removeIpResult is OkObjectResult removeOkResult)
+{
+    var response = removeIpResult.Value as IpWhitelistResponse;
+    Console.WriteLine($"Removed IP, whitelist unrestricted: {response?.IsUnrestricted}");
+}
+
+// Rotate an API key (create new key, revoke old one)
+var rotateResult = await controller.RotateKey("sk_prod_abc123xyz", new RotateKeyRequest
+{
+    NewExpirationDays = 30
+});
+if (rotateResult is OkObjectResult rotateOkResult)
+{
+    var response = rotateOkResult.Value as RotateKeyResponse;
+    Console.WriteLine($"Rotated key from {response?.OldKeyId} to {response?.NewKeyId}");
+    Console.WriteLine($"New key expires: {response?.NewKeyExpiresAt}");
+}
+
+// Delete an API key
+await controller.DeleteKey("sk_prod_abc123xyz");
+Console.WriteLine("API key deleted");
+```
+
 ## StatsController
 
 The `StatsController` provides endpoints for retrieving usage statistics, rate limit status, endpoint-specific metrics, recent activity, and quota utilization for authenticated API keys. These endpoints are designed to help API key owners monitor their usage patterns and stay within configured limits.
