@@ -713,6 +713,90 @@ string humanTime = oneHourAgo.ToHumanReadableTime();
 Console.WriteLine($"Time ago: {humanTime}");
 ```
 
+## StatsController
+
+The `StatsController` provides endpoints for retrieving usage statistics, rate limit status, endpoint-specific metrics, recent activity, and quota utilization for authenticated API keys. These endpoints are designed to help API key owners monitor their usage patterns and stay within configured limits.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Set up services
+var services = new ServiceCollection();
+services.AddLogging(configure => configure.AddConsole());
+
+var serviceProvider = services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+// Create controller instance
+var controller = new StatsController(
+    loggerFactory.CreateLogger<StatsController>()
+);
+
+// Get usage statistics for the last 24 hours
+var usageResult = controller.GetUsageStatistics("day");
+if (usageResult is OkObjectResult okResult)
+{
+    var stats = okResult.Value as dynamic;
+    Console.WriteLine($"Period: {stats.period}");
+    Console.WriteLine($"Requests: {stats.requests}");
+    Console.WriteLine($"Errors: {stats.errors}");
+}
+
+// Get current rate limit status
+var rateLimitResult = controller.GetRateLimitStatus();
+if (rateLimitResult is OkObjectResult rateLimitOkResult)
+{
+    var rateLimit = rateLimitOkResult.Value as dynamic;
+    Console.WriteLine($"Rate limit status: {rateLimit.status}");
+    Console.WriteLine($"Hourly limit: {rateLimit.rateLimits.hourly.limit}");
+    Console.WriteLine($"Daily limit: {rateLimit.rateLimits.daily.limit}");
+}
+
+// Get endpoint-specific statistics
+var endpointResult = controller.GetEndpointStatistics();
+if (endpointResult is OkObjectResult endpointOkResult)
+{
+    var endpoints = endpointOkResult.Value as dynamic;
+    Console.WriteLine($"Endpoints monitored: {endpoints.endpoints.Length}");
+    foreach (var endpoint in endpoints.endpoints)
+    {
+        Console.WriteLine($"  {endpoint.path}: {endpoint.requests} requests, {endpoint.avgResponseTime}ms avg");
+    }
+}
+
+// Get recent activity (last 50 requests)
+var activityResult = controller.GetRecentActivity(limit: 50);
+if (activityResult is OkObjectResult activityOkResult)
+{
+    var activity = activityOkResult.Value as dynamic;
+    Console.WriteLine($"Recent activity for API key: {activity.apiKeyId}");
+    Console.WriteLine($"Showing {activity.recentRequests.Length} requests");
+}
+
+// Get quota status
+var quotaResult = controller.GetQuotaStatus();
+if (quotaResult is OkObjectResult quotaOkResult)
+{
+    var quota = quotaOkResult.Value as dynamic;
+    Console.WriteLine($"Quota type: {quota.quotaType}");
+    Console.WriteLine($"Requests today: {quota.usage.requestsToday} / {quota.limits.requestsPerDay}");
+    Console.WriteLine($"Data transfer: {quota.usage.dataTransferGbThisMonth} GB / {quota.limits.dataTransferGbMonth} GB");
+    if (quota.warnings.Length > 0)
+    {
+        Console.WriteLine("Warnings:");
+        foreach (var warning in quota.warnings)
+        {
+            Console.WriteLine($"  - {warning}");
+        }
+    }
+}
+```
+
 ## RateLimitCalculationHelper
 
 The `RateLimitCalculationHelper` class provides utility methods for rate limit calculations and window management. It encapsulates the logic for determining if requests are within quota, calculating reset times, and providing human-readable information about rate limit status. This helper is separated from business logic to allow easy testing and reuse across different components.
