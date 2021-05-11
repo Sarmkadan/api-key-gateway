@@ -671,6 +671,98 @@ if (resetResult is OkObjectResult resetOkResult)
 }
 ```
 
+## AnalyticsController
+
+The `AnalyticsController` provides aggregated usage analytics for API keys, allowing consumers to monitor their API consumption patterns. It offers endpoints for retrieving high-level summaries, top endpoints by usage, and time-series trends (hourly and daily). All date parameters are treated as UTC and sensible defaults are applied when not provided.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Set up services
+var services = new ServiceCollection();
+services.AddLogging(configure => configure.AddConsole());
+services.AddSingleton<IUsageAnalyticsService, UsageAnalyticsService>();
+
+var serviceProvider = services.BuildServiceProvider();
+var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+var analyticsService = serviceProvider.GetRequiredService<IUsageAnalyticsService>();
+
+// Create controller instance
+var controller = new AnalyticsController(
+  analyticsService,
+  loggerFactory.CreateLogger<AnalyticsController>()
+);
+
+// Get high-level usage summary for an API key (last 30 days)
+var summaryResult = await controller.GetSummary(
+  keyId: "sk_prod_abc123xyz",
+  from: DateTime.UtcNow.AddDays(-30),
+  to: DateTime.UtcNow
+);
+if (summaryResult is OkObjectResult summaryOkResult)
+{
+  var summary = summaryOkResult.Value as dynamic;
+  Console.WriteLine($"Total requests: {summary.totalRequests}");
+  Console.WriteLine($"Total errors: {summary.totalErrors}");
+  Console.WriteLine($"Average response time: {summary.avgResponseTime}ms");
+  Console.WriteLine($"Total bytes transferred: {summary.totalBytesTransferred} bytes");
+}
+
+// Get top 10 most-called endpoints for an API key (last 7 days)
+var topEndpointsResult = await controller.GetTopEndpoints(
+  keyId: "sk_prod_abc123xyz",
+  limit: 10,
+  from: DateTime.UtcNow.AddDays(-7),
+  to: DateTime.UtcNow
+);
+if (topEndpointsResult is OkObjectResult endpointsOkResult)
+{
+  var endpoints = endpointsOkResult.Value as dynamic;
+  Console.WriteLine($"Top endpoints:");
+  foreach (var endpoint in endpoints)
+  {
+    Console.WriteLine($" - {endpoint.path}: {endpoint.requestCount} requests");
+  }
+}
+
+// Get hourly trends for an API key (last 24 hours)
+var hourlyTrendResult = await controller.GetHourlyTrend(
+  keyId: "sk_prod_abc123xyz",
+  from: DateTime.UtcNow.AddHours(-24),
+  to: DateTime.UtcNow
+);
+if (hourlyTrendResult is OkObjectResult hourlyOkResult)
+{
+  var hourlyData = hourlyOkResult.Value as dynamic;
+  Console.WriteLine($"Hourly trend data points: {hourlyData.Count}");
+  foreach (var bucket in hourlyData)
+  {
+    Console.WriteLine($" - {bucket.hour}: {bucket.requestCount} requests, {bucket.avgResponseTime}ms avg");
+  }
+}
+
+// Get daily trends for an API key (last 30 days)
+var dailyTrendResult = await controller.GetDailyTrend(
+  keyId: "sk_prod_abc123xyz",
+  from: DateTime.UtcNow.AddDays(-30),
+  to: DateTime.UtcNow
+);
+if (dailyTrendResult is OkObjectResult dailyOkResult)
+{
+  var dailyData = dailyOkResult.Value as dynamic;
+  Console.WriteLine($"Daily trend data points: {dailyData.Count}");
+  foreach (var bucket in dailyData)
+  {
+    Console.WriteLine($" - {bucket.date:yyyy-MM-dd}: {bucket.requestCount} requests, {bucket.errorCount} errors");
+  }
+}
+```
+
 ## DateTimeExtensions
 
 The `DateTimeExtensions` class provides a set of utility extension methods for working with `DateTime` values. It includes methods for finding the start/end of days, weeks, and months, checking if dates are in the past or future, calculating days until a date, and formatting dates as human-readable time strings. These extensions simplify common date manipulation tasks throughout the application.
