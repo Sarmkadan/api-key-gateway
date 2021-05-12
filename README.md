@@ -1284,6 +1284,193 @@ Console.WriteLine($"Circuit breaker state after failures: {circuitBreaker.GetSta
 
 // After timeout period, circuit transitions to Half-Open and allows one test request
 
+## IntegrationTests
+
+The `IntegrationTests` class provides comprehensive integration tests that validate the complete workflow of the API Key Gateway system. It tests end-to-end scenarios including API key creation, authentication, rate limiting, usage tracking, quota enforcement, IP whitelisting, and audit logging. These tests ensure all components work together correctly in realistic scenarios.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using Xunit;
+using System.Threading.Tasks;
+
+// Integration test suite for API Key Gateway functionality
+public class ApiKeyGatewayIntegrationTests : IntegrationTests
+{
+    [Fact]
+    public async Task FullWorkflow_CreateKeyToUsageTracking_CompletesSuccessfully()
+    {
+        // Create a new API key
+        var createResponse = await CreateKeyAsync("consumer_001", "Integration Test Key", 30);
+        Assert.NotNull(createResponse?.KeyId);
+        
+        // Authenticate with the new key
+        var authResult = await AuthenticateAsync(createResponse.KeyId);
+        Assert.True(authResult.IsAuthenticated);
+        
+        // Track API usage
+        var usageRecord = await RecordUsageAsync(createResponse.KeyId, "/api/users", "GET", 200, 1250, 4096, 42);
+        Assert.NotNull(usageRecord);
+        
+        // Verify usage was tracked
+        var stats = await GetKeyStatisticsAsync(createResponse.KeyId, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow);
+        Assert.True(stats.TotalRequests > 0);
+    }
+    
+    [Fact]
+    public async Task RateLimiting_FullWorkflow_EnforcesAndRecords()
+    {
+        // Create API key with rate limit
+        var createResponse = await CreateKeyAsync("consumer_002", "Rate Limited Key", 30);
+        
+        // Exceed rate limit
+        for (int i = 0; i < 150; i++)
+        {
+            var result = await MakeAuthenticatedRequestAsync(createResponse.KeyId, "/api/test", "GET");
+            if (i < 100)
+            {
+                Assert.True(result.IsSuccess);
+            }
+            else
+            {
+                Assert.Equal(429, result.StatusCode); // Too Many Requests
+            }
+        }
+        
+        // Verify rate limit was enforced
+        var rateLimitStatus = await GetRateLimitStatusAsync(createResponse.KeyId);
+        Assert.Equal(429, rateLimitStatus.StatusCode);
+    }
+    
+    [Fact]
+    public async Task UsageTracking_RecordMultipleAndGetStatistics()
+    {
+        // Create API key
+        var createResponse = await CreateKeyAsync("consumer_003", "Usage Tracking Key", 30);
+        
+        // Record multiple usage events
+        await RecordUsageAsync(createResponse.KeyId, "/api/users", "GET", 200, 1000, 2000, 35);
+        await RecordUsageAsync(createResponse.KeyId, "/api/products", "POST", 201, 1500, 3000, 85);
+        await RecordUsageAsync(createResponse.KeyId, "/api/orders", "GET", 200, 800, 1500, 28);
+        
+        // Retrieve statistics
+        var stats = await GetKeyStatisticsAsync(
+            createResponse.KeyId, 
+            DateTime.UtcNow.AddDays(-7), 
+            DateTime.UtcNow
+        );
+        
+        Assert.Equal(3, stats.TotalRequests);
+        Assert.Equal(3, stats.SuccessfulRequests);
+        Assert.Equal(0, stats.FailedRequests);
+        Assert.True(stats.TotalBytesTransferred > 0);
+    }
+    
+    [Fact]
+    public async Task UsageQuota_EnforceAndReset_WorksCorrectly()
+    {
+        // Create API key with usage quota
+        var createResponse = await CreateKeyAsync("consumer_004", "Quota Limited Key", 30);
+        
+        // Exceed quota
+        for (int i = 0; i < 1001; i++) // Exceeds default quota of 1000
+        {
+            var result = await MakeAuthenticatedRequestAsync(createResponse.KeyId, "/api/test", "GET");
+            if (i < 1000)
+            {
+                Assert.True(result.IsSuccess);
+            }
+            else
+            {
+                Assert.Equal(429, result.StatusCode); // Quota Exceeded
+            }
+        }
+        
+        // Reset quota
+        var resetResult = await ResetUsageQuotaAsync(createResponse.KeyId);
+        Assert.True(resetResult);
+        
+        // Verify quota was reset
+        var stats = await GetKeyStatisticsAsync(createResponse.KeyId, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow);
+        Assert.Equal(0, stats.TotalRequests);
+    }
+    
+    [Fact]
+    public async Task Authentication_IpWhitelist_ValidatesCorrectly()
+    {
+        // Create API key
+        var createResponse = await CreateKeyAsync("consumer_005", "IP Restricted Key", 30);
+        
+        // Set IP whitelist
+        var whitelistResult = await SetIpWhitelistAsync(createResponse.KeyId, new[] { "192.168.1.100", "10.0.0.5" });
+        Assert.NotNull(whitelistResult);
+        
+        // Request from allowed IP should succeed
+        var allowedResult = await MakeAuthenticatedRequestFromIpAsync(createResponse.KeyId, "192.168.1.100", "/api/test", "GET");
+        Assert.True(allowedResult.IsSuccess);
+        
+        // Request from blocked IP should fail
+        var blockedResult = await MakeAuthenticatedRequestFromIpAsync(createResponse.KeyId, "192.168.1.200", "/api/test", "GET");
+        Assert.Equal(403, blockedResult.StatusCode); // Forbidden
+    }
+    
+    [Fact]
+    public async Task AuditLogging_ConcurrentOperations_AllLogged()
+    {
+        // Create API key
+        var createResponse = await CreateKeyAsync("consumer_006", "Audit Logged Key", 30);
+        
+        // Perform multiple operations
+        await CreateKeyAsync("consumer_006", "Additional Key", 30);
+        await DisableKeyAsync(createResponse.KeyId);
+        await EnableKeyAsync(createResponse.KeyId);
+        await RecordUsageAsync(createResponse.KeyId, "/api/test", "GET", 200, 500, 1000, 25);
+        
+        // Retrieve audit logs
+        var auditLogs = await GetAuditLogsByResourceAsync(createResponse.KeyId, limit: 50);
+        Assert.True(auditLogs.Count >= 4); // At least 4 operations logged
+        
+        foreach (var log in auditLogs)
+        {
+            Assert.Equal(createResponse.KeyId, log.ResourceId);
+            Assert.Equal("ApiKey", log.ResourceType);
+            Assert.True(log.IsSuccess);
+        }
+    }
+    
+    [Fact]
+    public async Task CompleteFlow_CreateKeyAuthenticateAndTrack_Works()
+    {
+        // Complete end-to-end workflow
+        var createResponse = await CreateKeyAsync("consumer_007", "Complete Flow Key", 30);
+        Assert.NotNull(createResponse?.KeyId);
+        
+        // Authenticate
+        var authResult = await AuthenticateAsync(createResponse.KeyId);
+        Assert.True(authResult.IsAuthenticated);
+        Assert.Equal(createResponse.KeyId, authResult.ApiKeyId);
+        
+        // Make authenticated requests
+        var request1 = await MakeAuthenticatedRequestAsync(createResponse.KeyId, "/api/users", "GET");
+        Assert.True(request1.IsSuccess);
+        
+        var request2 = await MakeAuthenticatedRequestAsync(createResponse.KeyId, "/api/products", "POST");
+        Assert.True(request2.IsSuccess);
+        
+        // Verify usage tracking
+        var stats = await GetKeyStatisticsAsync(createResponse.KeyId, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow);
+        Assert.Equal(2, stats.TotalRequests);
+        Assert.Equal(2, stats.SuccessfulRequests);
+        
+        // Clean up
+        await DeleteKeyAsync(createResponse.KeyId);
+        var deletedKey = await GetKeyByIdAsync(createResponse.KeyId);
+        Assert.Null(deletedKey);
+    }
+}
+```
+
 ## ApiKeyValidator
 
 The `ApiKeyValidator` class provides validation methods for API key format, strength, and metadata. It ensures API keys meet security and format requirements before creation, helping to prevent weak or predictable keys that could compromise security. The validator separates validation logic from business logic for reusability across the application.
