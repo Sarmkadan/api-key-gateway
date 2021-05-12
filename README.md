@@ -1332,6 +1332,80 @@ if (!keyFormatResult.IsValid)
 }
 ```
 
+## ApiKeyServiceTests
+
+The `ApiKeyServiceTests` class provides unit tests for the `ApiKeyService` class, covering all major functionality including key creation, retrieval, validation, status management, and consumer-specific operations. It tests both success and failure scenarios to ensure the service behaves correctly under various conditions, including invalid inputs, missing keys, and repository errors.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using Moq;
+using Xunit;
+
+// Create a mock repository
+var mockRepository = new Mock<IApiKeyRepository>();
+
+// Set up test data
+var testKey = new ApiKey
+{
+    Id = "test_key_123",
+    ConsumerId = "consumer_123",
+    Name = "Test API Key",
+    KeyHash = "hashed_value_here",
+    Prefix = "test_",
+    Status = ApiKeyStatus.Active,
+    CreatedAt = DateTime.UtcNow,
+    ExpiresAt = DateTime.UtcNow.AddYears(1)
+};
+
+// Test CreateKeyAsync with valid arguments
+mockRepository.Setup(r => r.CreateAsync(It.IsAny<ApiKey>()))
+    .ReturnsAsync(testKey);
+
+var service = new ApiKeyService(mockRepository.Object, Mock.Of<ILogger<ApiKeyService>>());
+
+// Create a valid API key
+var createdKey = await service.CreateKeyAsync("consumer_123", "Production API Key", 90);
+Assert.Equal("test_key_123", createdKey.Id);
+Assert.Equal("test_", createdKey.Prefix);
+
+// Test GetByIdAsync with existing key
+mockRepository.Setup(r => r.GetByIdAsync("test_key_123"))
+    .ReturnsAsync(testKey);
+
+var retrievedKey = await service.GetByIdAsync("test_key_123");
+Assert.NotNull(retrievedKey);
+Assert.Equal("Test API Key", retrievedKey.Name);
+
+// Test DisableKeyAsync
+mockRepository.Setup(r => r.UpdateAsync(It.IsAny<ApiKey>()))
+    .ReturnsAsync((ApiKey k) => k);
+
+var disableResult = await service.DisableKeyAsync("test_key_123");
+Assert.True(disableResult);
+
+// Test ValidateKeyAsync with valid key
+mockRepository.Setup(r => r.GetByIdAsync("test_key_123"))
+    .ReturnsAsync(testKey);
+
+var isValid = await service.ValidateKeyAsync("test_key_123");
+Assert.True(isValid);
+
+// Test GetConsumerKeysAsync
+mockRepository.Setup(r => r.GetByConsumerAsync("consumer_123"))
+    .ReturnsAsync(new List<ApiKey> { testKey });
+
+var consumerKeys = await service.GetConsumerKeysAsync("consumer_123");
+Assert.Single(consumerKeys);
+
+// Test RevokeKeyAsync
+var revokeResult = await service.RevokeKeyAsync("test_key_123");
+Assert.True(revokeResult);
+```
+
 ## ValidationHelpers
 
 The `ValidationHelpers` class provides a collection of static utility methods for validating common input patterns such as email addresses, API keys, IP addresses, GUIDs, and URLs. These validation methods use regular expressions and .NET's built-in parsing capabilities to ensure data integrity before processing. The `SanitizeInput` method helps prevent injection attacks and enforces length limits on user-provided strings.
