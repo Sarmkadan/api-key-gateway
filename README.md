@@ -321,6 +321,58 @@ var deletedCount = await usageRepo.DeleteOldRecordsAsync(30);
 Console.WriteLine($"Deleted {deletedCount} old usage records");
 ```
 
+## RequestValidator
+
+The `RequestValidator` class provides reusable validation methods for common request parameters such as email addresses, URLs, IP addresses, string lengths, numeric ranges, and GUIDs. These static methods help prevent code duplication across controllers and keep validation logic centralized for easy maintenance and consistency.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Validation;
+
+// Validate an email address format
+var emailResult = RequestValidator.ValidateEmail("user@example.com");
+if (!emailResult.IsValid)
+{
+    Console.WriteLine($"Email validation failed: {emailResult.Message}");
+}
+
+// Validate a URL with HTTPS requirement
+var urlResult = RequestValidator.ValidateUrl("https://api.example.com/v1/users");
+if (!urlResult.IsValid)
+{
+    Console.WriteLine($"URL validation failed: {urlResult.Message}");
+}
+
+// Validate an IP address
+var ipResult = RequestValidator.ValidateIpAddress("192.168.1.100");
+if (!ipResult.IsValid)
+{
+    Console.WriteLine($"IP address validation failed: {ipResult.Message}");
+}
+
+// Validate string length (minimum 3, maximum 100 characters)
+var lengthResult = RequestValidator.ValidateLength("Production API Key", minLength: 3, maxLength: 100, fieldName: "API Key Name");
+if (!lengthResult.IsValid)
+{
+    Console.WriteLine($"Length validation failed: {lengthResult.Message}");
+}
+
+// Validate a numeric range (between 1 and 1000)
+var rangeResult = RequestValidator.ValidateRange(500, minimum: 1, maximum: 1000, fieldName: "Request Limit");
+if (!rangeResult.IsValid)
+{
+    Console.WriteLine($"Range validation failed: {rangeResult.Message}");
+}
+
+// Validate a GUID
+var guidResult = RequestValidator.ValidateGuid(Guid.NewGuid(), fieldName: "User ID");
+if (!guidResult.IsValid)
+{
+    Console.WriteLine($"GUID validation failed: {guidResult.Message}");
+}
+```
+
 ## ResponseFormatterExtensions
 
 The `ResponseFormatterExtensions` class provides extension methods for formatting HTTP responses with a consistent structure across the API. It includes methods for creating successful responses, error responses, and paginated responses, all following a standard envelope pattern with data, metadata, and error information.
