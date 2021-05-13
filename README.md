@@ -1814,6 +1814,99 @@ string sanitized = ValidationHelpers.SanitizeInput(maliciousInput, maxLength: 20
 Console.WriteLine($"Sanitized input: '{sanitized}'");
 ```
 
+## ValidationHelpersTests
+
+The `ValidationHelpersTests` class provides unit tests for the `ValidationHelpers` utility methods, covering validation logic for email addresses, API key formats, IP addresses, input sanitization, key name validation, quota limits, and key format validation. These tests ensure that validation rules are correctly implemented and help prevent regressions when modifying validation logic.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using Xunit;
+
+// Create test instance
+var validationTests = new ValidationHelpersTests();
+
+// Test email validation with various formats
+var emailResult = validationTests.IsValidEmail_VariousFormats_ReturnsExpectedResult(
+    "user@example.com",
+    "invalid-email",
+    "another.user@sub.domain.org"
+);
+Assert.True(emailResult.validEmails.All(v => v));
+Assert.True(emailResult.invalidEmails.All(v => !v));
+
+// Test API key format validation with valid SK prefix and 32+ characters
+var apiKeyFormatResult = validationTests.IsValidApiKeyFormat_ValidSkPrefixWith32Chars_ReturnsTrue(
+    "sk_abcdefghijklmnopqrstuvwxyz123456"
+);
+Assert.True(apiKeyFormatResult);
+
+// Test API key format validation with invalid formats
+var invalidApiKeyResult = validationTests.IsValidApiKeyFormat_InvalidFormats_ReturnsFalse(
+    "invalid_key",
+    "key_without_prefix",
+    "sk_short"
+);
+Assert.True(invalidApiKeyResult.allInvalid);
+
+// Test IP address validation with various address formats
+var ipResult = validationTests.IsValidIpAddress_VariousAddresses_ReturnsExpectedResult(
+    "192.168.1.1",
+    "10.0.0.1",
+    "2001:0db8:85a3:0000:0000:8a2e:0370:7334", // IPv6
+    "invalid-ip"
+);
+Assert.Equal(3, ipResult.validCount);
+Assert.Equal(1, ipResult.invalidCount);
+
+// Test input sanitization with strings exceeding maximum length
+var longString = new string('a', 501);
+var sanitizedLong = validationTests.SanitizeInput_StringExceedingMaxLength_TruncatesToLimit(longString, 500);
+Assert.Equal(500, sanitizedLong.Length);
+
+// Test input sanitization with leading and trailing whitespace
+var whitespaceString = "  trimmed content  ";
+var sanitizedWhitespace = validationTests.SanitizeInput_StringWithLeadingAndTrailingWhitespace_ReturnsTrimmedValue(whitespaceString);
+Assert.Equal("trimmed content", sanitizedWhitespace);
+
+// Test key format validation with sufficient entropy
+var validKeyResult = validationTests.ValidateKeyFormat_KeyWithSufficientEntropy_ReturnsValid(
+    "sk_ABC123def456GHI789jkl012MNO345pqr678"
+);
+Assert.True(validKeyResult.IsValid);
+
+// Test key format validation with keys that are too short
+var shortKeyResult = validationTests.ValidateKeyFormat_KeyTooShort_ReturnsInvalidWithMessage(
+    "sk_short",
+    "API key must be at least 32 characters after prefix"
+);
+Assert.False(shortKeyResult.IsValid);
+Assert.Contains("32 characters", shortKeyResult.Message);
+
+// Test key name validation with valid names
+var validNameResult = validationTests.ValidateKeyName_ValidName_ReturnsValid(
+    "Production API Key"
+);
+Assert.True(validNameResult.IsValid);
+
+// Test key name validation with special characters
+var specialCharsResult = validationTests.ValidateKeyName_NameWithSpecialChars_ReturnsInvalid(
+    "Key@With#Special$Chars"
+);
+Assert.False(specialCharsResult.IsValid);
+
+// Test quota limit validation with various limits
+var quotaResult = validationTests.ValidateQuotaLimit_VariousLimits_ReturnsExpectedValidity(
+    1000,
+    1000000,
+    0,
+    -100
+);
+Assert.True(quotaResult.validLimits.All(v => v));
+Assert.True(quotaResult.invalidLimits.All(v => !v));
+```
+
 ## RequestContextHelper
 
 The `RequestContextHelper` class provides utility methods for extracting and validating information from HTTP requests. It centralizes request parsing logic to ensure consistency across the application, handling API key extraction, correlation ID generation, pagination parameters, client IP address resolution, request scope identification, and content negotiation checks.
