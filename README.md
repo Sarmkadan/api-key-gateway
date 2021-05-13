@@ -1563,6 +1563,94 @@ var dailyTrend = await analyticsService.GetDailyTrendAsync("key-1",
 Assert.NotEmpty(dailyTrend);
 ```
 
+## IpWhitelistTests
+
+The `IpWhitelistTests` class provides unit tests for IP whitelist functionality in the API Key Gateway. It tests the IP whitelist validation logic that controls which IP addresses are allowed to use specific API keys, ensuring that only authorized sources can access protected endpoints. The tests cover scenarios including unrestricted access, empty whitelists, valid IP matching, trimming of whitespace, and various edge cases for IP address validation.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using Xunit;
+using System.Threading.Tasks;
+
+// Create test instance
+var ipWhitelistTests = new IpWhitelistTests();
+
+// Test unrestricted whitelist (no restrictions)
+var unrestrictedResult = ipWhitelistTests.IsIpAllowed_NoWhitelist_AllowsAnyIp();
+Assert.True(unrestrictedResult);
+
+// Test empty whitelist
+var emptyWhitelistResult = ipWhitelistTests.IsIpAllowed_EmptyWhitelist_AllowsAnyIp();
+Assert.True(emptyWhitelistResult);
+
+// Test whitelisted IP
+var whitelistedResult = ipWhitelistTests.IsIpAllowed_WhitelistedIp_ReturnsTrue("192.168.1.100");
+Assert.True(whitelistedResult);
+
+// Test non-whitelisted IP
+var nonWhitelistedResult = ipWhitelistTests.IsIpAllowed_NonWhitelistedIp_ReturnsFalse("192.168.1.200");
+Assert.False(nonWhitelistedResult);
+
+// Test whitelist with spaces (should trim)
+var trimmedResult = ipWhitelistTests.IsIpAllowed_WhitelistWithSpaces_TrimsAndMatches("  192.168.1.100  ");
+Assert.True(trimmedResult);
+
+// Test async methods for getting IP whitelist
+var emptyList = await ipWhitelistTests.GetIpWhitelistAsync_KeyNotFound_ReturnsEmptyList("nonexistent_key");
+Assert.Empty(emptyList);
+
+var whitelist = await ipWhitelistTests.GetIpWhitelistAsync_KeyWithWhitelist_ReturnsDistinctList("test_key_123");
+Assert.NotEmpty(whitelist);
+
+// Test async methods for setting IP whitelist
+var setResult = await ipWhitelistTests.SetIpWhitelistAsync_ValidIps_PersistsWhitelistAsCommaSeparated(
+    "test_key_123",
+    new List<string> { "192.168.1.100", "10.0.0.5" }
+);
+Assert.True(setResult);
+
+var clearResult = await ipWhitelistTests.SetIpWhitelistAsync_EmptyList_ClearsWhitelist("test_key_123");
+Assert.True(clearResult);
+
+// Test async methods for adding IPs to whitelist
+var addResult = await ipWhitelistTests.AddIpToWhitelistAsync_NewIp_AddsToList(
+    "test_key_123",
+    "192.168.1.200"
+);
+Assert.True(addResult);
+
+var duplicateResult = await ipWhitelistTests.AddIpToWhitelistAsync_DuplicateIp_ReturnsFalse(
+    "test_key_123",
+    "192.168.1.200"
+);
+Assert.False(duplicateResult);
+
+try
+{
+    await ipWhitelistTests.AddIpToWhitelistAsync_EmptyIp_ThrowsArgumentException("test_key_123", "");
+    Assert.True(false); // Should not reach here
+}
+catch (ArgumentException)
+{
+    // Expected exception
+}
+
+// Test async methods for removing IPs from whitelist
+var removeResult = await ipWhitelistTests.RemoveIpFromWhitelistAsync_ExistingIp_RemovesFromList(
+    "test_key_123",
+    "192.168.1.200"
+);
+Assert.True(removeResult);
+
+var nonExistentResult = await ipWhitelistTests.RemoveIpFromWhitelistAsync_NonExistentIp_ReturnsFalse(
+    "test_key_123",
+    "192.168.1.300"
+);
+Assert.False(nonExistentResult);
+```
+
 ## ApiKeyValidator
 
 The `ApiKeyValidator` class provides validation methods for API key format, strength, and metadata. It ensures API keys meet security and format requirements before creation, helping to prevent weak or predictable keys that could compromise security. The validator separates validation logic from business logic for reusability across the application.
