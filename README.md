@@ -1814,6 +1814,106 @@ string sanitized = ValidationHelpers.SanitizeInput(maliciousInput, maxLength: 20
 Console.WriteLine($"Sanitized input: '{sanitized}'");
 ```
 
+## AuditLogServiceTests
+
+The `AuditLogServiceTests` class provides unit tests for the `AuditLogService` class, covering all audit logging functionality including log creation, retrieval by resource ID or date range, cleanup operations, and concurrent logging scenarios. It tests both success and failure cases to ensure the audit logging service correctly records and manages audit trail entries for API key operations and other system events.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+// Create mock dependencies
+var mockRepository = new Mock<IAuditLogRepository>();
+var mockLogger = new Mock<ILogger<AuditLogService>>();
+var auditLogService = new AuditLogService(mockRepository.Object, mockLogger.Object);
+
+// Test Constructor with null repository
+var nullRepoException = Assert.Throws<ArgumentNullException>(
+    () => new AuditLogService(null, mockLogger.Object)
+);Assert.Equal("repository", nullRepoException.ParamName);
+
+// Test Constructor with null logger
+var nullLoggerException = Assert.Throws<ArgumentNullException>(
+    () => new AuditLogService(mockRepository.Object, null)
+);Assert.Equal("logger", nullLoggerException.ParamName);
+
+// Test LogAsync with null log
+var nullLogException = await Assert.ThrowsAsync<ArgumentNullException>(
+    () => auditLogService.LogAsync(null)
+);Assert.Equal("log", nullLogException.ParamName);
+
+// Test successful log creation
+var testLog = new AuditLog
+{
+    Id = "audit_001",
+    ResourceId = "key_001",
+    ResourceType = "ApiKey",
+    Action = Domain.Enums.AuditAction.KeyCreated,
+    PerformedBy = "admin_user",
+    PerformedAt = DateTime.UtcNow,
+    HttpStatusCode = 201,
+    SourceIp = "192.168.1.1",
+    Reason = "Initial creation",
+    IsSuccess = true
+};
+
+mockRepository.Setup(r => r.CreateAsync(It.IsAny<AuditLog>()))
+    .ReturnsAsync(testLog);
+
+var logResult = await auditLogService.LogAsync(testLog);
+Assert.Equal("audit_001", logResult.Id);
+
+// Test GetLogsAsync with valid resource ID
+mockRepository.Setup(r => r.GetByResourceIdAsync("key_001", 100, null, null))
+    .ReturnsAsync(new List<AuditLog> { testLog });
+
+var logs = await auditLogService.GetLogsAsync("key_001");
+Assert.Single(logs);
+
+// Test GetLogsAsync with custom limit
+var limitedLogs = await auditLogService.GetLogsAsync("key_001", limit: 50);
+Assert.Equal(50, limitedLogs.Count);
+
+// Test GetLogsForPeriodAsync with valid date range
+mockRepository.Setup(r => r.GetByDateRangeAsync(
+    It.IsAny<DateTime>(),
+    It.IsAny<DateTime>(),
+    It.IsAny<int?>(),
+    null,
+    null
+)).ReturnsAsync(new List<AuditLog> { testLog });
+
+var periodLogs = await auditLogService.GetLogsForPeriodAsync(
+    DateTime.UtcNow.AddDays(-7),
+    DateTime.UtcNow
+);
+Assert.Single(periodLogs);
+
+// Test CleanupOldLogsAsync with valid retention days
+mockRepository.Setup(r => r.DeleteOlderThanAsync(It.IsAny<DateTime>()))
+    .ReturnsAsync(5);
+
+var cleanupResult = await auditLogService.CleanupOldLogsAsync(30);
+Assert.Equal(5, cleanupResult);
+
+// Test error cases
+var invalidRangeException = await Assert.ThrowsAsync<ArgumentException>(
+    () => auditLogService.GetLogsForPeriodAsync(
+        DateTime.UtcNow.AddDays(1),
+        DateTime.UtcNow.AddDays(-1)
+    )
+);
+
+var invalidRetentionException = await Assert.ThrowsAsync<ArgumentException>(
+    () => auditLogService.CleanupOldLogsAsync(-1)
+);
+```
+
 ## ValidationHelpersTests
 
 The `ValidationHelpersTests` class provides unit tests for the `ValidationHelpers` utility methods, covering validation logic for email addresses, API key formats, IP addresses, input sanitization, key name validation, quota limits, and key format validation. These tests ensure that validation rules are correctly implemented and help prevent regressions when modifying validation logic.
