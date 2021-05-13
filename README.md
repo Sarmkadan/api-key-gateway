@@ -1471,6 +1471,98 @@ public class ApiKeyGatewayIntegrationTests : IntegrationTests
 }
 ```
 
+## UsageAnalyticsServiceTests
+
+The `UsageAnalyticsServiceTests` class provides unit tests for the `UsageAnalyticsService` class, covering all major analytics functionality including usage summaries, top endpoints by popularity, and time-series trends (hourly and daily). It tests both success and failure scenarios to ensure the analytics service calculates metrics correctly under various conditions, including empty datasets, mixed success/failure records, and proper grouping by time periods.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+// Create mock dependencies
+var trackingMock = new Mock<IUsageTrackingService>();
+var loggerMock = new Mock<ILogger<UsageAnalyticsService>>();
+var analyticsService = new UsageAnalyticsService(trackingMock.Object, loggerMock.Object);
+
+// Test GetSummaryAsync with no records
+var emptySummary = await analyticsService.GetSummaryAsync("key-1", 
+    DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+Assert.Equal(0, emptySummary.TotalRequests);
+Assert.Equal(0, emptySummary.SuccessfulRequests);
+
+// Test GetSummaryAsync with mixed records
+var records = new List<UsageRecord>
+{
+    new UsageRecord
+    {
+        ApiKeyId = "key-1",
+        Endpoint = "/api/users",
+        Method = "GET",
+        ResponseStatusCode = 200,
+        ResponseTimeMs = 100,
+        RecordedAt = DateTime.UtcNow,
+        SourceIp = "192.168.1.100"
+    },
+    new UsageRecord
+    {
+        ApiKeyId = "key-1",
+        Endpoint = "/api/users",
+        Method = "GET",
+        ResponseStatusCode = 200,
+        ResponseTimeMs = 150,
+        RecordedAt = DateTime.UtcNow.AddMinutes(5),
+        SourceIp = "192.168.1.100"
+    },
+    new UsageRecord
+    {
+        ApiKeyId = "key-1",
+        Endpoint = "/api/orders",
+        Method = "POST",
+        ResponseStatusCode = 500,
+        ResponseTimeMs = 200,
+        RecordedAt = DateTime.UtcNow.AddMinutes(10),
+        SourceIp = "192.168.1.101"
+    }
+};
+
+trackingMock.Setup(t => t.GetUsageRecordsAsync("key-1", 
+    It.IsAny<DateTime>(), It.IsAny<DateTime>())).ReturnsAsync(records);
+
+var summary = await analyticsService.GetSummaryAsync("key-1",
+    DateTime.UtcNow.AddDays(-7), DateTime.UtcNow);
+
+Assert.Equal(3, summary.TotalRequests);
+Assert.Equal(2, summary.SuccessfulRequests);
+Assert.Equal(1, summary.FailedRequests);
+Assert.Equal(66.67, summary.SuccessRatePercent, precision: 2);
+Assert.Equal(33.33, summary.ErrorRatePercent, precision: 2);
+Assert.Equal(150, summary.AverageResponseTimeMs);
+Assert.Equal(2, summary.UniqueEndpoints);
+Assert.Equal(2, summary.UniqueSourceIps);
+
+// Test GetTopEndpointsAsync
+var topEndpoints = await analyticsService.GetTopEndpointsAsync("key-1",
+    DateTime.UtcNow.AddDays(-7), DateTime.UtcNow, limit: 10);
+Assert.Equal(2, topEndpoints.Count);
+Assert.Equal("/api/users", topEndpoints[0].Endpoint);
+Assert.Equal(2, topEndpoints[0].RequestCount);
+
+// Test GetHourlyTrendAsync
+var hourlyTrend = await analyticsService.GetHourlyTrendAsync("key-1",
+    DateTime.UtcNow.AddHours(-24), DateTime.UtcNow);
+Assert.NotEmpty(hourlyTrend);
+
+// Test GetDailyTrendAsync
+var dailyTrend = await analyticsService.GetDailyTrendAsync("key-1",
+    DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+Assert.NotEmpty(dailyTrend);
+```
+
 ## ApiKeyValidator
 
 The `ApiKeyValidator` class provides validation methods for API key format, strength, and metadata. It ensures API keys meet security and format requirements before creation, helping to prevent weak or predictable keys that could compromise security. The validator separates validation logic from business logic for reusability across the application.
