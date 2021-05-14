@@ -346,5 +346,4 @@ var itemsToBatch = Enumerable.Range(1, 7);
 var batches = itemsToBatch.Batch(3).Select(b => string.Join(", ", b));
 Console.WriteLine(string.Join(", ", batches)); // Output: 1, 2, 3, 4, 5, 6, 7
 ```
-
 ```
