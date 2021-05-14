@@ -267,3 +267,52 @@ Assert.False(result.IsExceeded);
 Assert.Equal(500, result.Remaining);
 Assert.Equal(1000, result.Limit);
 ```
+
+## ApiKeyModelTests
+
+The `ApiKeyModelTests` class provides unit tests for the `ApiKey` model class, covering key status checks, usage tracking, and IP whitelist validation. It tests the functionality of key status, usage recording, and IP address validation. 
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Models;
+using Xunit;
+
+// Create test instance
+var apiKeyModelTests = new ApiKeyModelTests();
+
+// Test active non-expired key
+apiKeyModelTests.CanBeUsed_ActiveNonExpiredKey_ReturnsTrue();
+
+// Test inactive status
+apiKeyModelTests.CanBeUsed_InactiveStatus_ReturnsFalse(ApiKeyStatus.Disabled);
+
+// Test expired key
+var expiredKey = new ApiKey { Status = ApiKeyStatus.Active, ExpiresAt = DateTime.UtcNow.AddDays(-1) };
+apiKeyModelTests.CanBeUsed_ExpiredKey_ReturnsFalse();
+
+// Test recording usage
+var key = new ApiKey { Status = ApiKeyStatus.Active };
+apiKeyModelTests.RecordUsage_Called_IncrementsRequestCountAndUpdatesLastUsed();
+
+// Test disabling active key
+var activeKey = new ApiKey { Status = ApiKeyStatus.Active };
+apiKeyModelTests.Disable_ActiveKey_SetsDisabledStatusAndTimestamp();
+
+// Test enabling disabled key
+var disabledKey = new ApiKey { Status = ApiKeyStatus.Disabled };
+apiKeyModelTests.Enable_DisabledKey_RestoresActiveStatusAndClearsTimestamp();
+
+// Test IP allowed with null whitelist
+var nullWhitelistKey = new ApiKey { IpWhitelist = null };
+apiKeyModelTests.IsIpAllowed_NullWhitelist_AllowsAnyIp();
+
+// Test IP allowed in comma-delimited whitelist
+var whitelistKey = new ApiKey { IpWhitelist = "10.0.0.1, 192.168.1.50, 172.16.0.1" };
+apiKeyModelTests.IsIpAllowed_IpInCommaDelimitedWhitelist_ReturnsTrue();
+
+// Test IP not allowed in whitelist
+var notInWhitelistKey = new ApiKey { IpWhitelist = "10.0.0.1,10.0.0.2" };
+apiKeyModelTests.IsIpAllowed_IpNotInWhitelist_ReturnsFalse();
+```
