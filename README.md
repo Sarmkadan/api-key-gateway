@@ -316,3 +316,35 @@ apiKeyModelTests.IsIpAllowed_IpInCommaDelimitedWhitelist_ReturnsTrue();
 var notInWhitelistKey = new ApiKey { IpWhitelist = "10.0.0.1,10.0.0.2" };
 apiKeyModelTests.IsIpAllowed_IpNotInWhitelist_ReturnsFalse();
 ```
+
+## CollectionExtensionsTests
+
+The `CollectionExtensionsTests` class provides unit tests for the collection extension methods in `ApiKeyGateway.Extensions.CollectionExtensions`. It tests functionality for pagination, collection state checking, batching, and other collection operations. 
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+using System.Linq;
+
+// Test pagination
+var items = Enumerable.Range(1, 20);
+var paginatedItems = items.Paginate(1, 5);
+Console.WriteLine(string.Join(", ", paginatedItems)); // Output: 1, 2, 3, 4, 5
+
+// Test checking if a collection is empty
+var emptyCollection = Enumerable.Empty<int>();
+Console.WriteLine(emptyCollection.IsEmpty()); // Output: True
+
+// Test counting items by a key
+var itemsToCount = new[] { "a", "b", "a", "c", "b", "a" };
+var countedItems = itemsToCount.CountBy(x => x);
+Console.WriteLine(string.Join(", ", countedItems.Select(x => $"{x.Key}: {x.Value}"))); // Output: a: 3, b: 2, c: 1
+
+// Test batching
+var itemsToBatch = Enumerable.Range(1, 7);
+var batches = itemsToBatch.Batch(3).Select(b => string.Join(", ", b));
+Console.WriteLine(string.Join(", ", batches)); // Output: 1, 2, 3, 4, 5, 6, 7
+```
+
+```
