@@ -409,4 +409,27 @@ var whitelistedKey = new ApiKey { Id = "key-456", IpWhitelist = "10.0.0.1, 10.0.
 var whitelistedResult = await authenticationServiceTests.AuthenticateAsync_IpWhitelisted_AllowsAuthentication();
 Assert.NotNull(whitelistedResult);
 ```
+
+## CacheKeyGeneratorTests
+
+The `CacheKeyGeneratorTests` class provides unit tests for the `CacheKeyGenerator` class, covering cache key generation for various scenarios. It tests the functionality of generating cache keys for API keys, rate limits, usage statistics, quotas, and webhook deliveries. 
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Caching;
+using Xunit;
+
+// Test generating cache key for API key
+var apiKeyKey = CacheKeyGenerator.GetApiKeyKey("key-001");
+Assert.Equal("apigw:apikey:key-001", apiKeyKey);
+
+// Test generating cache key for rate limit
+var rateLimitKey = CacheKeyGenerator.GetRateLimitKey("key-001", "/api/users");
+Assert.Equal("apigw:ratelimit:key-001:/api/users", rateLimitKey);
+
+// Test generating cache key for usage statistics
+var usageStatsKey = CacheKeyGenerator.GetUsageStatsKey("key-001", DateTime.UtcNow);
+Assert.StartsWith("apigw:usage:key-001:", usageStatsKey);
+```
 ```
