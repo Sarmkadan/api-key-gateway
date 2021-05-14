@@ -346,4 +346,38 @@ var itemsToBatch = Enumerable.Range(1, 7);
 var batches = itemsToBatch.Batch(3).Select(b => string.Join(", ", b));
 Console.WriteLine(string.Join(", ", batches)); // Output: 1, 2, 3, 4, 5, 6, 7
 ```
+
+## StringExtensionsTests
+
+The `StringExtensionsTests` class provides unit tests for the string extension methods in `ApiKeyGateway.Extensions.StringExtensions`. It tests functionality for string truncation, ellipsis truncation, string containment, prefix matching, slug creation, and more. 
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+
+// Test truncation
+var originalString = "This is a very long string that needs to be truncated.";
+var truncatedString = originalString.Truncate(20);
+Console.WriteLine(truncatedString); // Output: "This is a very long..."
+
+// Test ellipsis truncation
+var ellipsisString = originalString.TruncateWithEllipsis(20);
+Console.WriteLine(ellipsisString); // Output: "This is a very..."
+
+// Test string containment
+var containsString = "Hello World";
+var containsResult = containsString.ContainsAny("World", "Universe");
+Console.WriteLine(containsResult); // Output: True
+
+// Test prefix matching
+var prefixString = "sk_abc123";
+var prefixResult = prefixString.StartsWithAny("pk_", "sk_");
+Console.WriteLine(prefixResult); // Output: True
+
+// Test slug creation
+var slugString = "Hello World Test";
+var slugResult = slugString.ToSlug();
+Console.WriteLine(slugResult); // Output: "hello-world-test"
+```
 ```
