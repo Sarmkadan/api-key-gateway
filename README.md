@@ -432,4 +432,38 @@ Assert.Equal("apigw:ratelimit:key-001:/api/users", rateLimitKey);
 var usageStatsKey = CacheKeyGenerator.GetUsageStatsKey("key-001", DateTime.UtcNow);
 Assert.StartsWith("apigw:usage:key-001:", usageStatsKey);
 ```
+
+## RateLimitingServiceTests
+
+The `RateLimitingServiceTests` class provides unit tests for the `RateLimitingService` class, covering rate limiting scenarios, including checking limits, recording requests, updating limits, and resetting windows. It tests the functionality of rate limiting, ensuring that the service correctly handles various input scenarios and edge cases.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using Xunit;
+
+// Create test instance
+var rateLimitingServiceTests = new RateLimitingServiceTests();
+
+// Test checking limit with a valid API key
+var rateLimit = new RateLimit
+{
+    ApiKeyId = "key-001",
+    RequestsPerUnit = 100,
+    Unit = Domain.Enums.RateLimitUnit.Minute,
+    CurrentRequestCount = 50,
+    LastResetAt = DateTime.UtcNow
+};
+var result = await rateLimitingServiceTests.CheckLimitAsync_BelowLimit_ReturnsTrue();
+Assert.True(result);
+
+// Test recording a request with a valid API key
+var requestResult = await rateLimitingServiceTests.RecordRequestAsync_ValidKey_IncrementsCountAndPersists();
+Assert.NotNull(requestResult);
+
+// Test updating a limit with a valid API key
+var updateResult = await rateLimitingServiceTests.UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue();
+Assert.True(updateResult);
 ```
