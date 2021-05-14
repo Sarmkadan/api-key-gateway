@@ -196,6 +196,68 @@ await usageQuotaRepo.UpdateAsync(retrievedUsageQuota);
 await usageQuotaRepo.DeleteAsync("quota_001");
 ```
 
+## RequestValidatorTests
+
+The `RequestValidatorTests` class provides unit tests for the `RequestValidator` class, covering validation methods for email addresses, URLs, IP addresses, string lengths, numeric ranges, and GUIDs. These tests ensure that the request validation logic correctly handles various input scenarios and edge cases.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using Xunit;
+
+// Create test instance
+var validatorTests = new RequestValidatorTests();
+
+// Test email validation with valid and invalid inputs
+var emailResult = validatorTests.ValidateEmail_VariousInputs_ReturnsExpectedResult(
+    "test@example.com", true);
+Assert.True(emailResult);
+
+var invalidEmailResult = validatorTests.ValidateEmail_VariousInputs_ReturnsExpectedResult(
+    "invalid-email", false);
+Assert.False(invalidEmailResult);
+
+// Test URL validation with HTTPS requirement
+var urlResult = validatorTests.ValidateUrl_VariousInputs_ReturnsExpectedResult(
+    "https://example.com", true);
+Assert.True(urlResult);
+
+var httpUrlResult = validatorTests.ValidateUrl_VariousInputs_ReturnsExpectedResult(
+    "http://example.com", false);
+Assert.False(httpUrlResult);
+
+// Test IP address validation
+var ipResult = validatorTests.ValidateIpAddress_VariousInputs_ReturnsExpectedResult(
+    "192.168.1.1", true);
+Assert.True(ipResult);
+
+var invalidIpResult = validatorTests.ValidateIpAddress_VariousInputs_ReturnsExpectedResult(
+    "invalid-ip", false);
+Assert.False(invalidIpResult);
+
+// Test string length validation
+var lengthValidResult = validatorTests.ValidateLength_ValidLength_ReturnsTrue();
+Assert.True(lengthValidResult);
+
+var lengthInvalidResult = validatorTests.ValidateLength_TooShort_ReturnsFalse();
+Assert.False(lengthInvalidResult);
+
+// Test numeric range validation
+var rangeValidResult = validatorTests.ValidateRange_ValidValue_ReturnsTrue();
+Assert.True(rangeValidResult);
+
+var rangeInvalidResult = validatorTests.ValidateRange_ValueOutOfRange_ReturnsFalse();
+Assert.False(rangeInvalidResult);
+
+// Test GUID validation
+var guidValidResult = validatorTests.ValidateGuid_ValidGuid_ReturnsTrue();
+Assert.True(guidValidResult);
+
+var guidEmptyResult = validatorTests.ValidateGuid_EmptyGuid_ReturnsFalse();
+Assert.False(guidEmptyResult);
+```
+
 ## DatabaseTransformationRuleRepository
 
 `DatabaseTransformationRuleRepository` is a concrete repository that stores and manages `TransformationRule` entities in a relational database. It provides methods to query rules by API key, consumer, or globally, as well as to create, update, and soft‑delete rules.
