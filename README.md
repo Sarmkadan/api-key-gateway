@@ -1625,6 +1625,160 @@ var dailyTrend = await analyticsService.GetDailyTrendAsync("key-1",
 Assert.NotEmpty(dailyTrend);
 ```
 
+## UsageTrackingServiceTests
+
+The `UsageTrackingServiceTests` class provides unit tests for the `UsageTrackingService` class, covering all major usage tracking functionality including recording API usage, retrieving usage statistics, and fetching usage records. It tests both success and failure scenarios to ensure the usage tracking service correctly records and manages API usage data for monitoring, analytics, and quota enforcement purposes.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+// Create mock dependencies
+var mockRepository = new Mock<IUsageRepository>();
+var mockLogger = new Mock<ILogger<UsageTrackingService>>();
+var usageTrackingService = new UsageTrackingService(mockRepository.Object, mockLogger.Object);
+
+// Test Constructor with null repository
+var nullRepoException = Assert.Throws<ArgumentNullException>(
+    () => new UsageTrackingService(null, mockLogger.Object)
+);
+Assert.Equal("repository", nullRepoException.ParamName);
+
+// Test Constructor with null logger
+var nullLoggerException = Assert.Throws<ArgumentNullException>(
+    () => new UsageTrackingService(mockRepository.Object, null)
+);
+Assert.Equal("logger", nullLoggerException.ParamName);
+
+// Test RecordUsageAsync with null record
+var nullRecordException = await Assert.ThrowsAsync<ArgumentNullException>(
+    () => usageTrackingService.RecordUsageAsync(null)
+);
+Assert.Equal("usageRecord", nullRecordException.ParamName);
+
+// Test successful usage recording
+var usageRecord = new UsageRecord
+{
+    Id = Guid.NewGuid().ToString(),
+    ApiKeyId = "sk_prod_abc123xyz",
+    ConsumerId = "consumer_prod_xyz789",
+    RecordedAt = DateTime.UtcNow,
+    Endpoint = "/api/users",
+    Method = "GET",
+    ResponseStatusCode = 200,
+    RequestBytes = 1250,
+    ResponseBytes = 4096,
+    ResponseTimeMs = 42,
+    SourceIp = "192.168.1.100"
+};
+
+mockRepository.Setup(r => r.CreateAsync(It.IsAny<UsageRecord>()))
+    .ReturnsAsync(usageRecord);
+
+var recordedUsage = await usageTrackingService.RecordUsageAsync(usageRecord);
+Assert.Equal("sk_prod_abc123xyz", recordedUsage.ApiKeyId);
+
+// Test GetUsageStatisticsAsync with valid date range
+mockRepository.Setup(r => r.GetUsageStatisticsAsync(
+    "sk_prod_abc123xyz",
+    It.IsAny<DateTime>(),
+    It.IsAny<DateTime>()
+)).ReturnsAsync(new UsageStatistics
+{
+    ApiKeyId = "sk_prod_abc123xyz",
+    PeriodStart = DateTime.UtcNow.AddDays(-30),
+    PeriodEnd = DateTime.UtcNow,
+    TotalRequests = 1500,
+    SuccessfulRequests = 1450,
+    FailedRequests = 50,
+    TotalBytesTransferred = 25_000_000,
+    AverageResponseTimeMs = 85,
+    UniqueEndpoints = 12,
+    UniqueSourceIps = 8
+});
+
+var statistics = await usageTrackingService.GetUsageStatisticsAsync(
+    "sk_prod_abc123xyz",
+    DateTime.UtcNow.AddDays(-30),
+    DateTime.UtcNow
+);
+
+Assert.Equal(1500, statistics.TotalRequests);
+Assert.Equal(1450, statistics.SuccessfulRequests);
+Assert.Equal(50, statistics.FailedRequests);
+Assert.Equal(25_000_000, statistics.TotalBytesTransferred);
+
+// Test GetUsageRecordsAsync with valid date range
+var usageRecords = new List<UsageRecord>
+{
+    new UsageRecord
+    {
+        Id = Guid.NewGuid().ToString(),
+        ApiKeyId = "sk_prod_abc123xyz",
+        ConsumerId = "consumer_prod_xyz789",
+        RecordedAt = DateTime.UtcNow.AddMinutes(-10),
+        Endpoint = "/api/users",
+        Method = "GET",
+        ResponseStatusCode = 200,
+        RequestBytes = 1250,
+        ResponseBytes = 4096,
+        ResponseTimeMs = 42,
+        SourceIp = "192.168.1.100"
+    },
+    new UsageRecord
+    {
+        Id = Guid.NewGuid().ToString(),
+        ApiKeyId = "sk_prod_abc123xyz",
+        ConsumerId = "consumer_prod_xyz789",
+        RecordedAt = DateTime.UtcNow.AddMinutes(-5),
+        Endpoint = "/api/products",
+        Method = "POST",
+        ResponseStatusCode = 201,
+        RequestBytes = 1800,
+        ResponseBytes = 6144,
+        ResponseTimeMs = 125,
+        SourceIp = "192.168.1.101"
+    }
+};
+
+mockRepository.Setup(r => r.GetUsageRecordsAsync(
+    "sk_prod_abc123xyz",
+    It.IsAny<DateTime>(),
+    It.IsAny<DateTime>()
+)).ReturnsAsync(usageRecords);
+
+var records = await usageTrackingService.GetUsageRecordsAsync(
+    "sk_prod_abc123xyz",
+    DateTime.UtcNow.AddDays(-7),
+    DateTime.UtcNow
+);
+
+Assert.Equal(2, records.Count);
+Assert.Equal("/api/users", records[0].Endpoint);
+Assert.Equal("GET", records[0].Method);
+
+// Test GetTotalBytesUsedAsync with valid consumer ID
+mockRepository.Setup(r => r.GetTotalBytesUsedAsync("consumer_prod_xyz789"))
+    .ReturnsAsync(12_500_000);
+
+var totalBytes = await usageTrackingService.GetTotalBytesUsedAsync("consumer_prod_xyz789");
+Assert.Equal(12_500_000, totalBytes);
+
+// Test error cases
+var emptyKeyException = await Assert.ThrowsAsync<ArgumentException>(
+    () => usageTrackingService.GetUsageStatisticsAsync("", DateTime.UtcNow.AddDays(-7), DateTime.UtcNow)
+);
+
+var invalidDateRangeException = await Assert.ThrowsAsync<ArgumentException>(
+    () => usageTrackingService.GetUsageStatisticsAsync("sk_prod_abc123xyz", DateTime.UtcNow, DateTime.UtcNow.AddDays(-1))
+);
+```
+
 ## IpWhitelistTests
 
 The `IpWhitelistTests` class provides unit tests for IP whitelist functionality in the API Key Gateway. It tests the IP whitelist validation logic that controls which IP addresses are allowed to use specific API keys, ensuring that only authorized sources can access protected endpoints. The tests cover scenarios including unrestricted access, empty whitelists, valid IP matching, trimming of whitespace, and various edge cases for IP address validation.
