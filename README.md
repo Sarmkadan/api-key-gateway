@@ -380,4 +380,33 @@ var slugString = "Hello World Test";
 var slugResult = slugString.ToSlug();
 Console.WriteLine(slugResult); // Output: "hello-world-test"
 ```
+
+## AuthenticationServiceTests
+
+The `AuthenticationServiceTests` class provides unit tests for the `AuthenticationService` class, covering authentication scenarios, IP whitelisting, and error handling. It tests the functionality of authenticating API keys, validating IP addresses, and logging authentication attempts.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Services;
+using Xunit;
+
+// Create test instance
+var authenticationServiceTests = new AuthenticationServiceTests();
+
+// Test authentication with a valid API key
+var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
+var result = await authenticationServiceTests.AuthenticateAsync_ValidKey_ReturnsKeyAndLogsSuccess();
+Assert.NotNull(result);
+
+// Test authentication with an invalid API key
+var invalidKeyResult = await authenticationServiceTests.AuthenticateAsync_InvalidKey_ThrowsUnauthorizedExceptionAndLogsFailure();
+Assert.Throws<UnauthorizedAccessException>(() => invalidKeyResult);
+
+// Test IP whitelisting
+var whitelistedKey = new ApiKey { Id = "key-456", IpWhitelist = "10.0.0.1, 10.0.0.2" };
+var whitelistedResult = await authenticationServiceTests.AuthenticateAsync_IpWhitelisted_AllowsAuthentication();
+Assert.NotNull(whitelistedResult);
+```
 ```
