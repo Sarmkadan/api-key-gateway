@@ -467,3 +467,31 @@ Assert.NotNull(requestResult);
 var updateResult = await rateLimitingServiceTests.UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue();
 Assert.True(updateResult);
 ```
+
+## ApiKeyRotationServiceTests
+
+The `ApiKeyRotationServiceTests` class provides unit tests for the `ApiKeyRotationService` class, covering key rotation scenarios, including rotating active keys, handling inactive or non-existent keys, and preserving IP whitelists. It tests the functionality of key rotation, ensuring that the service correctly handles various input scenarios and edge cases.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Models;
+using Xunit;
+
+// Create test instance
+var apiKeyRotationServiceTests = new ApiKeyRotationServiceTests();
+
+// Test rotating an active key
+var activeKey = new ApiKey { Id = "key-001", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
+var result = await apiKeyRotationServiceTests.RotateKeyAsync_ActiveKey_CreatesNewKeyAndRevokesOld();
+Assert.True(result.Success);
+
+// Test rotating a non-existent key
+var nonExistentKeyResult = await apiKeyRotationServiceTests.RotateKeyAsync_KeyNotFound_ReturnsFailureResult();
+Assert.False(nonExistentKeyResult.Success);
+
+// Test rotating an inactive key
+var inactiveKeyResult = await apiKeyRotationServiceTests.RotateKeyAsync_InactiveKey_ReturnsFailureResult();
+Assert.False(inactiveKeyResult.Success);
+```
