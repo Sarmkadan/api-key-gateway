@@ -7,6 +7,7 @@ using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using System.Security.Cryptography;
 using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace ApiKeyGateway.Services;
 
@@ -73,7 +74,7 @@ public class ApiKeyService : IApiKeyService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create API key for consumer {ConsumerId}", consumerId);
+            _logger.LogError(ex, "Failed to create API key for consumer {ConsumerId}. Exception Type: {ExceptionType}, Message: {ExceptionMessage}", consumerId, ex.GetType().Name, ex.Message);
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.KeyGenerationFailed, ex);
         }
     }
@@ -195,6 +196,7 @@ public class ApiKeyService : IApiKeyService
     /// <summary>
     /// Hashes an API key using SHA-256
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string HashApiKey(string keyValue)
     {
         using var sha256 = SHA256.Create();
@@ -205,6 +207,7 @@ public class ApiKeyService : IApiKeyService
     /// <summary>
     /// Generates a random string of specified length
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string GenerateRandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
