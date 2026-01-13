@@ -40,11 +40,19 @@ public static class ApiKeyValidator
                 Message = $"API key cannot exceed {MaxKeyLength} characters"
             };
 
-        // Check for sufficient entropy (mix of character types)
-        var hasUppercase = key.Any(char.IsUpper);
-        var hasLowercase = key.Any(char.IsLower);
-        var hasDigits = key.Any(char.IsDigit);
-        var hasSpecial = key.Any(c => !char.IsLetterOrDigit(c));
+        // Single-pass span scan for character-type entropy.
+        // Short-circuits as soon as all four categories are found, avoiding
+        // up to three redundant full traversals over the key string.
+        bool hasUppercase = false, hasLowercase = false, hasDigits = false, hasSpecial = false;
+        foreach (char c in key.AsSpan())
+        {
+            if (char.IsUpper(c)) hasUppercase = true;
+            else if (char.IsLower(c)) hasLowercase = true;
+            else if (char.IsDigit(c)) hasDigits = true;
+            else hasSpecial = true;
+
+            if (hasUppercase && hasLowercase && hasDigits && hasSpecial) break;
+        }
 
         var characterTypesUsed = 0;
         if (hasUppercase) characterTypesUsed++;
