@@ -6,7 +6,7 @@
 
 > A lightweight, production-grade API key authentication gateway for self-hosted services. Built for developers who need enterprise-grade API authentication without the enterprise complexity.
 
-**Version:** 1.2.0 | **License:** MIT | **Status:** Production Ready
+**Version:** 2.0.2 | **License:** MIT | **Status:** Production Ready
 
 ## Table of Contents
 
@@ -224,7 +224,7 @@ The gateway listens on:
 
 ```bash
 # Build Docker image
-docker build -t api-key-gateway:1.2.0 .
+docker build -t api-key-gateway:2.0.2 .
 
 # Deploy to Kubernetes
 kubectl apply -f k8s/deployment.yaml
@@ -740,7 +740,7 @@ Response: 200 OK
   "database": "Connected",
   "cache": "Operational",
   "uptime": "72:15:30",
-  "version": "1.2.0"
+  "version": "2.0.2"
 }
 ```
 
@@ -864,14 +864,14 @@ SERILOG__MINIMUMLEVEL=Information
 
 ```bash
 # Build image
-docker build -t api-key-gateway:1.2.0 .
+docker build -t api-key-gateway:2.0.2 .
 
 # Run with SQL Server
 docker run -d \
   --name api-key-gateway \
   -p 5000:5000 \
   -e ConnectionStrings__DefaultConnection="Server=sqlserver;Database=ApiKeyGateway;..." \
-  api-key-gateway:1.2.0
+  api-key-gateway:2.0.2
 ```
 
 ### Kubernetes Deployment
@@ -895,7 +895,7 @@ spec:
     spec:
       containers:
       - name: api-key-gateway
-        image: api-key-gateway:1.2.0
+        image: api-key-gateway:2.0.2
         ports:
         - containerPort: 5000
         livenessProbe:
