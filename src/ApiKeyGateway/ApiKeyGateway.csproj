@@ -8,7 +8,7 @@
     <AssemblyName>ApiKeyGateway</AssemblyName>
     <RootNamespace>ApiKeyGateway</RootNamespace>
     <PackageId>Zaiets.api.key.gateway</PackageId>
-    <Version>1.0.0</Version>
+    <Version>2.0.2</Version>
     <Authors>Vladyslav Zaiets</Authors>
     <Description>Lightweight API key authentication gateway for self-hosted services - rate limiting, usage tracking</Description>
     <PackageTags>api-key gateway rate-limiting usage-tracking authentication self-hosted middleware security</PackageTags>
