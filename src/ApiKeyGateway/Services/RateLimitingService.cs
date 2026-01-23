@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
@@ -24,13 +25,12 @@ public class RateLimitingService : IRateLimitingService
 {
     private readonly IRateLimitRepository _repository;
     private readonly ILogger<RateLimitingService> _logger;
-    private readonly Dictionary<string, DateTime> _windowResetCache;
+    private readonly ConcurrentDictionary<string, DateTime> _windowResetCache = new();
 
     public RateLimitingService(IRateLimitRepository repository, ILogger<RateLimitingService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _windowResetCache = new Dictionary<string, DateTime>();
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public class RateLimitingService : IRateLimitingService
 
         rateLimit.ResetWindow();
         await _repository.UpdateAsync(rateLimit);
-        _windowResetCache[apiKeyId] = DateTime.UtcNow;
+        _windowResetCache.AddOrUpdate(apiKeyId, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
 
         _logger.LogInformation("Rate limit window reset for API key {ApiKeyId}", apiKeyId);
     }
