@@ -10,7 +10,11 @@ using ApiKeyGateway.Services;
 namespace ApiKeyGateway.Repositories;
 
 /// <summary>
-/// Repository implementation for API key data persistence
+/// Repository implementation for API key data persistence using ADO.NET with
+/// an in-memory write-through cache. All reads check the memory store first
+/// before querying the database, and all writes update both the database and cache
+/// atomically. Thread safety for concurrent access relies on the underlying
+/// <see cref="IDbConnection"/> implementation.
 /// </summary>
 public class ApiKeyRepository : IApiKeyRepository
 {
@@ -26,8 +30,12 @@ public class ApiKeyRepository : IApiKeyRepository
     }
 
     /// <summary>
-    /// Creates a new API key in the repository
+    /// Persists a new API key to the database and populates the in-memory cache.
     /// </summary>
+    /// <param name="apiKey">The API key entity to create. Must not be null.</param>
+    /// <returns>The created <see cref="ApiKey"/> instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="DataAccessException">Thrown when the database insert fails.</exception>
     public async Task<ApiKey> CreateAsync(ApiKey apiKey)
     {
         if (apiKey == null)
@@ -60,8 +68,11 @@ public class ApiKeyRepository : IApiKeyRepository
     }
 
     /// <summary>
-    /// Retrieves an API key by its ID
+    /// Retrieves an API key by its unique identifier. Checks the in-memory cache first;
+    /// falls back to a database query on cache miss.
     /// </summary>
+    /// <param name="id">The unique API key identifier.</param>
+    /// <returns>The matching <see cref="ApiKey"/>, or <c>null</c> if not found.</returns>
     public async Task<ApiKey?> GetByIdAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
