@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Transformation;
 using Microsoft.Extensions.DependencyInjection;
@@ -238,10 +239,8 @@ public static class TransformationServiceExtensions
         services.AddSingleton(options);
         services.AddSingleton(options.Lua);
 
-        // Default rule repository — override by registering your own ITransformationRuleRepository.
-        services.AddSingleton<ITransformationRuleRepository>(
-            sp => new ConfigurationTransformationRuleRepository(
-                sp.GetRequiredService<TransformationPipelineOptions>()));
+        // Register the database-backed rule repository.
+        services.AddSingleton<ITransformationRuleRepository, DatabaseTransformationRuleRepository>();
 
         services.AddSingleton<ILuaScriptExecutor, LuaScriptExecutor>();
         services.AddSingleton<ITransformationPipeline, TransformationPipelineService>();
