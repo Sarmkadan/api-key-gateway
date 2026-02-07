@@ -90,6 +90,14 @@ public class AuthenticationService : IAuthenticationService
         {
             throw;
         }
+        catch (DataAccessException ex)
+        {
+            _logger.LogError(ex, "Key store unavailable during authentication for IP {IpAddress}", ipAddress ?? "unknown");
+            throw new KeyStoreUnavailableException(
+                Domain.Constants.ErrorMessages.KeyStoreUnavailable,
+                "ValidateKey",
+                ex);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Authentication error");

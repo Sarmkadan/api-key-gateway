@@ -26,4 +26,5 @@ public static class ErrorMessages
     public const string UserNotFound = "API consumer not found with identifier {0}.";
     public const string DuplicateKeyName = "An API key with name {0} already exists for this consumer.";
     public const string InvalidTimeRange = "Invalid time range: start time must be before end time.";
+    public const string KeyStoreUnavailable = "The authentication service is temporarily unavailable. Please retry shortly.";
 }
