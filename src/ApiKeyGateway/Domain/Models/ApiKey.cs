@@ -30,6 +30,13 @@ public class ApiKey
     public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
 
     /// <summary>
+    /// Comma-separated list of scope strings that restrict which upstream routes
+    /// this key may access. An empty or null value means the key is unrestricted
+    /// (can access all routes). Example: "/api/metrics,/api/stats"
+    /// </summary>
+    public string? AllowedScopes { get; set; }
+
+    /// <summary>
     /// Validates that the API key can be used for authentication
     /// </summary>
     public bool CanBeUsed()
@@ -89,5 +96,23 @@ public class ApiKey
             .ToList();
 
         return allowedIps.Contains(requestIp);
+    }
+
+    /// <summary>
+    /// Checks if the given request path is permitted by this key's scope list.
+    /// A key with no scopes is unrestricted. A key with scopes can only access
+    /// paths that start with at least one of those scope prefixes.
+    /// </summary>
+    public bool IsScopeAllowed(string requestPath)
+    {
+        if (string.IsNullOrWhiteSpace(AllowedScopes))
+            return true;
+
+        var scopes = AllowedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrWhiteSpace(s));
+
+        return scopes.Any(scope =>
+            requestPath.StartsWith(scope, StringComparison.OrdinalIgnoreCase));
     }
 }
