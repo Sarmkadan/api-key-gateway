@@ -41,6 +41,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
 
+        services.AddScoped<IUsageQuotaRepository, UsageQuotaRepository>();
+        services.AddScoped<IUsageQuotaService, UsageQuotaService>();
+
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();
 

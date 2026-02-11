@@ -21,6 +21,7 @@ public class ApiKeyAuthenticationMiddleware
     private readonly IAuthenticationService _authenticationService;
     private readonly IUsageTrackingService _usageTrackingService;
     private readonly IRateLimitingService _rateLimitingService;
+    private readonly IUsageQuotaService _usageQuotaService;
     private readonly bool _failOpenOnKeyStoreUnavailable;
 
     public ApiKeyAuthenticationMiddleware(
@@ -29,6 +30,7 @@ public class ApiKeyAuthenticationMiddleware
         IAuthenticationService authenticationService,
         IUsageTrackingService usageTrackingService,
         IRateLimitingService rateLimitingService,
+        IUsageQuotaService usageQuotaService,
         Configuration.GatewayConfiguration? gatewayConfig = null)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -36,6 +38,7 @@ public class ApiKeyAuthenticationMiddleware
         _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
         _usageTrackingService = usageTrackingService ?? throw new ArgumentNullException(nameof(usageTrackingService));
         _rateLimitingService = rateLimitingService ?? throw new ArgumentNullException(nameof(rateLimitingService));
+        _usageQuotaService = usageQuotaService ?? throw new ArgumentNullException(nameof(usageQuotaService));
         _failOpenOnKeyStoreUnavailable = gatewayConfig?.FailOpenOnKeyStoreUnavailable ?? false;
     }
 
@@ -57,6 +60,44 @@ public class ApiKeyAuthenticationMiddleware
                 if (authenticatedKey != null)
                 {
                     await _rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
+
+                    // Enforce route-scope restrictions
+                    var requestPath = context.Request.Path.ToString();
+                    if (!authenticatedKey.IsScopeAllowed(requestPath))
+                    {
+                        _logger.LogWarning(
+                            "API key {ApiKeyId} does not have scope permission for path {Path}",
+                            authenticatedKey.Id, requestPath);
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            error = "The API key does not have permission to access this route"
+                        });
+                        return;
+                    }
+
+                    // Check per-key usage quota (daily/monthly hard cap)
+                    var quotaResult = await _usageQuotaService.CheckAndRecordAsync(authenticatedKey.Id);
+                    if (quotaResult.Limit != long.MaxValue)
+                    {
+                        context.Response.Headers.Append("X-RateLimit-Quota-Limit", quotaResult.Limit.ToString());
+                        context.Response.Headers.Append("X-RateLimit-Quota-Remaining", quotaResult.Remaining.ToString());
+                        context.Response.Headers.Append("X-RateLimit-Quota-Reset",
+                            new DateTimeOffset(quotaResult.PeriodEnd).ToUnixTimeSeconds().ToString());
+                    }
+
+                    if (quotaResult.IsExceeded)
+                    {
+                        _logger.LogWarning("Usage quota exceeded for API key {ApiKeyId}", authenticatedKey.Id);
+                        context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            error = "Usage quota exceeded for this period",
+                            quotaResetAt = quotaResult.PeriodEnd
+                        });
+                        return;
+                    }
+
                     context.Items["ApiKey"] = authenticatedKey;
                     context.Items["ConsumerId"] = authenticatedKey.ConsumerId;
                 }
