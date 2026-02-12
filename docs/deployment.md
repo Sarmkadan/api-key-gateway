@@ -14,6 +14,199 @@ Production deployment best practices and configuration for API Key Gateway.
 - [ ] Disaster recovery plan documented
 - [ ] Performance tested under expected load
 
+---
+
+## Docker & Docker Compose Reference
+
+### Environment Variable Reference
+
+All gateway settings can be supplied as environment variables using the `__` double-underscore convention for nested keys.
+
+| Variable | Default | Description |
+|---|---|---|
+| `ASPNETCORE_ENVIRONMENT` | `Production` | ASP.NET runtime environment (`Development`, `Staging`, `Production`) |
+| `ASPNETCORE_URLS` | `http://+:5000` | Listening URLs; add `https://+:5001` when terminating TLS inside the container |
+| `ConnectionStrings__DefaultConnection` | _(required)_ | ADO.NET connection string to the SQL Server / SQLite backing store |
+| `GATEWAY__REQUIRESSL` | `true` | Reject requests over plain HTTP when `true` |
+| `GATEWAY__LOGALLREQUESTS` | `true` | Emit a structured log entry for every inbound request |
+| `GATEWAY__MAXKEYLENGTH` | `256` | Maximum length (characters) of a valid API key |
+| `GATEWAY__MINKEYLENGTH` | `16` | Minimum length (characters) of a valid API key |
+| `GATEWAY__DEFAULTKEYEXPIRATIONDAYS` | `365` | Default lifetime in days for newly created keys |
+| `GATEWAY__AUDITLOGRETENTIONDAYS` | `90` | How many days to keep audit log rows before purging |
+| `GATEWAY__ENABLERATELIMITING` | `true` | Toggle the sliding-window rate limiter |
+| `GATEWAY__DEFAULTRATELIMITPERHOUR` | `10000` | Fallback requests-per-hour when no per-key limit is configured |
+| `GATEWAY__MAXCONCURRENTREQUESTS` | `1000` | Maximum number of in-flight requests accepted at once |
+| `GATEWAY__CLOCKSKEWTOLERANCESSECONDS` | `1.0` | Seconds added to the window expiry threshold to absorb clock skew between the gateway and the backing store |
+| `GATEWAY__FAILOPENONKEYSTOREUNAVAILABLE` | `false` | `true` = allow unauthenticated requests through when the key store is unreachable (fail-open); `false` = return 503 (fail-closed, default) |
+| `Logging__LogLevel__Default` | `Information` | Minimum log level for all categories |
+| `Logging__LogLevel__ApiKeyGateway` | `Information` | Minimum log level for gateway-specific categories |
+| `Serilog__MinimumLevel` | `Information` | Serilog minimum level (overrides `Logging__LogLevel` when Serilog sink is configured) |
+
+### Volume Mount Recommendations
+
+| Mount path (inside container) | Purpose | Recommendation |
+|---|---|---|
+| `/app/logs` | Structured JSON log files | Use a named volume or bind-mount to `./logs` |
+| `/app/data` | SQLite database file (SQLite deployments only) | **Always** use a named Docker volume — container restarts erase ephemeral storage |
+| `/app/ssl` | TLS certificate + private key | Bind-mount a host directory with `chmod 600` on the key file; mount read-only (`:ro`) |
+
+### Annotated docker-compose.yml
+
+```yaml
+version: '3.8'
+
+services:
+  # ── SQL Server ───────────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: api-gateway-sqlserver
+    environment:
+      ACCEPT_EULA: 'Y'
+      SA_PASSWORD: 'Change_Me_Strong!123'   # change before production
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"                          # remove in production; limit to the internal network
+    volumes:
+      - sqlserver_data:/var/opt/mssql/data  # persistent – required
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Change_Me_Strong!123 -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gateway-net
+    restart: unless-stopped
+
+  # ── API Key Gateway ──────────────────────────────────────────────────────────
+  api-key-gateway:
+    image: ghcr.io/sarmkadan/api-key-gateway:latest  # or use build: { context: . }
+    container_name: api-key-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5000        # add https://+:5001 for in-container TLS
+
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver;Database=ApiKeyGateway;
+        User Id=sa;Password=Change_Me_Strong!123;
+        Encrypt=false;TrustServerCertificate=true;
+        Connection Timeout=30;Pooling=true;Max Pool Size=100;
+
+      GATEWAY__REQUIRESSL: "false"          # set true when behind an HTTPS reverse proxy
+      GATEWAY__LOGALLREQUESTS: "true"
+      GATEWAY__ENABLERATELIMITING: "true"
+      GATEWAY__DEFAULTRATELIMITPERHOUR: "10000"
+      GATEWAY__CLOCKSKEWTOLERANCESSECONDS: "1.0"
+      GATEWAY__FAILOPENONKEYSTOREUNAVAILABLE: "false"
+
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__ApiKeyGateway: Information
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - gateway_logs:/app/logs
+
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - gateway-net
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  gateway-net:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  gateway_logs:
+```
+
+### TLS Termination Patterns
+
+#### Option A — Reverse proxy (recommended for production)
+
+Terminate TLS at nginx, Traefik, or Caddy. The gateway container listens on plain HTTP internally.
+
+**nginx example:**
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name api.example.com;
+
+    ssl_certificate     /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    location / {
+        proxy_pass         http://api-key-gateway:5000;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Set `GATEWAY__REQUIRESSL=false` when TLS is terminated at the proxy.
+
+#### Option B — TLS inside the container (Kestrel)
+
+```yaml
+api-key-gateway:
+  environment:
+    ASPNETCORE_URLS: "http://+:5000;https://+:5001"
+    ASPNETCORE_Kestrel__Certificates__Default__Path: /app/ssl/cert.pem
+    ASPNETCORE_Kestrel__Certificates__Default__KeyPath: /app/ssl/privkey.pem
+    GATEWAY__REQUIRESSL: "true"
+  volumes:
+    - ./ssl:/app/ssl:ro
+  ports:
+    - "443:5001"
+    - "80:5000"
+```
+
+### Health Check Endpoints
+
+| Endpoint | Method | Success condition | Typical use |
+|---|---|---|---|
+| `GET /health` | GET | `200 OK` — all dependencies healthy | Docker `healthcheck`, uptime monitors |
+| `GET /health/ready` | GET | `200 OK` — gateway fully started and ready to serve | Kubernetes readiness probe |
+
+Example probe configuration for Kubernetes:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 5000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+---
+
 ## Deployment Methods
 
 ### Method 1: Docker Container (Recommended)
