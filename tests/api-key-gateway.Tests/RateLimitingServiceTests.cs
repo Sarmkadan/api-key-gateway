@@ -253,4 +253,124 @@ public class RateLimitingServiceTests
         rateLimit.CurrentRequestCount.Should().Be(0);
         _repositoryMock.Verify(r => r.UpdateAsync(rateLimit), Times.Once);
     }
+
+    // -------------------------------------------------------------------------
+    // Concurrency / thread-safety
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task CheckLimitAsync_ConcurrentCallsAtLimit_AllThrowRateLimitExceededException()
+    {
+        var rateLimit = new RateLimit
+        {
+            ApiKeyId = "key-concurrent",
+            RequestsPerUnit = 5,
+            Unit = RateLimitUnit.Minute,
+            CurrentRequestCount = 5,
+            LastResetAt = DateTime.UtcNow
+        };
+        _repositoryMock
+            .Setup(r => r.GetByApiKeyIdAsync("key-concurrent"))
+            .ReturnsAsync(rateLimit);
+
+        var exceptions = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+        var tasks = Enumerable.Range(0, 10).Select(async _ =>
+        {
+            try { await _sut.CheckLimitAsync("key-concurrent"); }
+            catch (Exception ex) { exceptions.Add(ex); }
+        });
+
+        await Task.WhenAll(tasks);
+
+        exceptions.Should().HaveCount(10);
+        exceptions.Should().AllSatisfy(ex => ex.Should().BeOfType<RateLimitExceededException>());
+    }
+
+    [Fact]
+    public async Task CheckLimitAsync_ConcurrentCallsOnExpiredWindow_AllRequestsAllowed()
+    {
+        var rateLimit = new RateLimit
+        {
+            ApiKeyId = "key-expired-window",
+            RequestsPerUnit = 10,
+            Unit = RateLimitUnit.Minute,
+            CurrentRequestCount = 10,
+            LastResetAt = DateTime.UtcNow.AddMinutes(-5)
+        };
+        _repositoryMock
+            .Setup(r => r.GetByApiKeyIdAsync("key-expired-window"))
+            .ReturnsAsync(rateLimit);
+        _repositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
+            .Returns(Task.CompletedTask);
+
+        var exceptions = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+        var tasks = Enumerable.Range(0, 10).Select(async _ =>
+        {
+            try { await _sut.CheckLimitAsync("key-expired-window"); }
+            catch (Exception ex) { exceptions.Add(ex); }
+        });
+
+        await Task.WhenAll(tasks);
+
+        exceptions.Should().BeEmpty("all requests should be allowed after window expires");
+    }
+
+    [Fact]
+    public async Task ResetWindowAsync_ConcurrentCalls_DoesNotThrowAndUpdatesCache()
+    {
+        var rateLimit = new RateLimit
+        {
+            ApiKeyId = "key-reset",
+            RequestsPerUnit = 100,
+            Unit = RateLimitUnit.Hour,
+            CurrentRequestCount = 50
+        };
+        _repositoryMock
+            .Setup(r => r.GetByApiKeyIdAsync("key-reset"))
+            .ReturnsAsync(rateLimit);
+        _repositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<RateLimit>()))
+            .Returns(Task.CompletedTask);
+
+        var exceptions = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+        var tasks = Enumerable.Range(0, 20).Select(async _ =>
+        {
+            try { await _sut.ResetWindowAsync("key-reset"); }
+            catch (Exception ex) { exceptions.Add(ex); }
+        });
+
+        await Task.WhenAll(tasks);
+
+        exceptions.Should().BeEmpty("concurrent resets must not throw");
+        rateLimit.CurrentRequestCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CheckLimitAsync_ConcurrentCallsBelowLimit_AllReturnTrue()
+    {
+        var rateLimit = new RateLimit
+        {
+            ApiKeyId = "key-below-limit",
+            RequestsPerUnit = 1000,
+            Unit = RateLimitUnit.Hour,
+            CurrentRequestCount = 1,
+            LastResetAt = DateTime.UtcNow
+        };
+        _repositoryMock
+            .Setup(r => r.GetByApiKeyIdAsync("key-below-limit"))
+            .ReturnsAsync(rateLimit);
+
+        var results = new System.Collections.Concurrent.ConcurrentBag<bool>();
+        var tasks = Enumerable.Range(0, 50).Select(async _ =>
+        {
+            var result = await _sut.CheckLimitAsync("key-below-limit");
+            results.Add(result);
+        });
+
+        await Task.WhenAll(tasks);
+
+        results.Should().HaveCount(50);
+        results.Should().OnlyContain(r => r, "all requests should pass when well below limit");
+    }
 }
