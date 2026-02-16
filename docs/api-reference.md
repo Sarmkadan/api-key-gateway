@@ -729,20 +729,174 @@ Content-Type: application/json
 
 ## Rate Limiting
 
-The gateway itself is rate-limited to prevent abuse:
+The gateway enforces rate limits to prevent abuse and protect upstream services.
 
-- **Default**: 10,000 requests/hour per API key
-- **Limits are per key**: Each key has independent quota
-- **Sliding Window**: Limits reset continuously (not on hour boundary)
-- **Response**: 429 Too Many Requests when exceeded
+### How It Works
 
-**Check remaining quota**:
+- **Per-key limits**: Each API key has its own independent counter
+- **Fixed window**: Counter resets after each window period elapses
+- **Clock-skew tolerance**: A small buffer (default 1 second) prevents premature resets when the gateway host and backing store have slight clock differences
+- **Units**: `Second`, `Minute`, `Hour`, `Day`, or `Unlimited`
+
+### Configuration
+
+**Global defaults** (`appsettings.json`):
+```json
+{
+  "Gateway": {
+    "EnableRateLimiting": true,
+    "DefaultRateLimitPerHour": 10000,
+    "DefaultRateLimitPerMinute": 1000,
+    "DefaultRateLimitPerSecond": 50,
+    "ClockSkewToleranceSeconds": 1
+  }
+}
 ```
-HTTP/1.1 200 OK
+
+**Per-key limit** (set at creation or via update endpoint):
+```bash
+curl -X POST http://localhost:5000/api/apikeys \
+  -H "X-API-Key: sk_admin..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "consumerId": "customer_123",
+    "name": "High-volume key",
+    "rateLimit": {
+      "requestsPerSecond": 200,
+      "requestsPerMinute": 10000,
+      "requestsPerHour": 500000
+    }
+  }'
+```
+
+**Update an existing key's limit**:
+```bash
+curl -X PUT http://localhost:5000/api/apikeys/key_abc123/ratelimit \
+  -H "X-API-Key: sk_admin..." \
+  -H "Content-Type: application/json" \
+  -d '{"requestsPerHour": 20000}'
+```
+
+### Response Headers
+
+Every response from a rate-limited key includes quota headers:
+```
 X-RateLimit-Limit: 10000
-X-RateLimit-Remaining: 9999
+X-RateLimit-Remaining: 9875
 X-RateLimit-Reset: 2026-05-04T16:00:00Z
+X-RateLimit-Quota-Limit: 500000
+X-RateLimit-Quota-Remaining: 487230
+X-RateLimit-Quota-Reset: 1746403200
 ```
+
+### Exceeded Response (429)
+
+```json
+{
+  "error": "Rate limit exceeded. Maximum 1000 requests per Minute allowed."
+}
+```
+
+The response also includes a `Retry-After` header with the number of seconds until the window resets.
+
+### Best Practices
+
+- Set `requestsPerSecond` for burst protection and `requestsPerHour` for daily quota together
+- Use `Unlimited` only for internal service-to-service keys in trusted networks
+- Monitor the `X-RateLimit-Remaining` header in your clients and back off proactively
+- Enable Redis distributed cache when running multiple gateway instances so rate-limit counters are shared across nodes
+
+### Troubleshooting Rate Limits
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| 429 hit too quickly | Limit too low for traffic pattern | Increase `requestsPerHour` |
+| Counter never resets | Clock skew between gateway and DB | Increase `ClockSkewToleranceSeconds` |
+| Different instances disagree | No shared cache | Configure Redis distributed cache |
+| Rate limit ignored | `IsEnabled = false` on key | Re-enable via `PUT /api/apikeys/{id}/enable` |
+
+---
+
+## API Key Rotation
+
+Rotating API keys regularly reduces the blast radius of a compromised credential. The recommended zero-downtime rotation process is:
+
+### Zero-Downtime Rotation Process
+
+1. **Create a new key** for the same consumer:
+   ```bash
+   NEW_KEY=$(curl -s -X POST http://localhost:5000/api/apikeys \
+     -H "X-API-Key: sk_admin..." \
+     -H "Content-Type: application/json" \
+     -d '{
+       "consumerId": "customer_123",
+       "name": "Production Key v2",
+       "expirationDays": 365
+     }' | jq -r '.keyId')
+   echo "New key ID: $NEW_KEY"
+   ```
+
+2. **Update your application** to use the new key. Deploy and verify traffic flows correctly.
+
+3. **Allow a grace period** (24–48 hours recommended) so that any in-flight requests or cached credentials drain naturally.
+
+4. **Revoke the old key** permanently:
+   ```bash
+   curl -X PUT http://localhost:5000/api/apikeys/old_key_id/revoke \
+     -H "X-API-Key: sk_admin..."
+   ```
+
+### Rotation with Expiration
+
+Create keys with short lifetimes to enforce automatic rotation:
+```bash
+# 90-day key — must be rotated before it expires
+curl -X POST http://localhost:5000/api/apikeys \
+  -H "X-API-Key: sk_admin..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "consumerId": "customer_123",
+    "name": "Quarterly Key",
+    "expirationDays": 90
+  }'
+```
+
+When a key expires, the gateway returns:
+```json
+HTTP/1.1 401 Unauthorized
+{"error": "api_key_expired"}
+```
+
+Your client should catch this response and trigger the rotation workflow.
+
+### Automated Rotation (CI/CD)
+
+Example GitHub Actions step to rotate keys on a schedule:
+```yaml
+- name: Rotate API key
+  run: |
+    # 1. Create replacement key
+    RESPONSE=$(curl -s -X POST $GATEWAY_URL/api/apikeys \
+      -H "X-API-Key: $ADMIN_KEY" \
+      -d "{\"consumerId\":\"ci\",\"name\":\"CI Key $(date +%Y-%m-%d)\"}")
+    NEW_KEY_ID=$(echo $RESPONSE | jq -r '.keyId')
+
+    # 2. Store new key in secrets manager
+    gh secret set API_KEY_ID --body "$NEW_KEY_ID"
+
+    # 3. Revoke the old key
+    curl -s -X PUT $GATEWAY_URL/api/apikeys/$OLD_KEY_ID/revoke \
+      -H "X-API-Key: $ADMIN_KEY"
+```
+
+### Rotation Best Practices
+
+- **Rotate on schedule**: Rotate at least every 90 days for production keys
+- **Rotate immediately** after any suspected compromise — do not wait for the schedule
+- **Never share keys** across consumers; always issue individual keys per service/team
+- **Use short expiry** (`expirationDays: 30`) for temporary integrations; they expire automatically
+- **Audit trail**: Every rotation creates audit log entries; review them regularly
+- **Overlap window**: Keep both old and new key valid for at least 24 hours to avoid service disruption
 
 ---
 
