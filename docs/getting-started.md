@@ -186,16 +186,64 @@ For production:
 
 #### 3. Rate Limiting
 
+**Global defaults** — apply to all keys that do not have a per-key override:
+
 ```json
 {
   "Gateway": {
     "EnableRateLimiting": true,
     "DefaultRateLimitPerHour": 10000,
     "DefaultRateLimitPerMinute": 1000,
-    "DefaultRateLimitPerSecond": 50
+    "DefaultRateLimitPerSecond": 50,
+    "ClockSkewToleranceSeconds": 1
   }
 }
 ```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `EnableRateLimiting` | `true` | Master switch — set `false` to disable all rate limiting |
+| `DefaultRateLimitPerSecond` | `50` | Burst cap per second |
+| `DefaultRateLimitPerMinute` | `1000` | Per-minute rolling cap |
+| `DefaultRateLimitPerHour` | `10000` | Hourly cap (primary billing/quota unit) |
+| `ClockSkewToleranceSeconds` | `1` | Extra seconds before a window is eligible for reset; prevents premature resets when the gateway host and database have slight clock drift |
+
+**Per-key override** — set a custom limit when creating a key:
+
+```bash
+curl -X POST http://localhost:5000/api/apikeys \
+  -H "Content-Type: application/json" \
+  -d '{
+    "consumerId": "partner-acme",
+    "name": "ACME Production",
+    "rateLimit": {
+      "requestsPerSecond": 200,
+      "requestsPerMinute": 5000,
+      "requestsPerHour": 200000
+    }
+  }'
+```
+
+**Response headers** included on every authenticated request:
+
+```
+X-RateLimit-Limit: 10000
+X-RateLimit-Remaining: 9741
+X-RateLimit-Reset: 2026-05-04T16:00:00Z
+```
+
+**When the limit is exceeded** the gateway returns `429 Too Many Requests`:
+
+```json
+{"error": "Rate limit exceeded. Maximum 1000 requests per Minute allowed."}
+```
+
+and a `Retry-After` header with the number of seconds until the window resets.
+
+**Troubleshooting**:
+- Hitting limits too fast? Increase `DefaultRateLimitPerSecond` or use per-key overrides.
+- Running multiple gateway instances? Configure a shared Redis distributed cache so counters are shared; otherwise each instance tracks its own window independently.
+- See the [API Reference](api-reference.md#rate-limiting) for the full configuration reference and best practices.
 
 #### 4. Logging
 
