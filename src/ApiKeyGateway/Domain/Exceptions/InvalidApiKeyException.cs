@@ -12,6 +12,7 @@ public class InvalidApiKeyException : Exception
 {
     public string? ApiKeyHash { get; init; }
     public DateTime? OccurredAt { get; init; }
+    public bool IsExpired { get; init; }
 
     public InvalidApiKeyException(string message) : base(message)
     {
@@ -27,6 +28,12 @@ public class InvalidApiKeyException : Exception
     public InvalidApiKeyException(string message, Exception innerException)
         : base(message, innerException)
     {
+        OccurredAt = DateTime.UtcNow;
+    }
+
+    public InvalidApiKeyException(string message, bool isExpired) : base(message)
+    {
+        IsExpired = isExpired;
         OccurredAt = DateTime.UtcNow;
     }
 }
