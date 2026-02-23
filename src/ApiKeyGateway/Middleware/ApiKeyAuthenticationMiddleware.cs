@@ -119,7 +119,10 @@ public class ApiKeyAuthenticationMiddleware
         {
             _logger.LogWarning("Invalid API key attempt: {Reason}", ex.Message);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+            if (ex.IsExpired)
+                await context.Response.WriteAsJsonAsync(new { error = "api_key_expired" });
+            else
+                await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
         }
         catch (UnauthorizedAccessException ex)
         {
