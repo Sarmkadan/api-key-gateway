@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
+        services.AddScoped<IUsageAnalyticsService, UsageAnalyticsService>();
 
         services.AddScoped<IUsageQuotaRepository, UsageQuotaRepository>();
         services.AddScoped<IUsageQuotaService, UsageQuotaService>();
@@ -48,6 +49,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuditLogService, AuditLogService>();
 
         services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+        services.AddScoped<IApiKeyRotationService, ApiKeyRotationService>();
 
         services.AddRequestCoalescing();
 
