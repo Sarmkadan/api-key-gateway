@@ -24,6 +24,12 @@ public interface IApiKeyService
     Task<bool> RevokeKeyAsync(string keyId);
     Task<List<ApiKey>> GetConsumerKeysAsync(string consumerId);
     Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata);
+
+    // IP whitelist management
+    Task<List<string>> GetIpWhitelistAsync(string keyId);
+    Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips);
+    Task<bool> AddIpToWhitelistAsync(string keyId, string ip);
+    Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip);
 }
 
 public class ApiKeyService : IApiKeyService
@@ -194,6 +200,96 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
+    /// Returns the IP whitelist for a key as a list of individual addresses.
+    /// An empty list means the key has no IP restriction.
+    /// </summary>
+    public async Task<List<string>> GetIpWhitelistAsync(string keyId)
+    {
+        var key = await GetByIdAsync(keyId);
+        if (key == null)
+            return [];
+
+        if (string.IsNullOrWhiteSpace(key.IpWhitelist))
+            return [];
+
+        return key.IpWhitelist
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(ip => ip.Trim())
+            .Where(ip => !string.IsNullOrWhiteSpace(ip))
+            .Distinct()
+            .ToList();
+    }
+
+    /// <summary>
+    /// Replaces the IP whitelist for a key with the provided set of IPs.
+    /// Pass an empty collection to remove all IP restrictions.
+    /// </summary>
+    public async Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips)
+    {
+        var key = await GetByIdAsync(keyId);
+        if (key == null)
+            return false;
+
+        var validated = ValidateIps(ips);
+        key.IpWhitelist = validated.Count > 0 ? string.Join(",", validated) : null;
+
+        await _repository.UpdateAsync(key);
+        _logger.LogInformation(
+            "IP whitelist updated for key {KeyId}: {Count} addresses",
+            keyId, validated.Count);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Adds a single IP address to a key's whitelist.
+    /// Returns <c>false</c> when the key does not exist or the IP is already present.
+    /// </summary>
+    public async Task<bool> AddIpToWhitelistAsync(string keyId, string ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip))
+            throw new ArgumentException("IP address cannot be empty", nameof(ip));
+
+        var current = await GetIpWhitelistAsync(keyId);
+        var normalised = ip.Trim();
+
+        if (current.Contains(normalised))
+            return false;
+
+        current.Add(normalised);
+        return await SetIpWhitelistAsync(keyId, current);
+    }
+
+    /// <summary>
+    /// Removes a single IP address from a key's whitelist.
+    /// Returns <c>false</c> when the key does not exist or the IP was not in the list.
+    /// </summary>
+    public async Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip))
+            throw new ArgumentException("IP address cannot be empty", nameof(ip));
+
+        var current = await GetIpWhitelistAsync(keyId);
+        var normalised = ip.Trim();
+
+        if (!current.Remove(normalised))
+            return false;
+
+        return await SetIpWhitelistAsync(keyId, current);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static List<string> ValidateIps(IEnumerable<string> ips)
+    {
+        return ips
+            .Select(ip => ip?.Trim() ?? string.Empty)
+            .Where(ip => !string.IsNullOrWhiteSpace(ip))
+            .Distinct()
+            .ToList();
+    }
+
+    /// <summary>
     /// Hashes an API key using SHA-256
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -228,4 +324,6 @@ public interface IApiKeyRepository
     Task UpdateAsync(ApiKey apiKey);
     Task DeleteAsync(string id);
     Task<List<ApiKey>> GetExpiredKeysAsync();
+    Task<List<ApiKey>> GetAllAsync();
+    Task<List<ApiKey>> GetKeysExpiringBeforeAsync(DateTime threshold);
 }

@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.BackgroundWorkers;
 using ApiKeyGateway.Caching;
 using ApiKeyGateway.Events;
 using ApiKeyGateway.Integration;
@@ -57,6 +58,7 @@ public static class ServiceRegistrationExtensions
         services.AddHostedService<UsageAggregationWorker>();
         services.AddHostedService<RateLimitResetScheduler>();
         services.AddHostedService<AuditLogCleanupWorker>();
+        services.AddHostedService<KeyRotationScheduler>();
 
         // Middleware
         services.AddGatewayMiddleware(configuration);
