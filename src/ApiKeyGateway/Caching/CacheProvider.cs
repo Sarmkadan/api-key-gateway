@@ -9,38 +9,40 @@ namespace ApiKeyGateway.Caching;
 /// Interface for cache abstraction. Implementations can use different
 /// backends (in-memory, Redis, Memcached) without changing calling code.
 /// This is critical for supporting both single-instance and distributed deployments.
+/// Methods return ValueTask so that synchronous-completing implementations (e.g.
+/// InMemoryCacheProvider) avoid allocating a Task state-machine object per call.
 /// </summary>
 public interface ICacheProvider
 {
     /// <summary>
     /// Retrieves a value from cache by key.
     /// </summary>
-    Task<T?> GetAsync<T>(string key) where T : class;
+    ValueTask<T?> GetAsync<T>(string key) where T : class;
 
     /// <summary>
     /// Stores a value in cache with optional expiration.
     /// </summary>
-    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class;
+    ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class;
 
     /// <summary>
     /// Removes a value from cache.
     /// </summary>
-    Task RemoveAsync(string key);
+    ValueTask RemoveAsync(string key);
 
     /// <summary>
     /// Checks if a key exists in cache.
     /// </summary>
-    Task<bool> ExistsAsync(string key);
+    ValueTask<bool> ExistsAsync(string key);
 
     /// <summary>
     /// Atomically increments a counter. Used for rate limiting tracking.
     /// </summary>
-    Task<long> IncrementAsync(string key, long increment = 1);
+    ValueTask<long> IncrementAsync(string key, long increment = 1);
 
     /// <summary>
     /// Removes all entries matching a pattern (use cautiously).
     /// </summary>
-    Task<int> RemoveByPatternAsync(string pattern);
+    ValueTask<int> RemoveByPatternAsync(string pattern);
 }
 
 /// <summary>
@@ -60,19 +62,19 @@ public sealed class InMemoryCacheProvider : ICacheProvider
         _logger = logger;
     }
 
-    public Task<T?> GetAsync<T>(string key) where T : class
+    public ValueTask<T?> GetAsync<T>(string key) where T : class
     {
         if (_cache.TryGetValue(key, out T? value))
         {
             _logger.LogDebug("Cache HIT for key: {Key}", key);
-            return Task.FromResult(value);
+            return ValueTask.FromResult(value);
         }
 
         _logger.LogDebug("Cache MISS for key: {Key}", key);
-        return Task.FromResult<T?>(null);
+        return ValueTask.FromResult<T?>(null);
     }
 
-    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
+    public ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
     {
         var cacheOptions = new MemoryCacheEntryOptions();
         if (expiration.HasValue)
@@ -82,20 +84,20 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 
         _cache.Set(key, value, cacheOptions);
         _logger.LogDebug("Cache SET for key: {Key} with expiration: {Expiration}", key, expiration?.TotalSeconds);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task RemoveAsync(string key)
+    public ValueTask RemoveAsync(string key)
     {
         _cache.Remove(key);
         _logger.LogDebug("Cache REMOVE for key: {Key}", key);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task<bool> ExistsAsync(string key) =>
-        Task.FromResult(_cache.TryGetValue(key, out _));
+    public ValueTask<bool> ExistsAsync(string key) =>
+        ValueTask.FromResult(_cache.TryGetValue(key, out _));
 
-    public Task<long> IncrementAsync(string key, long increment = 1)
+    public ValueTask<long> IncrementAsync(string key, long increment = 1)
     {
         // In-memory implementation needs manual locking for counters
         lock (_lockObj)
@@ -108,16 +110,15 @@ public sealed class InMemoryCacheProvider : ICacheProvider
             _counters[key] += increment;
             var newValue = _counters[key];
             _logger.LogDebug("Counter incremented: {Key} = {Value}", key, newValue);
-            return Task.FromResult(newValue);
+            return ValueTask.FromResult(newValue);
         }
     }
 
-    public Task<int> RemoveByPatternAsync(string pattern)
+    public ValueTask<int> RemoveByPatternAsync(string pattern)
     {
         // In-memory cache doesn't have pattern matching built-in
         // This is a simplified implementation
-        var keysToRemove = new List<string>();
         _logger.LogWarning("RemoveByPattern not fully implemented for in-memory cache");
-        return Task.FromResult(keysToRemove.Count);
+        return ValueTask.FromResult(0);
     }
 }
