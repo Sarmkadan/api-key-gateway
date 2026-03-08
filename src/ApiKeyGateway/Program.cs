@@ -45,6 +45,7 @@ if (builder.Configuration.GetValue<bool>("Gateway:RequireSsl"))
 
 app.UseCors("AllowAll");
 app.UseApiKeyAuthentication();
+app.UseRequestTransformation();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
