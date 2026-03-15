@@ -12,7 +12,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddControllers();
-builder.Services.AddGatewayServices(connectionString);
+builder.Services.AddGatewayServices(builder.Configuration);
 builder.Services.AddGatewayDocumentation();
 
 builder.Services.AddCors(options =>
