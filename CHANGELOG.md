@@ -5,6 +5,28 @@ All notable changes to API Key Gateway are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-05-26
+### Added
+- Security policy file (.github/SECURITY.md)
+- Dependabot configuration for nuget ecosystem
+- Input validation and length limits for string parameters
+- Timeout parameters to HttpClient calls
+- CancellationToken to async methods
+
+### Changed
+- Updated CHANGELOG.md format
+
+### Removed
+- None
+
+### Fixed
+- None
+
+### Security
+- Added input validation and length limits
+- Added request timeout configuration
+- Added security policy and vulnerability reporting
+
 ## [1.0.0] - 2025-11-18
 
 ### Added
