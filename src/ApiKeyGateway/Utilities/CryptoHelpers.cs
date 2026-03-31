@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Buffers;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,7 +16,9 @@ namespace ApiKeyGateway.Utilities;
 public static class CryptoHelpers
 {
     /// <summary>
-    /// Generates a cryptographically secure random string
+    /// Generates a cryptographically secure random string.
+    /// Uses stackalloc for the 4-byte RNG buffer and RandomNumberGenerator.Fill
+    /// to avoid per-call heap allocations.
     /// </summary>
     public static string GenerateSecureRandomString(int length)
     {
@@ -24,13 +28,12 @@ public static class CryptoHelpers
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         var result = new char[length];
 
-        using var rng = RandomNumberGenerator.Create();
-        var buffer = new byte[sizeof(uint)];
+        Span<byte> buffer = stackalloc byte[sizeof(uint)];
 
         for (int i = 0; i < length; i++)
         {
-            rng.GetBytes(buffer);
-            uint randomValue = BitConverter.ToUInt32(buffer, 0);
+            RandomNumberGenerator.Fill(buffer);
+            uint randomValue = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
             result[i] = chars[(int)(randomValue % (uint)chars.Length)];
         }
 
@@ -38,16 +41,28 @@ public static class CryptoHelpers
     }
 
     /// <summary>
-    /// Computes SHA-256 hash of a string
+    /// Computes SHA-256 hash of a string.
+    /// Uses ArrayPool for the UTF-8 encoding buffer and stackalloc for the
+    /// 32-byte hash output, keeping GC pressure near zero on the hot path.
     /// </summary>
     public static string ComputeSha256Hash(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
             throw new ArgumentException("Input cannot be empty", nameof(input));
 
-        using var sha256 = SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-        return Convert.ToBase64String(hashedBytes);
+        int maxBytes = Encoding.UTF8.GetMaxByteCount(input.Length);
+        byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(maxBytes);
+        try
+        {
+            int byteCount = Encoding.UTF8.GetBytes(input.AsSpan(), rentedBuffer);
+            Span<byte> hashBytes = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(rentedBuffer.AsSpan(0, byteCount), hashBytes);
+            return Convert.ToBase64String(hashBytes);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
+        }
     }
 
     /// <summary>
@@ -63,7 +78,9 @@ public static class CryptoHelpers
     }
 
     /// <summary>
-    /// Computes HMAC-SHA256 signature
+    /// Computes HMAC-SHA256 signature.
+    /// Uses ArrayPool for both key and message encoding buffers and the static
+    /// HMACSHA256.HashData overload to avoid allocating an HMACSHA256 instance.
     /// </summary>
     public static string ComputeHmacSha256(string message, string secret)
     {
@@ -73,8 +90,27 @@ public static class CryptoHelpers
         if (string.IsNullOrWhiteSpace(secret))
             throw new ArgumentException("Secret cannot be empty", nameof(secret));
 
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var signatureBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(message));
-        return Convert.ToBase64String(signatureBytes);
+        int maxSecretBytes = Encoding.UTF8.GetMaxByteCount(secret.Length);
+        int maxMsgBytes = Encoding.UTF8.GetMaxByteCount(message.Length);
+
+        byte[] secretBuffer = ArrayPool<byte>.Shared.Rent(maxSecretBytes);
+        byte[] msgBuffer = ArrayPool<byte>.Shared.Rent(maxMsgBytes);
+        try
+        {
+            int secretByteCount = Encoding.UTF8.GetBytes(secret.AsSpan(), secretBuffer);
+            int msgByteCount = Encoding.UTF8.GetBytes(message.AsSpan(), msgBuffer);
+
+            Span<byte> signature = stackalloc byte[HMACSHA256.HashSizeInBytes];
+            HMACSHA256.HashData(
+                secretBuffer.AsSpan(0, secretByteCount),
+                msgBuffer.AsSpan(0, msgByteCount),
+                signature);
+            return Convert.ToBase64String(signature);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(secretBuffer);
+            ArrayPool<byte>.Shared.Return(msgBuffer);
+        }
     }
 }
