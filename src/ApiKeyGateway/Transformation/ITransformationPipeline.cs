@@ -120,7 +120,8 @@ public sealed class TransformationContext
         ApiKeyId    = apiKeyId;
         ConsumerId  = consumerId;
         Method      = request.Method;
-        Path        = request.Path.Value ?? "/";
+        // Hotfix: Use ToString() to properly handle encoded path segments
+        Path        = request.Path.ToString() ?? "/";
         SourceIp    = ExtractIp(request.HttpContext);
 
         QueryParameters = request.Query
