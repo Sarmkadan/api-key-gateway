@@ -61,6 +61,9 @@ public static class ServiceRegistrationExtensions
         // Middleware
         services.AddGatewayMiddleware(configuration);
 
+        // Request transformation pipeline (v2)
+        services.AddRequestTransformationPipeline(configuration);
+
         return services;
     }
 
