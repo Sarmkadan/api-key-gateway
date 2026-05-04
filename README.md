@@ -317,6 +317,53 @@ var notInWhitelistKey = new ApiKey { IpWhitelist = "10.0.0.1,10.0.0.2" };
 apiKeyModelTests.IsIpAllowed_IpNotInWhitelist_ReturnsFalse();
 ```
 
+## ApiKeyGatewayExample
+
+The `ApiKeyGatewayExample` class demonstrates bulk API key management operations using the ApiKey Gateway API. It provides examples for creating, listing, updating, rotating, and reporting on API keys in batch operations, making it ideal for administrative tools and automation scenarios.
+
+### Example Usage
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+// Create an instance of the example
+var example = new ApiKeyGatewayExample(
+    baseUrl: "http://localhost:5000",
+    adminKey: "admin_key_example"
+);
+
+// Run the example
+await example.RunAsync();
+
+// Or use individual methods
+var consumerId = "consumer_123";
+
+// Create a new API key
+var newKey = await example.CreateKeyAsync(consumerId, "Production API Key");
+Console.WriteLine($"Created key: {newKey.Id}");
+
+// List all keys for a consumer
+var keys = await example.ListConsumerKeysAsync(consumerId);
+foreach (var key in keys)
+{
+    Console.WriteLine($"Key: {key.Name}, Status: {key.Status}");
+}
+
+// Update multiple keys at once
+var updatedCount = await example.UpdateKeysAsync(
+    new List<string> { "key_001", "key_002" },
+    new Dictionary<string, object> { { "rateLimit", new { requestsPerSecond = 200 } } }
+);
+
+// Rotate keys for a consumer (creates new keys, keeps old ones during grace period)
+await example.RotateConsumerKeysAsync(consumerId, gracePeriodHours: 24);
+
+// Generate a consumer report
+await example.GenerateConsumerReportAsync(consumerId);
+```
+
 ## CollectionExtensionsTests
 
 The `CollectionExtensionsTests` class provides unit tests for the collection extension methods in `ApiKeyGateway.Extensions.CollectionExtensions`. It tests functionality for pagination, collection state checking, batching, and other collection operations. 
