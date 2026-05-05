@@ -11,7 +11,7 @@
     <Authors>Vladyslav Zaiets</Authors>
     <Description>Lightweight API key authentication gateway for self-hosted services with rate limiting and usage tracking</Description>
     <RepositoryUrl>https://github.com/sarmkadan/api-key-gateway</RepositoryUrl>
-    <License>MIT</License>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
