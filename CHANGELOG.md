@@ -5,113 +5,123 @@ All notable changes to API Key Gateway are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-05-04
+## [1.0.0] - 2025-11-18
 
 ### Added
-- **Batch Operations API**: Create, disable, or revoke multiple keys in single request
-- **Advanced Caching**: Support for Redis distributed cache alongside in-memory cache
-- **Health Check Improvements**: Detailed component health status in health endpoint
-- **Export Functionality**: Export usage data as CSV, JSON, or XML
+- **Stable Release**: API Key Gateway promoted to v1.0.0 after six months of production testing
+- **Batch Operations API**: Create, disable, or revoke multiple keys in a single request
 - **Request Correlation**: Automatic correlation ID injection for distributed tracing
-- **Performance Monitoring**: Request latency tracking and metrics collection
 - **Circuit Breaker Pattern**: Graceful degradation when downstream services fail
-- **Webhook Events**: Publish events when API keys are created, revoked, or rate limits exceeded
-- **Audit Log Retention Policy**: Automatic cleanup of old audit logs based on configuration
+- **Webhook Events**: Push events when API keys are created, revoked, or rate limits exceeded
+- **Audit Log Retention Policy**: Automatic cleanup of old audit entries based on configurable window
+- **Data Export**: Export usage data as CSV or XML for reporting and compliance
 
 ### Changed
-- Improved rate limiting algorithm (sliding window vs fixed window)
-- Enhanced error messages with more context and suggestions
-- Database query optimization for high-throughput scenarios
+- Improved rate limiting algorithm to sliding-window (replaces fixed-window)
+- Enhanced error responses with field-level detail and actionable suggestions
 - Middleware pipeline refactored for better separation of concerns
-- Configuration schema now supports environment variable overrides
-- Validation errors now return detailed field-level information
+- Configuration schema now supports environment variable overrides for all gateway settings
+- Validation errors return HTTP 422 with structured field-error body
 
 ### Fixed
 - Race condition in rate limit counter updates under concurrent load
-- Memory leak in cache eviction for large key sets
-- Incorrect calculation of expiration times across timezones
-- API key hash comparison vulnerable to timing attacks (now uses constant-time comparison)
-- Database connection pool exhaustion under sustained load
+- Memory leak in cache eviction logic for large key sets
+- Incorrect expiration time calculation across DST boundaries
+- Timing-attack vulnerability in API key hash comparison (constant-time compare)
+- Connection pool exhaustion under sustained high-concurrency load
 
 ### Security
-- Added HTTPS/TLS enforcement options
-- Implemented rate limiting for gateway itself (prevent DoS)
-- API keys no longer logged in plaintext (masked to first 8 chars)
-- Added IP whitelisting support per API key
-- Input validation hardened against injection attacks
+- HTTPS/TLS enforcement option added (`Gateway:RequireSsl`)
+- Gateway-level rate limiting to prevent DoS amplification
+- API keys masked in logs (first 8 characters only)
+- Input validation hardened against SQL-injection and path-traversal patterns
 
-### Performance
-- Response times reduced by 40% through aggressive caching
-- Throughput increased from 5,000 to 10,000 RPS (single instance)
-- Database queries optimized with proper indexing
-- Connection pooling improved (increased default pool size to 100)
-- Async/await refactoring for all I/O operations
-
-## [1.1.0] - 2026-04-15
+## [0.9.0] - 2025-10-02
 
 ### Added
-- **Usage Statistics API**: Get detailed usage data per key and consumer
-- **Audit Logging**: Full audit trail of all key operations
-- **IP Whitelisting**: Optional IP-based access control for keys
-- **Key Metadata**: Custom metadata support for tracking additional key information
-- **Disable/Enable**: Ability to temporarily disable keys without deletion
-- **Key Rotation**: Support for securely rotating old keys
-- **Multiple Rate Limit Types**: Per-second, per-minute, per-hour, per-day limits
-- **Admin API**: Administrative endpoints for key and consumer management
+- **Performance Monitoring Middleware**: Per-request latency tracking and p99 metrics
+- **Admin API**: Administrative endpoints for bulk consumer and key management
+- **Health Check Improvements**: Detailed component status (database, cache, background workers)
+- **Background Workers**: Scheduled usage aggregation and audit-log cleanup workers
 
 ### Changed
-- Database schema redesigned for better scalability
-- Improved error handling with standard error codes
-- REST API endpoints now return consistent response format
-- Configuration format changed from XML to JSON
-- Logging switched to Serilog for structured logging
+- Database query layer optimised with covering indexes on hot read paths
+- Connection pooling default raised to 50; configurable via connection string
+- Async/await adopted throughout all I/O paths
 
 ### Fixed
-- Key expiration times now calculated correctly
-- Rate limiting counter reset issues in edge cases
-- Database timeout issues on first startup
-- Concurrency issues in usage record tracking
+- Usage aggregation worker could duplicate records on restart
+- Health check endpoint blocked under high load (now runs on a dedicated thread pool)
 
-### Deprecated
-- Support for .NET 8.0 (now requires .NET 10.0)
-- Old XML-based configuration format
-
-## [1.0.0] - 2026-03-20
+## [0.7.0] - 2025-08-14
 
 ### Added
-- **Initial Release**: API Key Gateway v1.0.0
-- **Core Features**:
-  - API key generation, validation, and management
-  - Rate limiting (configurable per key and globally)
-  - Usage tracking and analytics
-  - Audit logging for compliance
-  - Middleware for ASP.NET Core integration
-  - REST API for key management
-  - Health checks for monitoring
-  - In-memory caching for fast validation
-  - SQL Server database support
-- **Security**:
-  - API keys stored as SHA-256 hashes
-  - Support for HTTPS/TLS
-  - Request validation and sanitization
-- **Operations**:
-  - Docker support with Dockerfile
-  - Docker Compose for local development
-  - Comprehensive configuration options
-  - Structured logging with Serilog
-  - Health check endpoints for Kubernetes
-- **Documentation**:
-  - Getting Started guide
-  - API reference documentation
-  - Architecture documentation
-  - Deployment guide
-  - Configuration examples
-  - Multiple language examples (Node.js, Python, C#, Go, Bash)
-- **Testing**:
-  - Load testing script
-  - Monitoring script
-  - Integration examples
-  - Docker Compose test environment
+- **Audit Logging**: Immutable audit trail for all key operations and access events
+- **Webhook Integration**: Configurable outbound webhooks for key lifecycle events
+- **IP Whitelisting**: Optional IP-based access control at the individual key level
+- **Key Metadata**: Arbitrary key-value metadata attached to API keys
+- **Key Disable/Enable**: Temporarily suspend a key without deleting it
+- **Multiple Rate Limit Granularities**: Per-second, per-minute, per-hour, and per-day limits
+
+### Changed
+- Database schema extended with `AuditLogs` and `KeyMetadata` tables (auto-migrated on startup)
+- REST API responses normalised to a consistent envelope format
+- Logging switched to Serilog with structured JSON output
+
+### Fixed
+- Rate limit counters not reset correctly on unit boundary (second/minute rollover)
+- Database timeout on first-run table creation with SQL Server cold start
+
+## [0.5.0] - 2025-06-23
+
+### Added
+- **Usage Tracking**: Real-time per-key request counters, response time recording, and bandwidth metering
+- **Usage Statistics API**: Aggregate usage reports per key and per consumer
+- **Caching Layer**: In-memory cache for validated keys; configurable TTL and max-entry limit
+- **Key Rotation**: Revoke and replace a key atomically, preserving the consumer association
+- **Multiple Rate Limit Units**: Extend rate limiting to hourly and daily windows
+
+### Changed
+- Validation pipeline centralised into `RequestValidationMiddleware`
+- API key lookup moved to cached path — DB consulted only on cache miss
+- Error handling middleware now catches and formats all unhandled exceptions
+
+### Fixed
+- Null-reference when consumer had no active keys
+- Cache not invalidated after key revocation
+
+## [0.3.0] - 2025-04-09
+
+### Added
+- **Rate Limiting**: Per-key request rate limits enforced in middleware
+- **Request Logging Middleware**: Structured per-request log entries with method, path, status code, and duration
+- **Consumer Model**: Group multiple API keys under a single consumer identity
+- **List Keys API**: Retrieve all keys for a given consumer with optional status filter
+- **Docker Compose Setup**: `docker-compose.yml` for local development with SQL Server sidecar
+
+### Changed
+- API key generation switched from `Guid` to cryptographically random 32-byte token
+- Hash storage uses SHA-256; plaintext key never persisted after creation response
+- Project restructured into `Controllers`, `Services`, `Repositories`, `Domain` namespaces
+
+### Fixed
+- Key validation returned 500 instead of 401 when key not found in database
+- Missing `Content-Type: application/json` on error responses
+
+## [0.1.0] - 2025-02-17
+
+### Added
+- **Initial Release**: Core API key lifecycle management
+- API key generation with configurable prefix and length
+- SHA-256 key hashing — stored hash only, raw key returned once at creation
+- Key validation endpoint used by downstream services
+- Key expiration support (configurable TTL in days)
+- Key revocation (permanent) and deletion
+- SQL Server persistence via ADO.NET (no ORM dependency)
+- ASP.NET Core 10 application host with minimal middleware
+- `appsettings.json` configuration for database connection and gateway defaults
+- Dockerfile for containerised deployment
+- MIT license, README, and basic getting-started documentation
 
 ## Versioning
 
@@ -122,39 +132,36 @@ This project uses Semantic Versioning:
 
 ## Upgrade Guidelines
 
-### From v1.1.0 to v1.2.0
+### From v0.9.0 to v1.0.0
 - **Breaking Changes**: None
-- **Database Migration**: Automatic (run migrations with `dotnet ef database update`)
-- **Configuration**: Add new keys in appsettings.json (defaults provided)
-- **Action Required**: None (fully backwards compatible)
+- **Database**: Automatic schema migration on startup
+- **Configuration**: No changes required; new options have defaults
+- **Action Required**: None
 
-### From v1.0.0 to v1.1.0
-- **Breaking Changes**: Configuration format changed from XML to JSON
-- **Database Migration**: Required (backup first!)
-- **Action Required**: Migrate configuration files to JSON format
-- **Compatibility**: Existing API contracts remain unchanged
+### From v0.7.0 to v0.9.0
+- **Breaking Changes**: None
+- **Database**: New index migrations applied automatically on startup
+- **Action Required**: None
 
-## Future Roadmap
+### From v0.5.0 to v0.7.0
+- **Breaking Changes**: Response envelope format changed — clients should read `.data` field
+- **Database**: `AuditLogs` and `KeyMetadata` tables added automatically
+- **Action Required**: Update client deserialization if using typed response models
 
-### v1.3.0 (Q3 2026)
-- [ ] PostgreSQL database support
-- [ ] GraphQL API endpoint
-- [ ] Multi-tenant support
-- [ ] Performance dashboard
-- [ ] Advanced analytics and reporting
+### From v0.3.0 to v0.5.0
+- **Breaking Changes**: None
+- **Action Required**: None
 
-### v2.0.0 (Q4 2026)
-- [ ] OAuth2 integration
-- [ ] SAML support
-- [ ] Kubernetes operator
-- [ ] Microservices decomposition
-- [ ] Event streaming (Kafka) support
+### From v0.1.0 to v0.3.0
+- **Breaking Changes**: API key format changed (prefix + random bytes instead of GUID)
+  — existing keys continue to validate; new keys use updated format
+- **Action Required**: No migration needed for existing keys
 
 ## Support
 
 - **Issues**: Report bugs on [GitHub Issues](https://github.com/sarmkadan/api-key-gateway/issues)
 - **Discussions**: Ask questions on [GitHub Discussions](https://github.com/sarmkadan/api-key-gateway/discussions)
-- **Email**: Contact support at rutova2@gmail.com
+- **Email**: rutova2@gmail.com
 - **Website**: https://sarmkadan.com
 
 ## Contributors
@@ -166,10 +173,10 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-Copyright (c) 2026 Vladyslav Zaiets
+Copyright (c) 2025 Vladyslav Zaiets
 
 Licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-**Last Updated**: 2026-05-04
+**Last Updated**: 2025-11-18
