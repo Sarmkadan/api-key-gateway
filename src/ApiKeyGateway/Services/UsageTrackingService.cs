@@ -39,7 +39,7 @@ public class UsageTrackingService : IUsageTrackingService
 
         try
         {
-            await _repository.CreateAsync(record);
+            await _repository.CreateAsync(record).ConfigureAwait(false);
             _logger.LogDebug("Usage recorded for API key {ApiKeyId}: {Endpoint} {Method} -> {StatusCode}",
                 record.ApiKeyId, record.Endpoint, record.Method, record.ResponseStatusCode);
         }
@@ -61,7 +61,7 @@ public class UsageTrackingService : IUsageTrackingService
         if (endDate < startDate)
             throw new ArgumentException("End date must be after start date", nameof(endDate));
 
-        var records = await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
+        var records = await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate).ConfigureAwait(false);
 
         var stats = new UsageStatistics
         {
@@ -87,7 +87,7 @@ public class UsageTrackingService : IUsageTrackingService
         if (string.IsNullOrWhiteSpace(apiKeyId))
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
 
-        return await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
+        return await _repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ public class UsageTrackingService : IUsageTrackingService
         if (string.IsNullOrWhiteSpace(consumerId))
             return 0;
 
-        var records = await _repository.GetByConsumerAndDateRangeAsync(consumerId, startDate, endDate);
+        var records = await _repository.GetByConsumerAndDateRangeAsync(consumerId, startDate, endDate).ConfigureAwait(false);
         return UsageRecord.CalculateTotalBytes(records);
     }
 }

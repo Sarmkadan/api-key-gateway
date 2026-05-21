@@ -43,7 +43,7 @@ public sealed class UsageAggregationWorker : BackgroundService
                     oneHourAgo);
 
                 // Group usage by API key and endpoint
-                var aggregated = await usageRepository.GetUsageAsync(oneHourAgo, DateTime.UtcNow);
+                var aggregated = await usageRepository.GetUsageAsync(oneHourAgo, DateTime.UtcNow).ConfigureAwait(false);
 
                 var groupedUsage = aggregated
                     .GroupBy(u => new { u.ApiKeyId, u.Endpoint })
@@ -74,7 +74,7 @@ public sealed class UsageAggregationWorker : BackgroundService
                 }
 
                 // Wait for next aggregation cycle
-                await Task.Delay(_aggregationInterval, stoppingToken);
+                await Task.Delay(_aggregationInterval, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -85,7 +85,7 @@ public sealed class UsageAggregationWorker : BackgroundService
             {
                 _logger.LogError(ex, "Error during usage aggregation");
                 // Wait before retry to avoid tight error loop
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken).ConfigureAwait(false);
             }
         }
     }

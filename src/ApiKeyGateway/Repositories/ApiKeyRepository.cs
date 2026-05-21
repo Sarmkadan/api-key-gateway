@@ -43,9 +43,9 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.CommandText = query;
             AddParameters(cmd, apiKey);
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _memoryStore[apiKey.Id] = apiKey;
             _logger.LogDebug("API key {Id} created successfully", apiKey.Id);
@@ -78,8 +78,8 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@Id", id));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             if (await reader.ReadAsync())
             {
@@ -88,7 +88,7 @@ public class ApiKeyRepository : IApiKeyRepository
                 return apiKey;
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return null;
         }
         catch (Exception ex)
@@ -114,15 +114,15 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@KeyHash", keyHash));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             if (await reader.ReadAsync())
             {
                 return MapFromReader(reader);
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return null;
         }
         catch (Exception ex)
@@ -149,15 +149,15 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@ConsumerId", consumerId));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 keys.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return keys;
         }
         catch (Exception ex)
@@ -192,9 +192,9 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.Parameters.Add(CreateParameter("@RequestCount", apiKey.RequestCount));
             cmd.Parameters.Add(CreateParameter("@Id", apiKey.Id));
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _memoryStore[apiKey.Id] = apiKey;
         }
@@ -221,9 +221,9 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@Id", id));
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _memoryStore.Remove(id);
         }
@@ -249,15 +249,15 @@ public class ApiKeyRepository : IApiKeyRepository
             cmd.Parameters.Add(CreateParameter("@Now", DateTime.UtcNow));
             cmd.Parameters.Add(CreateParameter("@RevokedStatus", (int)Domain.Enums.ApiKeyStatus.Revoked));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 keys.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return keys;
         }
         catch (Exception ex)

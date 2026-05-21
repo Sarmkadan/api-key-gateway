@@ -39,17 +39,17 @@ public class RateLimitRepository : IRateLimitRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@ApiKeyId", apiKeyId));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             if (await reader.ReadAsync())
             {
                 var rateLimit = MapFromReader(reader);
-                await _connection.CloseAsync();
+                await _connection.CloseAsync().ConfigureAwait(false);
                 return rateLimit;
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return null;
         }
         catch (Exception ex)
@@ -78,9 +78,9 @@ public class RateLimitRepository : IRateLimitRepository
             cmd.CommandText = query;
             AddParameters(cmd, rateLimit);
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogDebug("Rate limit created for API key {ApiKeyId}", rateLimit.ApiKeyId);
             return rateLimit;
@@ -117,9 +117,9 @@ public class RateLimitRepository : IRateLimitRepository
             cmd.Parameters.Add(CreateParameter("@CurrentRequestCount", rateLimit.CurrentRequestCount));
             cmd.Parameters.Add(CreateParameter("@Id", rateLimit.Id));
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogDebug("Rate limit updated for API key {ApiKeyId}", rateLimit.ApiKeyId);
         }
@@ -146,9 +146,9 @@ public class RateLimitRepository : IRateLimitRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@Id", id));
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {

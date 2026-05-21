@@ -66,7 +66,7 @@ public static class CsvExportHelper
             var headers = properties
                 .Select(p => QuoteCsvField(p.Name))
                 .ToList();
-            await writer.WriteLineAsync(string.Join(",", headers));
+            await writer.WriteLineAsync(string.Join(",", headers)).ConfigureAwait(false);
         }
 
         // Process items as they arrive instead of buffering
@@ -75,10 +75,10 @@ public static class CsvExportHelper
             var values = properties
                 .Select(p => QuoteCsvField(p.GetValue(item)))
                 .ToList();
-            await writer.WriteLineAsync(string.Join(",", values));
+            await writer.WriteLineAsync(string.Join(",", values)).ConfigureAwait(false);
         }
 
-        await writer.FlushAsync();
+        await writer.FlushAsync().ConfigureAwait(false);
     }
 
     /// <summary>

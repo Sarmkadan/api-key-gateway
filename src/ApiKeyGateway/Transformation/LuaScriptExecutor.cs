@@ -127,7 +127,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
 
         try
         {
-            result = await Task.Run(() => RunScript(script, context), timeoutCts.Token);
+            result = await Task.Run(() => RunScript(script, context), timeoutCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {

@@ -79,7 +79,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
 
         try
         {
-            var result = await operation();
+            var result = await operation().ConfigureAwait(false);
             RecordSuccess();
             return result;
         }

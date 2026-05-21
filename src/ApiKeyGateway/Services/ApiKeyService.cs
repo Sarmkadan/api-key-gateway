@@ -67,7 +67,7 @@ public class ApiKeyService : IApiKeyService
                 ExpiresAt = expirationDays.HasValue ? DateTime.UtcNow.AddDays(expirationDays.Value) : null
             };
 
-            var created = await _repository.CreateAsync(apiKey);
+            var created = await _repository.CreateAsync(apiKey).ConfigureAwait(false);
             _logger.LogInformation("API key created for consumer {ConsumerId} with name {Name}", consumerId, name);
 
             return created;
@@ -87,7 +87,7 @@ public class ApiKeyService : IApiKeyService
         if (string.IsNullOrWhiteSpace(keyId))
             return null;
 
-        return await _repository.GetByIdAsync(keyId);
+        return await _repository.GetByIdAsync(keyId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public class ApiKeyService : IApiKeyService
             throw new UnauthorizedAccessException(Domain.Constants.ErrorMessages.UnauthorizedAccess);
 
         var keyHash = HashApiKey(keyValue);
-        var apiKey = await _repository.GetByHashAsync(keyHash);
+        var apiKey = await _repository.GetByHashAsync(keyHash).ConfigureAwait(false);
 
         if (apiKey == null)
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyNotFound, keyHash);
@@ -118,12 +118,12 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> DisableKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
+        var key = await GetByIdAsync(keyId).ConfigureAwait(false);
         if (key == null)
             return false;
 
         key.Disable();
-        await _repository.UpdateAsync(key);
+        await _repository.UpdateAsync(key).ConfigureAwait(false);
         _logger.LogInformation("API key {KeyId} disabled", keyId);
 
         return true;
@@ -134,12 +134,12 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> EnableKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
+        var key = await GetByIdAsync(keyId).ConfigureAwait(false);
         if (key == null)
             return false;
 
         key.Enable();
-        await _repository.UpdateAsync(key);
+        await _repository.UpdateAsync(key).ConfigureAwait(false);
         _logger.LogInformation("API key {KeyId} enabled", keyId);
 
         return true;
@@ -150,12 +150,12 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> RevokeKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
+        var key = await GetByIdAsync(keyId).ConfigureAwait(false);
         if (key == null)
             return false;
 
         key.Revoke();
-        await _repository.UpdateAsync(key);
+        await _repository.UpdateAsync(key).ConfigureAwait(false);
         _logger.LogWarning("API key {KeyId} revoked", keyId);
 
         return true;
@@ -169,7 +169,7 @@ public class ApiKeyService : IApiKeyService
         if (string.IsNullOrWhiteSpace(consumerId))
             return [];
 
-        return await _repository.GetByConsumerIdAsync(consumerId);
+        return await _repository.GetByConsumerIdAsync(consumerId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -177,7 +177,7 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
     {
-        var key = await GetByIdAsync(keyId);
+        var key = await GetByIdAsync(keyId).ConfigureAwait(false);
         if (key == null)
             return false;
 
@@ -189,7 +189,7 @@ public class ApiKeyService : IApiKeyService
             }
         }
 
-        await _repository.UpdateAsync(key);
+        await _repository.UpdateAsync(key).ConfigureAwait(false);
         return true;
     }
 

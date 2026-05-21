@@ -85,7 +85,7 @@ public sealed class BatchOperationHandler : IBatchOperationHandler
         {
             try
             {
-                var itemResult = await ProcessSingleKeyAsync(apiKeyId, operation);
+                var itemResult = await ProcessSingleKeyAsync(apiKeyId, operation).ConfigureAwait(false);
                 result.Items.Add(itemResult);
 
                 if (itemResult.Success)

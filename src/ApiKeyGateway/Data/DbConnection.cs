@@ -43,7 +43,7 @@ public class SqlServerConnection : IDbConnection
         {
             if (_connection?.State != ConnectionState.Open)
             {
-                await _connection!.OpenAsync();
+                await _connection!.OpenAsync().ConfigureAwait(false);
                 _logger.LogDebug("Database connection opened");
             }
         }
@@ -60,7 +60,7 @@ public class SqlServerConnection : IDbConnection
         {
             if (_connection?.State == ConnectionState.Open)
             {
-                await _connection.CloseAsync();
+                await _connection.CloseAsync().ConfigureAwait(false);
                 _logger.LogDebug("Database connection closed");
             }
         }

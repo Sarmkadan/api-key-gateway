@@ -41,7 +41,7 @@ public class AuthenticationService : IAuthenticationService
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            await LogAuthenticationAttemptAsync("unknown", false, "Missing API key");
+            await LogAuthenticationAttemptAsync("unknown", false, "Missing API key").ConfigureAwait(false);
             throw new UnauthorizedAccessException(
                 Domain.Constants.ErrorMessages.UnauthorizedAccess,
                 "Missing API key",
@@ -50,11 +50,11 @@ public class AuthenticationService : IAuthenticationService
 
         try
         {
-            var validKey = await _apiKeyService.ValidateKeyAsync(apiKey);
+            var validKey = await _apiKeyService.ValidateKeyAsync(apiKey).ConfigureAwait(false);
 
             if (validKey == null)
             {
-                await LogAuthenticationAttemptAsync("unknown", false, "Invalid API key");
+                await LogAuthenticationAttemptAsync("unknown", false, "Invalid API key").ConfigureAwait(false);
                 throw new UnauthorizedAccessException(
                     Domain.Constants.ErrorMessages.ApiKeyNotFound,
                     "Invalid API key format",
@@ -66,7 +66,7 @@ public class AuthenticationService : IAuthenticationService
                 var isIpAllowed = validKey.IsIpAllowed(ipAddress);
                 if (!isIpAllowed)
                 {
-                    await LogAuthenticationAttemptAsync(validKey.Id, false, $"IP not whitelisted: {ipAddress}");
+                    await LogAuthenticationAttemptAsync(validKey.Id, false, $"IP not whitelisted: {ipAddress}").ConfigureAwait(false);
                     throw new UnauthorizedAccessException(
                         "Access denied",
                         $"IP address {ipAddress} is not whitelisted",
@@ -75,7 +75,7 @@ public class AuthenticationService : IAuthenticationService
             }
 
             validKey.RecordUsage();
-            await LogAuthenticationAttemptAsync(validKey.Id, true);
+            await LogAuthenticationAttemptAsync(validKey.Id, true).ConfigureAwait(false);
 
             _logger.LogInformation("API key authenticated successfully: {KeyId} from IP {IpAddress}",
                 validKey.Id, ipAddress ?? "unknown");
@@ -115,7 +115,7 @@ public class AuthenticationService : IAuthenticationService
 
         if (!isAllowed)
         {
-            await LogAuthenticationAttemptAsync(key.Id, false, $"IP not whitelisted: {ipAddress}");
+            await LogAuthenticationAttemptAsync(key.Id, false, $"IP not whitelisted: {ipAddress}").ConfigureAwait(false);
         }
 
         return isAllowed;
@@ -138,7 +138,7 @@ public class AuthenticationService : IAuthenticationService
                 Reason = reason ?? (success ? "Successful authentication" : "Failed authentication")
             };
 
-            await _auditLogService.LogAsync(auditLog);
+            await _auditLogService.LogAsync(auditLog).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

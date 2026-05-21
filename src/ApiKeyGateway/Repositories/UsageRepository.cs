@@ -44,9 +44,9 @@ public class UsageRepository : IUsageRepository
             cmd.CommandText = query;
             AddParameters(cmd, record);
 
-            await _connection.OpenAsync();
-            await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogDebug("Usage record created for API key {ApiKeyId}", record.ApiKeyId);
         }
@@ -80,15 +80,15 @@ public class UsageRepository : IUsageRepository
             cmd.Parameters.Add(CreateParameter("@StartDate", startDate));
             cmd.Parameters.Add(CreateParameter("@EndDate", endDate));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 records.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return records;
         }
         catch (Exception ex)
@@ -121,15 +121,15 @@ public class UsageRepository : IUsageRepository
             cmd.Parameters.Add(CreateParameter("@StartDate", startDate));
             cmd.Parameters.Add(CreateParameter("@EndDate", endDate));
 
-            await _connection.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             while (await reader.ReadAsync())
             {
                 records.Add(MapFromReader(reader));
             }
 
-            await _connection.CloseAsync();
+            await _connection.CloseAsync().ConfigureAwait(false);
             return records;
         }
         catch (Exception ex)
@@ -156,9 +156,9 @@ public class UsageRepository : IUsageRepository
             cmd.CommandText = query;
             cmd.Parameters.Add(CreateParameter("@CutoffDate", cutoffDate));
 
-            await _connection.OpenAsync();
-            var deletedCount = await cmd.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            await _connection.OpenAsync().ConfigureAwait(false);
+            var deletedCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await _connection.CloseAsync().ConfigureAwait(false);
 
             _logger.LogInformation("Deleted {Count} old usage records", deletedCount);
         }

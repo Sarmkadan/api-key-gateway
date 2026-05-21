@@ -49,7 +49,7 @@ public sealed class DataExportService : IDataExportService
         try
         {
             // In production, use streaming for large datasets
-            var apiKeys = await _apiKeyRepository.GetAllAsync();
+            var apiKeys = await _apiKeyRepository.GetAllAsync().ConfigureAwait(false);
 
             return format.ToLower() switch
             {
@@ -104,7 +104,7 @@ public sealed class DataExportService : IDataExportService
 
         try
         {
-            var usageRecords = await _usageRepository.GetUsageAsync(startDate, endDate);
+            var usageRecords = await _usageRepository.GetUsageAsync(startDate, endDate).ConfigureAwait(false);
 
             return format.ToLower() switch
             {

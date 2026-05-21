@@ -77,17 +77,17 @@ public sealed class RetryPolicyBuilder
             {
                 try
                 {
-                    return await operation();
+                    return await operation().ConfigureAwait(false);
                 }
                 catch (Exception ex) when (attempt < _maxRetries && ShouldRetry(ex))
                 {
-                    await Task.Delay(currentDelay);
+                    await Task.Delay(currentDelay).ConfigureAwait(false);
                     currentDelay = (int)Math.Min(currentDelay * _backoffMultiplier, _maxDelayMs);
                 }
             }
 
             // All retries exhausted, throw original exception
-            return await operation();
+            return await operation().ConfigureAwait(false);
         };
     }
 

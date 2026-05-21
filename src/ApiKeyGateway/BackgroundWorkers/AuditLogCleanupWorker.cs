@@ -31,7 +31,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
         _logger.LogInformation("Audit log cleanup worker started");
 
         // Don't start cleanup immediately - wait a bit after startup
-        await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -48,7 +48,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
 
                 // In production, this would be a database operation
                 // that archives to cold storage or deletes based on policy
-                var deletedCount = await auditRepository.DeleteLogsOlderThanAsync(cutoffDate);
+                var deletedCount = await auditRepository.DeleteLogsOlderThanAsync(cutoffDate).ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "Cleaned up {Count} audit log entries older than {RetentionDays} days",
@@ -56,7 +56,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
                     _retentionDays);
 
                 // Wait for next cleanup cycle
-                await Task.Delay(_cleanupInterval, stoppingToken);
+                await Task.Delay(_cleanupInterval, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -67,7 +67,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
             {
                 _logger.LogError(ex, "Error during audit log cleanup");
                 // Wait before retry
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
             }
         }
     }

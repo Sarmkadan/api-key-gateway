@@ -60,7 +60,7 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         // Check cache first if caching is enabled
         if (cacheDuration.HasValue)
         {
-            var cached = await _cache.GetAsync<T>(cacheKey);
+            var cached = await _cache.GetAsync<T>(cacheKey).ConfigureAwait(false);
             if (cached != null)
             {
                 _logger.LogDebug("Cache hit for external API: {ApiName} {Endpoint}", _apiName, endpoint);
@@ -70,16 +70,16 @@ public sealed class HttpExternalApiClient : IExternalApiClient
 
         try
         {
-            var response = await _httpClient.GetAsync(endpoint);
+            var response = await _httpClient.GetAsync(endpoint).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var result = JsonSerializationHelper.Deserialize<T>(content);
 
             // Cache successful response if duration specified
             if (result != null && cacheDuration.HasValue)
             {
-                await _cache.SetAsync(cacheKey, result, cacheDuration);
+                await _cache.SetAsync(cacheKey, result, cacheDuration).ConfigureAwait(false);
                 _logger.LogDebug(
                     "Cached external API response: {ApiName} {Endpoint} for {Duration}",
                     _apiName,
@@ -107,10 +107,10 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             var jsonContent = JsonSerializationHelper.SerializeCompact(payload);
             var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync(endpoint, content);
+            var response = await _httpClient.PostAsync(endpoint, content).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonSerializationHelper.Deserialize<T>(responseContent);
         }
         catch (Exception ex)
@@ -128,10 +128,10 @@ public sealed class HttpExternalApiClient : IExternalApiClient
     {
         try
         {
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonSerializationHelper.Deserialize<T>(content);
         }
         catch (Exception ex)
