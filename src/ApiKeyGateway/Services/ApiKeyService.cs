@@ -48,6 +48,10 @@ public class ApiKeyService : IApiKeyService
     /// <summary>
     /// Creates a new API key for a consumer with optional expiration
     /// </summary>
+    /// <param name="consumerId">The ID of the consumer.</param>
+    /// <param name="name">The name of the key.</param>
+    /// <param name="expirationDays">Optional expiration days.</param>
+    /// <returns>The created <see cref="ApiKey"/>.</returns>
     public async Task<ApiKey> CreateKeyAsync(string consumerId, string name, int? expirationDays = null)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
