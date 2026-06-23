@@ -49,6 +49,8 @@ public class RateLimitingService : IRateLimitingService
     /// <summary>
     /// Checks if a request is allowed under the rate limit
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>True if the request is allowed; otherwise, false.</returns>
     public async Task<bool> CheckLimitAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
