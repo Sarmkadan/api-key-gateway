@@ -21,6 +21,14 @@ var key = await apiKeyService.CreateKeyAsync("consumer_001", "DevKey", expiratio
 Console.WriteLine($"Key: {key.Id}");
 ```
 
+## Examples
+
+For more comprehensive usage scenarios, see the [examples/](examples/) directory:
+
+- [BasicUsage.cs](examples/BasicUsage.cs): Minimal setup and first call.
+- [AdvancedUsage.cs](examples/AdvancedUsage.cs): Configuration, custom options, and error handling.
+- [IntegrationExample.cs](examples/IntegrationExample.cs): Wiring into ASP.NET Core DI container.
+
 ## Configuration
 
 Update `appsettings.json` with your SQL Server `ConnectionStrings:DefaultConnection`.
