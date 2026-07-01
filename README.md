@@ -52,6 +52,24 @@ For more comprehensive usage scenarios, see the [examples/](examples/) directory
 
 Update `appsettings.json` with your SQL Server `ConnectionStrings:DefaultConnection`.
 
+## Benchmarks
+
+This project includes a performance testing suite using [BenchmarkDotNet](https://benchmarkdotnet.org/) to measure hot paths and critical operations.
+
+### Running Benchmarks
+
+To run the full benchmark suite in Release mode:
+
+```bash
+dotnet run -c Release --project benchmarks/api-key-gateway.Benchmarks/api-key-gateway.Benchmarks.csproj
+```
+
+You can also run specific benchmarks by passing the class name as an argument:
+
+```bash
+dotnet run -c Release --project benchmarks/api-key-gateway.Benchmarks/api-key-gateway.Benchmarks.csproj -- ApiKeyValidationBenchmarks
+```
+
 ## License
 
 MIT - Copyright (c) 2026 Vladyslav Zaiets
