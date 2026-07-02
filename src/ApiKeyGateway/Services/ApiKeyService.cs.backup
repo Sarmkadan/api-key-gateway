@@ -186,17 +186,12 @@ public class ApiKeyService : IApiKeyService
     /// Updates metadata for an API key
     /// </summary>
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
-    if (string.IsNullOrWhiteSpace(keyId))
-        throw new ArgumentException("Key ID cannot be empty", nameof(keyId));
-
-    if (metadata == null)
-        throw new ArgumentNullException(nameof(metadata));
     {
         var key = await GetByIdAsync(keyId);
         if (key == null)
             return false;
 
-        foreach (var kvp in metadata)
+        if (metadata != null)
         {
             foreach (var kvp in metadata)
             {

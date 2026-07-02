@@ -8,7 +8,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Thrown when an API key is invalid, expired, or disabled
 /// </summary>
-public class InvalidApiKeyException : Exception
+public class InvalidApiKeyException : ApiKeyGatewayException
 {
     public string? ApiKeyHash { get; init; }
     public DateTime? OccurredAt { get; init; }

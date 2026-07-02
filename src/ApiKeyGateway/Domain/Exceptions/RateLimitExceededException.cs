@@ -8,7 +8,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Thrown when a request exceeds the configured rate limit for an API key
 /// </summary>
-public class RateLimitExceededException : Exception
+public class RateLimitExceededException : ApiKeyGatewayException
 {
     public string ApiKeyId { get; init; }
     public int Limit { get; init; }
