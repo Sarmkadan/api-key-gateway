@@ -47,7 +47,7 @@ public class UsageTrackingService : IUsageTrackingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to record usage for API key {ApiKeyId}", record.ApiKeyId);
-            throw;
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(RecordUsageAsync), nameof(UsageRecord));
         }
     }
 
@@ -57,10 +57,10 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
-            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+            throw new ValidationException("API Key ID cannot be empty", nameof(apiKeyId), apiKeyId);
 
         if (endDate < startDate)
-            throw new ArgumentException("End date must be after start date", nameof(endDate));
+            throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
 
         try
         {
@@ -94,7 +94,7 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
-            throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+            throw new ValidationException("API Key ID cannot be empty", nameof(apiKeyId), apiKeyId);
 
         try
         {
