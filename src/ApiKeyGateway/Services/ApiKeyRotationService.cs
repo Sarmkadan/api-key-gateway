@@ -81,7 +81,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
     public async Task<RotationResult> RotateKeyAsync(string keyId, int? newExpirationDays = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentException("Key ID cannot be empty", nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         var oldKey = await _repository.GetByIdAsync(keyId);
         if (oldKey is null)
@@ -166,7 +166,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
         int? newExpirationDays = null)
     {
         if (warningDays <= 0)
-            throw new ArgumentOutOfRangeException(nameof(warningDays), "Warning days must be positive");
+            throw new ValidationException("Warning days must be positive", nameof(warningDays), warningDays);
 
         var threshold = DateTime.UtcNow.AddDays(warningDays);
         var expiringKeys = await _repository.GetKeysExpiringBeforeAsync(threshold);

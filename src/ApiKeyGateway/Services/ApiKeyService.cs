@@ -55,10 +55,10 @@ public class ApiKeyService : IApiKeyService
     public async Task<ApiKey> CreateKeyAsync(string consumerId, string name, int? expirationDays = null)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
-            throw new ArgumentException("Consumer ID cannot be empty", nameof(consumerId));
+            throw new ValidationException("Consumer ID cannot be empty", nameof(consumerId), consumerId);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Key name cannot be empty", nameof(name));
+            throw new ValidationException("Key name cannot be empty", nameof(name), name);
 
         try
         {
@@ -95,7 +95,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<ApiKey?> GetByIdAsync(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            return null;
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         return await _repository.GetByIdAsync(keyId);
     }
@@ -129,7 +129,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> DisableKeyAsync(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentNullException(nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         try
         {
@@ -156,7 +156,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> EnableKeyAsync(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentNullException(nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         try
         {
@@ -183,7 +183,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> RevokeKeyAsync(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentNullException(nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         try
         {
@@ -229,10 +229,10 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentException("Key ID cannot be empty", nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         if (metadata == null)
-            throw new ArgumentNullException(nameof(metadata));
+            throw new ValidationException("Metadata cannot be null", nameof(metadata), metadata);
 
         try
         {
@@ -262,7 +262,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<List<string>> GetIpWhitelistAsync(string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentNullException(nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         try
         {
@@ -294,7 +294,7 @@ public class ApiKeyService : IApiKeyService
     public async Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips)
     {
         if (string.IsNullOrWhiteSpace(keyId))
-            throw new ArgumentNullException(nameof(keyId));
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
         try
         {
@@ -325,8 +325,11 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> AddIpToWhitelistAsync(string keyId, string ip)
     {
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+
         if (string.IsNullOrWhiteSpace(ip))
-            throw new ArgumentException("IP address cannot be empty", nameof(ip));
+            throw new ValidationException("IP address cannot be empty", nameof(ip), ip);
 
         var current = await GetIpWhitelistAsync(keyId);
         var normalised = ip.Trim();
@@ -344,8 +347,11 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip)
     {
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+
         if (string.IsNullOrWhiteSpace(ip))
-            throw new ArgumentException("IP address cannot be empty", nameof(ip));
+            throw new ValidationException("IP address cannot be empty", nameof(ip), ip);
 
         var current = await GetIpWhitelistAsync(keyId);
         var normalised = ip.Trim();
