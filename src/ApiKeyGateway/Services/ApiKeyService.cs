@@ -128,15 +128,26 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> DisableKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return false;
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentNullException(nameof(keyId));
 
-        key.Disable();
-        await _repository.UpdateAsync(key);
-        _logger.LogInformation("API key {KeyId} disabled", keyId);
+        try
+        {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return false;
 
-        return true;
+            key.Disable();
+            await _repository.UpdateAsync(key);
+            _logger.LogInformation("API key {KeyId} disabled", keyId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to disable API key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(DisableKeyAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
@@ -144,15 +155,26 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> EnableKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return false;
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentNullException(nameof(keyId));
 
-        key.Enable();
-        await _repository.UpdateAsync(key);
-        _logger.LogInformation("API key {KeyId} enabled", keyId);
+        try
+        {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return false;
 
-        return true;
+            key.Enable();
+            await _repository.UpdateAsync(key);
+            _logger.LogInformation("API key {KeyId} enabled", keyId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enable API key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(EnableKeyAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
@@ -160,15 +182,26 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> RevokeKeyAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return false;
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentNullException(nameof(keyId));
 
-        key.Revoke();
-        await _repository.UpdateAsync(key);
-        _logger.LogWarning("API key {KeyId} revoked", keyId);
+        try
+        {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return false;
 
-        return true;
+            key.Revoke();
+            await _repository.UpdateAsync(key);
+            _logger.LogWarning("API key {KeyId} revoked", keyId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to revoke API key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(RevokeKeyAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
@@ -179,33 +212,47 @@ public class ApiKeyService : IApiKeyService
         if (string.IsNullOrWhiteSpace(consumerId))
             return [];
 
-        return await _repository.GetByConsumerIdAsync(consumerId);
+        try
+        {
+            return await _repository.GetByConsumerIdAsync(consumerId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get keys for consumer {ConsumerId}", consumerId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetConsumerKeysAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
     /// Updates metadata for an API key
     /// </summary>
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
-    if (string.IsNullOrWhiteSpace(keyId))
-        throw new ArgumentException("Key ID cannot be empty", nameof(keyId));
-
-    if (metadata == null)
-        throw new ArgumentNullException(nameof(metadata));
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return false;
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentException("Key ID cannot be empty", nameof(keyId));
 
-        foreach (var kvp in metadata)
+        if (metadata == null)
+            throw new ArgumentNullException(nameof(metadata));
+
+        try
         {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return false;
+
             foreach (var kvp in metadata)
             {
                 key.Metadata[kvp.Key] = kvp.Value;
             }
-        }
 
-        await _repository.UpdateAsync(key);
-        return true;
+            await _repository.UpdateAsync(key);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update metadata for key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(UpdateKeyMetadataAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
@@ -214,19 +261,30 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<List<string>> GetIpWhitelistAsync(string keyId)
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return [];
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentNullException(nameof(keyId));
 
-        if (string.IsNullOrWhiteSpace(key.IpWhitelist))
-            return [];
+        try
+        {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return [];
 
-        return key.IpWhitelist
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(ip => ip.Trim())
-            .Where(ip => !string.IsNullOrWhiteSpace(ip))
-            .Distinct()
-            .ToList();
+            if (string.IsNullOrWhiteSpace(key.IpWhitelist))
+                return [];
+
+            return key.IpWhitelist
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(ip => ip.Trim())
+                .Where(ip => !string.IsNullOrWhiteSpace(ip))
+                .Distinct()
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get IP whitelist for key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetIpWhitelistAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
@@ -235,19 +293,30 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips)
     {
-        var key = await GetByIdAsync(keyId);
-        if (key == null)
-            return false;
+        if (string.IsNullOrWhiteSpace(keyId))
+            throw new ArgumentNullException(nameof(keyId));
 
-        var validated = ValidateIps(ips);
-        key.IpWhitelist = validated.Count > 0 ? string.Join(",", validated) : null;
+        try
+        {
+            var key = await GetByIdAsync(keyId);
+            if (key == null)
+                return false;
 
-        await _repository.UpdateAsync(key);
-        _logger.LogInformation(
-            "IP whitelist updated for key {KeyId}: {Count} addresses",
-            keyId, validated.Count);
+            var validated = ValidateIps(ips);
+            key.IpWhitelist = validated.Count > 0 ? string.Join(",", validated) : null;
 
-        return true;
+            await _repository.UpdateAsync(key);
+            _logger.LogInformation(
+                "IP whitelist updated for key {KeyId}: {Count} addresses",
+                keyId, validated.Count);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set IP whitelist for key {KeyId}", keyId);
+            throw new DataAccessException(Domain.Constants.ErrorMessages.KeyUpdateFailed, ex, nameof(SetIpWhitelistAsync), nameof(ApiKey));
+        }
     }
 
     /// <summary>
