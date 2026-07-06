@@ -1,8 +1,13 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Background worker that automatically rotates API keys nearing expiration.
+// Runs on a daily cadence and delegates rotation logic to
+// <see cref="IApiKeyRotationService"/>. The look-ahead window and replacement
+// key TTL are configurable via appsettings under the <c>KeyRotation</c> section.
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.BackgroundWorkers;
@@ -29,12 +34,21 @@ public sealed class KeyRotationScheduler : BackgroundService
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+        if (configuration == null)
+            throw new ArgumentNullException(nameof(configuration));
+
         var section = configuration.GetSection("KeyRotation");
         _checkInterval = TimeSpan.FromHours(section.GetValue("CheckIntervalHours", 24));
         _warningDays = section.GetValue("WarningDays", 7);
 
         var newTtl = section.GetValue<int?>("NewExpirationDays", null);
         _newExpirationDays = newTtl > 0 ? newTtl : null;
+
+        if (_checkInterval <= TimeSpan.Zero)
+            throw new ConfigurationException("Check interval must be positive", "KeyRotation:CheckIntervalHours");
+
+        if (_warningDays <= 0)
+            throw new ConfigurationException("Warning days must be positive", "KeyRotation:WarningDays");
     }
 
     /// <inheritdoc/>
@@ -42,7 +56,8 @@ public sealed class KeyRotationScheduler : BackgroundService
     {
         _logger.LogInformation(
             "Key rotation scheduler started (interval: {Interval}, warning window: {Days} days)",
-            _checkInterval, _warningDays);
+            _checkInterval,
+            _warningDays);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -84,13 +99,16 @@ public sealed class KeyRotationScheduler : BackgroundService
 
         _logger.LogInformation(
             "Rotation cycle complete: {Succeeded} rotated, {Failed} failed",
-            succeeded, failed);
+            succeeded,
+            failed);
 
         foreach (var failure in results.Where(r => !r.Success))
         {
             _logger.LogWarning(
                 "Failed to rotate key {OldKeyId} for consumer {ConsumerId}: {Reason}",
-                failure.OldKeyId, failure.ConsumerId, failure.FailureReason);
+                failure.OldKeyId,
+                failure.ConsumerId,
+                failure.FailureReason);
         }
     }
 }
