@@ -1,0 +1,52 @@
+
+# 2026-07-06 08:12:20.290301
++Improve error handling in sarmkadan/api-key-gateway.
++Work in: /home/redrocket/task-factory/workdir/api-key-gateway
++
++1. Review the main service classes for error handling gaps
++2. Add custom exception types in an Exceptions/ folder:
++   - ApiKeyGatewayException (base)
++   - ConfigurationException
++   - ValidationException (if applicable)
++3. Add proper try-catch blocks where external calls happen (HTTP, DB, file I/O)
++4. Add guard clauses (ArgumentNullException) to public methods missing them
++5. Do NOT over-engineer - only add where genuinely needed
++
++Commit as: "fix: improve error handling with custom exceptions"
++
++Git config:
++  git config user.name "Vladyslav Zaiets"
++  git config user.email "rutova2@gmail.com"
++
++CRITICAL RULES:
++- Do NOT add Co-Authored-By headers
++- Do NOT mention AI, Claude, GPT, Copilot, generated, automated anywhere in code or commits
++- Do NOT mention Red Rocket or Amdaris anywhere
++- Write natural commit messages
++- Push to main when done
+
+# 2026-07-06 08:12:20.290374
++Improve error handling in sarmkadan/api-key-gateway.
++Work in: /home/redrocket/task-factory/workdir/api-key-gateway
++
++1. Review the main service classes for error handling gaps
++2. Add custom exception types in an Exceptions/ folder:
++   - ApiKeyGatewayException (base)
++   - ConfigurationException
++   - ValidationException (if applicable)
++3. Add proper try-catch blocks where external calls happen (HTTP, DB, file I/O)
++4. Add guard clauses (ArgumentNullException) to public methods missing them
++5. Do NOT over-engineer - only add where genuinely needed
++
++Commit as: "fix: improve error handling with custom exceptions"
++
++Git config:
++  git config user.name "Vladyslav Zaiets"
++  git config user.email "rutova2@gmail.com"
++
++CRITICAL RULES:
++- Do NOT add Co-Authored-By headers
++- Do NOT mention AI, Claude, GPT, Copilot, generated, automated anywhere in code or commits
++- Do NOT mention Red Rocket or Amdaris anywhere
++- Write natural commit messages
++- Push to main when done
