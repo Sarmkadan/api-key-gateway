@@ -174,7 +174,7 @@ public class ApiKeyRepository : IApiKeyRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve keys for consumer {ConsumerId}", consumerId);
-            return [];
+            throw new DataAccessException("Failed to retrieve keys for consumer", "SELECT", "ApiKey", ex);
         }
     }
 
@@ -275,7 +275,7 @@ public class ApiKeyRepository : IApiKeyRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve all API keys");
-            return [];
+            throw new DataAccessException("Failed to retrieve all API keys", "SELECT", "ApiKey", ex);
         }
     }
 
@@ -312,7 +312,7 @@ public class ApiKeyRepository : IApiKeyRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve expiring API keys");
-            return [];
+            throw new DataAccessException("Failed to retrieve expiring API keys", "SELECT", "ApiKey", ex);
         }
     }
 
@@ -345,7 +345,7 @@ public class ApiKeyRepository : IApiKeyRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve expired keys");
-            return [];
+            throw new DataAccessException("Failed to retrieve expired keys", "SELECT", "ApiKey", ex);
         }
     }
 
