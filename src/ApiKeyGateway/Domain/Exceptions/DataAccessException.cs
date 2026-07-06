@@ -27,6 +27,13 @@ public class DataAccessException : ApiKeyGatewayException
         Entity = entity;
     }
 
+    public DataAccessException(string message, string operation, string entity, Exception innerException)
+        : base(message, innerException)
+    {
+        Operation = operation;
+        Entity = entity;
+    }
+
     public DataAccessException(string message, Exception innerException)
         : base(message, innerException) { }
 }
