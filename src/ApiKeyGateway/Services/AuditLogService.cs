@@ -6,6 +6,7 @@
 
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Repositories;
 
 namespace ApiKeyGateway.Services;
 
@@ -101,15 +102,4 @@ public class AuditLogService : IAuditLogService
             throw new DataAccessException("Failed to cleanup audit logs", nameof(CleanupOldLogsAsync), nameof(AuditLog), ex);
         }
     }
-}
-
-/// <summary>
-/// Repository interface for audit log data access
-/// </summary>
-public interface IAuditLogRepository
-{
-    Task CreateAsync(AuditLog log);
-    Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100);
-    Task<List<AuditLog>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
-    Task<int> DeleteOlderThanAsync(DateTime cutoffDate);
 }

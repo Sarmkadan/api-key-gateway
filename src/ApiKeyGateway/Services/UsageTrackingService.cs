@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
@@ -47,7 +48,7 @@ public class UsageTrackingService : IUsageTrackingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to record usage for API key {ApiKeyId}", record.ApiKeyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(RecordUsageAsync), nameof(UsageRecord));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(RecordUsageAsync), nameof(UsageRecord), ex);
         }
     }
 
@@ -84,7 +85,7 @@ public class UsageTrackingService : IUsageTrackingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get usage statistics for API key {ApiKeyId}", apiKeyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetUsageStatisticsAsync), nameof(UsageRecord));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetUsageStatisticsAsync), nameof(UsageRecord), ex);
         }
     }
 
@@ -103,7 +104,7 @@ public class UsageTrackingService : IUsageTrackingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get usage records for API key {ApiKeyId}", apiKeyId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetUsageRecordsAsync), nameof(UsageRecord));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetUsageRecordsAsync), nameof(UsageRecord), ex);
         }
     }
 
@@ -123,7 +124,7 @@ public class UsageTrackingService : IUsageTrackingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to calculate total bytes used for consumer {ConsumerId}", consumerId);
-            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, ex, nameof(GetTotalBytesUsedAsync), nameof(UsageRecord));
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetTotalBytesUsedAsync), nameof(UsageRecord), ex);
         }
     }
 }
@@ -153,5 +154,6 @@ public interface IUsageRepository
     Task CreateAsync(UsageRecord record);
     Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate);
     Task<List<UsageRecord>> GetByConsumerAndDateRangeAsync(string consumerId, DateTime startDate, DateTime endDate);
+    Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
     Task DeleteOldRecordsAsync(int retentionDays);
 }

@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Extensions;
 using FluentAssertions;
 
@@ -170,7 +171,7 @@ public class CollectionExtensionsTests
             new { Name = "Bob", Age = 40 }
         };
 
-        var result = items.DistinctBy(x => x.Name).ToList();
+        var result = ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, x => x.Name).ToList();
 
         result.Should().HaveCount(2);
         result.First(x => x.Name == "Alice").Age.Should().Be(30);
@@ -180,7 +181,7 @@ public class CollectionExtensionsTests
     public void DistinctBy_AllUnique_ReturnsAll()
     {
         var items = new[] { 1, 2, 3 };
-        items.DistinctBy(x => x).Should().HaveCount(3);
+        ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, x => x).Should().HaveCount(3);
     }
 
     // -------------------------------------------------------------------------

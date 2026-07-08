@@ -3,8 +3,10 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -75,7 +77,7 @@ public class AuditLogServiceTests
         {
             ResourceId = "key-fail",
             ResourceType = "ApiKey",
-            Action = AuditAction.KeyDeleted,
+            Action = AuditAction.KeyRevoked,
             IsSuccess = false
         };
 
@@ -195,9 +197,9 @@ public class AuditLogServiceTests
         var endDate = DateTime.UtcNow;
         var logs = new List<AuditLog>
         {
-            new() { ResourceId = "key-aaa", Action = AuditAction.KeyCreated, CreatedAt = startDate.AddHours(1) },
-            new() { ResourceId = "key-bbb", Action = AuditAction.KeyUsed, CreatedAt = startDate.AddDays(2) },
-            new() { ResourceId = "key-ccc", Action = AuditAction.KeyRevoked, CreatedAt = endDate.AddHours(-1) }
+            new() { ResourceId = "key-aaa", Action = AuditAction.KeyCreated, PerformedAt = startDate.AddHours(1) },
+            new() { ResourceId = "key-bbb", Action = AuditAction.KeyUsed, PerformedAt = startDate.AddDays(2) },
+            new() { ResourceId = "key-ccc", Action = AuditAction.KeyRevoked, PerformedAt = endDate.AddHours(-1) }
         };
 
         _repositoryMock

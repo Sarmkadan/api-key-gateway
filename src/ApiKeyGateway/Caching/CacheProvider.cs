@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace ApiKeyGateway.Caching;
 
 /// <summary>

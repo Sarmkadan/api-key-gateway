@@ -58,7 +58,7 @@ public static class EventConfiguration
         // Subscribe rate limit handlers
         eventPublisher.Subscribe<RateLimitExceededEvent>(rateLimitHandler.HandleRateLimitExceededAsync);
 
-        var logger = app.ApplicationServices.GetRequiredService<ILogger<EventConfiguration>>();
+        var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(EventConfiguration).FullName!);
         logger.LogInformation("Event subscriptions configured");
     }
 }
