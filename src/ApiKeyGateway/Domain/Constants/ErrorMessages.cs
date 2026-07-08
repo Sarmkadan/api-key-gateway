@@ -27,4 +27,6 @@ public static class ErrorMessages
     public const string DuplicateKeyName = "An API key with name {0} already exists for this consumer.";
     public const string InvalidTimeRange = "Invalid time range: start time must be before end time.";
     public const string KeyStoreUnavailable = "The authentication service is temporarily unavailable. Please retry shortly.";
+    public const string DataAccessFailed = "Failed to access data store.";
+    public const string KeyUpdateFailed = "Failed to update API key.";
 }

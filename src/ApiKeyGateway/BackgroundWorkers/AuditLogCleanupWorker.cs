@@ -48,7 +48,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
 
                 // In production, this would be a database operation
                 // that archives to cold storage or deletes based on policy
-                var deletedCount = await auditRepository.DeleteLogsOlderThanAsync(cutoffDate);
+                var deletedCount = await auditRepository.DeleteOlderThanAsync(cutoffDate);
 
                 _logger.LogInformation(
                     "Cleaned up {Count} audit log entries older than {RetentionDays} days",

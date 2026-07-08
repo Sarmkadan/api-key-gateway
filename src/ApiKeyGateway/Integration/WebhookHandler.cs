@@ -195,7 +195,7 @@ public sealed class WebhookHandler : IWebhookHandler
 
     private static string ComputeHmacSignature(string payload, string secret)
     {
-        using var hmac = System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
+        using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(payload));
         return $"sha256={Convert.ToHexString(hash).ToLower()}";
     }

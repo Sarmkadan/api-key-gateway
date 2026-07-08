@@ -31,6 +31,11 @@ public enum RateLimitUnit
     Day = 4,
 
     /// <summary>
+    /// Rate limit is per month
+    /// </summary>
+    Month = 6,
+
+    /// <summary>
     /// No rate limiting - unlimited requests
     /// </summary>
     Unlimited = 5

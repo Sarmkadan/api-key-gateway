@@ -3,8 +3,10 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;

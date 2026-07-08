@@ -6,6 +6,7 @@
 using System.Data.Common;
 using System.Text.Json;
 using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Transformation;
 using Microsoft.Extensions.Logging;
@@ -136,7 +137,7 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
     public async Task<string> CreateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
     {
         rule.Id = rule.Id ?? Guid.NewGuid().ToString();
-        rule.CreatedAt = DateTimeOffset.UtcNow;
+        rule.CreatedAt = DateTime.UtcNow;
         rule.IsEnabled = true; // Rules are enabled by default on creation
 
         await _dbConnection.OpenAsync();
@@ -172,7 +173,7 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
             throw new ArgumentException("Rule ID cannot be empty for update operation.", nameof(rule.Id));
         }
 
-        rule.UpdatedAt = DateTimeOffset.UtcNow;
+        rule.UpdatedAt = DateTime.UtcNow;
 
         await _dbConnection.OpenAsync();
         try
@@ -224,7 +225,7 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
 
             var paramUpdatedAt = command.CreateParameter();
             paramUpdatedAt.ParameterName = "@UpdatedAt";
-            paramUpdatedAt.Value = DateTimeOffset.UtcNow;
+            paramUpdatedAt.Value = DateTime.UtcNow;
             command.Parameters.Add(paramUpdatedAt);
 
             var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
@@ -262,8 +263,8 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
             Parameters = parameters,
             Priority = (int)reader["Priority"],
             IsEnabled = (bool)reader["IsEnabled"],
-            CreatedAt = (DateTimeOffset)reader["CreatedAt"],
-            UpdatedAt = reader["UpdatedAt"] as DateTimeOffset?,
+            CreatedAt = (DateTime)reader["CreatedAt"],
+            UpdatedAt = (DateTime)reader["UpdatedAt"],
             CreatedBy = reader["CreatedBy"] as string
         };
     }

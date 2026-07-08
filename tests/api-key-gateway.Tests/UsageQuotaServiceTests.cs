@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -229,7 +230,7 @@ public class UsageQuotaServiceTests
             .ReturnsAsync((UsageQuota?)null);
         _repositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<UsageQuota>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync((UsageQuota q) => q);
 
         var result = await _sut.SetQuotaAsync("key-new-quota", 5000, QuotaPeriod.Month);
 
