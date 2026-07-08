@@ -9,6 +9,7 @@ using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.Unauthorized
 using System.Security.Cryptography;
 using System.Text;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging; // Ensure logging namespace is available
 
 namespace ApiKeyGateway.Services;
 
@@ -55,6 +56,8 @@ public class ApiKeyService : IApiKeyService
     /// <returns>The created <see cref="ApiKey"/>.</returns>
     public async Task<ApiKey> CreateKeyAsync(string consumerId, string name, int? expirationDays = null)
     {
+        _logger.LogDebug("Creating API key for consumer {ConsumerId} with name {Name}", consumerId, name);
+
         if (string.IsNullOrWhiteSpace(consumerId))
             throw new ValidationException("Consumer ID cannot be empty", nameof(consumerId), consumerId);
 
@@ -95,6 +98,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<ApiKey?> GetByIdAsync(string keyId)
     {
+        _logger.LogDebug("Retrieving API key by ID {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -106,6 +111,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<ApiKey?> ValidateKeyAsync(string keyValue)
     {
+        _logger.LogDebug("Validating API key value");
+
         if (string.IsNullOrWhiteSpace(keyValue))
             throw new UnauthorizedAccessException(Domain.Constants.ErrorMessages.UnauthorizedAccess);
 
@@ -113,14 +120,24 @@ public class ApiKeyService : IApiKeyService
         var apiKey = await _repository.GetByHashAsync(keyHash);
 
         if (apiKey == null)
+        {
+            _logger.LogWarning("API key not found for hash {KeyHash}", keyHash);
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyNotFound, keyHash);
+        }
 
         if (apiKey.IsExpired)
+        {
+            _logger.LogWarning("API key {KeyId} is expired", apiKey.Id);
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyExpired, isExpired: true);
+        }
 
         if (!apiKey.CanBeUsed())
+        {
+            _logger.LogWarning("API key {KeyId} is disabled", apiKey.Id);
             throw new InvalidApiKeyException(Domain.Constants.ErrorMessages.ApiKeyDisabled);
+        }
 
+        _logger.LogInformation("API key {KeyId} validated successfully", apiKey.Id);
         return apiKey;
     }
 
@@ -129,6 +146,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> DisableKeyAsync(string keyId)
     {
+        _logger.LogDebug("Disabling API key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -136,7 +155,10 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("Attempted to disable non‑existent key {KeyId}", keyId);
                 return false;
+            }
 
             key.Disable();
             await _repository.UpdateAsync(key);
@@ -156,6 +178,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> EnableKeyAsync(string keyId)
     {
+        _logger.LogDebug("Enabling API key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -163,7 +187,10 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("Attempted to enable non‑existent key {KeyId}", keyId);
                 return false;
+            }
 
             key.Enable();
             await _repository.UpdateAsync(key);
@@ -183,6 +210,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> RevokeKeyAsync(string keyId)
     {
+        _logger.LogDebug("Revoking API key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -190,7 +219,10 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("Attempted to revoke non‑existent key {KeyId}", keyId);
                 return false;
+            }
 
             key.Revoke();
             await _repository.UpdateAsync(key);
@@ -210,12 +242,16 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<List<ApiKey>> GetConsumerKeysAsync(string consumerId)
     {
+        _logger.LogDebug("Getting API keys for consumer {ConsumerId}", consumerId);
+
         if (string.IsNullOrWhiteSpace(consumerId))
             return [];
 
         try
         {
-            return await _repository.GetByConsumerIdAsync(consumerId);
+            var result = await _repository.GetByConsumerIdAsync(consumerId);
+            _logger.LogInformation("Retrieved {Count} keys for consumer {ConsumerId}", result.Count, consumerId);
+            return result;
         }
         catch (Exception ex)
         {
@@ -229,6 +265,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
     {
+        _logger.LogDebug("Updating metadata for key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -239,7 +277,10 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("Attempted to update metadata for non‑existent key {KeyId}", keyId);
                 return false;
+            }
 
             foreach (var kvp in metadata)
             {
@@ -247,6 +288,7 @@ public class ApiKeyService : IApiKeyService
             }
 
             await _repository.UpdateAsync(key);
+            _logger.LogInformation("Metadata updated for key {KeyId}", keyId);
             return true;
         }
         catch (Exception ex)
@@ -262,6 +304,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<List<string>> GetIpWhitelistAsync(string keyId)
     {
+        _logger.LogDebug("Getting IP whitelist for key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -269,17 +313,23 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("IP whitelist requested for non‑existent key {KeyId}", keyId);
                 return [];
+            }
 
             if (string.IsNullOrWhiteSpace(key.IpWhitelist))
                 return [];
 
-            return key.IpWhitelist
+            var list = key.IpWhitelist
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(ip => ip.Trim())
                 .Where(ip => !string.IsNullOrWhiteSpace(ip))
                 .Distinct()
                 .ToList();
+
+            _logger.LogInformation("IP whitelist for key {KeyId} contains {Count} entries", keyId, list.Count);
+            return list;
         }
         catch (Exception ex)
         {
@@ -294,6 +344,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips)
     {
+        _logger.LogDebug("Setting IP whitelist for key {KeyId}", keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -301,7 +353,10 @@ public class ApiKeyService : IApiKeyService
         {
             var key = await GetByIdAsync(keyId);
             if (key == null)
+            {
+                _logger.LogWarning("Attempted to set IP whitelist for non‑existent key {KeyId}", keyId);
                 return false;
+            }
 
             var validated = ValidateIps(ips);
             key.IpWhitelist = validated.Count > 0 ? string.Join(",", validated) : null;
@@ -326,6 +381,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> AddIpToWhitelistAsync(string keyId, string ip)
     {
+        _logger.LogDebug("Adding IP {Ip} to whitelist for key {KeyId}", ip, keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -336,10 +393,15 @@ public class ApiKeyService : IApiKeyService
         var normalised = ip.Trim();
 
         if (current.Contains(normalised))
+        {
+            _logger.LogWarning("IP {Ip} already present in whitelist for key {KeyId}", ip, keyId);
             return false;
+        }
 
         current.Add(normalised);
-        return await SetIpWhitelistAsync(keyId, current);
+        var result = await SetIpWhitelistAsync(keyId, current);
+        _logger.LogInformation("IP {Ip} added to whitelist for key {KeyId}", ip, keyId);
+        return result;
     }
 
     /// <summary>
@@ -348,6 +410,8 @@ public class ApiKeyService : IApiKeyService
     /// </summary>
     public async Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip)
     {
+        _logger.LogDebug("Removing IP {Ip} from whitelist for key {KeyId}", ip, keyId);
+
         if (string.IsNullOrWhiteSpace(keyId))
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
 
@@ -358,9 +422,14 @@ public class ApiKeyService : IApiKeyService
         var normalised = ip.Trim();
 
         if (!current.Remove(normalised))
+        {
+            _logger.LogWarning("IP {Ip} not found in whitelist for key {KeyId}", ip, keyId);
             return false;
+        }
 
-        return await SetIpWhitelistAsync(keyId, current);
+        var result = await SetIpWhitelistAsync(keyId, current);
+        _logger.LogInformation("IP {Ip} removed from whitelist for key {KeyId}", ip, keyId);
+        return result;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
