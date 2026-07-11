@@ -4,7 +4,6 @@
 // Manages audit logging for compliance and security monitoring
 // =============================================================================
 
-using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 
@@ -33,40 +32,43 @@ public class AuditLogService : IAuditLogService
     }
 
     /// <summary>
-    /// Logs an audit event
+    /// Logs an audit event. Persistence failures are logged and swallowed so a
+    /// broken audit store never takes down the request flow being audited.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="log"/> is null.</exception>
     public async Task LogAsync(AuditLog log)
     {
-        if (log == null)
-            throw new ArgumentNullException(nameof(log));
+        ArgumentNullException.ThrowIfNull(log);
 
         try
         {
             await _repository.CreateAsync(log);
             _logger.LogInformation(
                 "Audit log: {Action} on {ResourceType} {ResourceId} by {PerformedBy}",
-                log.GetActionDescription(),
+                log.Action,
                 log.ResourceType,
                 log.ResourceId,
                 log.PerformedBy);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to write audit log");
-            throw new DataAccessException("Failed to write audit log", nameof(LogAsync), nameof(AuditLog), ex);
+            _logger.LogError(ex, "Failed to write audit log for {ResourceType} {ResourceId}",
+                log.ResourceType, log.ResourceId);
         }
     }
 
     /// <summary>
-    /// Retrieves audit logs for a specific resource
+    /// Retrieves audit logs for a specific resource. An empty resource ID cannot
+    /// match any log, so it returns an empty list rather than throwing.
     /// </summary>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="limit"/> is not positive.</exception>
     public async Task<List<AuditLog>> GetLogsAsync(string resourceId, int limit = 100)
     {
-        if (string.IsNullOrWhiteSpace(resourceId))
-            throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
-
         if (limit <= 0)
             throw new ArgumentException("Limit must be positive", nameof(limit));
+
+        if (string.IsNullOrWhiteSpace(resourceId))
+            return [];
 
         return await _repository.GetByResourceIdAsync(resourceId, limit);
     }
@@ -83,8 +85,11 @@ public class AuditLogService : IAuditLogService
     }
 
     /// <summary>
-    /// Removes old audit logs based on retention policy
+    /// Removes old audit logs based on retention policy. Cleanup is best-effort:
+    /// repository failures are logged and swallowed so the retention worker keeps
+    /// running and retries on its next cycle.
     /// </summary>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="retentionDays"/> is not positive.</exception>
     public async Task CleanupOldLogsAsync(int retentionDays)
     {
         if (retentionDays <= 0)
@@ -99,7 +104,6 @@ public class AuditLogService : IAuditLogService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during audit log cleanup");
-            throw new DataAccessException("Failed to cleanup audit logs", nameof(CleanupOldLogsAsync), nameof(AuditLog), ex);
         }
     }
 }

@@ -25,7 +25,7 @@ public static class CsvExportHelper
         if (items == null || !items.Any())
             return string.Empty;
 
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.IgnoreCase);
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var sb = new StringBuilder();
 
         // Write headers if requested
@@ -59,7 +59,7 @@ public static class CsvExportHelper
         bool includeHeaders = true)
     {
         using var writer = new StreamWriter(outputStream, Encoding.UTF8, leaveOpen: true);
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.IgnoreCase);
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         if (includeHeaders)
         {
@@ -92,13 +92,14 @@ public static class CsvExportHelper
 
         var fieldValue = value switch
         {
-            DateTime dt => dt.ToString("O"),
-            decimal d => d.ToString(CultureInfo.InvariantCulture),
+            DateTime dt => dt.ToString("O", CultureInfo.InvariantCulture),
+            DateTimeOffset dto => dto.ToString("O", CultureInfo.InvariantCulture),
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? string.Empty
         };
 
         // Quote field if it contains comma, quote, or newline
-        if (fieldValue.Contains(',') || fieldValue.Contains('"') || fieldValue.Contains('\n'))
+        if (fieldValue.Contains(',') || fieldValue.Contains('"') || fieldValue.Contains('\n') || fieldValue.Contains('\r'))
         {
             return $"\"{fieldValue.Replace("\"", "\"\"")}\"";
         }

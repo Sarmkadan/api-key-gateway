@@ -85,7 +85,7 @@ public sealed class CircuitBreaker : ICircuitBreaker
             RecordSuccess();
             return result;
         }
-        catch (Exception ex)
+        catch
         {
             RecordFailure();
             throw;

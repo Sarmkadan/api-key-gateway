@@ -197,7 +197,7 @@ public sealed class WebhookHandler : IWebhookHandler
     {
         using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(payload));
-        return $"sha256={Convert.ToHexString(hash).ToLower()}";
+        return $"sha256={Convert.ToHexString(hash).ToLowerInvariant()}";
     }
 
     private record WebhookSubscription

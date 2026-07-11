@@ -86,8 +86,8 @@ public sealed class AdminController : ControllerBase
 
         var csv = await _dataExportService.ExportUsageAsync(format, start, end);
 
-        var fileName = $"usage-report-{now:yyyy-MM-dd}.{format.ToLower()}";
-        var contentType = format.ToLower() == "csv" ? "text/csv" : "application/xml";
+        var fileName = $"usage-report-{now:yyyy-MM-dd}.{format.ToLowerInvariant()}";
+        var contentType = format.ToLowerInvariant() == "csv" ? "text/csv" : "application/xml";
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), contentType, fileName);
     }
