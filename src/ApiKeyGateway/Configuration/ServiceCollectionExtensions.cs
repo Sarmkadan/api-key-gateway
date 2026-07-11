@@ -1,12 +1,13 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// ===================================================================
 
 using ApiKeyGateway.Data;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace ApiKeyGateway.Configuration;
 
@@ -18,8 +19,17 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers all gateway services and repositories
     /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="configuration">The <see cref="IConfiguration"/> containing gateway settings.</param>
+    /// <returns>The <see cref="IServiceCollection"/> for fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.
+    /// </exception>
     public static IServiceCollection AddGatewayCoreServices(this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found in configuration.");
 
@@ -31,12 +41,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
         services.AddScoped<IRateLimitingService>(sp =>
-        {
-            var repo = sp.GetRequiredService<IRateLimitRepository>();
-            var logger = sp.GetRequiredService<ILogger<RateLimitingService>>();
-            var config = sp.GetRequiredService<GatewayConfiguration>();
-            return new RateLimitingService(repo, logger, config.ClockSkewToleranceSeconds);
-        });
+            new RateLimitingService(
+                sp.GetRequiredService<IRateLimitRepository>(),
+                sp.GetRequiredService<ILogger<RateLimitingService>>(),
+                sp.GetRequiredService<GatewayConfiguration>().ClockSkewToleranceSeconds));
 
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
@@ -49,14 +57,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuditLogService, AuditLogService>();
 
         services.AddScoped<IAuthenticationService, AuthenticationService>();
-
         services.AddScoped<IApiKeyRotationService, ApiKeyRotationService>();
 
         services.AddRequestCoalescing();
 
         services.AddSingleton<GatewayConfiguration>(sp =>
             sp.GetRequiredService<IConfiguration>().GetSection("Gateway")
-                .Get<GatewayConfiguration>() ?? new GatewayConfiguration());
+                .Get<GatewayConfiguration>()
+            ?? throw new InvalidOperationException("Gateway configuration section 'Gateway' is missing or invalid."));
 
         return services;
     }
@@ -64,8 +72,15 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers API documentation with Swagger/OpenAPI
     /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add documentation services to.</param>
+    /// <returns>The <see cref="IServiceCollection"/> for fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="services"/> is <see langword="null"/>.
+    /// </exception>
     public static IServiceCollection AddGatewayDocumentation(this IServiceCollection services)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.AddOpenApi();
         services.AddSwaggerGen(options =>
         {
@@ -91,10 +106,7 @@ public static class ServiceCollectionExtensions
 
             options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
             {
-                {
-                    new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKeyAuth", document),
-                    Array.Empty<string>().ToList()
-                }
+                { new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKeyAuth", document), Array.Empty<string>().ToList() }
             });
         });
 
@@ -105,7 +117,7 @@ public static class ServiceCollectionExtensions
 /// <summary>
 /// Configuration model bound from appsettings.json
 /// </summary>
-public class GatewayConfiguration
+public sealed class GatewayConfiguration
 {
     public bool RequireSsl { get; set; } = true;
     public bool LogAllRequests { get; set; } = true;
