@@ -30,13 +30,13 @@ public class ApiKeyServiceTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task CreateKeyAsync_EmptyOrNullConsumerId_ThrowsArgumentException(string? consumerId)
+    public async Task CreateKeyAsync_EmptyOrNullConsumerId_ThrowsValidationException(string? consumerId)
     {
         // Act
         var act = async () => await _sut.CreateKeyAsync(consumerId!, "My Key");
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>()
             .WithMessage("*Consumer ID*");
     }
 
@@ -44,13 +44,13 @@ public class ApiKeyServiceTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task CreateKeyAsync_EmptyOrNullName_ThrowsArgumentException(string? name)
+    public async Task CreateKeyAsync_EmptyOrNullName_ThrowsValidationException(string? name)
     {
         // Act
         var act = async () => await _sut.CreateKeyAsync("consumer-123", name!);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>()
             .WithMessage("*name*");
     }
 
@@ -79,18 +79,18 @@ public class ApiKeyServiceTests
         _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<ApiKey>()), Times.Once);
     }
 
-    [Fact]
-    public async Task GetByIdAsync_NullOrEmptyKeyId_ReturnsNull()
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task GetByIdAsync_NullOrEmptyKeyId_ThrowsValidationException(string? keyId)
     {
         // Act
-        var resultNull = await _sut.GetByIdAsync(null!);
-        var resultEmpty = await _sut.GetByIdAsync(string.Empty);
-        var resultWhitespace = await _sut.GetByIdAsync("   ");
+        var act = async () => await _sut.GetByIdAsync(keyId!);
 
         // Assert
-        resultNull.Should().BeNull();
-        resultEmpty.Should().BeNull();
-        resultWhitespace.Should().BeNull();
+        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>()
+            .WithMessage("*Key ID*");
         _repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<string>()), Times.Never);
     }
 
