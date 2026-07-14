@@ -1,21 +1,87 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace ApiKeyGateway.Controllers;
 
 /// <summary>
-/// Validation helpers for <see cref="UsageController"/>.
+/// Validation helpers for usage records.
 /// </summary>
-public static class UsageControllerValidation
+public static class UsageRecordValidation
 {
     /// <summary>
-    /// Validates a <see cref="UsageController"/> instance and returns a list of human-readable problems.
+    /// Validates a usage record instance and returns a list of human-readable problems.
     /// </summary>
-    /// <param name="value">The <see cref="UsageController"/> instance to validate.</param>
+    /// <param name="value">The usage record instance to validate.</param>
     /// <returns>A list of human-readable problems.</returns>
-    public static IReadOnlyList<string> Validate(this UsageController value)
+    public static IReadOnlyList<string> Validate(this UsageRecordResponse value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var problems = new List<string>();
+
+        if (string.IsNullOrEmpty(value.Id))
+            problems.Add("Id is required.");
+
+        if (value.RecordedAt == default)
+            problems.Add("Recorded at is required.");
+
+        if (string.IsNullOrEmpty(value.Endpoint))
+            problems.Add("Endpoint is required.");
+
+        if (string.IsNullOrEmpty(value.Method))
+            problems.Add("Method is required.");
+
+        if (value.StatusCode < 0)
+            problems.Add("Status code must be a non-negative integer.");
+
+        if (value.RequestBytes < 0)
+            problems.Add("Request bytes must be a non-negative integer.");
+
+        if (value.ResponseBytes < 0)
+            problems.Add("Response bytes must be a non-negative integer.");
+
+        if (value.ResponseTimeMs < 0)
+            problems.Add("Response time must be a non-negative integer.");
+
+        if (string.IsNullOrEmpty(value.SourceIp))
+            problems.Add("Source IP is required.");
+
+        return problems.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Checks if a usage record instance is valid.
+    /// </summary>
+    /// <param name="value">The usage record instance to check.</param>
+    /// <returns><c>true</c> if the instance is valid; <c>false</c> otherwise.</returns>
+    public static bool IsValid(this UsageRecordResponse value)
+    {
+        return !Validate(value).Any();
+    }
+
+    /// <summary>
+    /// Ensures that a usage record instance is valid, throwing an <see cref="ArgumentException"/> if it's not.
+    /// </summary>
+    /// <param name="value">The usage record instance to ensure.</param>
+    /// <exception cref="ArgumentException">If the instance is not valid.</exception>
+    public static void EnsureValid(this UsageRecordResponse value)
+    {
+        var problems = Validate(value).ToList();
+
+        if (problems.Any())
+            throw new ArgumentException($"Invalid UsageRecordResponse instance: {string.Join(", ", problems)}");
+    }
+}
+
+public static class UsageStatisticsResponseValidation
+{
+    /// <summary>
+    /// Validates a usage statistics response instance and returns a list of human-readable problems.
+    /// </summary>
+    /// <param name="value">The usage statistics response instance to validate.</param>
+    /// <returns>A list of human-readable problems.</returns>
+    public static IReadOnlyList<string> Validate(this UsageStatisticsResponse value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -54,47 +120,84 @@ public static class UsageControllerValidation
         if (value.UniqueEndpoints < 0)
             problems.Add("Unique endpoints must be a non-negative integer.");
 
-        if (string.IsNullOrEmpty(value.Id))
-            problems.Add("Id is required.");
-
-        if (value.RecordedAt == default)
-            problems.Add("Recorded at is required.");
-
-        if (string.IsNullOrEmpty(value.Endpoint))
-            problems.Add("Endpoint is required.");
-
-        if (string.IsNullOrEmpty(value.Method))
-            problems.Add("Method is required.");
-
-        if (value.StatusCode < 0)
-            problems.Add("Status code must be a non-negative integer.");
-
-        if (value.RequestBytes < 0)
-            problems.Add("Request bytes must be a non-negative integer.");
-
         return problems.AsReadOnly();
     }
 
     /// <summary>
-    /// Checks if a <see cref="UsageController"/> instance is valid.
+    /// Checks if a usage statistics response instance is valid.
     /// </summary>
-    /// <param name="value">The <see cref="UsageController"/> instance to check.</param>
+    /// <param name="value">The usage statistics response instance to check.</param>
     /// <returns><c>true</c> if the instance is valid; <c>false</c> otherwise.</returns>
-    public static bool IsValid(this UsageController value)
+    public static bool IsValid(this UsageStatisticsResponse value)
     {
         return !Validate(value).Any();
     }
 
     /// <summary>
-    /// Ensures that a <see cref="UsageController"/> instance is valid, throwing an <see cref="ArgumentException"/> if it's not.
+    /// Ensures that a usage statistics response instance is valid, throwing an <see cref="ArgumentException"/> if it's not.
     /// </summary>
-    /// <param name="value">The <see cref="UsageController"/> instance to ensure.</param>
+    /// <param name="value">The usage statistics response instance to ensure.</param>
     /// <exception cref="ArgumentException">If the instance is not valid.</exception>
-    public static void EnsureValid(this UsageController value)
+    public static void EnsureValid(this UsageStatisticsResponse value)
     {
         var problems = Validate(value).ToList();
 
         if (problems.Any())
-            throw new ArgumentException($"Invalid UsageController instance: {string.Join(", ", problems)}");
+            throw new ArgumentException($"Invalid UsageStatisticsResponse instance: {string.Join(", ", problems)}");
+    }
+}
+
+public static class ConsumerUsageResponseValidation
+{
+    /// <summary>
+    /// Validates a consumer usage response instance and returns a list of human-readable problems.
+    /// </summary>
+    /// <param name="value">The consumer usage response instance to validate.</param>
+    /// <returns>A list of human-readable problems.</returns>
+    public static IReadOnlyList<string> Validate(this ConsumerUsageResponse value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var problems = new List<string>();
+
+        if (string.IsNullOrEmpty(value.ConsumerId))
+            problems.Add("Consumer ID is required.");
+
+        if (value.StartDate == default)
+            problems.Add("Start date is required.");
+
+        if (value.EndDate == default)
+            problems.Add("End date is required.");
+
+        if (value.EndDate < value.StartDate)
+            problems.Add("End date must be after start date.");
+
+        if (value.TotalBytesTransferred < 0)
+            problems.Add("Total bytes transferred must be a non-negative integer.");
+
+        return problems.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Checks if a consumer usage response instance is valid.
+    /// </summary>
+    /// <param name="value">The consumer usage response instance to check.</param>
+    /// <returns><c>true</c> if the instance is valid; <c>false</c> otherwise.</returns>
+    public static bool IsValid(this ConsumerUsageResponse value)
+    {
+        return !Validate(value).Any();
+    }
+
+    /// <summary>
+    /// Ensures that a consumer usage response instance is valid, throwing an <see cref="ArgumentException"/> if it's not.
+    /// </summary>
+    /// <param name="value">The consumer usage response instance to ensure.</param>
+    /// <exception cref="ArgumentException">If the instance is not valid.</exception>
+    public static void EnsureValid(this ConsumerUsageResponse value)
+    {
+        var problems = Validate(value).ToList();
+
+        if (problems.Any())
+            throw new ArgumentException($"Invalid ConsumerUsageResponse instance: {string.Join(", ", problems)}");
     }
 }
