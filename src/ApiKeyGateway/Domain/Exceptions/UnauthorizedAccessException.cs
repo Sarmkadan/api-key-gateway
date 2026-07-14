@@ -8,7 +8,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Thrown when authentication fails or credentials are missing
 /// </summary>
-public class UnauthorizedAccessException : ApiKeyGatewayException
+public class UnauthorizedAccessException : Exception
 {
     public string? Reason { get; init; }
     public string? SourceIp { get; init; }
