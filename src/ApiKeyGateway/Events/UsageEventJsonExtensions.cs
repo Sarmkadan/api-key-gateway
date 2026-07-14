@@ -2,6 +2,8 @@
 // Author: [Your Name]
 // =============================================================================
 
+using System.Text.Json;
+
 namespace ApiKeyGateway.Events;
 
 /// <summary>
