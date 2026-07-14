@@ -6,7 +6,7 @@ namespace ApiKeyGateway.Tests;
 
 public static class RequestValidatorTestsJsonExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
@@ -23,7 +23,8 @@ public static class RequestValidatorTestsJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented ? JsonOptions : JsonOptions with { WriteIndented = false };
+        var options = indented ? JsonOptions : JsonOptions;
+        options.WriteIndented = indented;
         return JsonSerializer.Serialize(value, options);
     }
 
