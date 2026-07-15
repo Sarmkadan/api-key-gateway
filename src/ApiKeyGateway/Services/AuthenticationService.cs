@@ -14,8 +14,28 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IAuthenticationService
 {
+    /// <summary>
+    /// Authenticates a request using an API key
+    /// </summary>
+    /// <param name="apiKey">The API key value to authenticate.</param>
+    /// <param name="ipAddress">Optional source IP address for IP whitelist validation.</param>
+    /// <returns>The authenticated API key.</returns>
     Task<ApiKey> AuthenticateAsync(string apiKey, string? ipAddress = null);
+
+    /// <summary>
+    /// Validates if an IP address is allowed for the key
+    /// </summary>
+    /// <param name="key">The API key to check.</param>
+    /// <param name="ipAddress">IP address to validate.</param>
+    /// <returns>True if the IP is allowed; otherwise, false.</returns>
     Task<bool> ValidateIpAsync(ApiKey key, string ipAddress);
+
+    /// <summary>
+    /// Logs authentication attempts for audit purposes
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="success">Whether the authentication was successful.</param>
+    /// <param name="reason">Optional reason for failure or additional context.</param>
     Task LogAuthenticationAttemptAsync(string apiKeyId, bool success, string? reason = null);
 }
 

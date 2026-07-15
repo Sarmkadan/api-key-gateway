@@ -44,18 +44,21 @@ public interface IApiKeyRotationService
     /// </summary>
     /// <param name="keyId">The ID of the key to rotate.</param>
     /// <param name="newExpirationDays">
-    /// Expiration for the new key in days. When <c>null</c> the same TTL as the
+    /// Expiration for the new key in days. When <paramref name="newExpirationDays"/> is <c>null</c> the same TTL as the
     /// original key is used; if the original had no expiry the new key also has none.
     /// </param>
+    /// <returns>Result of the rotation operation.</returns>
     Task<RotationResult> RotateKeyAsync(string keyId, int? newExpirationDays = null);
 
     /// <summary>
     /// Rotates all active keys whose expiry falls within <paramref name="warningDays"/> from now.
+    /// Useful for proactive rotation of keys approaching expiration.
     /// </summary>
     /// <param name="warningDays">Look-ahead window in days (default 7).</param>
     /// <param name="newExpirationDays">
     /// Expiration for the replacement keys. Defaults to the same TTL as each original.
     /// </param>
+    /// <returns>List of rotation results for all keys processed.</returns>
     Task<List<RotationResult>> RotateExpiringSoonAsync(int warningDays = 7, int? newExpirationDays = null);
 }
 

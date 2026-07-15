@@ -141,8 +141,15 @@ public static class ApiKeyConsumerExtensions
 /// </summary>
 public enum ApiKeyTier
 {
+    /// <summary>Free tier with basic API key management</summary>
     Free = 0,
+
+    /// <summary>Basic tier with additional features</summary>
     Basic = 1,
+
+    /// <summary>Pro tier with advanced rate limiting and quotas</summary>
     Pro = 2,
+
+    /// <summary>Enterprise tier with all features and support</summary>
     Enterprise = 3
 }
