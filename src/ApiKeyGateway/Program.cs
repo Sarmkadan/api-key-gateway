@@ -44,6 +44,10 @@ if (builder.Configuration.GetValue<bool>("Gateway:RequireSsl"))
     app.UseHttpsRedirection();
 }
 
+// Must be first app middleware so exceptions from authentication,
+// transformation and controllers are converted to structured JSON errors.
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 app.UseCors("AllowAll");
 app.UseApiKeyAuthentication();
 app.UseRequestTransformation();
