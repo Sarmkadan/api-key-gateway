@@ -80,9 +80,10 @@ public sealed class ErrorHandlingMiddleware
         // Only set status code if not already set
         if (context.Response.StatusCode == 200)
         {
-            context.Response.StatusCode = (int)typeof(object)
-                .GetProperty(nameof(response.statusCode))
-                ?.GetValue(response)!;
+            // All switch arms above produce the same anonymous type, so the
+            // property is statically available; reflection via typeof(object)
+            // returned null and threw NullReferenceException here.
+            context.Response.StatusCode = response.statusCode;
         }
 
         var jsonResponse = JsonSerializer.Serialize(response);
