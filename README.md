@@ -3,6 +3,13 @@
 // CTO & Software Architect
 // =============================================================================
 
+## Architecture
+
+For the system-level picture - project layout, DI composition root, the
+actual request pipeline, background workers, extension points and known
+limitations - see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The sections
+below document individual classes.
+
 ## ApiKeyRepository
 
 The `ApiKeyRepository` class is a concrete implementation of the `IApiKeyRepository` interface, providing data access and persistence for API keys using an ADO.NET connection with an in-memory write-through cache. It supports CRUD operations on API keys, including creating, retrieving, updating, and deleting keys.

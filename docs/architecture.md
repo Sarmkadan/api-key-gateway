@@ -124,15 +124,21 @@ public class ApiKeyService
 
 **Responsibility**: Cross-cutting concerns, request interception
 
-**Processing Order**:
+**Processing order actually wired in `Program.cs`**:
 
-1. **CorrelationContextMiddleware** - Inject request ID for tracing
-2. **RequestLoggingMiddleware** - Log incoming requests
-3. **RequestValidationMiddleware** - Validate request format
-4. **ApiKeyAuthenticationMiddleware** - Extract and validate API key
-5. **PerformanceMonitoringMiddleware** - Measure response time
-6. **ErrorHandlingMiddleware** - Catch and format errors
-7. **Controllers** - Route to appropriate handler
+1. **ErrorHandlingMiddleware** - Catch and format errors (must be first)
+2. **CORS** (`AllowAll` policy)
+3. **ApiKeyAuthenticationMiddleware** - Extract and validate API key,
+   rate limit, scope and quota checks
+4. **RequestTransformationMiddleware** - Lua transformation pipeline
+5. **Controllers** - Route to appropriate handler
+
+`CorrelationContextMiddleware`, `RequestLoggingMiddleware`,
+`RequestValidationMiddleware` and `PerformanceMonitoringMiddleware` exist in
+`Middleware/` and are exercised by tests, but they are opt-in: `Program.cs`
+does not add them. `MiddlewareConfiguration.UseGatewayMiddleware` wires
+several of them if you choose to call it. See
+[ARCHITECTURE.md](ARCHITECTURE.md) for the current, code-accurate pipeline.
 
 **Example: ApiKeyAuthenticationMiddleware**
 
