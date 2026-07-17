@@ -757,3 +757,56 @@ class KeyStoreExample
     }
 }
 ```
+
+## UnauthorizedAccessExceptionExtensions
+
+The `UnauthorizedAccessExceptionExtensions` class provides extension methods for `UnauthorizedAccessException` to enable fluent exception enrichment with source IP addresses, reasons, and custom messages. It offers utilities for creating enriched exceptions, checking exception reasons, and generating formatted diagnostic strings for logging and debugging purposes.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+using System;
+
+class UnauthorizedAccessExample
+{
+public void Run()
+{
+try
+{
+// Simulate an unauthorized access scenario
+throw new UnauthorizedAccessException("Access denied", "Invalid API key provided", "192.168.1.100");
+}
+catch (UnauthorizedAccessException ex)
+{
+// Enrich exception with source IP address
+var enrichedWithIp = ex.WithSourceIp("10.0.0.50");
+Console.WriteLine(enrichedWithIp.Message); // Original message with new source IP
+
+// Enrich exception with a reason
+var enrichedWithReason = ex.WithReason("Rate limit exceeded");
+Console.WriteLine(enrichedWithReason.Message);
+
+// Enrich exception with a custom message
+var enrichedWithMessage = ex.WithMessage("API key authentication failed: rate limit exceeded");
+Console.WriteLine(enrichedWithMessage.Message);
+
+// Check if exception has a specific reason
+bool hasReason = ex.HasReason("Invalid API key provided");
+Console.WriteLine($"Has reason: {hasReason}");
+
+// Generate a formatted string for logging
+string formatted = ex.ToFormattedString();
+Console.WriteLine(formatted); // "Access denied | Reason: Invalid API key provided | Source IP: 192.168.1.100"
+
+// Chain multiple enrichments for detailed error reporting
+var detailedException = new UnauthorizedAccessException("Access denied", "Invalid API key", "192.168.1.100")
+.WithSourceIp("10.0.0.50")
+.WithReason("Authentication failed");
+
+Console.WriteLine($"Detailed message: {detailedException.Message}");
+Console.WriteLine($"Formatted: {detailedException.ToFormattedString()}");
+}
+}
+}
+```
