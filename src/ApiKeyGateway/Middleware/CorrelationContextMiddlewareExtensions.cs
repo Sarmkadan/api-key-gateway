@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
 namespace ApiKeyGateway.Middleware;
 
@@ -15,8 +14,8 @@ public static class CorrelationContextMiddlewareExtensions
     /// Gets the correlation ID from the HTTP context items set by the correlation context middleware.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    /// <returns>The correlation ID, or null if not set.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+    /// <returns>The correlation ID, or <see langword="null"/> if not set.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is <see langword="null"/>.</exception>
     public static string? GetCorrelationId(this HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -30,8 +29,8 @@ public static class CorrelationContextMiddlewareExtensions
     /// Gets the API key ID from the HTTP context items set by the correlation context middleware.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    /// <returns>The API key ID, or null if not set.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+    /// <returns>The API key ID, or <see langword="null"/> if not set.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is <see langword="null"/>.</exception>
     public static string? GetApiKeyId(this HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -45,8 +44,8 @@ public static class CorrelationContextMiddlewareExtensions
     /// Gets the client IP address from the HTTP context items set by the correlation context middleware.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    /// <returns>The client IP address, or null if not set.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+    /// <returns>The client IP address, or <see langword="null"/> if not set.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is <see langword="null"/>.</exception>
     public static string? GetClientIp(this HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -60,8 +59,9 @@ public static class CorrelationContextMiddlewareExtensions
     /// Extracts all correlation context values as a dictionary for logging or diagnostics purposes.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    /// <returns>A read-only dictionary containing all correlation context values.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+    /// <returns>A read-only dictionary containing all correlation context values.
+    /// The dictionary may be empty if no correlation context values have been set.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is <see langword="null"/>.</exception>
     public static IReadOnlyDictionary<string, object?> GetCorrelationContext(this HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -90,8 +90,9 @@ public static class CorrelationContextMiddlewareExtensions
     /// Determines whether the correlation context has been initialized in the HTTP context.
     /// </summary>
     /// <param name="context">The HTTP context.</param>
-    /// <returns>True if correlation context values are present; otherwise, false.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is null.</exception>
+    /// <returns><see langword="true"/> if correlation context values are present; otherwise, <see langword="false"/>.
+    /// This is determined by the presence of a correlation ID.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="context"/> is <see langword="null"/>.</exception>
     public static bool HasCorrelationContext(this HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
