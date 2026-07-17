@@ -19,7 +19,7 @@ public class InvalidApiKeyException : ApiKeyGatewayException
     /// <summary>Timestamp when the exception occurred</summary>
     public new DateTime OccurredAt { get; init; }
 
-    /// <summary>Whether the key was expired when this exception was thrown</summary>
+/// <summary>Gets a value indicating whether the API key was expired when this exception was thrown</summary>
     public bool IsExpired { get; init; }
 
     /// <summary>
