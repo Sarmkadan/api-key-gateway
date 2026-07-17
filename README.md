@@ -334,6 +334,59 @@ var finalKey = multiUsageKey
 finalKey.ShouldHaveUsage(2, 2560); // 512 + 2048 = 2560
 ```
 
+## StringExtensionsTestsJsonExtensions
+
+The `StringExtensionsTestsJsonExtensions` class provides JSON serialization and deserialization utilities for `StringExtensions` type metadata. This enables test scenarios that require serializing extension method information to JSON for logging, caching, or API responses, and deserializing it back for validation or comparison purposes.
+
+### Public Members
+
+- `TypeName` (string?) - Gets or sets the type name for serialization
+- `Methods` (IReadOnlyList<string>?) - Gets or sets the list of public extension method names
+- `ToJson(bool indented = false)` (static string) - Serializes StringExtensions type metadata to a JSON string
+- `FromJson(string json)` (static StringExtensionsMetadata?) - Deserializes a JSON string to StringExtensions type metadata
+- `TryFromJson(string json, out StringExtensionsMetadata? value)` (static bool) - Attempts to deserialize a JSON string to StringExtensions type metadata
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using System.Text.Json;
+using FluentAssertions;
+
+// Serialize StringExtensions metadata to compact JSON
+var compactJson = StringExtensionsTestsJsonExtensions.ToJson();
+compactJson.Should().NotBeNullOrEmpty();
+
+// Serialize with indentation for readability
+var indentedJson = StringExtensionsTestsJsonExtensions.ToJson(indented: true);
+indentedJson.Should().Contain("\n"); // Should have newlines for indentation
+
+// Deserialize the JSON back to metadata
+var metadata = StringExtensionsTestsJsonExtensions.FromJson(compactJson);
+metadata.Should().NotBeNull();
+metadata.TypeName.Should().Be("StringExtensions");
+metadata.Methods.Should().NotBeNull();
+metadata.Methods.Should().NotBeEmpty();
+
+// Test TryFromJson with valid JSON
+bool parseSuccess = StringExtensionsTestsJsonExtensions.TryFromJson(compactJson, out var parsedMetadata);
+parseSuccess.Should().BeTrue();
+parsedMetadata.Should().NotBeNull();
+
+// Test TryFromJson with invalid JSON (should return false)
+bool invalidParseSuccess = StringExtensionsTestsJsonExtensions.TryFromJson("invalid json", out var invalidMetadata);
+invalidParseSuccess.Should().BeFalse();
+invalidMetadata.Should().BeNull();
+
+// Test FromJson with null input (throws ArgumentNullException)
+Action act = () => StringExtensionsTestsJsonExtensions.FromJson(null);
+act.Should().Throw<ArgumentNullException>();
+
+// Test FromJson with empty string (returns null)
+var emptyResult = StringExtensionsTestsJsonExtensions.FromJson("   ");
+emptyResult.Should().BeNull();
+```
+
 ## ApiKeyRotationServiceTestsValidation
 
 The `ApiKeyRotationServiceTestsValidation` class provides validation helpers for `ApiKeyRotationServiceTests` instances. It includes methods for validating test setup, key rotation results, and API key properties to ensure test instances are properly configured and rotation operations produce expected outcomes.
