@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 using System;
 using System.Collections.Generic;
@@ -35,10 +35,18 @@ public static class RateLimitExceededExceptionValidation
         {
             problems.Add("Limit must be greater than 0.");
         }
+        else if (value.Limit > 1000000)
+        {
+            problems.Add("Limit must be a reasonable value (maximum 1000000).");
+        }
 
         if (value.WindowInSeconds <= 0)
         {
             problems.Add("WindowInSeconds must be greater than 0.");
+        }
+        else if (value.WindowInSeconds > 86400 * 365) // More than 1 year
+        {
+            problems.Add("WindowInSeconds must be a reasonable value (maximum 1 year).");
         }
 
         if (value.RetryAfter.HasValue)
@@ -52,6 +60,10 @@ public static class RateLimitExceededExceptionValidation
             {
                 problems.Add("RetryAfter cannot be the default DateTime value.");
             }
+            else if (retryAfter < DateTime.UtcNow)
+            {
+                problems.Add("RetryAfter cannot be in the past.");
+            }
         }
 
         return problems;
@@ -62,7 +74,12 @@ public static class RateLimitExceededExceptionValidation
     /// </summary>
     /// <param name="value">The RateLimitExceededException instance to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(this RateLimitExceededException value) => Validate(value).Count == 0;
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    public static bool IsValid(this RateLimitExceededException value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return Validate(value).Count == 0;
+    }
 
     /// <summary>
     /// Ensures the RateLimitExceededException instance is valid, throwing if not.
