@@ -1,5 +1,6 @@
 // =============================================================================
-// Author: [Your Name]
+// Author: Vladyslav Zaiets | https://sarmkadan.com
+// CTO & Software Architect
 // =============================================================================
 
 using ApiKeyGateway.Configuration;
@@ -18,6 +19,7 @@ public static class TransformationPipelineOptionsExtensions
     /// </summary>
     /// <param name="options">The options to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when validation fails due to invalid property values.</exception>
     public static void Validate(this TransformationPipelineOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -42,12 +44,12 @@ public static class TransformationPipelineOptionsExtensions
             throw new InvalidOperationException("Lua execution options are not configured.");
         }
 
-        if (options.Lua.MaxExecutionMs < 1)
+        if (options.Lua.MaxExecutionMs <1)
         {
             throw new InvalidOperationException($"Lua MaxExecutionMs must be at least 1, but was {options.Lua.MaxExecutionMs}.");
         }
 
-        if (options.Lua.MaxScriptSizeBytes < 0)
+        if (options.Lua.MaxScriptSizeBytes <0)
         {
             throw new InvalidOperationException($"Lua MaxScriptSizeBytes must be non-negative, but was {options.Lua.MaxScriptSizeBytes}.");
         }
@@ -72,11 +74,13 @@ public static class TransformationPipelineOptionsExtensions
     /// </summary>
     /// <param name="options">The options instance.</param>
     /// <param name="ruleId">The ID of the rule to remove.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> or <paramref name="ruleId"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="ruleId"/> is <see langword="null"/> or whitespace.</exception>
     /// <returns><see langword="true"/> if the rule was found and removed; otherwise, <see langword="false"/>.</returns>
     public static bool RemoveStaticRule(this TransformationPipelineOptions options, string ruleId)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
 
         return options.StaticRules.RemoveAll(r => r.Id == ruleId) > 0;
     }
