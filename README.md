@@ -379,6 +379,67 @@ if (ok && parsedMetadata != null)
 }
 ```
 
+## ValidationHelpersValidation
+
+`ValidationHelpersValidation` provides validation utilities that wrap the static `ValidationHelpers` methods. It offers three validation approaches for each validation scenario: returning error lists, boolean checks, and exception-throwing validation. This class is useful for validating user input, API parameters, and configuration values before processing.
+
+### Example Usage
+
+```csharp
+using System;
+using ApiKeyGateway.Utilities;
+
+// Validate an email address and get validation errors
+IReadOnlyList<string> emailProblems = ValidationHelpersValidation.ValidateEmail("user@example.com");
+if (emailProblems.Count == 0)
+{
+    Console.WriteLine("Email is valid!");
+}
+else
+{
+    Console.WriteLine("Email validation failed:");
+    foreach (var problem in emailProblems)
+    {
+        Console.WriteLine($" - {problem}");
+    }
+}
+
+// Quick boolean validation
+bool isEmailValid = ValidationHelpersValidation.IsValidEmail("user@example.com");
+if (isEmailValid)
+{
+    Console.WriteLine("Email format is valid");
+}
+
+// Validate and throw ArgumentException if invalid
+ValidationHelpersValidation.EnsureValidEmail("user@example.com");
+
+// Validate an API key
+IReadOnlyList<string> apiKeyProblems = ValidationHelpersValidation.ValidateApiKey("sk_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789");
+bool isApiKeyValid = ValidationHelpersValidation.IsValidApiKey("sk_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789");
+ValidationHelpersValidation.EnsureValidApiKey("sk_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789");
+
+// Validate an IP address
+IReadOnlyList<string> ipProblems = ValidationHelpersValidation.ValidateIpAddress("192.168.1.1");
+bool isIpValid = ValidationHelpersValidation.IsValidIpAddress("192.168.1.1");
+ValidationHelpersValidation.EnsureValidIpAddress("192.168.1.1");
+
+// Validate a GUID
+IReadOnlyList<string> guidProblems = ValidationHelpersValidation.ValidateGuid("550e8400-e29b-41d4-a716-446655440000");
+bool isGuidValid = ValidationHelpersValidation.IsValidGuid("550e8400-e29b-41d4-a716-446655440000");
+ValidationHelpersValidation.EnsureValidGuid("550e8400-e29b-41d4-a716-446655440000");
+
+// Validate a URL
+IReadOnlyList<string> urlProblems = ValidationHelpersValidation.ValidateUrl("https://example.com/api");
+bool isUrlValid = ValidationHelpersValidation.IsValidUrl("https://example.com/api");
+ValidationHelpersValidation.EnsureValidUrl("https://example.com/api");
+
+// Validate and sanitize input
+IReadOnlyList<string> inputProblems = ValidationHelpersValidation.ValidateSanitizeInput("Safe input text", maxLength: 500);
+bool isInputValid = ValidationHelpersValidation.IsValidSanitizeInput("Safe input text", maxLength: 500);
+ValidationHelpersValidation.EnsureValidSanitizeInput("Safe input text", maxLength: 500);
+```
+
 ## CryptoHelpersJsonExtensions
 
 The `CryptoHelpersJsonExtensions` class provides JSON serialization extensions for cryptographic configuration used with the `CryptoHelpers` utility. It enables serialization and deserialization of cryptographic settings including secure random string length and character set configuration.
