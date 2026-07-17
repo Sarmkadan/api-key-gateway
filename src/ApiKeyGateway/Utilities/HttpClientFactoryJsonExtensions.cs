@@ -41,14 +41,9 @@ public static class HttpClientFactoryJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions)
-            {
-                WriteIndented = true
-            }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, indented
+            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+            : _jsonOptions);
     }
 
     /// <summary>
@@ -56,7 +51,9 @@ public static class HttpClientFactoryJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="HttpClientConfiguration"/> instance if successful; otherwise, null.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to <see cref="HttpClientConfiguration"/>.</exception>
     public static HttpClientConfiguration? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -70,7 +67,8 @@ public static class HttpClientFactoryJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized <see cref="HttpClientConfiguration"/> instance, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
     public static bool TryFromJson(string json, out HttpClientConfiguration? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
