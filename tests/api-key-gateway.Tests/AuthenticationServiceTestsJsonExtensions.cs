@@ -29,7 +29,6 @@ public static class AuthenticationServiceTestsJsonExtensions
     public static string ToJson(this AuthenticationServiceTests value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
         return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonSerializerOptions) { WriteIndented = true } : _jsonSerializerOptions);
     }
 
@@ -37,7 +36,7 @@ public static class AuthenticationServiceTestsJsonExtensions
     /// Deserializes a JSON string to an <see cref="AuthenticationServiceTests"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>An <see cref="AuthenticationServiceTests"/> instance deserialized from JSON.</returns>
+    /// <returns>An <see cref="AuthenticationServiceTests"/> instance deserialized from JSON, or <see langword="null"/> if deserialization fails.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static AuthenticationServiceTests? FromJson(string json)
@@ -51,8 +50,8 @@ public static class AuthenticationServiceTestsJsonExtensions
     /// Attempts to deserialize a JSON string to an <see cref="AuthenticationServiceTests"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized instance if successful; otherwise, null.</param>
-    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <param name="value">Receives the deserialized instance if successful; otherwise, <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out AuthenticationServiceTests? value)
     {
