@@ -15,11 +15,15 @@ public static class AuditLogValidation
     /// </summary>
     /// <param name="value">The audit log to validate</param>
     /// <returns>An enumerable of validation error messages; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/></exception>
     public static IReadOnlyList<string> Validate(this AuditLog value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        return ValidateCore(value);
+    }
 
+    private static IReadOnlyList<string> ValidateCore(AuditLog value)
+    {
         var errors = new List<string>();
 
         // Validate required string properties
@@ -56,12 +60,9 @@ public static class AuditLogValidation
         }
 
         // Validate HttpStatusCode if set
-        if (value.HttpStatusCode.HasValue)
+        if (value.HttpStatusCode.HasValue && (value.HttpStatusCode is < 100 or > 599))
         {
-            if (value.HttpStatusCode is < 100 or > 599)
-            {
-                errors.Add("HttpStatusCode, if provided, must be a valid HTTP status code (100-599).");
-            }
+            errors.Add("HttpStatusCode, if provided, must be a valid HTTP status code (100-599).");
         }
 
         // Validate Changes dictionary
@@ -94,19 +95,19 @@ public static class AuditLogValidation
     /// </summary>
     /// <param name="value">The audit log to check</param>
     /// <returns>True if valid; otherwise false</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/></exception>
     public static bool IsValid(this AuditLog value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Validate(value).Count == 0;
+        return !Validate(value).Any();
     }
 
     /// <summary>
     /// Ensures that an <see cref="AuditLog"/> instance is valid, throwing an exception if not
     /// </summary>
     /// <param name="value">The audit log to validate</param>
-    /// <exception cref="ArgumentException">Thrown if value is null or invalid</exception>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid</exception>
     public static void EnsureValid(this AuditLog value)
     {
         ArgumentNullException.ThrowIfNull(value);
