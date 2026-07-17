@@ -31,10 +31,9 @@ namespace ApiKeyGateway.Tests
         {
             ArgumentNullException.ThrowIfNull(tests);
 
-            return whitelist is null
+            return string.IsNullOrWhiteSpace(whitelist)
                 ? Array.Empty<string>()
-                : whitelist
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                : whitelist.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(p => p.Trim())
                     .Where(p => p.Length > 0)
                     .ToArray();
