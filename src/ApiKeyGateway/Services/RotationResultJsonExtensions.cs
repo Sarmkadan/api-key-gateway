@@ -43,14 +43,14 @@ public static class RotationResultJsonExtensions
     /// Deserializes a JSON string to <see cref="RotationResult"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized rotation result.</returns>
+    /// <returns>The deserialized rotation result, or null if deserialization fails.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
     public static RotationResult? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        ArgumentException.ThrowIfNullOrEmpty(json.Trim());
 
         return JsonSerializer.Deserialize<RotationResult>(json, JsonSerializerOptions);
     }
@@ -66,7 +66,8 @@ public static class RotationResultJsonExtensions
         try
         {
             ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
+            ArgumentException.ThrowIfNullOrEmpty(json.Trim());
+
             value = JsonSerializer.Deserialize<RotationResult>(json, JsonSerializerOptions);
             return value is not null;
         }
