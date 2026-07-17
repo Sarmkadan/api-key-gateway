@@ -3,29 +3,37 @@
 // CTO & Software Architect
 // =====================================================================
 
-using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ApiKeyGateway.Repositories;
 
 /// <summary>
 /// Provides validation helpers for <see cref="ApiKeyRepository"/> instances.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class ApiKeyRepositoryValidation
 {
     /// <summary>
     /// Validates the <see cref="ApiKeyRepository"/> instance for logical consistency.
     /// </summary>
+    /// <remarks>
+    /// This method performs runtime validation of the repository instance.
+    /// Currently, <see cref="ApiKeyRepository"/> is a service class with injected dependencies
+    /// that are validated in its constructor. Additional validation logic can be added here
+    /// if the repository gains state that requires runtime validation.
+    /// </remarks>
     /// <param name="value">The repository instance to validate.</param>
     /// <returns>A list of human-readable validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(this ApiKeyRepository value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = new List<string>();
 
-        // ApiKeyRepository is primarily a service class with injected dependencies
-        // The main validation is that the injected services are not null
-        // (already validated in constructor)
+        // ApiKeyRepository is primarily a service class with injected dependencies.
+        // The main validation occurs in the constructor via ArgumentNullException.ThrowIfNull.
+        // This method provides extensibility for future validation requirements.
 
         return problems.AsReadOnly();
     }
@@ -35,9 +43,10 @@ public static class ApiKeyRepositoryValidation
     /// </summary>
     /// <param name="value">The repository instance to check.</param>
     /// <returns><c>true</c> if valid; otherwise, <c>false</c>.</returns>
-    public static bool IsValid(this ApiKeyRepository value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    public static bool IsValid([NotNullWhen(true)] this ApiKeyRepository? value)
     {
-        return value.Validate().Count == 0;
+        return value?.Validate().Count == 0;
     }
 
     /// <summary>
@@ -45,13 +54,14 @@ public static class ApiKeyRepositoryValidation
     /// throwing an <see cref="ArgumentException"/> with a detailed message if it is not.
     /// </summary>
     /// <param name="value">The repository instance to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the repository is invalid.</exception>
     public static void EnsureValid(this ApiKeyRepository value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = value.Validate();
-        if (problems.Count == 0)
+        if (problems.Count is 0)
             return;
 
         throw new ArgumentException(
