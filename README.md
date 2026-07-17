@@ -750,3 +750,123 @@ edgeCases.Should().NotBeNullOrEmpty();
 edgeCases.Should().Contain("!@#$%^&*()");
 edgeCases.Should().Contain("\t\n");
 ```
+## AuditLogServiceTestsValidation
+
+The `AuditLogServiceTestsValidation` class provides validation helpers for `AuditLogServiceTests` instances. It includes methods for validating test setup, audit log creation, and audit log properties to ensure test instances are properly configured and audit logging operations produce expected outcomes.
+
+### Public Members
+
+- `Validate(this AuditLogServiceTests value)` - Validates the test instance and its mock dependencies, returning a list of validation problems
+- `IsValid(this AuditLogServiceTests value)` - Determines whether the test instance is valid by checking if the validation list is empty
+- `EnsureValid(this AuditLogServiceTests value)` - Ensures that the test instance is valid, throwing an exception if validation fails
+- `ValidateAuditLog(this AuditLogServiceTests _, AuditLog log, string expectedResourceId, AuditAction expectedAction, bool expectedIsSuccess, string? expectedPerformedBy = null, string expectedResourceType = "ApiKey")` - Validates that an audit log contains expected values including resource ID, action, success status, performer, and resource type
+- `ValidateAuditLogCollection(this AuditLogServiceTests _, List<AuditLog> logs, params (string ResourceId, AuditAction Action, bool IsSuccess)[] expectedItems)` - Validates that a collection of audit logs contains expected items with specific resource IDs, actions, and success statuses
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new AuditLogServiceTestsValidation();
+
+// Validate the test instance setup
+var validationProblems = testInstance.Validate();
+testInstance.IsValid().Should().BeTrue();
+
+// Test successful validation
+var validResult = new AuditLogServiceTestsValidation();
+validResult.EnsureValid(); // Throws if invalid
+
+// Test audit log validation
+var auditLog = new AuditLog
+{
+    Id = Guid.NewGuid(),
+    ResourceId = "api-key-123",
+    Action = AuditAction.Create,
+    IsSuccess = true,
+    PerformedBy = "admin@example.com",
+    ResourceType = "ApiKey",
+    Timestamp = DateTime.UtcNow,
+    Metadata = "{\"ipAddress\":\"192.168.1.1\"}"
+};
+
+var logProblems = testInstance.ValidateAuditLog(
+    auditLog,
+    expectedResourceId: "api-key-123",
+    expectedAction: AuditAction.Create,
+    expectedIsSuccess: true,
+    expectedPerformedBy: "admin@example.com",
+    expectedResourceType: "ApiKey"
+);
+logProblems.Should().BeEmpty();
+
+// Test audit log collection validation
+var logCollection = new List<AuditLog>
+{
+    new AuditLog
+    {
+        Id = Guid.NewGuid(),
+        ResourceId = "api-key-1",
+        Action = AuditAction.Create,
+        IsSuccess = true,
+        PerformedBy = "user1@example.com",
+        ResourceType = "ApiKey",
+        Timestamp = DateTime.UtcNow.AddMinutes(-10)
+    },
+    new AuditLog
+    {
+        Id = Guid.NewGuid(),
+        ResourceId = "api-key-2",
+        Action = AuditAction.Update,
+        IsSuccess = false,
+        PerformedBy = "user2@example.com",
+        ResourceType = "ApiKey",
+        Timestamp = DateTime.UtcNow.AddMinutes(-5)
+    },
+    new AuditLog
+    {
+        Id = Guid.NewGuid(),
+        ResourceId = "api-key-3",
+        Action = AuditAction.Delete,
+        IsSuccess = true,
+        PerformedBy = "admin@example.com",
+        ResourceType = "ApiKey",
+        Timestamp = DateTime.UtcNow
+    }
+};
+
+var collectionProblems = testInstance.ValidateAuditLogCollection(
+    logCollection,
+    ("api-key-1", AuditAction.Create, true),
+    ("api-key-2", AuditAction.Update, false),
+    ("api-key-3", AuditAction.Delete, true)
+);
+collectionProblems.Should().BeEmpty();
+
+// Test validation with mismatched values
+var invalidLog = new AuditLog
+{
+    Id = Guid.Empty,
+    ResourceId = null,
+    Action = (AuditAction)999, // Invalid action
+    IsSuccess = false,
+    PerformedBy = "",
+    ResourceType = null,
+    Timestamp = DateTime.MinValue,
+    Metadata = null
+};
+
+var invalidLogProblems = testInstance.ValidateAuditLog(
+    invalidLog,
+    expectedResourceId: "api-key-123",
+    expectedAction: AuditAction.Create,
+    expectedIsSuccess: true,
+    expectedPerformedBy: "admin@example.com",
+    expectedResourceType: "ApiKey"
+);
+invalidLogProblems.Should().HaveCount(6); // Multiple validation failures
+```
