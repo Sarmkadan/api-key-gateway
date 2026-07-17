@@ -360,6 +360,109 @@ if (weeklyResult.Result is OkObjectResult weeklyOkResult)
 }
 ```
 
+## RequestValidatorValidation
+
+The `RequestValidatorValidation` class provides instance-based validation helpers that wrap the static methods of `RequestValidator`. It offers a convenient way to validate common data types like email addresses, URLs, IP addresses, string lengths, numeric ranges, and GUIDs with both validation-returning and exception-throwing methods.
+
+### Public Members
+
+- `ValidateEmail(string email)` - Validates an email address and returns a list of validation problems
+- `ValidateUrl(string url, bool requireHttps)` - Validates a URL and returns a list of validation problems
+- `ValidateIpAddress(string ip)` - Validates an IP address and returns a list of validation problems
+- `ValidateLength(string value, int minLength, int maxLength, string fieldName)` - Validates string length and returns a list of validation problems
+- `ValidateRange(int value, int minimum, int maximum, string fieldName)` - Validates a numeric range and returns a list of validation problems
+- `ValidateGuid(Guid value, string fieldName)` - Validates a GUID and returns a list of validation problems
+- `IsValidEmail(string email)` - Checks if an email address is valid
+- `IsValidUrl(string url, bool requireHttps)` - Checks if a URL is valid
+- `IsValidIpAddress(string ip)` - Checks if an IP address is valid
+- `IsValidLength(string value, int minLength, int maxLength, string fieldName)` - Checks if a string length is valid
+- `IsValidRange(int value, int minimum, int maximum, string fieldName)` - Checks if a number is within range
+- `IsValidGuid(Guid value, string fieldName)` - Checks if a GUID is valid
+- `EnsureValidEmail(string email)` - Ensures an email address is valid, throwing if not
+- `EnsureValidUrl(string url, bool requireHttps)` - Ensures a URL is valid, throwing if not
+- `EnsureValidIpAddress(string ip)` - Ensures an IP address is valid, throwing if not
+- `EnsureValidLength(string value, int minLength, int maxLength, string fieldName)` - Ensures a string length is valid, throwing if not
+- `EnsureValidRange(int value, int minimum, int maximum, string fieldName)` - Ensures a number is within range, throwing if not
+- `EnsureValidGuid(Guid value, string fieldName)` - Ensures a GUID is valid, throwing if not
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Validation;
+
+// Validate an email address
+IReadOnlyList<string> emailErrors = RequestValidatorValidation.ValidateEmail("test@example.com");
+if (RequestValidatorValidation.IsValidEmail("test@example.com"))
+{
+  Console.WriteLine("Email is valid.");
+}
+else
+{
+  foreach (string error in emailErrors)
+  {
+    Console.WriteLine($"Email validation error: {error}");
+  }
+}
+
+// Validate a URL with HTTPS requirement
+IReadOnlyList<string> urlErrors = RequestValidatorValidation.ValidateUrl("https://example.com/api", requireHttps: true);
+if (RequestValidatorValidation.IsValidUrl("https://example.com/api", requireHttps: true))
+{
+  Console.WriteLine("URL is valid.");
+}
+
+// Validate an IP address
+IReadOnlyList<string> ipErrors = RequestValidatorValidation.ValidateIpAddress("192.168.1.1");
+if (RequestValidatorValidation.IsValidIpAddress("192.168.1.1"))
+{
+  Console.WriteLine("IP address is valid.");
+}
+
+// Validate string length
+IReadOnlyList<string> lengthErrors = RequestValidatorValidation.ValidateLength("password123", minLength: 8, maxLength: 64, fieldName: "Password");
+if (RequestValidatorValidation.IsValidLength("password123", minLength: 8, maxLength: 64))
+{
+  Console.WriteLine("Password length is valid.");
+}
+
+// Validate a numeric range
+IReadOnlyList<string> rangeErrors = RequestValidatorValidation.ValidateRange(42, minimum: 0, maximum: 100, fieldName: "Age");
+if (RequestValidatorValidation.IsValidRange(42, minimum: 0, maximum: 100))
+{
+  Console.WriteLine("Age is within valid range.");
+}
+
+// Validate a GUID
+Guid id = Guid.NewGuid();
+IReadOnlyList<string> guidErrors = RequestValidatorValidation.ValidateGuid(id, fieldName: "User ID");
+if (RequestValidatorValidation.IsValidGuid(id))
+{
+  Console.WriteLine("GUID is valid.");
+}
+
+// Alternative: Use EnsureValid methods to throw exceptions on failure
+try
+{
+  RequestValidatorValidation.EnsureValidEmail("invalid-email");
+  Console.WriteLine("Email validation passed.");
+}
+catch (ArgumentException ex)
+{
+  Console.WriteLine($"Validation failed: {ex.Message}");
+}
+
+// Validate a URL with HTTPS requirement using EnsureValid
+try
+{
+  RequestValidatorValidation.EnsureValidUrl("http://insecure.com", requireHttps: true);
+  Console.WriteLine("URL validation passed.");
+}
+catch (ArgumentException ex)
+{
+  Console.WriteLine($"URL validation failed: {ex.Message}");
+}
+```
+
 ## ApiKeysControllerValidation
 
 The `ApiKeysControllerValidation` class provides validation extension methods for API key models used in the `ApiKeysController`. These methods help ensure data integrity by validating required fields, date ranges, and business rules for API key entities including `ApiKey`, `CreateKeyRequest`, `CreateKeyResponse`, `GetKeyResponse`, and `RotateKeyResponse`.
