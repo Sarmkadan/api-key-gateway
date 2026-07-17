@@ -30,6 +30,65 @@ if (success && parsedMetadata != null)
 }
 ```
 
+## UsageRecordValidation
+
+The `UsageRecordValidation` class provides validation extension methods for usage record DTOs, allowing you to validate usage records and usage statistics before processing or storing them. These methods help ensure data integrity by checking required fields and enforcing business rules.
+
+### Public Members
+
+- `Validate(this UsageRecordResponse value)` - Validates a usage record and returns a list of human-readable problems
+- `IsValid(this UsageRecordResponse value)` - Checks if a usage record is valid
+- `EnsureValid(this UsageRecordResponse value)` - Ensures a usage record is valid, throwing an `ArgumentException` if it's not
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using ApiKeyGateway.Models;
+
+// Create a sample usage record
+var usageRecord = new UsageRecordResponse
+{
+    Id = "rec-12345",
+    RecordedAt = DateTime.UtcNow,
+    Endpoint = "/api/users",
+    Method = "GET",
+    StatusCode = 200,
+    RequestBytes = 1024,
+    ResponseBytes = 2048,
+    ResponseTimeMs = 42,
+    SourceIp = "192.168.1.1"
+};
+
+// Validate the usage record
+IReadOnlyList<string> validationErrors = usageRecord.Validate();
+
+if (usageRecord.IsValid())
+{
+    // Process the valid usage record
+    Console.WriteLine("Usage record is valid and ready for processing.");
+}
+else
+{
+    // Handle validation errors
+    foreach (string error in validationErrors)
+    {
+        Console.WriteLine($"Validation error: {error}");
+    }
+}
+
+// Alternative: Use EnsureValid to throw an exception if invalid
+try
+{
+    usageRecord.EnsureValid();
+    Console.WriteLine("Usage record passed validation successfully.");
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Validation failed: {ex.Message}");
+}
+```
+
 ## AdminControllerExtensions
 
 The `AdminControllerExtensions` class provides a set of extension methods for the `AdminController`, enabling administrative operations such as fetching detailed statistics, exporting data, performing diagnostic checks, and managing API keys. These extensions facilitate maintenance tasks and help monitor system performance by exposing enriched data and operational utilities.
