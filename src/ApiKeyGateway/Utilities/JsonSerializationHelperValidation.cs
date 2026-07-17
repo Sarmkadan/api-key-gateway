@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text.Json;
 
 namespace ApiKeyGateway.Utilities
@@ -16,8 +15,21 @@ namespace ApiKeyGateway.Utilities
         /// Returns any validation problems found in the serialization behavior.
         /// </summary>
         /// <returns>A list of validation errors; empty if valid.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if <see cref="JsonSerializationHelper"/> methods are not accessible.</exception>
         public static IReadOnlyList<string> Validate()
         {
+            // Validate that all required methods exist and are accessible
+            try
+            {
+                _ = JsonSerializationHelper.SerializeCompact(new { });
+                _ = JsonSerializationHelper.SerializeFormatted(new { });
+                _ = JsonSerializationHelper.IsValidJson("{}");
+            }
+            catch (Exception ex)
+            {
+                return new[] { $"JsonSerializationHelper methods are not accessible: {ex.Message}" };
+            }
+
             var errors = new List<string>();
 
             // Test SerializeCompact with a simple object
@@ -63,7 +75,7 @@ namespace ApiKeyGateway.Utilities
             try
             {
                 var deserialized = JsonSerializationHelper.Deserialize<TestDto>(serializedCompact);
-                if (deserialized == null)
+                if (deserialized is null)
                 {
                     errors.Add("Deserialize returned null for valid JSON input.");
                 }
@@ -79,7 +91,7 @@ namespace ApiKeyGateway.Utilities
 
             // Test SafeDeserialize with valid JSON
             var safeDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>(serializedCompact);
-            if (safeDeserialized == null)
+            if (safeDeserialized is null)
             {
                 errors.Add("SafeDeserialize returned null for valid JSON input.");
             }
@@ -90,7 +102,7 @@ namespace ApiKeyGateway.Utilities
 
             // Test SafeDeserialize with invalid JSON
             var invalidDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>("invalid json");
-            if (invalidDeserialized != null)
+            if (invalidDeserialized is not null)
             {
                 errors.Add("SafeDeserialize did not return null for invalid JSON input.");
             }
