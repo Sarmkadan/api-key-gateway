@@ -6,7 +6,13 @@ namespace ApiKeyGateway.Tests;
 
 public static class RequestValidatorTestsJsonExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false,
+    };
+
+    private static readonly JsonSerializerOptions JsonOptionsIndented = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
@@ -19,14 +25,9 @@ public static class RequestValidatorTestsJsonExtensions
     /// <param name="indented">A value indicating whether the JSON should be formatted with indentation.</param>
     /// <returns>The JSON string representation of the <see cref="RequestValidatorTests"/> object.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <c>null</c>.</exception>
-    public static string ToJson(this RequestValidatorTests value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented ? JsonOptions : JsonOptions;
-        options.WriteIndented = indented;
-        return JsonSerializer.Serialize(value, options);
-    }
+    /// <exception cref="JsonException">Thrown when serialization fails.</exception>
+    public static string ToJson(this RequestValidatorTests value, bool indented = false) =>
+        JsonSerializer.Serialize(value, indented ? JsonOptionsIndented : JsonOptions);
 
     /// <summary>
     /// Deserializes a JSON string to a <see cref="RequestValidatorTests"/> object.
