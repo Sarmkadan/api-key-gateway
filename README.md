@@ -263,6 +263,91 @@ var sanitizedInput = "<script>alert('xss')</script>";
 testInstance.AssertSanitizedInput(sanitizedInput, 100, "scriptalertxssscript");
 ```
 
+## CollectionExtensionsTestsExtensions
+
+The `CollectionExtensionsTestsExtensions` class provides extension methods for `CollectionExtensionsTests` that offer reusable test utilities for common collection operations in test scenarios. These extensions simplify assertions for collection state, provide dictionary conversion utilities, and offer first/last element accessors with default values, making test code more readable and maintainable.
+
+### Public Members
+
+- `ShouldBeEmpty<T>(this IEnumerable<T> collection, string paramName = null)` - Asserts that the collection is empty, throwing an exception if it contains any elements
+- `ShouldNotBeEmpty<T>(this IEnumerable<T> collection, string paramName = null)` - Asserts that the collection is not empty, throwing an exception if it's empty
+- `ShouldHaveCount<T>(this IEnumerable<T> collection, int expectedCount, string paramName = null)` - Asserts that the collection has the expected count of items
+- `ToDictionary<TSource, TKey, TElement>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector)` - Creates a dictionary from the collection using key selector and element selector functions
+- `FirstOrDefault<T>(this IEnumerable<T> source, T defaultValue = default)` - Gets the first element of a sequence, or a default value if the sequence is empty
+- `LastOrDefault<T>(this IEnumerable<T> source, T defaultValue = default)` - Gets the last element of a sequence, or a default value if the sequence is empty
+- `All<T>(this IEnumerable<T> source, Func<T, bool> predicate)` - Determines whether all elements of a sequence satisfy a condition
+- `Any<T>(this IEnumerable<T> source, Func<T, bool> predicate)` - Determines whether any element of a sequence satisfies a condition
+- `Append<T>(this IEnumerable<T> source, T item)` - Returns a new sequence with the specified item added to the end
+- `Prepend<T>(this IEnumerable<T> source, T item)` - Returns a new sequence with the specified item added to the beginning
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using FluentAssertions;
+using System.Collections.Generic;
+
+// Create test collections
+var emptyCollection = new List<int>();
+var singleItemCollection = new List<int> { 42 };
+var multipleItemsCollection = new List<int> { 1, 2, 3, 4, 5 };
+
+// Test empty collection assertion
+emptyCollection.ShouldBeEmpty();
+
+// Test non-empty collection assertion  
+singleItemCollection.ShouldNotBeEmpty();
+multipleItemsCollection.ShouldNotBeEmpty();
+
+// Test collection count assertion
+multipleItemsCollection.ShouldHaveCount(5);
+
+// Test first/last element accessors
+var firstItem = singleItemCollection.FirstOrDefault();
+firstItem.Should().Be(42);
+
+var lastItem = multipleItemsCollection.LastOrDefault();
+lastItem.Should().Be(5);
+
+// Test first/last with default values
+var emptyFirst = emptyCollection.FirstOrDefault(defaultValue: -1);
+emptyFirst.Should().Be(-1);
+
+var emptyLast = emptyCollection.LastOrDefault(defaultValue: -1);
+emptyLast.Should().Be(-1);
+
+// Test dictionary conversion
+var keyValuePairs = new List<KeyValuePair<string, int>>
+{
+    new KeyValuePair<string, int>("first", 1),
+    new KeyValuePair<string, int>("second", 2),
+    new KeyValuePair<string, int>("third", 3)
+};
+
+var dictionary = keyValuePairs.ToDictionary(
+    kvp => kvp.Key,
+    kvp => kvp.Value
+);
+dictionary.Should().HaveCount(3);
+dictionary["first"].Should().Be(1);
+
+// Test predicate-based operations
+var hasEvenNumbers = multipleItemsCollection.Any(x => x % 2 == 0);
+hasEvenNumbers.Should().BeTrue();
+
+var allPositive = multipleItemsCollection.All(x => x > 0);
+allPositive.Should().BeTrue();
+
+// Test sequence manipulation
+var appendedCollection = multipleItemsCollection.Append(6);
+appendedCollection.Should().HaveCount(6);
+appendedCollection.Last().Should().Be(6);
+
+var prependedCollection = multipleItemsCollection.Prepend(0);
+prependedCollection.Should().HaveCount(6);
+prependedCollection.First().Should().Be(0);
+```
+
 ## ApiKeyModelTestsExtensions
 
 The `ApiKeyModelTestsExtensions` class provides extension methods for `ApiKeyModelTests` that offer reusable test utilities for creating and asserting API key scenarios. These extensions simplify the setup of test API keys with various statuses, IP whitelists, and expiration dates, and provide fluent assertions for verifying API key state and behavior.
