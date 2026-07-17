@@ -3,7 +3,8 @@
 // CTO & Software Architect
 // ===================================================================
 
-using System.Globalization;
+using System.Data;
+using System.Data.Common;
 
 namespace ApiKeyGateway.Repositories;
 
@@ -24,9 +25,17 @@ public static class UsageRepositoryValidation
 
         var problems = new List<string>();
 
-        // UsageRepository dependencies are validated in constructor
-        // (_connection and _logger are checked in constructor)
-        // No additional validation needed for the repository itself
+        // Validate connection state
+        if (value.GetConnectionState() != System.Data.ConnectionState.Closed)
+        {
+            problems.Add("Database connection is not closed. Ensure proper connection lifecycle management.");
+        }
+
+        // Validate logger
+        if (value.Logger == null)
+        {
+            problems.Add("Logger dependency is null.");
+        }
 
         return problems.AsReadOnly();
     }
@@ -59,5 +68,60 @@ public static class UsageRepositoryValidation
 
         throw new ArgumentException(
             $"UsageRepository is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
+    }
+
+    /// <summary>
+    /// Gets the database connection associated with this repository.
+    /// </summary>
+    internal static IDbConnection Connection(this UsageRepository repository)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+
+        // Use reflection to access the private connection field since we can't modify the class
+        var connectionField = typeof(UsageRepository).GetField("_connection",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (connectionField == null)
+        {
+            throw new InvalidOperationException("Failed to access connection field via reflection.");
+        }
+
+        return (IDbConnection)connectionField.GetValue(repository) ?? throw new InvalidOperationException("Connection field is null.");
+    }
+
+    /// <summary>
+    /// Gets the logger associated with this repository.
+    /// </summary>
+    internal static ILogger<UsageRepository> Logger(this UsageRepository repository)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+
+        // Use reflection to access the private logger field since we can't modify the class
+        var loggerField = typeof(UsageRepository).GetField("_logger",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (loggerField == null)
+        {
+            throw new InvalidOperationException("Failed to access logger field via reflection.");
+        }
+
+        return (ILogger<UsageRepository>)loggerField.GetValue(repository) ?? throw new InvalidOperationException("Logger field is null.");
+    }
+
+    /// <summary>
+    /// Gets the current connection state of the repository's database connection.
+    /// </summary>
+    internal static System.Data.ConnectionState GetConnectionState(this UsageRepository repository)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+
+        try
+        {
+            return repository.Connection().State;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
+        {
+            return System.Data.ConnectionState.Broken;
+        }
     }
 }
