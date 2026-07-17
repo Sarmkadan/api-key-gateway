@@ -11,48 +11,49 @@ namespace ApiKeyGateway.Domain.Exceptions;
 public static class KeyStoreUnavailableExceptionValidation
 {
     /// <summary>
-    /// Validates the <see cref="KeyStoreUnavailableException"/> instance and returns a list of validation errors.
+    /// Validates the specified <see cref="KeyStoreUnavailableException"/> instance.
     /// </summary>
     /// <param name="value">The exception instance to validate.</param>
-    /// <returns>A read-only list of validation error messages.</returns>
+    /// <returns>A list of validation problems; empty if valid.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this KeyStoreUnavailableException value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var errors = new List<string>();
+        var problems = new List<string>();
 
-        if (string.IsNullOrEmpty(value.Operation))
+        if (value.Operation is not null && string.IsNullOrWhiteSpace(value.Operation))
         {
-            errors.Add("Operation must not be empty.");
+            problems.Add("Operation cannot be whitespace if specified.");
         }
 
-        return errors.AsReadOnly();
+        return problems.AsReadOnly();
     }
 
     /// <summary>
-    /// Checks if the <see cref="KeyStoreUnavailableException"/> instance is valid.
+    /// Determines whether the specified <see cref="KeyStoreUnavailableException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception instance to check.</param>
-    /// <returns>True if valid, false otherwise.</returns>
+    /// <param name="value">The exception to check.</param>
+    /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this KeyStoreUnavailableException value)
-    {
-        return Validate(value).Count == 0;
-    }
+    public static bool IsValid(this KeyStoreUnavailableException value) => Validate(value).Count == 0;
 
     /// <summary>
-    /// Throws an <see cref="ArgumentException"/> if the <see cref="KeyStoreUnavailableException"/> instance is invalid.
+    /// Ensures that the specified <see cref="KeyStoreUnavailableException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception instance to validate.</param>
+    /// <param name="value">The exception to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown if the instance is invalid, containing all validation errors.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid, containing the validation problems.</exception>
     public static void EnsureValid(this KeyStoreUnavailableException value)
     {
-        var errors = Validate(value);
-        if (errors.Count > 0)
+        ArgumentNullException.ThrowIfNull(value);
+
+        var problems = Validate(value);
+        if (problems.Count > 0)
         {
-            throw new ArgumentException(string.Join("; ", errors), nameof(value));
+            throw new ArgumentException(
+                $"KeyStoreUnavailableException is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}",
+                nameof(value));
         }
     }
 }
