@@ -1,9 +1,9 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
-using System.Globalization;
+using System.Reflection;
 
 namespace ApiKeyGateway.Tests;
 
@@ -26,54 +26,36 @@ public static class IntegrationTestsValidation
 
         // Validate private fields via reflection
         var type = value.GetType();
-        var fields = type.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
 
         foreach (var field in fields)
         {
             var fieldValue = field.GetValue(value);
 
-            if (fieldValue is string strValue)
+            switch (fieldValue)
             {
-                if (string.IsNullOrWhiteSpace(strValue))
-                {
+                case string strValue when string.IsNullOrWhiteSpace(strValue):
                     problems.Add($"Field '{field.Name}' is null, empty, or whitespace.");
-                }
-            }
-            else if (fieldValue is int intValue)
-            {
-                if (intValue < 0)
-                {
+                    break;
+
+                case int intValue when intValue < 0:
                     problems.Add($"Field '{field.Name}' has negative value {intValue} which is out of range.");
-                }
-            }
-            else if (fieldValue is DateTime dateTimeValue)
-            {
-                if (dateTimeValue == default)
-                {
+                    break;
+
+                case DateTime dateTimeValue when dateTimeValue == default:
                     problems.Add($"Field '{field.Name}' has default DateTime value which is invalid.");
-                }
-            }
-            else if (fieldValue is DateTimeOffset dateTimeOffsetValue)
-            {
-                if (dateTimeOffsetValue == default)
-                {
+                    break;
+
+                case DateTimeOffset dateTimeOffsetValue when dateTimeOffsetValue == default:
                     problems.Add($"Field '{field.Name}' has default DateTimeOffset value which is invalid.");
-                }
-            }
-            else if (fieldValue is bool boolValue)
-            {
-                // Booleans are always valid
-            }
-            else if (fieldValue is System.Collections.IEnumerable enumerable && fieldValue is not string)
-            {
-                // Check if it's a collection that might be null or empty
-                if (fieldValue is System.Collections.ICollection collection)
-                {
-                    if (collection.Count == 0)
+                    break;
+
+                case System.Collections.IEnumerable enumerable when enumerable is not string:
+                    if (enumerable is System.Collections.ICollection collection && collection.Count == 0)
                     {
                         problems.Add($"Field '{field.Name}' is an empty collection.");
                     }
-                }
+                    break;
             }
         }
 
@@ -85,10 +67,7 @@ public static class IntegrationTestsValidation
     /// </summary>
     /// <param name="value">The instance to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(this IntegrationTests? value)
-    {
-        return Validate(value).Count == 0;
-    }
+    public static bool IsValid(this IntegrationTests? value) => Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that the specified <see cref="IntegrationTests"/> instance is valid.
@@ -101,14 +80,12 @@ public static class IntegrationTestsValidation
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = Validate(value);
-        if (problems.Count == 0)
+        if (problems.Count != 0)
         {
-            return;
+            throw new ArgumentException(
+                $"IntegrationTests instance is invalid:{Environment.NewLine}- ".Replace("- ", string.Empty) +
+                string.Join(Environment.NewLine + "- ", problems),
+                nameof(value));
         }
-
-        throw new ArgumentException(
-            $"IntegrationTests instance is invalid:{Environment.NewLine}- ".Replace("- ", string.Empty) +
-            string.Join(Environment.NewLine + "- ", problems),
-            nameof(value));
     }
 }
