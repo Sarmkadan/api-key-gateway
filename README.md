@@ -304,3 +304,37 @@ IReadOnlyList<string> paginationErrors = paginatedResponse.Validate();
 bool paginationIsValid = paginatedResponse.IsValid();
 paginatedResponse.EnsureValid();
 ```
+
+## ValidationHelpersJsonExtensions
+
+`ValidationHelpersJsonExtensions` supplies JSON‑serialization utilities for the static `ValidationHelpers` class, allowing you to export metadata about its public validation methods and later reconstruct that information. It serializes a lightweight metadata model containing the type name and a list of method names.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+
+// Serialize the ValidationHelpers metadata to JSON (indented for readability)
+string json = ValidationHelpersJsonExtensions.ToJson(indented: true);
+
+// Deserialize the JSON back to a metadata object
+var metadata = ValidationHelpersJsonExtensions.FromJson(json);
+if (metadata != null)
+{
+    Console.WriteLine($"Type: {metadata.TypeName}");
+    Console.WriteLine("Methods:");
+    foreach (var method in metadata.Methods ?? Array.Empty<string>())
+    {
+        Console.WriteLine($" - {method}");
+    }
+}
+
+// Try‑parse the JSON safely without throwing
+bool ok = ValidationHelpersJsonExtensions.TryFromJson(json, out var parsedMetadata);
+if (ok && parsedMetadata != null)
+{
+    // Use the parsed metadata
+    var typeName = parsedMetadata.TypeName;
+    var methods = parsedMetadata.Methods;
+}
+```
