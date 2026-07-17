@@ -28,10 +28,7 @@ public static class ApiKeyServiceTestsJsonExtensions
     public static string ToJson(this ApiKeyServiceTests value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        return JsonSerializer.Serialize(value, indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions);
+        return JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } : _jsonOptions);
     }
 
     /// <summary>
@@ -44,7 +41,6 @@ public static class ApiKeyServiceTestsJsonExtensions
     public static ApiKeyServiceTests? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
-
         return JsonSerializer.Deserialize<ApiKeyServiceTests>(json, _jsonOptions);
     }
 
