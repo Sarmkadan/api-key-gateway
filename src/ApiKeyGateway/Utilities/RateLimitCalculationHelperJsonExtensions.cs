@@ -27,35 +27,28 @@ public static class RateLimitCalculationHelperJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representing <see cref="RateLimitCalculationHelper"/> type metadata.</returns>
     public static string ToJson(bool indented = false)
-    {
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        var metadata = new RateLimitCalculationHelperMetadata
-        {
-            TypeName = "RateLimitCalculationHelper",
-            Methods = GetPublicMethodNames()
-        };
-
-        return JsonSerializer.Serialize(metadata, options);
-    }
+        => JsonSerializer.Serialize(
+            new RateLimitCalculationHelperMetadata
+            {
+                TypeName = "RateLimitCalculationHelper",
+                Methods = GetPublicMethodNames()
+            },
+            indented
+                ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+                : _jsonOptions);
 
     /// <summary>
     /// Deserializes a JSON string to <see cref="RateLimitCalculationHelper"/> type metadata.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="RateLimitCalculationHelperMetadata"/> object, or null if the JSON is null or empty.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static RateLimitCalculationHelperMetadata? FromJson(string json)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
-
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         return JsonSerializer.Deserialize<RateLimitCalculationHelperMetadata>(json, _jsonOptions);
     }
@@ -66,10 +59,12 @@ public static class RateLimitCalculationHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized metadata if successful.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     public static bool TryFromJson(string json, out RateLimitCalculationHelperMetadata? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         value = null;
 
@@ -100,8 +95,7 @@ public static class RateLimitCalculationHelperJsonExtensions
     /// Gets the names of public methods on <see cref="RateLimitCalculationHelper"/> for serialization.
     /// </summary>
     private static IReadOnlyList<string> GetPublicMethodNames()
-    {
-        return [
+        => [
             nameof(RateLimitCalculationHelper.GetWindowEnd),
             nameof(RateLimitCalculationHelper.GetWindowStart),
             nameof(RateLimitCalculationHelper.GetSecondsUntilAllowed),
@@ -109,5 +103,4 @@ public static class RateLimitCalculationHelperJsonExtensions
             nameof(RateLimitCalculationHelper.ShouldWarnAboutLimit),
             nameof(RateLimitCalculationHelper.GetReadableResetTime)
         ];
-    }
 }
