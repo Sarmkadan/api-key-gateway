@@ -15,8 +15,9 @@ using Moq;
 namespace ApiKeyGateway.Tests;
 
 /// <summary>
-/// Extension methods for <see cref="RateLimitingServiceTests"/> to provide reusable test utilities
-/// for rate limiting service scenarios.
+/// Extension methods for <see cref="RateLimitingServiceTests"/> that provide reusable test utilities
+/// for rate limiting service scenarios, including service creation, rate limit configuration,
+/// concurrent request execution, and result verification.
 /// </summary>
 public static class RateLimitingServiceTestsExtensions
 {
@@ -25,7 +26,7 @@ public static class RateLimitingServiceTestsExtensions
     /// </summary>
     /// <param name="tests">The test instance</param>
     /// <returns>Configured rate limiting service</returns>
-    /// <exception cref="ArgumentNullException">When tests is null</exception>
+    /// <exception cref="ArgumentNullException">When <paramref name="tests"/> is null</exception>
     public static RateLimitingService CreateService(this RateLimitingServiceTests tests)
     {
         ArgumentNullException.ThrowIfNull(tests);
@@ -39,11 +40,12 @@ public static class RateLimitingServiceTestsExtensions
     /// Creates a rate limit configuration for testing purposes.
     /// </summary>
     /// <param name="apiKeyId">The API key identifier</param>
-    /// <param name="requestsPerUnit">Maximum requests allowed</param>
+    /// <param name="requestsPerUnit">Maximum requests allowed per time unit</param>
     /// <param name="unit">Time unit for rate limiting</param>
     /// <param name="currentCount">Current request count (default: 0)</param>
     /// <returns>Configured rate limit model</returns>
-    /// <exception cref="ArgumentException">When apiKeyId is null or empty</exception>
+    /// <exception cref="ArgumentException">When <paramref name="apiKeyId"/> is null or empty</exception>
+/// <exception cref="ArgumentOutOfRangeException">When <paramref name="requestsPerUnit"/> is less than 1</exception>
     public static RateLimit CreateRateLimit(
         this RateLimitingServiceTests tests,
         string apiKeyId,
@@ -52,6 +54,12 @@ public static class RateLimitingServiceTestsExtensions
         int currentCount = 0)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
+    if (requestsPerUnit < 1)
+    {
+        throw new ArgumentOutOfRangeException(
+            nameof(requestsPerUnit),
+            "Requests per unit must be at least 1");
+    }
 
         return new RateLimit
         {
@@ -71,7 +79,7 @@ public static class RateLimitingServiceTestsExtensions
     /// <param name="keyId">The API key identifier</param>
     /// <param name="requestCount">Number of concurrent requests to make</param>
     /// <returns>Collection of results and exceptions</returns>
-    /// <exception cref="ArgumentException">When keyId is null or empty</exception>
+    /// <exception cref="ArgumentException">When <paramref name="keyId"/> is null or empty</exception>
     public static async Task<ConcurrentBag<RateLimitResult>> ExecuteConcurrentRequestsAsync(
         this RateLimitingService service,
         string keyId,
@@ -103,7 +111,7 @@ public static class RateLimitingServiceTestsExtensions
     /// <param name="results">Collection of rate limit results</param>
     /// <param name="expectedCount">Expected number of exceptions</param>
     /// <returns>Task for async operation</returns>
-    /// <exception cref="ArgumentNullException">When results is null</exception>
+    /// <exception cref="ArgumentNullException">When <paramref name="results"/> is null</exception>
     public static async Task ShouldAllThrowRateLimitExceededAsync(
         this Task<ConcurrentBag<RateLimitResult>> resultsTask,
         int expectedCount)
@@ -116,7 +124,8 @@ public static class RateLimitingServiceTestsExtensions
         {
             result.Success.Should().BeFalse();
             result.Exception.Should().NotBeNull();
-            result.Exception.Should().BeOfType<RateLimitExceededException>();
+            result.Exception.Should().BeOfType<RateLimitExceededException>(
+                "because all failed requests should throw RateLimitExceededException");
         });
     }
 
@@ -126,7 +135,7 @@ public static class RateLimitingServiceTestsExtensions
     /// <param name="resultsTask">Task returning collection of rate limit results</param>
     /// <param name="expectedCount">Expected number of successful requests</param>
     /// <returns>Task for async operation</returns>
-    /// <exception cref="ArgumentNullException">When resultsTask is null</exception>
+    /// <exception cref="ArgumentNullException">When <paramref name="resultsTask"/> is null</exception>
     public static async Task ShouldAllSucceedAsync(
         this Task<ConcurrentBag<RateLimitResult>> resultsTask,
         int expectedCount)
@@ -137,15 +146,16 @@ public static class RateLimitingServiceTestsExtensions
         results.Should().HaveCount(expectedCount);
         results.Should().AllSatisfy(result =>
         {
-            result.Success.Should().BeTrue();
+            result.Success.Should().BeTrue(
+                "because all requests should succeed when under rate limit");
             result.Exception.Should().BeNull();
         });
     }
 
     /// <summary>
-    /// Helper record to track rate limit test results.
+    /// Record that tracks the result of rate limit test requests, including success status and any exceptions.
     /// </summary>
-    /// <param name="Success">Whether the request succeeded</param>
-    /// <param name="Exception">Exception thrown, if any</param>
+    /// <param name="Success">Whether the request succeeded without exceeding rate limits</param>
+    /// <param name="Exception">Exception thrown during request processing, if any</param>
     public record RateLimitResult(bool Success, Exception? Exception);
 }
