@@ -79,7 +79,81 @@ foreach (var result in exceededResults)
 - `RepeatPattern(this string pattern, int repeatCount)` - Generates a test string with repeated pattern for consistency testing
 - `CreateEdgeCaseString()` - Creates a string with all possible edge case characters for comprehensive testing
 
+## CacheKeyGeneratorTestsExtensions
+
+The `CacheKeyGeneratorTestsExtensions` class provides extension methods for `CacheKeyGeneratorTests` that offer reusable assertions and helper methods for testing cache key generation scenarios. These extensions validate cache key formats, parameter handling, and hash generation for various API gateway caching use cases including API keys, rate limits, usage statistics, quotas, webhook deliveries, and external API calls.
+
+### Public Members
+
+- `ShouldHaveApiKeyFormat(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)` - Asserts that a cache key follows the expected format pattern for API keys
+- `ShouldHaveApiKeyMetadataFormat(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)` - Asserts that a cache key follows the expected format pattern for API key metadata
+- `ShouldHaveRateLimitKey(this CacheKeyGeneratorTests test, string apiKey, string? endpoint, string expectedKey)` - Asserts that a rate limit cache key includes the expected components
+- `ShouldHaveUsageStatsKey(this CacheKeyGeneratorTests test, string apiKey, DateTime date, string expectedKey)` - Asserts that a usage statistics cache key formats the date correctly
+- `ShouldHaveQuotaKey(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)` - Asserts that a quota cache key follows the expected format pattern
+- `ShouldHaveWebhookDeliveryKey(this CacheKeyGeneratorTests test, Guid eventId, string expectedKey)` - Asserts that a webhook delivery cache key uses the expected GUID format
+- `ShouldHaveExternalApiCacheKey(this CacheKeyGeneratorTests test, string provider, string endpoint, Dictionary<string, string>? parameters, string expectedKey)` - Asserts that an external API cache key follows the expected format
+- `ShouldIncludeHash(this CacheKeyGeneratorTests test, string key)` - Asserts that an external API cache key includes a hash when parameters are provided
+- `ShouldBeHashOrderInvariant(this CacheKeyGeneratorTests test, string key1, string key2)` - Asserts that two cache keys are identical regardless of parameter dictionary order
+- `ShouldHaveApiKeyInvalidationPattern(this CacheKeyGeneratorTests test, string apiKey, string expectedPattern)` - Asserts that a cache key follows the expected format pattern for API key invalidation
+- `ShouldHaveRateLimitInvalidationPattern(this CacheKeyGeneratorTests test, string expectedPattern)` - Asserts that a rate limit invalidation pattern matches all rate limit keys
+- `CreateParameterDictionary(this CacheKeyGeneratorTests test, params (string Key, string Value)[] parameters)` - Creates a dictionary of query parameters for testing external API cache keys
+- `CreateDate(this CacheKeyGeneratorTests test, int year, int month, int day)` - Creates a date for testing usage statistics cache keys
+
 ### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Caching;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new CacheKeyGeneratorTests();
+
+// Test API key format assertions
+var apiKey = "test-api-key-12345";
+testInstance.ShouldHaveApiKeyFormat(apiKey, "api-key:test-api-key-12345");
+testInstance.ShouldHaveApiKeyMetadataFormat(apiKey, "api-key:test-api-key-12345:metadata");
+
+// Test rate limit key generation
+testInstance.ShouldHaveRateLimitKey(apiKey, null, "rate-limit:*:test-api-key-12345");
+testInstance.ShouldHaveRateLimitKey(apiKey, "/api/v1/users", "rate-limit:/api/v1/users:test-api-key-12345");
+
+// Test usage statistics key generation
+var testDate = testInstance.CreateDate(2024, 6, 15);
+testInstance.ShouldHaveUsageStatsKey(apiKey, testDate, "usage-stats:2024-06-15:test-api-key-12345");
+
+// Test quota key generation
+testInstance.ShouldHaveQuotaKey(apiKey, "quota:test-api-key-12345");
+
+// Test webhook delivery key generation
+var eventId = Guid.Parse("12345678-1234-5678-1234-567812345678");
+testInstance.ShouldHaveWebhookDeliveryKey(eventId, "webhook-delivery:12345678-1234-5678-1234-567812345678");
+
+// Test external API cache key generation with parameters
+var parameters = testInstance.CreateParameterDictionary(
+    ("limit", "100"),
+    ("offset", "50"),
+    ("sort", "date")
+);
+testInstance.ShouldHaveExternalApiCacheKey(
+    "stripe",
+    "/v1/customers",
+    parameters,
+    "external-api:stripe:/v1/customers:limit:100:offset:50:sort:date:hash"
+);
+
+// Test hash inclusion assertion
+testInstance.ShouldIncludeHash("external-api:stripe:/v1/customers:limit:100:hash");
+
+// Test hash order invariance
+var key1 = "external-api:stripe:/v1/customers:limit:100:offset:50:hash";
+var key2 = "external-api:stripe:/v1/customers:offset:50:limit:100:hash";
+testInstance.ShouldBeHashOrderInvariant(key1, key2);
+
+// Test invalidation patterns
+testInstance.ShouldHaveApiKeyInvalidationPattern(apiKey, "api-key:test-api-key-12345:*");
+testInstance.ShouldHaveRateLimitInvalidationPattern("rate-limit:*:*");
+```
 
 ```csharp
 using ApiKeyGateway.Tests;
