@@ -110,3 +110,34 @@ if (success && parsedSettings != null)
     // Use parsedSettings...
 }
 ```
+
+## LoggerFactoryHelperJsonExtensions
+
+`LoggerFactoryHelperJsonExtensions` provides System.Text.Json serialization support for logger factory configuration states. It enables converting between `LoggerFactoryConfiguration` objects and JSON strings, facilitating the persistence and retrieval of logging settings.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+
+// Create a new configuration instance
+var config = new LoggerFactoryHelperJsonExtensions.LoggerFactoryConfiguration
+{
+    DefaultLogLevel = "Debug",
+    DebugEnabled = true,
+    ConsoleEnabled = true
+};
+
+// Serialize the configuration to a JSON string
+string json = config.ToJson(indented: true);
+
+// Deserialize the JSON string back to a configuration object
+var deserializedConfig = LoggerFactoryHelperJsonExtensions.FromJson(json);
+
+// Attempt to deserialize using the TryFromJson method
+if (LoggerFactoryHelperJsonExtensions.TryFromJson(json, out var parsedConfig))
+{
+    // Access properties
+    bool isDebugEnabled = parsedConfig.DebugEnabled;
+}
+```
