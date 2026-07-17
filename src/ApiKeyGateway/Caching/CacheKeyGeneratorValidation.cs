@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =====================================================================
 
+using System;
 using System.Collections.Generic;
 
 namespace ApiKeyGateway.Caching;
@@ -91,10 +92,12 @@ public static class CacheKeyGeneratorValidation
     /// </summary>
     /// <param name="eventId">The event identifier.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
-    public static IReadOnlyList<string> Validate(Guid eventId)
-    {
-        return Array.Empty<string>();
-    }
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="eventId"/> is <see cref="Guid.Empty"/>.</exception>
+public static IReadOnlyList<string> Validate(Guid eventId)
+{
+    ArgumentOutOfRangeException.ThrowIfEqual(eventId, Guid.Empty);
+    return Array.Empty<string>();
+}
 
     /// <summary>
     /// Validates the parameters of <see cref="CacheKeyGenerator.GetExternalApiCacheKey"/>.
@@ -141,10 +144,7 @@ public static class CacheKeyGeneratorValidation
     /// <param name="apiKeyId">The API key identifier.</param>
     /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiKeyId"/> is null.</exception>
-    public static bool IsValid(string apiKeyId)
-    {
-        return Validate(apiKeyId).Count == 0;
-    }
+    public static bool IsValid(string apiKeyId) => Validate(apiKeyId).Count == 0;
 
     /// <summary>
     /// Checks if the specified parameters are valid for <see cref="CacheKeyGenerator.GetRateLimitKey"/>.
@@ -153,10 +153,7 @@ public static class CacheKeyGeneratorValidation
     /// <param name="endpoint">The endpoint being rate limited.</param>
     /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiKeyId"/> is null.</exception>
-    public static bool IsValid(string apiKeyId, string endpoint = "*")
-    {
-        return Validate(apiKeyId, endpoint).Count == 0;
-    }
+    public static bool IsValid(string apiKeyId, string endpoint = "*") => Validate(apiKeyId, endpoint).Count == 0;
 
     /// <summary>
     /// Checks if the specified parameters are valid for <see cref="CacheKeyGenerator.GetUsageStatsKey"/>.
@@ -165,20 +162,15 @@ public static class CacheKeyGeneratorValidation
     /// <param name="date">The date for usage statistics.</param>
     /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiKeyId"/> is null.</exception>
-    public static bool IsValid(string apiKeyId, DateTime date)
-    {
-        return Validate(apiKeyId, date).Count == 0;
-    }
+    public static bool IsValid(string apiKeyId, DateTime date) => Validate(apiKeyId, date).Count == 0;
 
     /// <summary>
     /// Checks if the specified parameters are valid for <see cref="CacheKeyGenerator.GetWebhookDeliveryKey"/>.
     /// </summary>
     /// <param name="eventId">The event identifier.</param>
     /// <returns>True if valid; otherwise false.</returns>
-    public static bool IsValid(Guid eventId)
-    {
-        return Validate(eventId).Count == 0;
-    }
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="eventId"/> is <see cref="Guid.Empty"/>.</exception>
+    public static bool IsValid(Guid eventId) => Validate(eventId).Count == 0;
 
     /// <summary>
     /// Checks if the specified parameters are valid for <see cref="CacheKeyGenerator.GetExternalApiCacheKey"/>.
@@ -189,18 +181,13 @@ public static class CacheKeyGeneratorValidation
     /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="apiName"/> or <paramref name="endpoint"/> is null.</exception>
     public static bool IsValid(string apiName, string endpoint, Dictionary<string, string>? parameters = null)
-    {
-        return Validate(apiName, endpoint, parameters).Count == 0;
-    }
+        => Validate(apiName, endpoint, parameters).Count == 0;
 
     /// <summary>
     /// Checks if the parameters are valid for <see cref="CacheKeyGenerator.GetRateLimitInvalidationPattern"/>.
     /// </summary>
     /// <returns>True if valid; otherwise false.</returns>
-    public static bool IsValid()
-    {
-        return Validate().Count == 0;
-    }
+    public static bool IsValid() => Validate().Count == 0;
 
     /// <summary>
     /// Ensures that the specified parameters are valid for <see cref="CacheKeyGenerator.GetApiKeyKey"/>,
@@ -260,6 +247,7 @@ public static class CacheKeyGeneratorValidation
     /// throwing an <see cref="ArgumentException"/> if any validation problem is found.
     /// </summary>
     /// <param name="eventId">The event identifier.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="eventId"/> is <see cref="Guid.Empty"/>.</exception>
     /// <exception cref="ArgumentException">Thrown if validation fails.</exception>
     public static void EnsureValid(Guid eventId)
     {
