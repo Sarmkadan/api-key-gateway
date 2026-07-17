@@ -15,10 +15,11 @@ namespace ApiKeyGateway.Events;
 /// </summary>
 public static class ApiKeyEventJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new()
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
+        WriteIndented = false,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>
@@ -29,28 +30,20 @@ public static class ApiKeyEventJsonExtensions
     /// <returns>A JSON string representing the event.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string ToJson(this ApiKeyEvent value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
-    }
+        => JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } : _jsonOptions);
 
     /// <summary>
     /// Parses an <see cref="ApiKeyEvent"/> from its JSON representation.
     /// </summary>
     /// <param name="json">The JSON string to parse.</param>
-    /// <returns>The deserialized API key event, or null if the JSON represents a null value.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static ApiKeyEvent? FromJson(string json)
+    /// <returns>The deserialized API key event.</returns>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">The JSON is invalid or cannot be deserialized.</exception>
+    public static ApiKeyEvent FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
-
-        return JsonSerializer.Deserialize<ApiKeyEvent>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<ApiKeyEvent>(json, _jsonOptions)
+            ?? throw new JsonException("JSON deserialized to null, expected non-null ApiKeyEvent");
     }
 
     /// <summary>
@@ -59,6 +52,7 @@ public static class ApiKeyEventJsonExtensions
     /// <param name="json">The JSON string to parse.</param>
     /// <param name="value">Receives the deserialized API key event if successful.</param>
     /// <returns>True if parsing succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out ApiKeyEvent? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
