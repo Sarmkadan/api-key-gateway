@@ -38,15 +38,17 @@ namespace ApiKeyGateway.Tests
                     problems.Add($"Test method has null/empty name: {method.DeclaringType?.Name}");
                 }
 
-                // Check for test method attributes
-                if (!method.GetCustomAttributes(typeof(FactAttribute), false).Any() &&
-                    !method.GetCustomAttributes(typeof(TheoryAttribute), false).Any())
+                // Check for test method attributes using pattern matching
+                var hasFactAttribute = method.GetCustomAttributes(typeof(FactAttribute), false).Any();
+                var hasTheoryAttribute = method.GetCustomAttributes(typeof(TheoryAttribute), false).Any();
+
+                if (!hasFactAttribute && !hasTheoryAttribute)
                 {
                     problems.Add($"Test method {method.Name} is missing [Fact] or [Theory] attribute");
                 }
             }
 
-            return problems;
+            return problems.AsReadOnly();
         }
 
         /// <summary>
@@ -72,9 +74,9 @@ namespace ApiKeyGateway.Tests
             ArgumentNullException.ThrowIfNull(value);
 
             var problems = value.Validate();
-            if (problems.Any())
+            if (problems.Count > 0)
             {
-                throw new ArgumentException(string.Join("\n", problems), nameof(value));
+                throw new ArgumentException(string.Join(Environment.NewLine, problems), nameof(value));
             }
         }
     }
