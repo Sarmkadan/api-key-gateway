@@ -810,3 +810,59 @@ Console.WriteLine($"Formatted: {detailedException.ToFormattedString()}");
 }
 }
 ```
+
+## InvalidApiKeyExceptionExtensions
+
+The `InvalidApiKeyExceptionExtensions` class provides extension methods for `InvalidApiKeyException` to simplify common operations like checking if a key is expired, retrieving the API key hash, getting the timestamp when the exception occurred, and formatting exception details for logging purposes.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+using System;
+
+class InvalidApiKeyExample
+{
+public void Run()
+{
+try
+{
+// Simulate an invalid API key scenario
+throw new InvalidApiKeyException("API key validation failed", "sk_test_abc123xyz", isExpired: true);
+}
+catch (InvalidApiKeyException ex)
+{
+// Check if the key is expired
+bool isExpired = ex.IsKeyExpired();
+Console.WriteLine($"Is key expired: {isExpired}");
+
+// Get the API key hash
+string? keyHash = ex.GetApiKeyHash();
+Console.WriteLine($"API key hash: {keyHash}");
+
+// Get when the exception occurred
+DateTime occurredAt = ex.GetOccurredAt();
+Console.WriteLine($"Exception occurred at: {occurredAt:yyyy-MM-dd HH:mm:ss}");
+
+// Check if the key is disabled (not expired)
+bool isDisabled = ex.IsKeyDisabled();
+Console.WriteLine($"Is key disabled: {isDisabled}");
+
+// Format the exception for logging
+string logMessage = ex.FormatForLogging();
+Console.WriteLine(logMessage);
+// Output: "InvalidApiKeyException: API key validation failed | ApiKeyHash: sk_test_abc123xyz | IsExpired: True | OccurredAt: 2026-07-19 14:30:00 UTC"
+
+// Chain multiple checks for detailed error handling
+if (ex.IsKeyExpired())
+{
+Console.WriteLine("Key has expired - consider renewing the API key");
+}
+else if (ex.IsKeyDisabled())
+{
+Console.WriteLine("Key is disabled - check key status in the admin portal");
+}
+}
+}
+}
+```
