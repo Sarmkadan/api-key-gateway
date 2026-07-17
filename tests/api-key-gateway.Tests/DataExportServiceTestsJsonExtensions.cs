@@ -20,28 +20,26 @@ public static class DataExportServiceTestsJsonExtensions
     /// <returns>The serialized JSON string.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static string ToJson(this DataExportServiceTests value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        return JsonSerializer.Serialize(value, indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions);
-    }
+        => JsonSerializer.Serialize(
+            value,
+            indented
+                ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+                : _jsonOptions);
 
     /// <summary>
     /// Deserializes a JSON string to a <see cref="DataExportServiceTests"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized instance, or null if the JSON is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown if the JSON is invalid.</exception>
     public static DataExportServiceTests? FromJson(string json)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<DataExportServiceTests>(json, _jsonOptions);
+        return string.IsNullOrEmpty(json)
+            ? null
+            : JsonSerializer.Deserialize<DataExportServiceTests>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -56,7 +54,7 @@ public static class DataExportServiceTestsJsonExtensions
 
         if (string.IsNullOrEmpty(json))
         {
-            return true;
+            return false;
         }
 
         try
