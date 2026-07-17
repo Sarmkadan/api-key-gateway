@@ -28,6 +28,7 @@ public static class AuditLogServiceTestsExtensions
     /// <param name="performedBy">Who performed the action.</param>
     /// <param name="resourceType">Type of resource (defaults to "ApiKey").</param>
     /// <returns>A configured audit log instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when resourceId or resourceType is null or empty.</exception>
     public static AuditLog CreateTestAuditLog(
         this string resourceId,
         AuditAction action,
@@ -55,6 +56,7 @@ public static class AuditLogServiceTestsExtensions
     /// </summary>
     /// <param name="test">The test instance.</param>
     /// <param name="expectedLog">The expected audit log.</param>
+    /// <exception cref="ArgumentNullException">Thrown when test or expectedLog is null.</exception>
     public static void VerifyLogCreated(
         this AuditLogServiceTests test,
         AuditLog expectedLog)
@@ -72,6 +74,7 @@ public static class AuditLogServiceTestsExtensions
     /// </summary>
     /// <param name="test">The test instance.</param>
     /// <param name="expectedAction">The expected audit action.</param>
+    /// <exception cref="ArgumentNullException">Thrown when test is null.</exception>
     public static void VerifyInformationLogForAction(
         this AuditLogServiceTests test,
         AuditAction expectedAction)
@@ -96,6 +99,8 @@ public static class AuditLogServiceTestsExtensions
     /// <param name="resourceId">The resource identifier.</param>
     /// <param name="logs">The logs to return.</param>
     /// <param name="limit">Optional limit (defaults to 100).</param>
+    /// <exception cref="ArgumentNullException">Thrown when test or logs is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when resourceId is null or empty.</exception>
     public static void SetupGetLogsAsync(
         this AuditLogServiceTests test,
         string resourceId,
@@ -118,6 +123,7 @@ public static class AuditLogServiceTestsExtensions
     /// <param name="startDate">Start date of the range.</param>
     /// <param name="endDate">End date of the range.</param>
     /// <param name="logs">The logs to return.</param>
+    /// <exception cref="ArgumentNullException">Thrown when test or logs is null.</exception>
     public static void SetupGetLogsForPeriodAsync(
         this AuditLogServiceTests test,
         DateTime startDate,
@@ -138,6 +144,8 @@ public static class AuditLogServiceTestsExtensions
     /// <param name="test">The test instance.</param>
     /// <param name="retentionDays">Retention period in days.</param>
     /// <param name="deletedCount">Number of logs that were deleted.</param>
+    /// <exception cref="ArgumentNullException">Thrown when test is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when retentionDays is less than or equal to 0.</exception>
     public static void SetupCleanupOldLogsAsync(
         this AuditLogServiceTests test,
         int retentionDays,
@@ -154,6 +162,9 @@ public static class AuditLogServiceTestsExtensions
     /// <summary>
     /// Gets the mock repository from the test instance.
     /// </summary>
+    /// <param name="test">The test instance.</param>
+    /// <returns>The mock repository instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when test is null.</exception>
     public static Mock<IAuditLogRepository> GetMockRepository(this AuditLogServiceTests test)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -163,6 +174,9 @@ public static class AuditLogServiceTestsExtensions
     /// <summary>
     /// Gets the mock logger from the test instance.
     /// </summary>
+    /// <param name="test">The test instance.</param>
+    /// <returns>The mock logger instance.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when test is null.</exception>
     public static Mock<ILogger<AuditLogService>> GetMockLogger(this AuditLogServiceTests test)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -172,6 +186,9 @@ public static class AuditLogServiceTestsExtensions
     /// <summary>
     /// Gets the service under test from the test instance.
     /// </summary>
+    /// <param name="test">The test instance.</param>
+    /// <returns>The service under test.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when test is null.</exception>
     public static AuditLogService GetServiceUnderTest(this AuditLogServiceTests test)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -183,6 +200,7 @@ public static class AuditLogServiceTestsExtensions
     /// </summary>
     /// <param name="logs">The actual logs.</param>
     /// <param name="expectedActions">The expected action types.</param>
+    /// <exception cref="ArgumentNullException">Thrown when logs or expectedActions is null.</exception>
     public static void ContainOnlyActions(
         this List<AuditLog> logs,
         params AuditAction[] expectedActions)
@@ -199,6 +217,7 @@ public static class AuditLogServiceTestsExtensions
     /// Helper method to assert that a collection of logs contains only successful operations.
     /// </summary>
     /// <param name="logs">The actual logs.</param>
+    /// <exception cref="ArgumentNullException">Thrown when logs is null.</exception>
     public static void ContainOnlySuccessfulOperations(this List<AuditLog> logs)
     {
         ArgumentNullException.ThrowIfNull(logs);
@@ -211,6 +230,7 @@ public static class AuditLogServiceTestsExtensions
     /// Helper method to assert that a collection of logs contains only failed operations.
     /// </summary>
     /// <param name="logs">The actual logs.</param>
+    /// <exception cref="ArgumentNullException">Thrown when logs is null.</exception>
     public static void ContainOnlyFailedOperations(this List<AuditLog> logs)
     {
         ArgumentNullException.ThrowIfNull(logs);
@@ -220,19 +240,27 @@ public static class AuditLogServiceTestsExtensions
     }
 
     /// <summary>
-    /// Helper method to get the private field value from the test instance.
+    /// Gets the value of a private field from the test instance.
     /// </summary>
-    private static T GetFieldValue<T>(this AuditLogServiceTests test, string fieldName)
+    /// <typeparam name="T">The type of the field value.</typeparam>
+    /// <param name="test">The test instance.</param>
+    /// <param name="fieldName">Name of the field to retrieve.</param>
+    /// <returns>The field value.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when test or fieldName is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the field is not found.</exception>
+    private static T GetFieldValue<T>(
+        this AuditLogServiceTests test,
+        string fieldName)
     {
+        ArgumentNullException.ThrowIfNull(test);
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+
         var field = typeof(AuditLogServiceTests).GetField(
             fieldName,
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        if (field == null)
-        {
-            throw new InvalidOperationException($"Field '{fieldName}' not found in AuditLogServiceTests");
-        }
-
-        return (T)field.GetValue(test)!;
+        return field == null
+            ? throw new InvalidOperationException($"Field '{fieldName}' not found in AuditLogServiceTests")
+            : (T)field.GetValue(test)!;
     }
 }
