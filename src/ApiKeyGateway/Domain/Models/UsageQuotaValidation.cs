@@ -23,40 +23,58 @@ public static class UsageQuotaValidation
 
         // Id must not be null or empty
         if (string.IsNullOrWhiteSpace(value.Id))
+        {
             errors.Add("Id must not be null or empty.");
+        }
 
         // ApiKeyId must not be null or empty
         if (string.IsNullOrWhiteSpace(value.ApiKeyId))
+        {
             errors.Add("ApiKeyId must not be null or empty.");
+        }
 
-        // QuotaLimit must be non‑negative
+        // QuotaLimit must be non-negative
         if (value.QuotaLimit < 0)
-            errors.Add($"QuotaLimit must be non‑negative (found {value.QuotaLimit.ToString(CultureInfo.InvariantCulture)}).");
+        {
+            errors.Add($"QuotaLimit must be non-negative (found {value.QuotaLimit}).");
+        }
 
         // Period must be a defined enum value
         if (!Enum.IsDefined(typeof(Enums.QuotaPeriod), value.Period))
-            errors.Add($"Period must be a valid <see cref=\"Enums.QuotaPeriod\"/> value.");
+        {
+            errors.Add("Period must be a valid QuotaPeriod value.");
+        }
 
         // CreatedAt must not be the default DateTime
         if (value.CreatedAt == default)
+        {
             errors.Add("CreatedAt must not be the default DateTime.");
+        }
 
         // PeriodStartAt must not be the default DateTime
         if (value.PeriodStartAt == default)
+        {
             errors.Add("PeriodStartAt must not be the default DateTime.");
+        }
 
-        // CurrentUsage must be non‑negative
+        // CurrentUsage must be non-negative
         if (value.CurrentUsage < 0)
-            errors.Add($"CurrentUsage must be non‑negative (found {value.CurrentUsage.ToString(CultureInfo.InvariantCulture)}).");
+        {
+            errors.Add($"CurrentUsage must be non-negative (found {value.CurrentUsage}).");
+        }
 
         // If the quota is enabled, CurrentUsage must not exceed QuotaLimit
         if (value.IsEnabled && value.CurrentUsage > value.QuotaLimit)
-            errors.Add($"CurrentUsage ({value.CurrentUsage.ToString(CultureInfo.InvariantCulture)}) exceeds QuotaLimit ({value.QuotaLimit.ToString(CultureInfo.InvariantCulture)}).");
+        {
+            errors.Add($"CurrentUsage ({value.CurrentUsage}) exceeds QuotaLimit ({value.QuotaLimit}).");
+        }
 
         // PeriodStartAt must be before the period end
         var periodEnd = value.GetPeriodEndUtc();
         if (periodEnd <= value.PeriodStartAt)
-            errors.Add($"PeriodStartAt ({value.PeriodStartAt.ToString("o", CultureInfo.InvariantCulture)}) must be before the period end ({periodEnd.ToString("o", CultureInfo.InvariantCulture)}).");
+        {
+            errors.Add($"PeriodStartAt ({value.PeriodStartAt:o}) must be before the period end ({periodEnd:o}).");
+        }
 
         return errors.AsReadOnly();
     }
@@ -79,6 +97,8 @@ public static class UsageQuotaValidation
     {
         var errors = Validate(value);
         if (errors.Count > 0)
+        {
             throw new ArgumentException(string.Join("; ", errors), nameof(value));
+        }
     }
 }
