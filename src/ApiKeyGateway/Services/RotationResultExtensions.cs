@@ -32,16 +32,9 @@ public static class RotationResultExtensions
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var keyIdText = string.IsNullOrEmpty(result.NewKeyId)
-            ? "no new key generated"
-            : $"new key {result.NewKeyId}";
-
-        if (result.Success)
-        {
-            return $"Rotated key {result.OldKeyId} → {keyIdText} for consumer {result.ConsumerId}";
-        }
-
-        return $"Failed to rotate key {result.OldKeyId}: {result.FailureReason}";
+        return result.Success
+            ? GetSuccessDescription(result)
+            : GetFailureDescription(result);
     }
 
     /// <summary>
@@ -55,5 +48,19 @@ public static class RotationResultExtensions
         ArgumentNullException.ThrowIfNull(result);
 
         return !string.IsNullOrEmpty(result.FailureReason);
+    }
+
+    private static string GetSuccessDescription(RotationResult result)
+    {
+        var keyIdText = string.IsNullOrEmpty(result.NewKeyId)
+            ? "no new key generated"
+            : $"new key {result.NewKeyId}";
+
+        return $"Rotated key {result.OldKeyId} → {keyIdText} for consumer {result.ConsumerId}";
+    }
+
+    private static string GetFailureDescription(RotationResult result)
+    {
+        return $"Failed to rotate key {result.OldKeyId}: {result.FailureReason}";
     }
 }
