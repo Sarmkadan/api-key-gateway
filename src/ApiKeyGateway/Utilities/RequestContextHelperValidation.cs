@@ -22,7 +22,7 @@ public static class RequestContextHelperValidation
     /// </summary>
     /// <param name="request">The HTTP request to validate.</param>
     /// <returns>An empty list if valid, otherwise a list of human-readable validation errors.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if request is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="request"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this HttpRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -78,16 +78,15 @@ public static class RequestContextHelperValidation
     /// </summary>
     /// <param name="request">The HTTP request to check.</param>
     /// <returns>True if valid, false otherwise.</returns>
-    public static bool IsValid(this HttpRequest request)
-    {
-        return request.Validate().Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="request"/> is null.</exception>
+    public static bool IsValid(this HttpRequest request) => request.Validate().Count == 0;
 
     /// <summary>
     /// Ensures the request values extracted using RequestContextHelper are valid.
     /// Throws an exception if validation fails.
     /// </summary>
     /// <param name="request">The HTTP request to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="request"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown if request contains invalid values with a list of validation errors.</exception>
     public static void EnsureValid(this HttpRequest request)
     {
@@ -139,7 +138,7 @@ public static class RequestContextHelperValidation
         // Handle IPv6
         if (ipAddress.Contains(':'))
         {
-            return System.Net.IPAddress.TryParse(ipAddress, out _);
+            return IPAddress.TryParse(ipAddress, out _);
         }
 
         return false;
