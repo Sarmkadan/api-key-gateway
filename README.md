@@ -286,6 +286,110 @@ var finalKey = multiUsageKey
 finalKey.ShouldHaveUsage(2, 2560); // 512 + 2048 = 2560
 ```
 
+## ApiKeyRotationServiceTestsValidation
+
+The `ApiKeyRotationServiceTestsValidation` class provides validation helpers for `ApiKeyRotationServiceTests` instances. It includes methods for validating test setup, key rotation results, and API key properties to ensure test instances are properly configured and rotation operations produce expected outcomes.
+
+### Public Members
+
+- `Validate(this ApiKeyRotationServiceTests value)` - Validates the test instance and its mock dependencies, returning a list of validation problems
+- `IsValid(this ApiKeyRotationServiceTests value)` - Determines whether the test instance is valid by checking if the validation list is empty
+- `EnsureValid(this ApiKeyRotationServiceTests value)` - Ensures that the test instance is valid, throwing an exception if validation fails
+- `ValidateKeyRotationResult(this ApiKeyRotationServiceTests _, RotationResult result, string expectedOldKeyId, string expectedNewKeyId, string expectedConsumerId)` - Validates that a key rotation result contains expected values including success status and key identifiers
+- `ValidateApiKey(this ApiKeyRotationServiceTests _, ApiKey key, string expectedConsumerId, ApiKeyStatus expectedStatus, string? expectedIpWhitelist = null)` - Validates that an API key has expected properties including consumer ID, status, and optional IP whitelist
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Services;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new ApiKeyRotationServiceTests();
+
+// Validate the test instance setup
+var validationProblems = testInstance.Validate();
+testInstance.IsValid().Should().BeTrue();
+
+// Test successful validation
+var validResult = new ApiKeyRotationServiceTests();
+validResult.EnsureValid(); // Throws if invalid
+
+// Test key rotation result validation
+var rotationResult = new RotationResult
+{
+    Success = true,
+    OldKeyId = "old-key-123",
+    NewKeyId = "new-key-456",
+    ConsumerId = "consumer-789",
+    FailureReason = null
+};
+
+var rotationProblems = testInstance.ValidateKeyRotationResult(
+    rotationResult,
+    expectedOldKeyId: "old-key-123",
+    expectedNewKeyId: "new-key-456",
+    expectedConsumerId: "consumer-789"
+);
+rotationProblems.Should().BeEmpty();
+
+// Test API key validation
+var apiKey = new ApiKey
+{
+    Id = "key-789",
+    ConsumerId = "consumer-789",
+    Status = ApiKeyStatus.Active,
+    CreatedAt = DateTime.UtcNow,
+    IpWhitelist = "192.168.1.1,10.0.0.1"
+};
+
+var keyProblems = testInstance.ValidateApiKey(
+    apiKey,
+    expectedConsumerId: "consumer-789",
+    expectedStatus: ApiKeyStatus.Active,
+    expectedIpWhitelist: "192.168.1.1,10.0.0.1"
+);
+keyProblems.Should().BeEmpty();
+
+// Test validation with mismatched values
+var invalidRotationResult = new RotationResult
+{
+    Success = false,
+    OldKeyId = "wrong-old-key",
+    NewKeyId = "wrong-new-key",
+    ConsumerId = "wrong-consumer",
+    FailureReason = "Invalid key format"
+};
+
+var invalidRotationProblems = testInstance.ValidateKeyRotationResult(
+    invalidRotationResult,
+    expectedOldKeyId: "old-key-123",
+    expectedNewKeyId: "new-key-456",
+    expectedConsumerId: "consumer-789"
+);
+invalidRotationProblems.Should().HaveCount(3); // Success, OldKeyId, NewKeyId, ConsumerId mismatches
+
+// Test validation with invalid API key
+var invalidApiKey = new ApiKey
+{
+    Id = null,
+    ConsumerId = "wrong-consumer",
+    Status = ApiKeyStatus.Disabled,
+    CreatedAt = default,
+    IpWhitelist = null
+};
+
+var invalidKeyProblems = testInstance.ValidateApiKey(
+    invalidApiKey,
+    expectedConsumerId: "consumer-789",
+    expectedStatus: ApiKeyStatus.Active
+);
+invalidKeyProblems.Should().HaveCount(4); // ConsumerId, Status, CreatedAt, Id, IpWhitelist issues
+```
+
 ## CacheKeyGeneratorTestsExtensions
 
 The `CacheKeyGeneratorTestsExtensions` class provides extension methods for `CacheKeyGeneratorTests` that offer reusable assertions and helper methods for testing cache key generation scenarios. These extensions validate cache key formats, parameter handling, and hash generation for various API gateway caching use cases including API keys, rate limits, usage statistics, quotas, webhook deliveries, and external API calls.
