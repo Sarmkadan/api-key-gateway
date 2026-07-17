@@ -6,6 +6,7 @@
 // Provides efficient serialization/deserialization with camelCase naming convention.
 // =====================================================================
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace ApiKeyGateway.Domain.Exceptions;
@@ -13,6 +14,7 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// <summary>
 /// Provides JSON serialization and deserialization extensions for <see cref="InvalidApiKeyException"/>.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class InvalidApiKeyExceptionJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -59,14 +61,15 @@ public static class InvalidApiKeyExceptionJsonExtensions
     /// <param name="json">The JSON string to parse.</param>
     /// <param name="value">Receives the deserialized invalid API key exception if successful.</param>
     /// <returns>True if parsing succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out InvalidApiKeyException? value)
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    public static bool TryFromJson(string json, [NotNullWhen(true)] out InvalidApiKeyException? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
         try
         {
             value = JsonSerializer.Deserialize<InvalidApiKeyException>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
