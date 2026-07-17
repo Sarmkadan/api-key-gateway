@@ -17,9 +17,9 @@ public static class ValidationExceptionValidation
     /// <summary>
     /// Validates the specified <see cref="ValidationException"/> instance
     /// </summary>
-    /// <param name="value">The exception to validate</param>
-    /// <returns>A list of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
+    /// <param name="value">The exception to validate.</param>
+    /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(this ValidationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -31,17 +31,17 @@ public static class ValidationExceptionValidation
             problems.Add("Message cannot be null, empty, or whitespace.");
         }
 
-        if (!string.IsNullOrEmpty(value.ParameterName) && string.IsNullOrWhiteSpace(value.ParameterName))
+        if (value.ParameterName is not null && string.IsNullOrWhiteSpace(value.ParameterName))
         {
             problems.Add("ParameterName cannot be whitespace if specified.");
         }
 
-        if (!string.IsNullOrEmpty(value.AttemptedValue?.ToString()) && string.IsNullOrWhiteSpace(value.AttemptedValue?.ToString()))
+        if (value.AttemptedValue is not null && string.IsNullOrWhiteSpace(value.AttemptedValue.ToString()))
         {
             problems.Add("AttemptedValue cannot be whitespace if specified.");
         }
 
-        if (value.ValidationErrors != null)
+        if (value.ValidationErrors is not null)
         {
             if (!value.ValidationErrors.Any())
             {
@@ -64,11 +64,11 @@ public static class ValidationExceptionValidation
     }
 
     /// <summary>
-    /// Determines whether the specified <see cref="ValidationException"/> is valid
+    /// Determines whether the specified <see cref="ValidationException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception to check</param>
-    /// <returns>True if valid; otherwise false</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
+    /// <param name="value">The exception to check.</param>
+    /// <returns><see langword="true"/> if valid; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
     public static bool IsValid(this ValidationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -76,11 +76,11 @@ public static class ValidationExceptionValidation
     }
 
     /// <summary>
-    /// Ensures that the specified <see cref="ValidationException"/> is valid
+    /// Ensures that the specified <see cref="ValidationException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid, containing the validation problems</exception>
+    /// <param name="value">The exception to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid, containing the validation problems.</exception>
     public static void EnsureValid(this ValidationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
