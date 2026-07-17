@@ -10,7 +10,8 @@ public static class UnauthorizedAccessExceptionJsonExtensions
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
+        WriteIndented = false,
+        PropertyNameCaseInsensitive = true
     };
 
     /// <summary>
@@ -51,6 +52,7 @@ public static class UnauthorizedAccessExceptionJsonExtensions
     /// <param name="json">The JSON string to parse.</param>
     /// <param name="value">Receives the deserialized unauthorized access exception if successful.</param>
     /// <returns>True if parsing succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out UnauthorizedAccessException? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -58,7 +60,7 @@ public static class UnauthorizedAccessExceptionJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<UnauthorizedAccessException>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
