@@ -166,3 +166,38 @@ if (LoggerFactoryHelperJsonExtensions.TryFromJson(json, out var parsedConfig))
     bool isDebugEnabled = parsedConfig.DebugEnabled;
 }
 ```
+
+## JsonSerializationHelperValidation
+
+`JsonSerializationHelperValidation` provides static methods to verify the behavior and accessibility of the `JsonSerializationHelper` utilities. It ensures that serialization, deserialization, and JSON validation logic function as expected by running internal tests.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System;
+
+// Validate the helper and retrieve any errors
+IReadOnlyList<string> errors = JsonSerializationHelperValidation.Validate();
+if (errors.Count > 0)
+{
+    Console.WriteLine("Validation failed:");
+    foreach (var error in errors)
+    {
+        Console.WriteLine($" - {error}");
+    }
+}
+
+// Check if the helper is valid without retrieving errors
+bool isValid = JsonSerializationHelperValidation.IsValid();
+
+// Ensure validity; throws ArgumentException if validation fails
+try
+{
+    JsonSerializationHelperValidation.EnsureValid();
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Validation exception: {ex.Message}");
+}
+```
