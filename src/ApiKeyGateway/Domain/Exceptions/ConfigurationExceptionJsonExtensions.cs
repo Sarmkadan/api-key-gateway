@@ -2,7 +2,7 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // System.Text.Json serialization helpers for ConfigurationException
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -44,25 +44,28 @@ public static class ConfigurationExceptionJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static ConfigurationException? FromJson(string json)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
+        return string.IsNullOrEmpty(json)
+            ? null
+            : JsonSerializer.Deserialize<ConfigurationException>(json, _jsonOptions);
     }
 
     /// <summary>
     /// Attempts to deserialize a <see cref="ConfigurationException"/> from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized exception if successful.</param>
+    /// <param name="value">Receives the deserialized exception if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out ConfigurationException? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrEmpty(json))
