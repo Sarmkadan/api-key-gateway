@@ -550,6 +550,46 @@ var inactiveKeyResult = await apiKeyRotationServiceTests.RotateKeyAsync_Inactive
 Assert.False(inactiveKeyResult.Success);
 ```
 
+## StringExtensionsJsonExtensions
+
+The `StringExtensionsJsonExtensions` class provides JSON serialization and deserialization capabilities for `StringExtensions` type metadata. Since `StringExtensions` is a static class, this class serializes metadata about the extension methods rather than instances of `StringExtensions` itself. It includes methods for converting metadata to JSON strings, parsing JSON strings back to metadata objects, and safely attempting deserialization.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+using System;
+
+// Serialize StringExtensions metadata to JSON
+var json = StringExtensionsJsonExtensions.ToJson();
+Console.WriteLine(json);
+
+// Serialize with indentation for readability
+var prettyJson = StringExtensionsJsonExtensions.ToJson(indented: true);
+Console.WriteLine(prettyJson);
+
+// Deserialize JSON back to metadata
+var metadata = StringExtensionsJsonExtensions.FromJson(json);
+if (metadata != null)
+{
+    Console.WriteLine($"Type: {metadata.TypeName}");
+    Console.WriteLine($"Methods: {string.Join(", ", metadata.Methods ?? Array.Empty<string>())}");
+}
+
+// Safely attempt deserialization
+if (StringExtensionsJsonExtensions.TryFromJson(json, out var safeMetadata))
+{
+    Console.WriteLine("Deserialization succeeded!");
+}
+
+// Handle invalid JSON safely
+var invalidJson = "{ invalid: json";
+if (!StringExtensionsJsonExtensions.TryFromJson(invalidJson, out var errorMetadata))
+{
+    Console.WriteLine("Failed to deserialize invalid JSON");
+}
+```
+
 ## CollectionExtensionsValidation
 
 The `CollectionExtensionsValidation` class provides a set of helper methods that validate common collection‑related parameters and state before they are used by extension methods. It ensures arguments such as pagination values, batch sizes, key selectors, and actions are correct, and it offers utilities to check or enforce collection validity.
