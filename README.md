@@ -636,3 +636,63 @@ class ValidationExample
     }
 }
 ```
+
+## StringExtensionsValidation
+
+The `StringExtensionsValidation` class provides validation helpers for string operation parameters from `StringExtensions`. It validates inputs before they are used by extension methods like `Truncate`, `TruncateWithEllipsis`, `ContainsAny`, `StartsWithAny`, and `ToList`, ensuring parameters meet expected constraints. The class offers both validation methods that return lists of problems and convenience methods that throw exceptions when validation fails.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+using System;
+
+class ValidationExample
+{
+    public void Run()
+    {
+        // Validate Truncate parameters (maxLength must be > 0)
+        var truncateProblems = StringExtensionsValidation.ValidateTruncateParameters(25);
+        if (truncateProblems.Count == 0)
+        {
+            Console.WriteLine("Truncate parameters are valid");
+        }
+
+        // Validate TruncateWithEllipsis parameters (maxLength must be >= 3 to fit ellipsis)
+        var ellipsisProblems = StringExtensionsValidation.ValidateTruncateWithEllipsisParameters(10);
+        if (ellipsisProblems.Count == 0)
+        {
+            Console.WriteLine("TruncateWithEllipsis parameters are valid");
+        }
+
+        // Validate ContainsAny parameters (search strings must not be null/empty/whitespace)
+        var containsProblems = StringExtensionsValidation.ValidateContainsAnyParameters("test", "example");
+        if (containsProblems.Count == 0)
+        {
+            Console.WriteLine("ContainsAny parameters are valid");
+        }
+
+        // Validate StartsWithAny parameters (prefixes must not be null/empty/whitespace)
+        var startsWithProblems = StringExtensionsValidation.ValidateStartsWithAnyParameters("pk_", "sk_");
+        if (startsWithProblems.Count == 0)
+        {
+            Console.WriteLine("StartsWithAny parameters are valid");
+        }
+
+        // Validate ToList parameters (delimiter must not be a control character)
+        var toListProblems = StringExtensionsValidation.ValidateToListParameters(',');
+        if (toListProblems.Count == 0)
+        {
+            Console.WriteLine("ToList parameters are valid");
+        }
+
+        // Quick validity checks (returns bool instead of problems list)
+        bool isValidTruncate = StringExtensionsValidation.IsValidTruncateParameters(25);
+        bool isValidContains = StringExtensionsValidation.IsValidContainsAnyParameters("test");
+
+        // Ensure parameters are valid (throws ArgumentException if not)
+        StringExtensionsValidation.EnsureValidTruncateParameters(25);
+        StringExtensionsValidation.EnsureValidContainsAnyParameters("pk_", "sk_");
+    }
+}
+```
