@@ -549,3 +549,50 @@ Assert.False(nonExistentKeyResult.Success);
 var inactiveKeyResult = await apiKeyRotationServiceTests.RotateKeyAsync_InactiveKey_ReturnsFailureResult();
 Assert.False(inactiveKeyResult.Success);
 ```
+
+## CollectionExtensionsValidation
+
+The `CollectionExtensionsValidation` class provides a set of helper methods that validate common collection‑related parameters and state before they are used by extension methods. It ensures arguments such as pagination values, batch sizes, key selectors, and actions are correct, and it offers utilities to check or enforce collection validity.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class ValidationExample
+{
+    public void Run()
+    {
+        // Validate pagination parameters (page number must be >= 1, page size >= 1)
+        IReadOnlyList<string> paginationProblems =
+            CollectionExtensionsValidation.ValidatePaginationParameters(pageNumber: 1, pageSize: 20);
+
+        // Validate batch size
+        IReadOnlyList<string> batchProblems =
+            CollectionExtensionsValidation.ValidateBatchParameters(batchSize: 5);
+
+        // Validate a key selector function
+        Func<string, int> keySelector = s => s.Length;
+        IReadOnlyList<string> keySelectorProblems =
+            CollectionExtensionsValidation.ValidateKeySelector<string, int>(keySelector);
+
+        // Validate an action for ForEachSafe
+        Action<string> action = s => Console.WriteLine(s);
+        IReadOnlyList<string> actionProblems =
+            CollectionExtensionsValidation.ValidateForEachAction(action);
+
+        // Validate a collection itself
+        IEnumerable<int> numbers = new List<int> { 1, 2, 3 };
+        IReadOnlyList<string> collectionProblems = CollectionExtensionsValidation.Validate(numbers);
+
+        // Quick validity check
+        bool isValid = numbers.IsValid();
+
+        // Ensure the collection is not null (throws ArgumentNullException if it is)
+        numbers.EnsureValid();
+    }
+}
+```
