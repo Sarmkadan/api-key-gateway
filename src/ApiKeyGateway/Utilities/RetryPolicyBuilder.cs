@@ -19,6 +19,26 @@ public sealed class RetryPolicyBuilder
     private readonly List<Type> _retryableExceptions = new();
 
     /// <summary>
+    /// Gets the maximum number of retry attempts.
+    /// </summary>
+    public int MaxRetries => _maxRetries;
+
+    /// <summary>
+    /// Gets the initial delay before first retry in milliseconds.
+    /// </summary>
+    public int InitialDelayMs => _initialDelayMs;
+
+    /// <summary>
+    /// Gets the exponential backoff multiplier.
+    /// </summary>
+    public double BackoffMultiplier => _backoffMultiplier;
+
+    /// <summary>
+    /// Gets the maximum delay in milliseconds.
+    /// </summary>
+    public int MaxDelayMs => _maxDelayMs;
+
+    /// <summary>
     /// Sets maximum number of retry attempts.
     /// </summary>
     public RetryPolicyBuilder WithMaxRetries(int maxRetries)

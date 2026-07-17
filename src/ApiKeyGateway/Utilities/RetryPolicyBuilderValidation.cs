@@ -23,41 +23,25 @@ public static class RetryPolicyBuilderValidation
         var problems = new List<string>();
 
         // Validate MaxRetries
-        try
-        {
-            value.WithMaxRetries(-1);
-        }
-        catch
+        if (value.MaxRetries < 0)
         {
             problems.Add("Max retries must be a non-negative integer.");
         }
 
         // Validate InitialDelay
-        try
-        {
-            value.WithInitialDelay(0);
-        }
-        catch
+        if (value.InitialDelayMs <= 0)
         {
             problems.Add("Initial delay must be a positive integer greater than zero.");
         }
 
         // Validate BackoffMultiplier
-        try
-        {
-            value.WithBackoffMultiplier(0);
-        }
-        catch
+        if (value.BackoffMultiplier <= 0)
         {
             problems.Add("Backoff multiplier must be a positive number greater than zero.");
         }
 
         // Validate MaxDelay
-        try
-        {
-            value.WithMaxDelay(0);
-        }
-        catch
+        if (value.MaxDelayMs <= 0)
         {
             problems.Add("Max delay must be a positive integer greater than zero.");
         }
