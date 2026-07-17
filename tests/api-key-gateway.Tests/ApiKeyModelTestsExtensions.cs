@@ -5,6 +5,7 @@
 // =============================================================================
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
@@ -15,15 +16,33 @@ namespace ApiKeyGateway.Tests;
 /// <summary>
 /// Provides extension methods for <see cref="ApiKeyModelTests"/> to simplify test assertions and setup.
 /// </summary>
+[SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Justification = "Extension methods class")]
 public static class ApiKeyModelTestsExtensions
 {
+    /// <summary>
+    /// Validates that the IP whitelist string is not null, empty, or whitespace.
+    /// </summary>
+    /// <param name="ipWhitelist">The IP whitelist string to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipWhitelist"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="ipWhitelist"/> is empty or consists only of whitespace.</exception>
+    private static void ValidateIpWhitelist(string ipWhitelist)
+    {
+        ArgumentNullException.ThrowIfNull(ipWhitelist);
+
+        if (string.IsNullOrWhiteSpace(ipWhitelist))
+        {
+            throw new ArgumentException(
+                "IP whitelist cannot be empty or consist only of whitespace.",
+                nameof(ipWhitelist));
+        }
+    }
     /// <summary>
     /// Creates a new active <see cref="ApiKey"/> with default values for testing.
     /// </summary>
     /// <param name="tests">The test instance (unused but required for extension method syntax).</param>
     /// <param name="expirationDays">Optional expiration days from now. Defaults to 30 days.</param>
     /// <returns>A new active API key with test-friendly defaults.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when expirationDays is negative.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="expirationDays"/> is negative.</exception>
     public static ApiKey WithDefaultValues(this ApiKeyModelTests tests, int expirationDays = 30)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(expirationDays);
@@ -52,7 +71,7 @@ public static class ApiKeyModelTestsExtensions
     /// <param name="status">The desired status for the API key.</param>
     /// <param name="expirationDays">Optional expiration days from now. Defaults to 30 days.</param>
     /// <returns>A new API key with the specified status.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when expirationDays is negative.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="expirationDays"/> is negative.</exception>
     public static ApiKey WithStatus(this ApiKeyModelTests tests, ApiKeyStatus status, int expirationDays = 30)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(expirationDays);
@@ -78,10 +97,11 @@ public static class ApiKeyModelTestsExtensions
     /// Creates a new API key with the specified IP whitelist for testing.
     /// </summary>
     /// <param name="tests">The test instance (unused but required for extension method syntax).</param>
-    /// <param name="ipWhitelist">Comma-separated list of allowed IPs.</param>
+    /// <param name="ipWhitelist">Comma-separated list of allowed IPs. Must not be null or whitespace.</param>
     /// <param name="status">Optional status for the API key. Defaults to Active.</param>
     /// <returns>A new API key with the specified IP whitelist.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when ipWhitelist is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipWhitelist"/> is null.</exception>
+/// <exception cref="ArgumentException">Thrown when <paramref name="ipWhitelist"/> is empty or consists only of whitespace.</exception>
     public static ApiKey WithIpWhitelist(this ApiKeyModelTests tests, string ipWhitelist, ApiKeyStatus status = ApiKeyStatus.Active)
     {
         ArgumentNullException.ThrowIfNull(ipWhitelist);
@@ -94,7 +114,7 @@ public static class ApiKeyModelTestsExtensions
             BytesTransferred = 0,
             LastUsedAt = null,
             CreatedAt = DateTime.UtcNow,
-            IpWhitelist = ipWhitelist,
+            IpWhitelist = ipWhitelist.Trim(),
             DisabledAt = status == ApiKeyStatus.Disabled ? DateTime.UtcNow : null
         };
     }
@@ -124,6 +144,8 @@ public static class ApiKeyModelTestsExtensions
     public static void ShouldHaveUsage(this ApiKey key, int expectedCount, long expectedBytes)
     {
         ArgumentNullException.ThrowIfNull(key);
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedBytes);
 
         key.RequestCount.Should().Be(expectedCount, "Request count mismatch");
         key.BytesTransferred.Should().Be(expectedBytes, "Bytes transferred mismatch");
