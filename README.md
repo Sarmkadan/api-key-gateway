@@ -79,6 +79,142 @@ foreach (var result in exceededResults)
 - `RepeatPattern(this string pattern, int repeatCount)` - Generates a test string with repeated pattern for consistency testing
 - `CreateEdgeCaseString()` - Creates a string with all possible edge case characters for comprehensive testing
 
+## RequestValidatorTestsExtensions
+
+The `RequestValidatorTestsExtensions` class provides extension methods for `RequestValidatorTests` that offer reusable test utilities for validating various request parameters commonly encountered in API key gateway scenarios. These extensions generate comprehensive test cases for email validation, URL validation, IP address validation, length validation, range validation, and GUID validation to ensure robust parameter validation in the API gateway.
+
+### Public Members
+
+- `CreateEmailValidationTestCases()` - Creates a collection of test cases for email validation with expected boolean results
+- `CreateUrlValidationTestCases()` - Creates a collection of test cases for URL validation with expected boolean results
+- `CreateIpAddressValidationTestCases()` - Creates a collection of test cases for IP address validation with expected boolean results
+- `CreateLengthValidationTestCases()` - Creates a collection of test cases for string length validation with minimum and maximum length constraints
+- `CreateRangeValidationTestCases()` - Creates a collection of test cases for numeric range validation with minimum and maximum values
+- `CreateGuidValidationTestCases()` - Creates a collection of test cases for GUID validation with expected boolean results
+- `ShouldBeValid(this RequestValidatorTests tests)` - Asserts that a validation result indicates success
+- `ShouldBeInvalid(this RequestValidatorTests tests)` - Asserts that a validation result indicates failure
+- `CreateValidationResult(this RequestValidatorTests tests, bool isValid, string? errorMessage = null)` - Creates a validation result for testing purposes
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Models;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new RequestValidatorTests();
+
+// Test email validation scenarios
+var emailTestCases = testInstance.CreateEmailValidationTestCases();
+emailTestCases.Should().NotBeEmpty();
+
+foreach (var (email, expected) in emailTestCases)
+{
+    var validationResult = RequestValidator.ValidateEmail(email);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Test URL validation scenarios
+var urlTestCases = testInstance.CreateUrlValidationTestCases();
+urlTestCases.Should().NotBeEmpty();
+
+foreach (var (url, expected) in urlTestCases)
+{
+    var validationResult = RequestValidator.ValidateUrl(url);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Test IP address validation scenarios
+var ipTestCases = testInstance.CreateIpAddressValidationTestCases();
+ipTestCases.Should().NotBeEmpty();
+
+foreach (var (ipAddress, expected) in ipTestCases)
+{
+    var validationResult = RequestValidator.ValidateIpAddress(ipAddress);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Test length validation scenarios
+var lengthTestCases = testInstance.CreateLengthValidationTestCases();
+lengthTestCases.Should().NotBeEmpty();
+
+foreach (var (value, minLength, maxLength, expected) in lengthTestCases)
+{
+    var validationResult = RequestValidator.ValidateLength(value, minLength, maxLength);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Test range validation scenarios
+var rangeTestCases = testInstance.CreateRangeValidationTestCases();
+rangeTestCases.Should().NotBeEmpty();
+
+foreach (var (value, minimum, maximum, expected) in rangeTestCases)
+{
+    var validationResult = RequestValidator.ValidateRange(value, minimum, maximum);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Test GUID validation scenarios
+var guidTestCases = testInstance.CreateGuidValidationTestCases();
+guidTestCases.Should().NotBeEmpty();
+
+foreach (var (guid, expected) in guidTestCases)
+{
+    var validationResult = RequestValidator.ValidateGuid(guid);
+    if (expected)
+    {
+        validationResult.ShouldBeValid(testInstance);
+    }
+    else
+    {
+        validationResult.ShouldBeInvalid(testInstance);
+    }
+}
+
+// Create custom validation results for specific test scenarios
+var customResult = testInstance.CreateValidationResult(true, null);
+testInstance.ShouldBeValid(customResult);
+
+var errorResult = testInstance.CreateValidationResult(false, "Invalid parameter format");
+testInstance.ShouldBeInvalid(errorResult);
+```
+
 ## CacheKeyGeneratorTestsExtensions
 
 The `CacheKeyGeneratorTestsExtensions` class provides extension methods for `CacheKeyGeneratorTests` that offer reusable assertions and helper methods for testing cache key generation scenarios. These extensions validate cache key formats, parameter handling, and hash generation for various API gateway caching use cases including API keys, rate limits, usage statistics, quotas, webhook deliveries, and external API calls.
