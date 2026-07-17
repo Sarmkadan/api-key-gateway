@@ -27,12 +27,12 @@ public static class DataAccessExceptionValidation
             problems.Add("Message cannot be null, empty, or whitespace.");
         }
 
-        if (!string.IsNullOrEmpty(value.Operation) && string.IsNullOrWhiteSpace(value.Operation))
+        if (value.Operation is not null && string.IsNullOrWhiteSpace(value.Operation))
         {
             problems.Add("Operation cannot be whitespace if specified.");
         }
 
-        if (!string.IsNullOrEmpty(value.Entity) && string.IsNullOrWhiteSpace(value.Entity))
+        if (value.Entity is not null && string.IsNullOrWhiteSpace(value.Entity))
         {
             problems.Add("Entity cannot be whitespace if specified.");
         }
@@ -63,7 +63,6 @@ public static class DataAccessExceptionValidation
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = Validate(value);
-
         if (problems.Count > 0)
         {
             throw new ArgumentException(
