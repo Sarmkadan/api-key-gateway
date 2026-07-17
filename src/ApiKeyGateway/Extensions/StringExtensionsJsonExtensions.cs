@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // ===================================================================
 
+using System.Reflection;
 using System.Text.Json;
 
 namespace ApiKeyGateway.Extensions;
@@ -33,8 +34,8 @@ public static class StringExtensionsJsonExtensions
 
         var metadata = new StringExtensionsMetadata
         {
-            TypeName = "StringExtensions",
-            Methods = GetPublicMethodNames(),
+            TypeName = typeof(StringExtensions).Name,
+            Methods = GetPublicExtensionMethodNames(),
         };
 
         return JsonSerializer.Serialize(metadata, options);
@@ -45,10 +46,13 @@ public static class StringExtensionsJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A StringExtensionsMetadata object, or null if the JSON is null or empty.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or consists only of whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static StringExtensionsMetadata? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrWhiteSpace(json))
         {
             return null;
@@ -63,8 +67,11 @@ public static class StringExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized metadata if successful.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
     public static bool TryFromJson(string json, out StringExtensionsMetadata? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrWhiteSpace(json))
@@ -96,21 +103,18 @@ public static class StringExtensionsJsonExtensions
     }
 
     /// <summary>
-    /// Gets the names of public methods on StringExtensions for serialization.
+    /// Gets the names of public extension methods on StringExtensions for serialization.
+    /// Uses reflection to dynamically discover all public extension methods.
     /// </summary>
-    private static IReadOnlyList<string> GetPublicMethodNames()
+    private static IReadOnlyList<string> GetPublicExtensionMethodNames()
     {
-        return [
-            nameof(StringExtensions.Truncate),
-            nameof(StringExtensions.TruncateWithEllipsis),
-            nameof(StringExtensions.ContainsAny),
-            nameof(StringExtensions.StartsWithAny),
-            nameof(StringExtensions.ToSlug),
-            nameof(StringExtensions.CapitalizeFirst),
-            nameof(StringExtensions.ToList),
-            nameof(StringExtensions.IsNumeric),
-            nameof(StringExtensions.TryParseInt),
-            nameof(StringExtensions.TryParseLong)
-        ];
+        var extensionMethods = typeof(StringExtensions)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.GetCustomAttribute<System.Runtime.CompilerServices.ExtensionAttribute>() != null)
+            .Select(m => m.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        return extensionMethods;
     }
 }
