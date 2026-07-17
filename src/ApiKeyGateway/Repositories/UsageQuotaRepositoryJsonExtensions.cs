@@ -19,7 +19,8 @@ public static class UsageQuotaRepositoryJsonExtensions
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
+        WriteIndented = false,
+        PropertyNameCaseInsensitive = true
     };
 
     /// <summary>
@@ -30,15 +31,7 @@ public static class UsageQuotaRepositoryJsonExtensions
     /// <returns>JSON string representation of the usage quota repository.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string ToJson(this UsageQuotaRepository value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        JsonSerializerOptions options = indented
-            ? new(JsonSerializerOptions) { WriteIndented = true }
-            : JsonSerializerOptions;
-
-        return JsonSerializer.Serialize(value, options);
-    }
+        => JsonSerializer.Serialize(value, indented ? new(JsonSerializerOptions) { WriteIndented = true } : JsonSerializerOptions);
 
     /// <summary>
     /// Deserializes a JSON string to <see cref="UsageQuotaRepository"/>.
@@ -46,12 +39,12 @@ public static class UsageQuotaRepositoryJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized usage quota repository.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
     public static UsageQuotaRepository? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
         return JsonSerializer.Deserialize<UsageQuotaRepository>(json, JsonSerializerOptions);
     }
 
@@ -63,16 +56,19 @@ public static class UsageQuotaRepositoryJsonExtensions
     /// <returns>True if deserialization succeeded; otherwise false.</returns>
     public static bool TryFromJson(string json, out UsageQuotaRepository? value)
     {
+        value = null;
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
+
         try
         {
-            ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
             value = JsonSerializer.Deserialize<UsageQuotaRepository>(json, JsonSerializerOptions);
             return value is not null;
         }
         catch (JsonException)
         {
-            value = null;
             return false;
         }
     }
