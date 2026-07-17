@@ -13,6 +13,7 @@ namespace ApiKeyGateway.Tests;
 
 /// <summary>
 /// Provides validation helpers for <see cref="RateLimitingServiceTests"/> test class.
+/// Validates test method naming conventions, attributes, and structure.
 /// </summary>
 public static class RateLimitingServiceTestsValidation
 {
@@ -27,54 +28,65 @@ public static class RateLimitingServiceTestsValidation
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = new List<string>();
+        var testClassType = value.GetType();
 
         // Validate test method attributes and naming conventions
-        var testMethods = value.GetType()
+        var testMethods = testClassType
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Where(m => m.Name.StartsWith("Constructor_") ||
                         m.Name.StartsWith("CheckLimitAsync_") ||
                         m.Name.StartsWith("RecordRequestAsync_") ||
                         m.Name.StartsWith("UpdateLimitAsync_") ||
-                        m.Name.StartsWith("ResetWindowAsync_"));
+                        m.Name.StartsWith("ResetWindowAsync_"))
+            .ToList();
+
+        if (testMethods.Count == 0)
+        {
+            problems.Add("Test class has no recognized test methods (Constructor_, CheckLimitAsync_, RecordRequestAsync_, UpdateLimitAsync_, or ResetWindowAsync_ prefixes)");
+        }
 
         foreach (var method in testMethods)
         {
-            // Check for null/empty test names
+            // Method names from reflection are never null, but we check for empty as defensive coding
             if (string.IsNullOrEmpty(method.Name))
             {
                 problems.Add($"Test method has null/empty name: {method.DeclaringType?.Name}");
             }
 
-            // Check for test method attributes
-            if (!method.GetCustomAttributes(typeof(FactAttribute), false).Any() &&
-                !method.GetCustomAttributes(typeof(TheoryAttribute), false).Any())
+            // Check for test method attributes using modern API
+            var hasFactAttribute = method.GetCustomAttributes<FactAttribute>().Any();
+            var hasTheoryAttribute = method.GetCustomAttributes<TheoryAttribute>().Any();
+
+            if (!hasFactAttribute && !hasTheoryAttribute)
             {
                 problems.Add($"Test method {method.Name} is missing [Fact] or [Theory] attribute");
             }
 
-            // Check for Should() usage in test names
-            if (method.Name.Contains("Should"))
+            // Check for Should() usage in test names - prefer descriptive naming like "ReturnsTrue" over "ShouldReturnTrue"
+            if (method.Name.Contains("Should", StringComparison.Ordinal))
             {
-                problems.Add($"Test method {method.Name} uses 'Should' in name - prefer descriptive naming");
+                problems.Add($"Test method {method.Name} uses 'Should' in name - prefer descriptive naming without 'Should'");
             }
 
-            // Validate method signatures for async Task patterns
-            if (method.Name.StartsWith("Constructor_"))
+            // Validate method signatures for async Task patterns using pattern matching
+            switch (method.Name)
             {
-                if (method.ReturnType != typeof(void))
-                {
-                    problems.Add($"Constructor test method {method.Name} should return void, found {method.ReturnType.Name}");
-                }
-            }
-            else if (method.Name.StartsWith("CheckLimitAsync_") ||
-                     method.Name.StartsWith("RecordRequestAsync_") ||
-                     method.Name.StartsWith("UpdateLimitAsync_") ||
-                     method.Name.StartsWith("ResetWindowAsync_"))
-            {
-                if (method.ReturnType != typeof(Task))
-                {
-                    problems.Add($"Async test method {method.Name} should return Task, found {method.ReturnType.Name}");
-                }
+                case var _ when method.Name.StartsWith("Constructor_"):
+                    if (method.ReturnType != typeof(void))
+                    {
+                        problems.Add($"Constructor test method {method.Name} should return void, found {method.ReturnType.Name}");
+                    }
+                    break;
+
+                case var _ when method.Name.StartsWith("CheckLimitAsync_") ||
+                             method.Name.StartsWith("RecordRequestAsync_") ||
+                             method.Name.StartsWith("UpdateLimitAsync_") ||
+                             method.Name.StartsWith("ResetWindowAsync_"):
+                    if (method.ReturnType != typeof(Task))
+                    {
+                        problems.Add($"Async test method {method.Name} should return Task, found {method.ReturnType.Name}");
+                    }
+                    break;
             }
         }
 
@@ -90,7 +102,7 @@ public static class RateLimitingServiceTestsValidation
     public static bool IsValid(this RateLimitingServiceTests value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return !value.Validate().Any();
+        return value.Validate().Count == 0;
     }
 
     /// <summary>
@@ -104,9 +116,9 @@ public static class RateLimitingServiceTestsValidation
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = value.Validate();
-        if (problems.Any())
+        if (problems.Count > 0)
         {
-            throw new ArgumentException(string.Join("\n", problems), nameof(value));
+            throw new ArgumentException(string.Join(Environment.NewLine, problems), nameof(value));
         }
     }
 }
