@@ -10,11 +10,17 @@ public static class RetryPolicyBuilderExtensions
     /// </summary>
     /// <param name="builder">The retry policy builder.</param>
     /// <param name="exceptionTypes">The exception types to retry on.</param>
+    /// <returns>The retry policy builder for method chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="exceptionTypes"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="exceptionTypes"/> is empty or contains a type that is not an <see cref="Exception"/>.</exception>
     public static RetryPolicyBuilder RetryOn(this RetryPolicyBuilder builder, params Type[] exceptionTypes)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(exceptionTypes);
+        if (exceptionTypes.Length == 0)
+        {
+            throw new ArgumentException("Exception types collection cannot be empty.", nameof(exceptionTypes));
+        }
 
         foreach (var exceptionType in exceptionTypes)
         {
@@ -33,6 +39,7 @@ public static class RetryPolicyBuilderExtensions
     /// Configures the retry policy to retry on all <see cref="Exception"/> instances.
     /// </summary>
     /// <param name="builder">The retry policy builder.</param>
+    /// <returns>The retry policy builder for method chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
     public static RetryPolicyBuilder RetryOnAllExceptions(this RetryPolicyBuilder builder)
     {
