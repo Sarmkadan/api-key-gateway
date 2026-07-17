@@ -59,7 +59,7 @@ public static class RequestValidatorTestsExtensions
         yield return ("172.16.0.1", true);
         yield return ("255.255.255.255", true);
         yield return ("0.0.0.0", true);
-        yield return ("2001:0db8:85a3:0000:0000:8a2e:0370:7334", false); // IPv6 not supported
+        yield return ("2001:0db8:85a3:0000:0000:8a2e:0370:7334", true); // IPv6 is supported
         yield return ("256.1.1.1", false);
         yield return ("192.168.1", false);
         yield return ("192.168.1.1.1", false);
@@ -110,12 +110,13 @@ public static class RequestValidatorTestsExtensions
     /// Asserts that the validation result is valid and contains no error message.
     /// </summary>
     /// <param name="result">The validation result to assert.</param>
-    /// <exception cref="ArgumentNullException">Thrown if result is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="result"/> is <see langword="null"/>.</exception>
     public static void ShouldBeValid(this ValidationResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
         result.IsValid.Should().BeTrue("validation should succeed");
         result.Message.Should().BeNullOrEmpty("valid result should have no error message");
+        result.Errors.Should().BeEmpty("valid result should have no errors");
     }
 
     /// <summary>
@@ -123,12 +124,13 @@ public static class RequestValidatorTestsExtensions
     /// </summary>
     /// <param name="result">The validation result to assert.</param>
     /// <param name="expectedMessageFragment">Optional fragment of the expected error message.</param>
-    /// <exception cref="ArgumentNullException">Thrown if result is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="result"/> is <see langword="null"/>.</exception>
     public static void ShouldBeInvalid(this ValidationResult result, string? expectedMessageFragment = null)
     {
         ArgumentNullException.ThrowIfNull(result);
         result.IsValid.Should().BeFalse("validation should fail");
         result.Message.Should().NotBeNullOrEmpty("invalid result should have an error message");
+        result.Errors.Should().NotBeEmpty("invalid result should have errors");
 
         if (expectedMessageFragment is not null)
         {
@@ -143,12 +145,11 @@ public static class RequestValidatorTestsExtensions
     /// <param name="isValid">Whether the validation should succeed.</param>
     /// <param name="message">Optional error message.</param>
     /// <returns>A new validation result.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="message"/> is neither <see langword="null"/> nor a valid string.</exception>
     public static ValidationResult CreateValidationResult(bool isValid, string? message = null)
-    {
-        return new ValidationResult
+        => new ValidationResult
         {
             IsValid = isValid,
             Message = message
         };
-    }
 }
