@@ -1,7 +1,6 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-
 // System.Text.Json serialization helpers for CryptoBenchmarks benchmarks
 
 using System.Text.Json;
@@ -60,6 +59,7 @@ public static class CryptoBenchmarksJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized benchmarks instance if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out CryptoBenchmarks? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
