@@ -1,5 +1,6 @@
 // =============================================================================
-// Author: [Your Name]
+// Author: Vladyslav Zaiets | https://sarmkadan.com
+// CTO & Software Architect
 // =============================================================================
 
 using System.Text.Json;
@@ -7,7 +8,7 @@ using System.Text.Json;
 namespace ApiKeyGateway.Events;
 
 /// <summary>
-/// JSON serialization helpers for <see cref="UsageEvent"/>.
+/// Provides JSON serialization and deserialization extensions for <see cref="UsageEvent"/> and its derived types.
 /// </summary>
 public static class UsageEventJsonExtensions
 {
@@ -28,10 +29,9 @@ public static class UsageEventJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented ? JsonSerializerOptions : new JsonSerializerOptions(JsonSerializerOptions)
-        {
-            WriteIndented = false,
-        };
+        var options = indented
+            ? JsonSerializerOptions
+            : new JsonSerializerOptions(JsonSerializerOptions) { WriteIndented = false };
 
         return JsonSerializer.Serialize(value, options);
     }
@@ -41,6 +41,7 @@ public static class UsageEventJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized <see cref="UsageEvent"/>, or null if the JSON string is invalid.</returns>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
     public static UsageEvent? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -56,14 +57,28 @@ public static class UsageEventJsonExtensions
     }
 
     /// <summary>
-    /// Tries to deserialize a JSON string to a <see cref="UsageEvent"/>.
+    /// Attempts to deserialize a JSON string to a <see cref="UsageEvent"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized <see cref="UsageEvent"/>, or null if the JSON string is invalid.</param>
-    /// <returns>True if the JSON string was successfully deserialized, false otherwise.</returns>
+    /// <param name="value">
+    /// When this method returns, contains the deserialized <see cref="UsageEvent"/> if successful,
+    /// or null if the JSON string is invalid.
+    /// </param>
+    /// <returns>True if the JSON string was successfully deserialized; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out UsageEvent? value)
     {
-        value = FromJson(json);
-        return value != null;
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
+        try
+        {
+            value = JsonSerializer.Deserialize<UsageEvent>(json, JsonSerializerOptions);
+            return value is not null;
+        }
+        catch (JsonException)
+        {
+            value = null;
+            return false;
+        }
     }
 }
