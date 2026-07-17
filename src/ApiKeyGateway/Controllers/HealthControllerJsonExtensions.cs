@@ -27,16 +27,11 @@ public static class HealthControllerJsonExtensions
     /// <param name="value">The controller instance to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the controller.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
     public static string ToJson(this HealthController value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, new JsonSerializerOptions(_jsonOptions) { WriteIndented = indented });
     }
 
     /// <summary>
@@ -44,7 +39,7 @@ public static class HealthControllerJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized <see cref="HealthController"/> instance, or null if deserialization fails.</returns>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static HealthController? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -65,7 +60,7 @@ public static class HealthControllerJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized instance if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out HealthController? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
