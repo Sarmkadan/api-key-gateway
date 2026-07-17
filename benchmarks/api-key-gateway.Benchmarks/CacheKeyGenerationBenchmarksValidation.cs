@@ -5,7 +5,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ApiKeyGateway.Benchmarks;
 
@@ -66,11 +66,32 @@ public static class CacheKeyGenerationBenchmarksValidation
         }
     }
 
-    private static void ValidateString(List<string> problems, string memberName, string? value)
+    private static void ValidateString(List<string> problems, [NotNull] string memberName, string? value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(memberName);
+
         if (string.IsNullOrEmpty(value))
         {
             problems.Add($"{memberName} is null or empty");
+            return;
+        }
+
+        // Validate cache key format: should start with "apigw:" prefix
+        if (!value.StartsWith("apigw:", StringComparison.Ordinal))
+        {
+            problems.Add($"{memberName} has invalid format: '{value}'. Cache keys must start with 'apigw:' prefix");
+        }
+
+        // Validate no whitespace in key (except separator which is ':')
+        if (value.Any(char.IsWhiteSpace))
+        {
+            problems.Add($"{memberName} contains whitespace characters");
+        }
+
+        // Validate proper separator usage
+        if (value.Contains("::"))
+        {
+            problems.Add($"{memberName} contains consecutive separators '::'");
         }
     }
 }
