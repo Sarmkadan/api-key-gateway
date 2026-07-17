@@ -56,12 +56,11 @@ public static class ServiceCollectionExtensionsJsonExtensions
     /// </exception>
     public static GatewayConfiguration? FromJson(string json)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<GatewayConfiguration>(json, JsonSerializerOptions);
+        return string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<GatewayConfiguration>(json, JsonSerializerOptions);
     }
 
     /// <summary>
@@ -70,9 +69,14 @@ public static class ServiceCollectionExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized gateway configuration if successful.</param>
     /// <returns><see langword="true"/> if deserialization succeeded; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="json"/> is <see langword="null"/>.
+    /// </exception>
     public static bool TryFromJson(string json, out GatewayConfiguration? value)
     {
         value = null;
+
+        ArgumentNullException.ThrowIfNull(json);
 
         if (string.IsNullOrWhiteSpace(json))
         {
