@@ -6,6 +6,7 @@
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Repositories;
@@ -23,24 +24,20 @@ public static class UsageQuotaRepositoryExtensions
     /// <param name="apiKeyId">The API key identifier.</param>
     /// <param name="factory">A factory delegate that creates a <see cref="UsageQuota"/> for the given API key.</param>
     /// <returns>The existing or newly created <see cref="UsageQuota"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> or <paramref name="factory"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="factory"/> is null.</exception>
     /// <exception cref="DataAccessException">Propagated from the underlying repository when a data operation fails.</exception>
     public static async Task<UsageQuota> GetOrCreateAsync(
         this UsageQuotaRepository repository,
         string apiKeyId,
         Func<string, UsageQuota> factory)
     {
+        ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         ArgumentNullException.ThrowIfNull(factory);
 
         var existing = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
-        if (existing is not null)
-            return existing;
-
-        var quota = factory(apiKeyId);
-        await repository.CreateAsync(quota).ConfigureAwait(false);
-        return quota;
+        return existing ?? await CreateAndReturnAsync(repository, apiKeyId, factory);
     }
 
     /// <summary>
@@ -51,6 +48,7 @@ public static class UsageQuotaRepositoryExtensions
     /// <param name="apiKeyId">The API key identifier.</param>
     /// <param name="increment">The amount to add to the current usage. Must be greater than zero.</param>
     /// <returns>The updated <see cref="UsageQuota"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="increment"/> is less than or equal to zero.</exception>
     /// <exception cref="InvalidOperationException">Thrown when no quota exists for the supplied API key.</exception>
@@ -60,15 +58,15 @@ public static class UsageQuotaRepositoryExtensions
         string apiKeyId,
         long increment = 1L)
     {
+        ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        if (increment <= 0)
-            throw new ArgumentOutOfRangeException(nameof(increment), "Increment must be greater than zero.");
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(increment, 0L);
 
         var quota = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false)
-                    ?? throw new InvalidOperationException(
-                        string.Format(CultureInfo.InvariantCulture,
-                                      "Usage quota not found for API key '{0}'.",
-                                      apiKeyId));
+            ?? throw new InvalidOperationException(
+                string.Format(CultureInfo.InvariantCulture,
+                    "Usage quota not found for API key '{0}'.",
+                    apiKeyId));
 
         quota.CurrentUsage += increment;
         await repository.UpdateAsync(quota).ConfigureAwait(false);
@@ -81,18 +79,35 @@ public static class UsageQuotaRepositoryExtensions
     /// <param name="repository">The repository instance.</param>
     /// <param name="apiKeyId">The API key identifier.</param>
     /// <returns>True if a disabled quota was found and deleted; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     /// <exception cref="DataAccessException">Propagated from the underlying repository when a data operation fails.</exception>
     public static async Task<bool> DeleteIfDisabledAsync(
         this UsageQuotaRepository repository,
         string apiKeyId)
     {
+        ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
 
         var quota = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
-        if (quota is null || quota.IsEnabled)
-            return false;
+        return quota is { IsEnabled: false }
+            && await DeleteQuotaAsync(repository, quota).ConfigureAwait(false);
+    }
 
+    private static async Task<UsageQuota> CreateAndReturnAsync(
+        UsageQuotaRepository repository,
+        string apiKeyId,
+        Func<string, UsageQuota> factory)
+    {
+        var quota = factory(apiKeyId);
+        await repository.CreateAsync(quota).ConfigureAwait(false);
+        return quota;
+    }
+
+    private static async Task<bool> DeleteQuotaAsync(
+        UsageQuotaRepository repository,
+        UsageQuota quota)
+    {
         await repository.DeleteAsync(quota.Id).ConfigureAwait(false);
         return true;
     }
