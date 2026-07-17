@@ -215,6 +215,77 @@ var errorResult = testInstance.CreateValidationResult(false, "Invalid parameter 
 testInstance.ShouldBeInvalid(errorResult);
 ```
 
+## ApiKeyModelTestsExtensions
+
+The `ApiKeyModelTestsExtensions` class provides extension methods for `ApiKeyModelTests` that offer reusable test utilities for creating and asserting API key scenarios. These extensions simplify the setup of test API keys with various statuses, IP whitelists, and expiration dates, and provide fluent assertions for verifying API key state and behavior.
+
+### Public Members
+
+- `WithDefaultValues(this ApiKeyModelTests tests, int expirationDays = 30)` - Creates a new active API key with default test-friendly values including 30-day expiration
+- `WithStatus(this ApiKeyModelTests tests, ApiKeyStatus status, int expirationDays = 30)` - Creates an API key with the specified status and expiration
+- `WithIpWhitelist(this ApiKeyModelTests tests, string ipWhitelist, ApiKeyStatus status = ApiKeyStatus.Active)` - Creates an API key with the specified IP whitelist and optional status
+- `ShouldBeUsable(this ApiKey key, bool expected)` - Asserts that the API key can or cannot be used based on its status and expiration
+- `ShouldHaveUsage(this ApiKey key, int expectedCount, long expectedBytes)` - Asserts that the API key has the expected request count and bytes transferred
+- `ShouldHaveLastUsedAt(this ApiKey key, DateTime? expected)` - Asserts that the API key has the expected last used timestamp
+- `ShouldHaveDisabledAt(this ApiKey key, DateTime? expected)` - Asserts that the API key has the expected disabled timestamp
+- `ShouldAllowIp(this ApiKey key, string ipAddress, bool expected)` - Asserts that the API key allows or denies the specified IP address
+- `DisableAndAssert(this ApiKey key, DateTime? before = null)` - Disables the API key and asserts the operation was successful
+- `EnableAndAssert(this ApiKey key)` - Enables the API key and asserts the operation was successful
+- `RecordUsageAndAssert(this ApiKey key, long bytes = 0, DateTime? before = null)` - Records usage on the API key and asserts the operation was successful
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new ApiKeyModelTests();
+
+// Create an active API key with default values (30-day expiration)
+var activeKey = testInstance.WithDefaultValues();
+activeKey.ShouldBeUsable(true);
+activeKey.ShouldHaveUsage(0, 0);
+activeKey.ShouldHaveLastUsedAt(null);
+activeKey.ShouldHaveDisabledAt(null);
+
+// Create an API key with specific status and expiration
+var expiredKey = testInstance.WithStatus(ApiKeyStatus.Active, expirationDays: 0);
+// Set expiration to past date for testing
+expiredKey.ExpiresAt = DateTime.UtcNow.AddDays(-1);
+expiredKey.ShouldBeUsable(false);
+
+// Create an API key with IP whitelist
+var ipRestrictedKey = testInstance.WithIpWhitelist("192.168.1.1, 10.0.0.1, 172.16.0.1");
+ipRestrictedKey.ShouldAllowIp("192.168.1.1", true);
+ipRestrictedKey.ShouldAllowIp("8.8.8.8", false);
+
+// Test disabling an API key
+var keyToDisable = testInstance.WithDefaultValues();
+var disabledKey = keyToDisable.DisableAndAssert();
+disabledKey.Status.Should().Be(ApiKeyStatus.Disabled);
+
+// Test enabling an API key
+var keyToEnable = testInstance.WithStatus(ApiKeyStatus.Disabled);
+var enabledKey = keyToEnable.EnableAndAssert();
+enabledKey.Status.Should().Be(ApiKeyStatus.Active);
+
+// Test recording usage
+var keyForUsage = testInstance.WithDefaultValues();
+var usedKey = keyForUsage.RecordUsageAndAssert(bytes: 1024);
+usedKey.ShouldHaveUsage(1, 1024);
+usedKey.ShouldHaveLastUsedAt(usedKey.LastUsedAt);
+
+// Test multiple usage recordings
+var multiUsageKey = testInstance.WithDefaultValues();
+var finalKey = multiUsageKey
+    .RecordUsageAndAssert(bytes: 512)
+    .RecordUsageAndAssert(bytes: 2048);
+finalKey.ShouldHaveUsage(2, 2560); // 512 + 2048 = 2560
+```
+
 ## CacheKeyGeneratorTestsExtensions
 
 The `CacheKeyGeneratorTestsExtensions` class provides extension methods for `CacheKeyGeneratorTests` that offer reusable assertions and helper methods for testing cache key generation scenarios. These extensions validate cache key formats, parameter handling, and hash generation for various API gateway caching use cases including API keys, rate limits, usage statistics, quotas, webhook deliveries, and external API calls.
