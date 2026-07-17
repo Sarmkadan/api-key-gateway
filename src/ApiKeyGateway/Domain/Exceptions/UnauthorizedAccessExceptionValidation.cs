@@ -31,12 +31,12 @@ public static class UnauthorizedAccessExceptionValidation
             problems.Add("Message cannot be null, empty, or whitespace.");
         }
 
-        if (!string.IsNullOrEmpty(value.Reason) && string.IsNullOrWhiteSpace(value.Reason))
+        if (value.Reason is not null && string.IsNullOrWhiteSpace(value.Reason))
         {
             problems.Add("Reason cannot be whitespace if specified.");
         }
 
-        if (!string.IsNullOrEmpty(value.SourceIp) && string.IsNullOrWhiteSpace(value.SourceIp))
+        if (value.SourceIp is not null && string.IsNullOrWhiteSpace(value.SourceIp))
         {
             problems.Add("SourceIp cannot be whitespace if specified.");
         }
@@ -52,8 +52,7 @@ public static class UnauthorizedAccessExceptionValidation
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static bool IsValid(this UnauthorizedAccessException value)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        return Validate(value).Count == 0;
+        return value is not null && Validate(value).Count == 0;
     }
 
     /// <summary>
@@ -70,7 +69,8 @@ public static class UnauthorizedAccessExceptionValidation
         if (problems.Count > 0)
         {
             throw new ArgumentException(
-                $"UnauthorizedAccessException is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
+                $"UnauthorizedAccessException is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}",
+                nameof(value));
         }
     }
 }
