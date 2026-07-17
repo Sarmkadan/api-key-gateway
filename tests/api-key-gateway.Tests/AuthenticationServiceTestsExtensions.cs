@@ -59,6 +59,10 @@ public static class AuthenticationServiceTestsExtensions
     /// <summary>
     /// Verifies that the authentication service properly handles API key deactivation scenarios
     /// </summary>
+    /// <param name="_">The test class instance</param>
+    /// <param name="deactivatedStatus">The deactivated status to test (Revoked, Expired, or Disabled)</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="deactivatedStatus"/> is not a deactivated status</exception>
     public static async Task AuthenticateAsync_DeactivatedKey_ThrowsUnauthorizedException(
         this AuthenticationServiceTests _,
         ApiKeyStatus deactivatedStatus)
@@ -70,7 +74,10 @@ public static class AuthenticationServiceTestsExtensions
             ApiKeyStatus.Revoked => "sk_revokedkey",
             ApiKeyStatus.Expired => "sk_expiredkey",
             ApiKeyStatus.Disabled => "sk_disabledkey",
-            _ => throw new ArgumentOutOfRangeException(nameof(deactivatedStatus), deactivatedStatus, null)
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(deactivatedStatus),
+                deactivatedStatus,
+                "Status must be a deactivated status (Revoked, Expired, or Disabled)")
         };
 
         // Act
@@ -84,6 +91,7 @@ public static class AuthenticationServiceTestsExtensions
     /// <summary>
     /// Creates a collection of test API keys with different statuses for bulk testing scenarios
     /// </summary>
+    /// <param name="_">The test class instance</param>
     /// <returns>Read-only list of test API keys</returns>
     public static IReadOnlyList<ApiKey> CreateTestApiKeys(this AuthenticationServiceTests _)
     {
@@ -121,6 +129,8 @@ public static class AuthenticationServiceTestsExtensions
     /// <summary>
     /// Verifies that the authentication service properly validates API key format
     /// </summary>
+    /// <param name="_">The test class instance</param>
+    /// <returns>A task representing the asynchronous operation</returns>
     public static async Task AuthenticateAsync_InvalidKeyFormat_ThrowsUnauthorizedException(
         this AuthenticationServiceTests _)
     {
