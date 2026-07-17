@@ -3,7 +3,6 @@
 // CTO & Software Architect
 // Provides validation helpers for InvalidApiKeyException instances
 // =====================================================================
-
 using System;
 using System.Collections.Generic;
 
@@ -31,9 +30,9 @@ public static class InvalidApiKeyExceptionValidation
             problems.Add("Message cannot be null, empty, or whitespace.");
         }
 
-        if (!string.IsNullOrEmpty(value.ApiKeyHash) && string.IsNullOrWhiteSpace(value.ApiKeyHash))
+        if (!string.IsNullOrEmpty(value.ApiKeyHash) && value.ApiKeyHash != value.ApiKeyHash.Trim())
         {
-            problems.Add("ApiKeyHash cannot be whitespace if specified.");
+            problems.Add("ApiKeyHash cannot contain leading or trailing whitespace.");
         }
 
         if (value.OccurredAt == default)
