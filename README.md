@@ -12,6 +12,62 @@ catch (ArgumentException ex)
 
 The `StringExtensionsTestsExtensions` class provides extension methods for `StringExtensionsTests` that offer additional test utilities for string manipulation scenarios commonly encountered in API key gateway testing. These extensions handle edge cases, null values, and provide deterministic test data generation for comprehensive test coverage.
 
+## RateLimitingServiceTestsExtensions
+
+The `RateLimitingServiceTestsExtensions` class provides extension methods for `RateLimitingServiceTests` that offer reusable test utilities for rate limiting service scenarios. It includes methods for creating configured service instances, generating rate limit configurations, executing concurrent requests, and verifying rate limit behavior through assertions.
+
+### Public Members
+
+- `CreateService(this RateLimitingServiceTests tests)` - Creates a configured `RateLimitingService` instance with default mocks
+- `CreateRateLimit(this RateLimitingServiceTests tests, string apiKeyId, int requestsPerUnit, RateLimitUnit unit, int currentCount = 0)` - Creates a rate limit configuration for testing purposes
+- `ExecuteConcurrentRequestsAsync(this RateLimitingService service, string keyId, int requestCount)` - Executes multiple concurrent requests against the rate limiting service and returns the results with exception tracking
+- `ShouldAllThrowRateLimitExceededAsync(this Task<ConcurrentBag<RateLimitResult>> resultsTask, int expectedCount)` - Verifies that all requests in a collection resulted in rate limit exceptions
+- `ShouldAllSucceedAsync(this Task<ConcurrentBag<RateLimitResult>> resultsTask, int expectedCount)` - Verifies that all requests in a collection succeeded
+- `RateLimitResult(bool Success, Exception? Exception)` - Record that tracks the result of rate limit test requests
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new RateLimitingServiceTests();
+
+// Create a configured rate limiting service with default mocks
+var service = testInstance.CreateService();
+
+// Create a rate limit configuration for testing
+var rateLimit = testInstance.CreateRateLimit(
+    apiKeyId: "test-api-key-123",
+    requestsPerUnit: 5,
+    unit: RateLimitUnit.Minute
+);
+
+// Test successful requests within rate limit
+var successfulResults = await service.ExecuteConcurrentRequestsAsync("test-api-key-123", 3);
+await successfulResults.ShouldAllSucceedAsync(3);
+
+// Test rate limit exceeded scenario
+var exceededResults = await service.ExecuteConcurrentRequestsAsync("test-api-key-123", 10);
+await exceededResults.ShouldAllThrowRateLimitExceededAsync(10);
+
+// Verify result properties
+foreach (var result in successfulResults)
+{
+    result.Success.Should().BeTrue();
+    result.Exception.Should().BeNull();
+}
+
+foreach (var result in exceededResults)
+{
+    result.Success.Should().BeFalse();
+    result.Exception.Should().BeOfType<RateLimitExceededException>();
+}
+```
+
 ### Public Members
 
 - `ContainsAny(this string source, params string[] values)` - Determines whether the string contains any of the specified substrings, ignoring case and culture
