@@ -5,14 +5,16 @@
 
 namespace ApiKeyGateway.Utilities;
 
+using System.Text.Json;
+
 /// <summary>
 /// Provides System.Text.Json serialization extensions for DateTime values
 /// </summary>
 public static class DateTimeExtensionsJsonExtensions
 {
-    private static readonly System.Text.Json.JsonSerializerOptions _jsonOptions = new()
+    private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false
     };
 
@@ -22,19 +24,16 @@ public static class DateTimeExtensionsJsonExtensions
     /// <param name="dateTime">The DateTime value to serialize</param>
     /// <param name="indented">Whether to format the JSON with indentation</param>
     /// <returns>A JSON string representation of the DateTime</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="dateTime"/> is null</exception>
     public static string ToJson(this DateTime dateTime, bool indented = false)
     {
-        ArgumentNullException.ThrowIfNull(dateTime);
-
         var options = indented
-            ? new System.Text.Json.JsonSerializerOptions(_jsonOptions)
+            ? new JsonSerializerOptions(_jsonOptions)
             {
                 WriteIndented = true
             }
             : _jsonOptions;
 
-        return System.Text.Json.JsonSerializer.Serialize(dateTime, options);
+        return JsonSerializer.Serialize(dateTime, options);
     }
 
     /// <summary>
@@ -43,14 +42,14 @@ public static class DateTimeExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize</param>
     /// <returns>The deserialized DateTime, or null if the JSON is null or whitespace</returns>
     /// <exception cref="JsonException">Thrown if the JSON is invalid or cannot be converted to DateTime</exception>
-    public static DateTime? FromJson(string json)
+    public static DateTime? FromJson(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
             return null;
         }
 
-        return System.Text.Json.JsonSerializer.Deserialize<DateTime>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<DateTime>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -59,7 +58,7 @@ public static class DateTimeExtensionsJsonExtensions
     /// <param name="json">The JSON string to deserialize</param>
     /// <param name="value">The deserialized DateTime, or null if parsing failed</param>
     /// <returns>True if deserialization succeeded; otherwise false</returns>
-    public static bool TryFromJson(string json, out DateTime? value)
+    public static bool TryFromJson(string? json, out DateTime? value)
     {
         value = null;
 
@@ -70,10 +69,10 @@ public static class DateTimeExtensionsJsonExtensions
 
         try
         {
-            value = System.Text.Json.JsonSerializer.Deserialize<DateTime>(json, _jsonOptions);
+            value = JsonSerializer.Deserialize<DateTime>(json, _jsonOptions);
             return true;
         }
-        catch (System.Text.Json.JsonException)
+        catch (JsonException)
         {
             return false;
         }
