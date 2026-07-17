@@ -78,3 +78,35 @@ CacheKeyGeneratorValidation.EnsureValid("GitHub", "/repos");
 bool patternIsValid = CacheKeyGeneratorValidation.IsValid();
 CacheKeyGeneratorValidation.EnsureValid();
 ```
+
+## JsonSerializationHelperJsonExtensions
+
+`JsonSerializationHelperJsonExtensions` provides JSON‑serialization helpers that work with the `JsonSerializationHelper` configuration. It defines a `JsonSerializationSettings` record exposing the naming policy, ignore condition, and indentation options, and offers methods to serialize these settings to JSON and deserialize them back safely.
+
+### Example Usage
+
+```csharp
+using System.Text.Json;
+using ApiKeyGateway.Utilities;
+
+// Create a settings instance
+var settings = new JsonSerializationHelperJsonExtensions.JsonSerializationSettings
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    WriteIndented = true
+};
+
+// Serialize the settings to a JSON string
+string json = settings.ToJson(); // respects WriteIndented = true
+
+// Deserialize back using the static FromJson method
+var deserialized = JsonSerializationHelperJsonExtensions.FromJson(json);
+
+// Try‑parse with TryFromJson
+bool success = JsonSerializationHelperJsonExtensions.TryFromJson(json, out var parsedSettings);
+if (success && parsedSettings != null)
+{
+    // Use parsedSettings...
+}
+```
