@@ -38,11 +38,15 @@ public static class AnalyticsControllerExtensions
 
         // Parse period strings like "7d", "30d", "1d"
         if (!TryParsePeriod(period, out var currentDays))
+        {
             return controller.BadRequest(new { error = "Invalid period format. Use format like '7d', '30d', '1d'" });
+        }
 
         comparisonPeriod ??= period;
         if (!TryParsePeriod(comparisonPeriod, out var comparisonDays))
+        {
             return controller.BadRequest(new { error = "Invalid comparisonPeriod format. Use format like '7d', '30d', '1d'" });
+        }
 
         var now = DateTime.UtcNow;
         var currentStart = now.AddDays(-currentDays);
@@ -54,14 +58,18 @@ public static class AnalyticsControllerExtensions
         // Get current period summary
         var currentSummary = await controller.GetSummary(keyId, currentStart, currentEnd);
         if (currentSummary.Result is not OkObjectResult currentOkResult)
+        {
             return currentSummary.Result;
+        }
 
         var current = (AnalyticsSummary)currentOkResult.Value!;
 
         // Get comparison period summary
         var comparisonSummary = await controller.GetSummary(keyId, comparisonStart, comparisonEnd);
         if (comparisonSummary.Result is not OkObjectResult comparisonOkResult)
+        {
             return comparisonSummary.Result;
+        }
 
         var comparison = (AnalyticsSummary)comparisonOkResult.Value!;
 
@@ -132,14 +140,20 @@ public static class AnalyticsControllerExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(keyId);
 
         if (limit < 1 || limit > 100)
+        {
             return controller.BadRequest(new { error = "limit must be between 1 and 100" });
+        }
 
         if (minErrorRate < 0 || minErrorRate > 100)
+        {
             return controller.BadRequest(new { error = "minErrorRate must be between 0 and 100" });
+        }
 
         var endpointsResult = await controller.GetTopEndpoints(keyId, limit, from, to);
         if (endpointsResult.Result is not OkObjectResult endpointsOkResult)
+        {
             return endpointsResult.Result;
+        }
 
         var endpoints = (List<EndpointStat>)endpointsOkResult.Value!;
 
@@ -177,11 +191,15 @@ public static class AnalyticsControllerExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(keyId);
 
         if (minErrorRate < 0 || minErrorRate > 100)
+        {
             return controller.BadRequest(new { error = "minErrorRate must be between 0 and 100" });
+        }
 
         var hourlyResult = await controller.GetHourlyTrend(keyId, from, to);
         if (hourlyResult.Result is not OkObjectResult hourlyOkResult)
+        {
             return hourlyResult.Result;
+        }
 
         var hourlyBuckets = (List<HourlyBucket>)hourlyOkResult.Value!;
 
@@ -217,7 +235,9 @@ public static class AnalyticsControllerExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(keyId);
 
         if (weeks < 1 || weeks > 12)
+        {
             return controller.BadRequest(new { error = "weeks must be between 1 and 12" });
+        }
 
         var now = DateTime.UtcNow;
         var startDate = from ?? now.AddDays(-7 * weeks);
@@ -225,7 +245,9 @@ public static class AnalyticsControllerExtensions
 
         var dailyResult = await controller.GetDailyTrend(keyId, startDate, endDate);
         if (dailyResult.Result is not OkObjectResult dailyOkResult)
+        {
             return dailyResult.Result;
+        }
 
         var dailyBuckets = (List<DailyBucket>)dailyOkResult.Value!;
 
@@ -257,11 +279,15 @@ public static class AnalyticsControllerExtensions
     {
         days = 0;
         if (string.IsNullOrWhiteSpace(period) || period.Length < 2)
+        {
             return false;
+        }
 
         var suffix = period[^1];
         if (!int.TryParse(period[..^1], CultureInfo.InvariantCulture, out var value))
+        {
             return false;
+        }
 
         return suffix switch
         {
@@ -273,7 +299,9 @@ public static class AnalyticsControllerExtensions
     private static double CalculateChangePercent(double oldValue, double newValue)
     {
         if (oldValue == 0)
+        {
             return newValue > 0 ? 100 : 0;
+        }
 
         return Math.Round(((newValue - oldValue) / oldValue) * 100, 2);
     }
@@ -282,7 +310,7 @@ public static class AnalyticsControllerExtensions
 /// <summary>
 /// Represents a comparison between two time periods.
 /// </summary>
-public class PeriodComparison
+public sealed class PeriodComparison
 {
     /// <summary>Metrics for the current period.</summary>
     public required PeriodMetrics CurrentPeriod { get; set; }
@@ -295,7 +323,7 @@ public class PeriodComparison
 }
 
 /// <summary>Metrics for a specific time period.</summary>
-public class PeriodMetrics
+public sealed class PeriodMetrics
 {
     /// <summary>Period descriptor (e.g., "7d", "30d").</summary>
     public required string Period { get; set; }
@@ -329,7 +357,7 @@ public class PeriodMetrics
 }
 
 /// <summary>Change percentages between two periods.</summary>
-public class PeriodChange
+public sealed class PeriodChange
 {
     /// <summary>Percentage change in total requests.</summary>
     public double RequestsChangePercent { get; set; }
@@ -348,7 +376,7 @@ public class PeriodChange
 }
 
 /// <summary>Represents aggregated metrics for a week.</summary>
-public class WeeklyBucket
+public sealed class WeeklyBucket
 {
     /// <summary>ISO week number.</summary>
     public int WeekNumber { get; set; }
