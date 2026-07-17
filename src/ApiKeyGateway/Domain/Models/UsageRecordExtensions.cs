@@ -31,8 +31,11 @@ public static class UsageRecordExtensions
     /// <param name="record">The usage record to evaluate.</param>
     /// <returns><c>true</c> if the status code is between 200 and 299; otherwise, <c>false</c>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="record"/> is <c>null</c>.</exception>
-    public static bool IsSuccessful(this UsageRecord record) =>
-        (record?.ResponseStatusCode is >= 200 and < 300);
+    public static bool IsSuccessful(this UsageRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        return record.ResponseStatusCode is >= 200 and < 300;
+    }
 
     /// <summary>
     /// Retrieves a tag value from the <see cref="UsageRecord.Tags"/> dictionary.
@@ -64,10 +67,8 @@ public static class UsageRecordExtensions
         ArgumentNullException.ThrowIfNull(records);
         ArgumentException.ThrowIfNullOrEmpty(endpoint);
 
-        var filtered = records
+        return records
             .Where(r => string.Equals(r.Endpoint, endpoint, StringComparison.OrdinalIgnoreCase))
             .ToList();
-
-        return filtered;
     }
 }
