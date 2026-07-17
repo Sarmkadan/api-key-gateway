@@ -360,6 +360,91 @@ if (weeklyResult.Result is OkObjectResult weeklyOkResult)
 }
 ```
 
+## ApiKeysControllerValidation
+
+The `ApiKeysControllerValidation` class provides validation extension methods for API key models used in the `ApiKeysController`. These methods help ensure data integrity by validating required fields, date ranges, and business rules for API key entities including `ApiKey`, `CreateKeyRequest`, `CreateKeyResponse`, `GetKeyResponse`, and `RotateKeyResponse`.
+
+### Public Members
+
+- `Validate(this ApiKey value)` - Validates an API key and returns a list of human-readable problems
+- `IsValid(this ApiKey value)` - Checks if an API key is valid
+- `EnsureValid(this ApiKey value)` - Ensures an API key is valid, throwing an `ArgumentException` if it's not
+- `Validate(this CreateKeyRequest value)` - Validates a create key request and returns a list of human-readable problems
+- `IsValid(this CreateKeyRequest value)` - Checks if a create key request is valid
+- `EnsureValid(this CreateKeyRequest value)` - Ensures a create key request is valid, throwing an `ArgumentException` if it's not
+- `Validate(this CreateKeyResponse value)` - Validates a create key response and returns a list of human-readable problems
+- `IsValid(this CreateKeyResponse value)` - Checks if a create key response is valid
+- `EnsureValid(this CreateKeyResponse value)` - Ensures a create key response is valid, throwing an `ArgumentException` if it's not
+- `Validate(this GetKeyResponse value)` - Validates a get key response and returns a list of human-readable problems
+- `IsValid(this GetKeyResponse value)` - Checks if a get key response is valid
+- `EnsureValid(this GetKeyResponse value)` - Ensures a get key response is valid, throwing an `ArgumentException` if it's not
+- `Validate(this RotateKeyResponse value)` - Validates a rotate key response and returns a list of human-readable problems
+- `IsValid(this RotateKeyResponse value)` - Checks if a rotate key response is valid
+- `EnsureValid(this RotateKeyResponse value)` - Ensures a rotate key response is valid, throwing an `ArgumentException` if it's not
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using ApiKeyGateway.Domain.Models;
+
+// Create a sample API key
+var apiKey = new ApiKey
+{
+    Id = "key-12345",
+    ConsumerId = "consumer-67890",
+    Name = "Production API Key",
+    KeyHash = "hashed-key-value",
+    Prefix = "prod_",
+    CreatedAt = DateTime.UtcNow,
+    ExpiresAt = DateTime.UtcNow.AddYears(1),
+    RequestCount = 0,
+    BytesTransferred = 0,
+    Status = ApiKeyStatus.Active
+};
+
+// Validate the API key
+IReadOnlyList<string> validationErrors = apiKey.Validate();
+
+if (apiKey.IsValid())
+{
+    Console.WriteLine("API key is valid and ready for use.");
+}
+else
+{
+    // Handle validation errors
+    foreach (string error in validationErrors)
+    {
+        Console.WriteLine($"Validation error: {error}");
+    }
+}
+
+// Alternative: Use EnsureValid to throw an exception if invalid
+try
+{
+    apiKey.EnsureValid();
+    Console.WriteLine("API key passed validation successfully.");
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Validation failed: {ex.Message}");
+}
+
+// Validate a create key request
+var createRequest = new CreateKeyRequest
+{
+    ConsumerId = "consumer-67890",
+    Name = "New API Key",
+    ExpirationDays = 365
+};
+
+IReadOnlyList<string> requestErrors = createRequest.Validate();
+if (createRequest.IsValid())
+{
+    Console.WriteLine("Create key request is valid.");
+}
+```
+
 ## AnalyticsControllerJsonExtensions
 
 The `AnalyticsControllerJsonExtensions` class provides System.Text.Json serialization extensions for analytics response types returned by `AnalyticsController` actions. It enables serialization and deserialization of analytics summary data, endpoint statistics, hourly buckets, and daily buckets with support for both compact and indented JSON formatting.
