@@ -23,6 +23,7 @@ namespace ApiKeyGateway.Tests
         /// <param name="currentUsage">The current usage count.</param>
         /// <param name="periodStart">The period start date.</param>
         /// <returns>A configured mock repository.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance is null.</exception>
         public static Mock<IUsageQuotaRepository> SetupQuotaRepository(
             this UsageQuotaServiceTests _,
             long? quotaLimit = null,
@@ -72,6 +73,7 @@ namespace ApiKeyGateway.Tests
         /// <param name="mockRepo">Mock repository instance.</param>
         /// <param name="mockLogger">Mock logger instance.</param>
         /// <returns>A configured <see cref="UsageQuotaService"/> instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance or mock repository is null.</exception>
         public static UsageQuotaService CreateQuotaService(
             this UsageQuotaServiceTests _,
             Mock<IUsageQuotaRepository> mockRepo,
@@ -90,6 +92,7 @@ namespace ApiKeyGateway.Tests
         /// <param name="mockRepo">The mock repository to verify.</param>
         /// <param name="expectedApiKeyId">Expected API key identifier.</param>
         /// <param name="expectedLimit">Expected quota limit.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance or mock repository is null.</exception>
         public static void VerifyQuotaSet(
             this UsageQuotaServiceTests _,
             Mock<IUsageQuotaRepository> mockRepo,
@@ -111,6 +114,7 @@ namespace ApiKeyGateway.Tests
         /// </summary>
         /// <param name="mockRepo">The mock repository to verify.</param>
         /// <param name="expectedApiKeyId">Expected API key identifier.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance or mock repository is null.</exception>
         public static void VerifyQuotaGet(
             this UsageQuotaServiceTests _,
             Mock<IUsageQuotaRepository> mockRepo,
@@ -130,6 +134,8 @@ namespace ApiKeyGateway.Tests
         /// <param name="count">Number of keys to generate.</param>
         /// <param name="quotaLimit">Quota limit for each key.</param>
         /// <returns>A dictionary mapping key IDs to quota values.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when count is less than or equal to zero.</exception>
         public static IReadOnlyDictionary<string, long> CreateQuotaKeys(
             this UsageQuotaServiceTests _,
             int count,
@@ -149,7 +155,11 @@ namespace ApiKeyGateway.Tests
         /// </summary>
         /// <param name="quotaString">String representation of quota limit.</param>
         /// <returns>The parsed quota limit, or null if invalid.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance is null.</exception>
         public static long? ParseQuotaLimit(this UsageQuotaServiceTests _, string quotaString)
+            => ParseQuotaLimitInternal(_, quotaString);
+
+        private static long? ParseQuotaLimitInternal(UsageQuotaServiceTests _, string quotaString)
         {
             ArgumentNullException.ThrowIfNull(_);
 
@@ -158,18 +168,15 @@ namespace ApiKeyGateway.Tests
                 return null;
             }
 
-            if (quotaString.Equals("unlimited", StringComparison.OrdinalIgnoreCase) ||
+            if (quotaString.Equals("unlimited", StringComparison.Ordinal) ||
                 quotaString == "-1")
             {
                 return -1;
             }
 
-            if (long.TryParse(quotaString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
-            {
-                return limit;
-            }
-
-            return null;
+            return long.TryParse(quotaString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit)
+                ? limit
+                : null;
         }
 
         /// <summary>
@@ -177,6 +184,7 @@ namespace ApiKeyGateway.Tests
         /// </summary>
         /// <param name="_">The test instance.</param>
         /// <returns>A mock logger with captured messages.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the test instance is null.</exception>
         public static (Mock<ILogger<UsageQuotaService>> Mock, List<string> Messages) CreateCapturingLogger(
             this UsageQuotaServiceTests _)
         {
@@ -193,12 +201,12 @@ namespace ApiKeyGateway.Tests
                     It.IsAny<Exception>(),
                     It.IsAny<Func<object, Exception, string>>()))
                 .Callback<LogLevel, EventId, object, Exception, Func<object, Exception, string>>(
-                    (level, eventId, state, exception, formatter) =>
+                    (logLevel, eventId, state, exception, formatter) =>
                     {
                         var message = formatter?.Invoke(state, exception);
                         if (!string.IsNullOrEmpty(message))
                         {
-                            messages.Add($"[{level}] {message}");
+                            messages.Add($"[{logLevel}] {message}");
                         }
                     });
 
