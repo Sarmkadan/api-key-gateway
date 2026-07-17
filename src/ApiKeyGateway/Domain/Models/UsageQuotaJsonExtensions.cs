@@ -29,32 +29,28 @@ public static class UsageQuotaJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the usage quota.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this UsageQuota value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+public static string ToJson(this UsageQuota value, bool indented = false)
+{
+	ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
+	var options = indented
+		? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+			: _jsonOptions;
 
-        return JsonSerializer.Serialize(value, options);
-    }
+	return JsonSerializer.Serialize(value, options);
+}
 
     /// <summary>
     /// Deserializes a JSON string to a <see cref="UsageQuota"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized usage quota, or null if the JSON is empty or whitespace.</returns>
+    /// <returns>The deserialized usage quota, or null if deserialization fails.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static UsageQuota? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
 
         return JsonSerializer.Deserialize<UsageQuota>(json, _jsonOptions);
     }
@@ -77,7 +73,7 @@ public static class UsageQuotaJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<UsageQuota>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
