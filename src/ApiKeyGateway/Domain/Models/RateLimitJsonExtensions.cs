@@ -4,12 +4,11 @@
 // =============================================================================
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace ApiKeyGateway.Domain.Models;
 
 /// <summary>
-/// Provides JSON serialization helpers for <see cref="RateLimit"/>.
+/// Provides JSON serialization and deserialization helpers for <see cref="RateLimit"/>.
 /// </summary>
 public static class RateLimitJsonExtensions
 {
@@ -23,12 +22,12 @@ public static class RateLimitJsonExtensions
     };
 
     /// <summary>
-    /// Serializes <see cref="RateLimit"/> to a JSON string.
+    /// Serializes a <see cref="RateLimit"/> instance to a JSON string.
     /// </summary>
     /// <param name="value">The rate limit to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation.</param>
     /// <returns>JSON string representation of the rate limit.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     public static string ToJson(this RateLimit value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -41,13 +40,13 @@ public static class RateLimitJsonExtensions
     }
 
     /// <summary>
-    /// Deserializes a JSON string to <see cref="RateLimit"/>.
+    /// Deserializes a JSON string to a <see cref="RateLimit"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized rate limit.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
-    /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
+    /// <returns>The deserialized rate limit, or <see langword="null"/> if the JSON represents a null value.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to a <see cref="RateLimit"/>.</exception>
     public static RateLimit? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -56,11 +55,11 @@ public static class RateLimitJsonExtensions
     }
 
     /// <summary>
-    /// Tries to deserialize a JSON string to <see cref="RateLimit"/>.
+    /// Attempts to deserialize a JSON string to a <see cref="RateLimit"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized rate limit if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <param name="value">When this method returns, contains the deserialized rate limit if successful; otherwise, <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
     public static bool TryFromJson(string json, out RateLimit? value)
     {
         try
@@ -68,7 +67,7 @@ public static class RateLimitJsonExtensions
             ArgumentNullException.ThrowIfNull(json);
             ArgumentException.ThrowIfNullOrEmpty(json);
             value = JsonSerializer.Deserialize<RateLimit>(json, JsonSerializerOptions);
-            return value is not null;
+            return true;
         }
         catch (JsonException)
         {
