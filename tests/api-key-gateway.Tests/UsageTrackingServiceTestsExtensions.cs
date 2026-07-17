@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
 using Xunit;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -22,6 +20,8 @@ namespace ApiKeyGateway.Tests
         /// <param name="bytesTransferred">Number of bytes transferred</param>
         /// <param name="timestamp">Optional timestamp (defaults to UtcNow)</param>
         /// <param name="responseStatusCode">HTTP status code (defaults to 200)</param>
+        /// <exception cref="ArgumentNullException"><paramref name="keyId"/> is null or empty.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="bytesTransferred"/> is zero or negative.</exception>
         /// <returns>A new UsageRecord instance</returns>
         public static UsageRecord CreateTestUsageRecord(
             this UsageTrackingServiceTests _,
@@ -50,6 +50,9 @@ namespace ApiKeyGateway.Tests
         /// <param name="endDate">End date of the range</param>
         /// <param name="dailyRecords">Number of daily records to generate</param>
         /// <param name="bytesPerDay">Bytes transferred per day</param>
+        /// <exception cref="ArgumentNullException"><paramref name="keyId"/> is null or empty.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="dailyRecords"/> or <paramref name="bytesPerDay"/> is zero or negative.</exception>
+        /// <exception cref="ArgumentException"><paramref name="endDate"/> is before <paramref name="startDate"/>.</exception>
         /// <returns>Collection of usage records</returns>
         public static IReadOnlyList<UsageRecord> CreateUsageRecordsForDateRange(
             this UsageTrackingServiceTests _,
@@ -91,6 +94,7 @@ namespace ApiKeyGateway.Tests
         /// <param name="expected">Expected statistics</param>
         /// <param name="actual">Actual statistics</param>
         /// <param name="tolerancePercent">Allowed percentage difference (default: 0.01%)</param>
+        /// <exception cref="ArgumentNullException"><paramref name="expected"/> or <paramref name="actual"/> is null.</exception>
         public static void ShouldBeEquivalentTo(
             this UsageTrackingServiceTests _,
             UsageStatistics expected,
@@ -138,6 +142,9 @@ namespace ApiKeyGateway.Tests
         /// <param name="startDate">Start of period</param>
         /// <param name="endDate">End of period</param>
         /// <param name="averageResponseTimeMs">Average response time in milliseconds</param>
+        /// <exception cref="ArgumentNullException"><paramref name="keyId"/> is null or empty.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Any numeric parameter is negative.</exception>
+        /// <exception cref="ArgumentException"><paramref name="endDate"/> is before <paramref name="startDate"/>.</exception>
         /// <returns>UsageStatistics instance</returns>
         public static UsageStatistics CreateTestStatistics(
             this UsageTrackingServiceTests _,
@@ -160,6 +167,8 @@ namespace ApiKeyGateway.Tests
                 throw new ArgumentException("Period end must be greater than or equal to period start", nameof(endDate));
             }
 
+            var totalBytesTransferred = 1024L * totalRequests; // Reasonable default for testing
+
             return new UsageStatistics
             {
                 ApiKeyId = keyId,
@@ -168,6 +177,7 @@ namespace ApiKeyGateway.Tests
                 TotalRequests = totalRequests,
                 SuccessfulRequests = successfulRequests,
                 FailedRequests = failedRequests,
+                TotalBytesTransferred = totalBytesTransferred,
                 AverageResponseTimeMs = averageResponseTimeMs
             };
         }
