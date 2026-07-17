@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace ApiKeyGateway.Validation;
 
@@ -49,17 +50,11 @@ public static class ApiKeyValidatorValidation
                 "API key cannot exceed {0} characters.", MaxKeyLength));
         }
 
-        // Check character type entropy
-        bool hasUppercase = false, hasLowercase = false, hasDigits = false, hasSpecial = false;
-        foreach (char c in key.AsSpan())
-        {
-            if (char.IsUpper(c)) hasUppercase = true;
-            else if (char.IsLower(c)) hasLowercase = true;
-            else if (char.IsDigit(c)) hasDigits = true;
-            else hasSpecial = true;
-
-            if (hasUppercase && hasLowercase && hasDigits && hasSpecial) break;
-        }
+        // Check character type entropy using pattern matching
+        bool hasUppercase = key.Any(c => char.IsUpper(c));
+        bool hasLowercase = key.Any(c => char.IsLower(c));
+        bool hasDigits = key.Any(c => char.IsDigit(c));
+        bool hasSpecial = key.Any(c => !char.IsLetterOrDigit(c));
 
         var characterTypesUsed = 0;
         if (hasUppercase) characterTypesUsed++;
@@ -108,8 +103,8 @@ public static class ApiKeyValidatorValidation
                 "API key name cannot exceed {0} characters.", MaxNameLength));
         }
 
-        // Check for valid characters
-        if (!name.All(c => char.IsLetterOrDigit(c) || c is ' ' or '_' or '-'))
+        // Check for valid characters using pattern matching for clarity
+        if (name.Any(c => !char.IsLetterOrDigit(c) && c is not (' ' or '_' or '-')))
         {
             problems.Add("API key name can only contain letters, digits, spaces, underscores, and hyphens.");
         }
@@ -122,6 +117,7 @@ public static class ApiKeyValidatorValidation
     /// </summary>
     /// <param name="limit">The quota limit to validate.</param>
     /// <returns>An IReadOnlyList of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if limit is negative.</exception>
     public static IReadOnlyList<string> ValidateQuotaLimit(int limit)
     {
         var problems = new List<string>();
@@ -165,6 +161,7 @@ public static class ApiKeyValidatorValidation
     /// Ensures that the API key string format is valid, throwing if not.
     /// </summary>
     /// <param name="key">The API key to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if key is null.</exception>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
     public static void EnsureValidKeyFormat(string key)
     {
@@ -179,6 +176,7 @@ public static class ApiKeyValidatorValidation
     /// Ensures that the API key name is valid, throwing if not.
     /// </summary>
     /// <param name="name">The API key name to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if name is null.</exception>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
     public static void EnsureValidKeyName(string name)
     {
@@ -193,6 +191,7 @@ public static class ApiKeyValidatorValidation
     /// Ensures that the quota limit is valid, throwing if not.
     /// </summary>
     /// <param name="limit">The quota limit to validate.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if limit is negative.</exception>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
     public static void EnsureValidQuotaLimit(int limit)
     {
