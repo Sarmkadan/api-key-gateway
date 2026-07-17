@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // ===================================================================
 
-using System.Globalization;
 using System.Reflection;
+using System.Linq;
 
 namespace ApiKeyGateway.Tests;
 
@@ -33,79 +33,41 @@ public static class RequestValidatorTestsValidation
         {
             var fieldValue = field.GetValue(value);
 
-            if (fieldValue is null)
+            switch (fieldValue)
             {
-                problems.Add($"Field '{field.Name}' is null.");
-            }
-            else if (fieldValue is string strValue)
-            {
-                if (string.IsNullOrWhiteSpace(strValue))
-                {
+                case null:
+                    problems.Add($"Field '{field.Name}' is null.");
+                    break;
+                case string strValue when string.IsNullOrWhiteSpace(strValue):
                     problems.Add($"Field '{field.Name}' is null, empty, or whitespace.");
-                }
-            }
-            else if (fieldValue is int intValue)
-            {
-                if (intValue == 0)
-                {
+                    break;
+                case int intValue when intValue == 0:
                     problems.Add($"Field '{field.Name}' has default value (0).");
-                }
-            }
-            else if (fieldValue is DateTime dateValue)
-            {
-                if (dateValue == default)
-                {
+                    break;
+                case DateTime dateValue when dateValue == default:
                     problems.Add($"Field '{field.Name}' has default DateTime value.");
-                }
-            }
-            else if (fieldValue is DateOnly dateOnlyValue)
-            {
-                if (dateOnlyValue == default)
-                {
+                    break;
+                case DateOnly dateOnlyValue when dateOnlyValue == default:
                     problems.Add($"Field '{field.Name}' has default DateOnly value.");
-                }
-            }
-            else if (fieldValue is TimeOnly timeOnlyValue)
-            {
-                if (timeOnlyValue == default)
-                {
+                    break;
+                case TimeOnly timeOnlyValue when timeOnlyValue == default:
                     problems.Add($"Field '{field.Name}' has default TimeOnly value.");
-                }
-            }
-            else if (fieldValue is Guid guidValue)
-            {
-                if (guidValue == Guid.Empty)
-                {
+                    break;
+                case Guid guidValue when guidValue == Guid.Empty:
                     problems.Add($"Field '{field.Name}' has empty Guid.");
-                }
-            }
-            else if (fieldValue is decimal decimalValue)
-            {
-                if (decimalValue == 0m)
-                {
+                    break;
+                case decimal decimalValue when decimalValue == 0m:
                     problems.Add($"Field '{field.Name}' has default decimal value (0).");
-                }
-            }
-            else if (fieldValue is double doubleValue)
-            {
-                if (doubleValue == 0d)
-                {
+                    break;
+                case double doubleValue when doubleValue == 0d:
                     problems.Add($"Field '{field.Name}' has default double value (0).");
-                }
-            }
-            else if (fieldValue is float floatValue)
-            {
-                if (floatValue == 0f)
-                {
+                    break;
+                case float floatValue when floatValue == 0f:
                     problems.Add($"Field '{field.Name}' has default float value (0).");
-                }
-            }
-            else if (fieldValue is long longValue)
-            {
-                if (longValue == 0L)
-                {
+                    break;
+                case long longValue when longValue == 0L:
                     problems.Add($"Field '{field.Name}' has default long value (0).");
-                }
+                    break;
             }
         }
 
@@ -138,8 +100,7 @@ public static class RequestValidatorTestsValidation
         if (problems.Count > 0)
         {
             throw new ArgumentException(
-                $"RequestValidatorTests instance is invalid:{Environment.NewLine}- ".Replace("- ", string.Empty) +
-                string.Join(Environment.NewLine + "- ", problems),
+                $"RequestValidatorTests instance is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems.Select(p => $"- {p}"))}",
                 nameof(value));
         }
     }
