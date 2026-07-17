@@ -53,8 +53,9 @@ public static class UsageQuotaServiceTestsJsonExtensions
     /// Attempts to deserialize a <see cref="UsageQuotaServiceTests"/> instance from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized test instance, or null if deserialization failed.</param>
+    /// <param name="value">When this method returns, contains the deserialized test instance if deserialization succeeded, or <see langword="null"/> if deserialization failed.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out UsageQuotaServiceTests? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
