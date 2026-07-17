@@ -14,6 +14,9 @@ namespace ApiKeyGateway.Domain.Models;
 /// </summary>
 public static class UsageQuotaJsonExtensions
 {
+    /// <summary>
+    /// Gets the default JSON serialization options for <see cref="UsageQuota"/>.
+    /// </summary>
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -50,7 +53,6 @@ public static string ToJson(this UsageQuota value, bool indented = false)
     public static UsageQuota? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
-
 
         return JsonSerializer.Deserialize<UsageQuota>(json, _jsonOptions);
     }
