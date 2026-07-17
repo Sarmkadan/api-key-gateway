@@ -696,3 +696,64 @@ class ValidationExample
     }
 }
 ```
+
+## KeyStoreUnavailableExceptionExtensions
+
+The `KeyStoreUnavailableExceptionExtensions` class provides extension methods for `KeyStoreUnavailableException` that enable fluent exception enrichment, diagnostic analysis, and retry decision-making. It offers methods to create enriched exceptions with operation context, cache miss details, and custom messages, as well as utilities to analyze exception chains and determine if failures are likely transient.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Exceptions;
+using System;
+
+class KeyStoreExample
+{
+    public void Run()
+    {
+        try
+        {
+            // Simulate a key store operation that fails
+            throw new KeyStoreUnavailableException("Key store connection failed");
+        }
+        catch (KeyStoreUnavailableException ex)
+        {
+            // Enrich exception with operation context
+            var enrichedWithOperation = ex.WithOperation("GetApiKeyAsync");
+            Console.WriteLine(enrichedWithOperation.Message);
+            
+            // Enrich with cache miss details
+            var enrichedWithCacheMiss = ex.WithCacheMiss("key_12345");
+            Console.WriteLine(enrichedWithCacheMiss.Message);
+            
+            // Enrich with custom context
+            var enrichedWithContext = ex.WithContext("Redis connection timeout after 5 seconds");
+            Console.WriteLine(enrichedWithContext.Message);
+            
+            // Analyze all operations in the exception chain
+            var allOperations = ex.GetAllOperations();
+            foreach (var operation in allOperations)
+            {
+                Console.WriteLine($"Failed operation: {operation}");
+            }
+            
+            // Determine if the failure is likely transient (good for retry logic)
+            bool isTransient = ex.IsLikelyTransient();
+            Console.WriteLine($"Is transient: {isTransient}");
+            
+            // Generate a diagnostic report for logging
+            string diagnosticReport = ex.ToDiagnosticString();
+            Console.WriteLine(diagnosticReport);
+            
+            // Chain multiple enrichments for detailed error reporting
+            var detailedException = new KeyStoreUnavailableException("Database unavailable")
+                .WithOperation("ValidateKeyAsync")
+                .WithContext("PostgreSQL connection pool exhausted")
+                .WithCacheMiss("consumer_api_key_abc123");
+            
+            Console.WriteLine($"Detailed message: {detailedException.Message}");
+            Console.WriteLine($"Is transient: {detailedException.IsLikelyTransient()}");
+        }
+    }
+}
+```
