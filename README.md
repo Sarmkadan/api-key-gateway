@@ -32,7 +32,44 @@ if (success && parsedMetadata != null)
 
 ## AdminControllerExtensions
 
-The `AdminControllerExtensions` class provides a set of extension methods for the `AdminController`, enabling administrative operations such as fetching detailed statistics, exporting data, and performing diagnostic checks. These extensions facilitate maintenance tasks and help monitor system performance by exposing enriched data and operational utilities.
+The `AdminControllerExtensions` class provides a set of extension methods for the `AdminController`, enabling administrative operations such as fetching detailed statistics, exporting data, performing diagnostic checks, and managing API keys. These extensions facilitate maintenance tasks and help monitor system performance by exposing enriched data and operational utilities.
+
+### Public Members
+
+- `GetDetailedStats(this AdminController controller)` - Gets detailed system statistics including endpoint breakdown and error rates
+- `ExportApiKeysAsync(this AdminController controller, string format = "csv")` - Exports API keys in the specified format (csv, json, xml)
+- `ExportAuditLogsAsync(this AdminController controller, string format = "csv", DateTime? since = null)` - Exports audit logs in the specified format
+- `RunComprehensiveDiagnosticsAsync(this AdminController controller)` - Runs comprehensive system diagnostics and returns a health check report
+- `ResetRateLimitsForKeyAsync(this AdminController controller, string apiKeyId)` - Resets rate limits for a specific API key
+
+### Data Transfer Objects
+
+The extension methods return data transfer objects with the following structure:
+
+```csharp
+public string Timestamp { get; init; }
+public StatsSummary Total { get; init; }
+public IReadOnlyDictionary<string, long>? EndpointBreakdown { get; init; }
+public IReadOnlyDictionary<int, long>? ErrorBreakdown { get; init; }
+public PerformanceMetrics Performance { get; init; }
+public TimeSpan? Uptime { get; init; }
+
+public class StatsSummary
+{
+    public long? Requests { get; init; }
+    public int? ActiveKeys { get; init; }
+    public double? Errors { get; init; }
+    public int? RateLimits { get; init; }
+}
+
+public class PerformanceMetrics
+{
+    public double? AverageLatencyMs { get; init; }
+    public double? P95LatencyMs { get; init; }
+    public double? ErrorRate { get; init; }
+    public double RequestsPerSecond { get; init; }
+}
+```
 
 ### Example Usage
 
@@ -44,17 +81,17 @@ using Microsoft.AspNetCore.Mvc;
 var controller = adminController;
 
 // 1. Get detailed system statistics
-IActionResult statsResult = AdminControllerExtensions.GetDetailedStats(controller);
+IActionResult statsResult = controller.GetDetailedStats();
 
 // 2. Export API keys in JSON format
-await AdminControllerExtensions.ExportApiKeysAsync(controller, "json");
+await controller.ExportApiKeysAsync("json");
 
 // 3. Export audit logs since a specific date
-await AdminControllerExtensions.ExportAuditLogsAsync(controller, "csv", DateTime.UtcNow.AddDays(-7));
+await controller.ExportAuditLogsAsync("csv", DateTime.UtcNow.AddDays(-7));
 
 // 4. Run comprehensive system diagnostics
-await AdminControllerExtensions.RunComprehensiveDiagnosticsAsync(controller);
+await controller.RunComprehensiveDiagnosticsAsync();
 
 // 5. Reset rate limits for a specific API key
-await AdminControllerExtensions.ResetRateLimitsForKeyAsync(controller, "api-key-12345");
+await controller.ResetRateLimitsForKeyAsync("api-key-12345");
 ```
