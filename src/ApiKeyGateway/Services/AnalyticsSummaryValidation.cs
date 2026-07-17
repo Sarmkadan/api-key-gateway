@@ -12,6 +12,9 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public static class AnalyticsSummaryValidation
 {
+    private const double PercentageTolerance = 0.001;
+    private const int DateTimeToleranceMinutes = 5;
+
     /// <summary>
     /// Validates the <see cref="AnalyticsSummary"/> instance and returns a list of validation errors.
     /// </summary>
@@ -31,24 +34,24 @@ public static class AnalyticsSummaryValidation
 
         if (value.From == default)
         {
-            errors.Add("From must be set to a valid date.");
+            errors.Add("From date must be set to a valid date.");
         }
-        else if (value.From > DateTime.UtcNow.AddMinutes(5))
+        else if (value.From > DateTime.UtcNow.AddMinutes(DateTimeToleranceMinutes))
         {
-            errors.Add("From cannot be in the future.");
+            errors.Add("From date cannot be in the future.");
         }
 
         if (value.To == default)
         {
-            errors.Add("To must be set to a valid date.");
+            errors.Add("To date must be set to a valid date.");
         }
-        else if (value.To > DateTime.UtcNow.AddMinutes(5))
+        else if (value.To > DateTime.UtcNow.AddMinutes(DateTimeToleranceMinutes))
         {
-            errors.Add("To cannot be in the future.");
+            errors.Add("To date cannot be in the future.");
         }
         else if (value.To < value.From)
         {
-            errors.Add("To must be after or equal to From.");
+            errors.Add("To date must be after or equal to From date.");
         }
 
         if (value.TotalRequests < 0)
@@ -91,9 +94,9 @@ public static class AnalyticsSummaryValidation
             errors.Add("ErrorRatePercent must be between 0 and 100 inclusive.");
         }
 
-        if (value.SuccessRatePercent + value.ErrorRatePercent > 100.001) // Allow for floating point precision
+        if (Math.Abs(value.SuccessRatePercent + value.ErrorRatePercent - 100) > PercentageTolerance)
         {
-            errors.Add("SuccessRatePercent + ErrorRatePercent must not exceed 100.");
+            errors.Add("SuccessRatePercent + ErrorRatePercent must equal 100 within tolerance.");
         }
 
         if (value.AverageResponseTimeMs < 0)
@@ -125,10 +128,7 @@ public static class AnalyticsSummaryValidation
     /// <param name="value">The analytics summary instance to check.</param>
     /// <returns>True if valid, false otherwise.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this AnalyticsSummary value)
-    {
-        return Validate(value).Count == 0;
-    }
+    public static bool IsValid(this AnalyticsSummary value) => Validate(value).Count == 0;
 
     /// <summary>
     /// Throws an <see cref="ArgumentException"/> if the <see cref="AnalyticsSummary"/> instance is invalid.
