@@ -74,4 +74,3 @@ class TransformationRuleExample
         Console.WriteLine($"Original parameters: {parametersString}");
     }
 }
-```
