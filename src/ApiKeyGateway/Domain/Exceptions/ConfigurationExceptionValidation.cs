@@ -7,16 +7,16 @@
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
-/// Provides validation helpers for <see cref="ConfigurationException"/> instances
+/// Provides validation helpers for <see cref="ConfigurationException"/> instances.
 /// </summary>
 public static class ConfigurationExceptionValidation
 {
     /// <summary>
     /// Validates the specified <see cref="ConfigurationException"/> instance.
     /// </summary>
-    /// <param name="value">The exception to validate</param>
-    /// <returns>An enumerable of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null</exception>
+    /// <param name="value">The exception to validate. Cannot be null.</param>
+    /// <returns>An enumerable of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this ConfigurationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -39,9 +39,9 @@ public static class ConfigurationExceptionValidation
     /// <summary>
     /// Determines whether the specified <see cref="ConfigurationException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception to check</param>
-    /// <returns>true if valid; otherwise, false</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null</exception>
+    /// <param name="value">The exception to check. Cannot be null.</param>
+    /// <returns>true if valid; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static bool IsValid(this ConfigurationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -51,9 +51,9 @@ public static class ConfigurationExceptionValidation
     /// <summary>
     /// Ensures that the specified <see cref="ConfigurationException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null</exception>
-    /// <exception cref="ArgumentException">Thrown when the exception is invalid, containing the validation problems</exception>
+    /// <param name="value">The exception to validate. Cannot be null.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when the exception is invalid, containing the validation problems.</exception>
     public static void EnsureValid(this ConfigurationException value)
     {
         ArgumentNullException.ThrowIfNull(value);
