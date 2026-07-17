@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 using System.Globalization;
 
@@ -67,7 +67,7 @@ public static class InvalidApiKeyExceptionExtensions
         }
 
         parts.Add($"IsExpired: {exception.IsExpired}");
-        parts.Add($"OccurredAt: {exception.OccurredAt.ToString("yyyy-MM-dd HH:mm:ss UTC", CultureInfo.InvariantCulture)}");
+        parts.Add($"OccurredAt: {exception.OccurredAt:yyyy-MM-dd HH:mm:ss UTC}");
 
         return string.Join(" | ", parts);
     }
