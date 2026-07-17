@@ -65,6 +65,40 @@ public static class ValidationHelpersTestsExtensions
     }
 
     /// <summary>
+    /// Asserts that the result of <see cref="ValidationHelpers.IsValidGuid"/> matches the expected value.
+    /// </summary>
+    /// <param name="test">The test instance invoking the helper.</param>
+    /// <param name="guidValue">The GUID string to validate.</param>
+    /// <param name="expected">The expected validation result.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="guidValue"/> is <c>null</c> or empty.</exception>
+    public static void AssertGuidValidity(this ValidationHelpersTests test, string guidValue, bool expected)
+    {
+        ArgumentNullException.ThrowIfNull(test);
+        ArgumentException.ThrowIfNullOrEmpty(guidValue);
+
+        var result = ValidationHelpers.IsValidGuid(guidValue);
+        result.Should().Be(expected);
+    }
+
+    /// <summary>
+    /// Asserts that the result of <see cref="ValidationHelpers.IsValidUrl"/> matches the expected value.
+    /// </summary>
+    /// <param name="test">The test instance invoking the helper.</param>
+    /// <param name="url">The URL string to validate.</param>
+    /// <param name="expected">The expected validation result.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="url"/> is <c>null</c> or empty.</exception>
+    public static void AssertUrlValidity(this ValidationHelpersTests test, string url, bool expected)
+    {
+        ArgumentNullException.ThrowIfNull(test);
+        ArgumentException.ThrowIfNullOrEmpty(url);
+
+        var result = ValidationHelpers.IsValidUrl(url);
+        result.Should().Be(expected);
+    }
+
+    /// <summary>
     /// Asserts that <see cref="ValidationHelpers.SanitizeInput"/> returns the expected sanitized string.
     /// </summary>
     /// <param name="test">The test instance invoking the helper.</param>
@@ -73,12 +107,15 @@ public static class ValidationHelpersTestsExtensions
     /// <param name="expected">The expected sanitized string.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Thrown when <paramref name="input"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxLength"/> is negative.</exception>
     public static void AssertSanitizedInput(this ValidationHelpersTests test, string input, int maxLength, string expected)
     {
         ArgumentNullException.ThrowIfNull(test);
         ArgumentNullException.ThrowIfNull(input);
         if (maxLength < 0)
-            throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be non‑negative.");
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be non-negative.");
+        }
 
         var result = ValidationHelpers.SanitizeInput(input, maxLength);
         result.Should().Be(expected);
