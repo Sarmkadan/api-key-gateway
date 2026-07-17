@@ -20,9 +20,13 @@ public sealed class CorrelationContextMiddleware
 
     public CorrelationContextMiddleware(RequestDelegate next, ILogger<CorrelationContextMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    internal RequestDelegate GetNextDelegate() => _next;
+
+    internal ILogger<CorrelationContextMiddleware> GetLogger() => _logger;
 
     public async Task InvokeAsync(HttpContext context)
     {
