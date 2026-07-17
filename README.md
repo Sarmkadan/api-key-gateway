@@ -237,3 +237,70 @@ catch (ArgumentException ex)
     Console.WriteLine($"Validation exception: {ex.Message}");
 }
 ```
+
+## ResponseFormatterExtensionsValidation
+
+`ResponseFormatterExtensionsValidation` provides extension methods for validating API responses created by `ResponseFormatterExtensions`. It offers validation for both `ApiResponse<T>` and `PaginatedResponse<T>` types through three approaches: returning error lists, boolean checks, and exception-throwing validation.
+
+### Example Usage
+
+```csharp
+using System;
+using System.Collections.Generic;
+using ApiKeyGateway.Utilities;
+
+// Create a valid API response
+var validResponse = new ApiResponse<string>
+{
+    StatusCode = 200,
+    Success = true,
+    Message = "Request successful",
+    Data = "api-key-123",
+    ErrorCode = null,
+    Timestamp = DateTime.UtcNow
+};
+
+// Validate the response and get validation errors
+IReadOnlyList<string> errors = validResponse.Validate();
+if (errors.Count == 0)
+{
+    Console.WriteLine("Response is valid!");
+}
+
+// Quick boolean validation
+bool isValid = validResponse.IsValid();
+
+// Validate and throw ArgumentException if invalid
+validResponse.EnsureValid();
+
+// Example with an invalid response
+var invalidResponse = new ApiResponse<string>
+{
+    StatusCode = 200,
+    Success = true,
+    Message = "", // Missing message
+    Data = "api-key-123",
+    ErrorCode = null,
+    Timestamp = DateTime.UtcNow
+};
+
+// This will return validation errors
+IReadOnlyList<string> invalidErrors = invalidResponse.Validate();
+// invalidErrors will contain: "Success is true but Message is null or empty."
+
+// Validate a paginated response
+var paginatedResponse = new PaginatedResponse<string>
+{
+    PageNumber = 1,
+    PageSize = 10,
+    TotalCount = 25,
+    TotalPages = 3,
+    Items = new List<string> { "item1", "item2" },
+    Timestamp = DateTime.UtcNow
+};
+
+// Validate paginated response
+IReadOnlyList<string> paginationErrors = paginatedResponse.Validate();
+bool paginationIsValid = paginatedResponse.IsValid();
+paginatedResponse.EnsureValid();
+```
