@@ -1,11 +1,11 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-
 // System.Text.Json serialization helpers for LoggerFactoryHelper configuration state.
 // Provides efficient serialization/deserialization with camelCase naming convention.
 // =====================================================================
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -24,17 +24,17 @@ public static class LoggerFactoryHelperJsonExtensions
     public sealed record LoggerFactoryConfiguration
     {
         /// <summary>
-        /// Gets or sets the default log level.
+        /// Gets the default log level.
         /// </summary>
         public string? DefaultLogLevel { get; init; }
 
         /// <summary>
-        /// Gets or sets whether debug logging is enabled.
+        /// Gets whether debug logging is enabled.
         /// </summary>
         public bool DebugEnabled { get; init; }
 
         /// <summary>
-        /// Gets or sets whether console logging is enabled.
+        /// Gets whether console logging is enabled.
         /// </summary>
         public bool ConsoleEnabled { get; init; }
     }
@@ -91,15 +91,21 @@ public static class LoggerFactoryHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized <see cref="LoggerFactoryConfiguration"/> instance if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
-    public static bool TryFromJson(string json, out LoggerFactoryConfiguration? value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+    public static bool TryFromJson(string json, [NotNullWhen(true)] out LoggerFactoryConfiguration? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json, nameof(json));
+        ArgumentNullException.ThrowIfNull(json);
+
+        if (string.IsNullOrEmpty(json))
+        {
+            throw new ArgumentException("JSON string cannot be empty or whitespace.", nameof(json));
+        }
 
         try
         {
             value = JsonSerializer.Deserialize<LoggerFactoryConfiguration>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
