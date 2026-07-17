@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 namespace ApiKeyGateway.Domain.Models;
 
@@ -39,6 +39,10 @@ public static class RateLimitValidation
         {
             errors.Add("RequestsPerUnit must be a positive integer greater than zero.");
         }
+        else if (value.RequestsPerUnit > 1_000_000) // Reasonable upper bound
+        {
+            errors.Add("RequestsPerUnit cannot exceed 1,000,000.");
+        }
 
         // Validate Unit (enum validation)
         if (!Enum.IsDefined(typeof(Enums.RateLimitUnit), value.Unit))
@@ -56,7 +60,7 @@ public static class RateLimitValidation
         }
 
         // Validate LastResetAt
-        if (value.LastResetAt == default && value.LastResetAt.HasValue)
+        if (value.LastResetAt.HasValue && value.LastResetAt.Value == default)
         {
             errors.Add("LastResetAt cannot be the default DateTime value.");
         }
@@ -65,6 +69,10 @@ public static class RateLimitValidation
         if (value.CurrentRequestCount < 0)
         {
             errors.Add("CurrentRequestCount cannot be negative.");
+        }
+        else if (value.CurrentRequestCount > value.RequestsPerUnit)
+        {
+            errors.Add("CurrentRequestCount cannot exceed RequestsPerUnit.");
         }
 
         // Validate that CurrentRequestCount doesn't exceed RequestsPerUnit when IsEnabled
