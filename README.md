@@ -154,3 +154,86 @@ await controller.RunComprehensiveDiagnosticsAsync();
 // 5. Reset rate limits for a specific API key
 await controller.ResetRateLimitsForKeyAsync("api-key-12345");
 ```
+
+## AnalyticsControllerJsonExtensions
+
+The `AnalyticsControllerJsonExtensions` class provides System.Text.Json serialization extensions for analytics response types returned by `AnalyticsController` actions. It enables serialization and deserialization of analytics summary data, endpoint statistics, hourly buckets, and daily buckets with support for both compact and indented JSON formatting.
+
+### Public Members
+
+- `ToJson(this AnalyticsSummary value, bool indented = false)` - Serializes an analytics summary to a JSON string
+- `ToJson(this List<EndpointStat> value, bool indented = false)` - Serializes a list of endpoint statistics to a JSON string
+- `ToJson(this List<HourlyBucket> value, bool indented = false)` - Serializes a list of hourly buckets to a JSON string
+- `ToJson(this List<DailyBucket> value, bool indented = false)` - Serializes a list of daily buckets to a JSON string
+- `FromJson(string json)` - Deserializes a JSON string to an analytics summary
+- `FromJsonToEndpointStats(string json)` - Deserializes a JSON string to a list of endpoint statistics
+- `FromJsonToHourlyBuckets(string json)` - Deserializes a JSON string to a list of hourly buckets
+- `FromJsonToDailyBuckets(string json)` - Deserializes a JSON string to a list of daily buckets
+- `TryFromJson(string json, out AnalyticsSummary? value)` - Attempts to deserialize a JSON string to an analytics summary
+- `TryFromJson(string json, out List<EndpointStat>? value)` - Attempts to deserialize a JSON string to a list of endpoint statistics
+- `TryFromJson(string json, out List<HourlyBucket>? value)` - Attempts to deserialize a JSON string to a list of hourly buckets
+- `TryFromJson(string json, out List<DailyBucket>? value)` - Attempts to deserialize a JSON string to a list of daily buckets
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using ApiKeyGateway.Services;
+
+// Create sample analytics data
+var analyticsSummary = new AnalyticsSummary
+{
+    TotalRequests = 1000,
+    TotalErrors = 15,
+    AverageResponseTimeMs = 42.5,
+    TopEndpoints = new List<EndpointStat>
+    {
+        new EndpointStat { Path = "/api/users", Requests = 500, Errors = 2 },
+        new EndpointStat { Path = "/api/products", Requests = 300, Errors = 5 }
+    },
+    HourlyStats = new List<HourlyBucket>
+    {
+        new HourlyBucket { Hour = 10, Requests = 150, Errors = 1 },
+        new HourlyBucket { Hour = 11, Requests = 200, Errors = 2 }
+    },
+    DailyStats = new List<DailyBucket>
+    {
+        new DailyBucket { Date = DateTime.Today, Requests = 800, Errors = 10 },
+        new DailyBucket { Date = DateTime.Today.AddDays(-1), Requests = 200, Errors = 5 }
+    }
+};
+
+// Serialize analytics summary to JSON string
+string jsonSummary = analyticsSummary.ToJson(indented: true);
+
+// Serialize endpoint statistics to JSON string
+string jsonEndpoints = analyticsSummary.TopEndpoints.ToJson();
+
+// Serialize hourly buckets to JSON string
+string jsonHourly = analyticsSummary.HourlyStats.ToJson();
+
+// Serialize daily buckets to JSON string
+string jsonDaily = analyticsSummary.DailyStats.ToJson();
+
+// Deserialize analytics summary from JSON
+AnalyticsSummary? deserializedSummary = AnalyticsControllerJsonExtensions.FromJson(jsonSummary);
+
+// Deserialize endpoint statistics from JSON
+List<EndpointStat>? deserializedEndpoints = AnalyticsControllerJsonExtensions.FromJsonToEndpointStats(jsonEndpoints);
+
+// Deserialize hourly buckets from JSON
+List<HourlyBucket>? deserializedHourly = AnalyticsControllerJsonExtensions.FromJsonToHourlyBuckets(jsonHourly);
+
+// Deserialize daily buckets from JSON
+List<DailyBucket>? deserializedDaily = AnalyticsControllerJsonExtensions.FromJsonToDailyBuckets(jsonDaily);
+
+// Try to deserialize with error handling
+if (AnalyticsControllerJsonExtensions.TryFromJson(jsonSummary, out var parsedSummary))
+{
+    Console.WriteLine("Successfully deserialized analytics summary");
+}
+else
+{
+    Console.WriteLine("Failed to deserialize analytics summary");
+}
+```
