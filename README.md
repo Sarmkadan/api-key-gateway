@@ -83,6 +83,69 @@ foreach (var result in exceededResults)
 
 The `CacheKeyGeneratorTestsExtensions` class provides extension methods for `CacheKeyGeneratorTests` that offer reusable assertions and helper methods for testing cache key generation scenarios. These extensions validate cache key formats, parameter handling, and hash generation for various API gateway caching use cases including API keys, rate limits, usage statistics, quotas, webhook deliveries, and external API calls.
 
+## AuditLogServiceTestsExtensions
+
+The `AuditLogServiceTestsExtensions` class provides extension methods for `AuditLogServiceTests` that offer reusable test utilities for audit logging scenarios. It includes methods for creating test audit logs, setting up mock repository behaviors, verifying log creation and logging calls, and asserting on log collections with fluent assertions.
+
+### Public Members
+
+- `CreateTestAuditLog(this string resourceId, AuditAction action, bool isSuccess = true, string? performedBy = null, string resourceType = "ApiKey")` - Creates a test audit log with the specified parameters
+- `VerifyLogCreated(this AuditLogServiceTests test, AuditLog expectedLog)` - Verifies that the repository received a call to create the specified log
+- `VerifyInformationLogForAction(this AuditLogServiceTests test, AuditAction expectedAction)` - Verifies that the logger received an information-level log containing the specified action
+- `SetupGetLogsAsync(this AuditLogServiceTests test, string resourceId, List<AuditLog> logs, int limit = 100)` - Sets up the repository to return a specific list of logs for the given resource ID
+- `SetupGetLogsForPeriodAsync(this AuditLogServiceTests test, DateTime startDate, DateTime endDate, List<AuditLog> logs)` - Sets up the repository to return a specific list of logs for the given date range
+- `SetupCleanupOldLogsAsync(this AuditLogServiceTests test, int retentionDays, int deletedCount)` - Sets up the repository to return a specific count when deleting old logs
+- `GetMockRepository(this AuditLogServiceTests test)` - Gets the mock repository from the test instance
+- `GetMockLogger(this AuditLogServiceTests test)` - Gets the mock logger from the test instance
+- `GetServiceUnderTest(this AuditLogServiceTests test)` - Gets the service under test from the test instance
+- `ContainOnlyActions(this List<AuditLog> logs, params AuditAction[] expectedActions)` - Asserts that a collection of logs contains only the expected actions
+- `ContainOnlySuccessfulOperations(this List<AuditLog> logs)` - Asserts that a collection of logs contains only successful operations
+- `ContainOnlyFailedOperations(this List<AuditLog> logs)` - Asserts that a collection of logs contains only failed operations
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new AuditLogServiceTests();
+
+// Create a test audit log
+var auditLog = "api-key-123".CreateTestAuditLog(
+    action: AuditAction.Create,
+    isSuccess: true,
+    performedBy: "admin@example.com",
+    resourceType: "ApiKey"
+);
+
+// Verify log creation
+var service = testInstance.GetServiceUnderTest();
+testInstance.VerifyLogCreated(auditLog);
+
+// Setup repository to return specific logs for a resource
+var logs = new List<AuditLog>
+{
+    auditLog,
+    "api-key-123".CreateTestAuditLog(AuditAction.Update, true, "admin@example.com")
+};
+testInstance.SetupGetLogsAsync("api-key-123", logs, limit: 50);
+
+// Test log retrieval
+var retrievedLogs = await service.GetByResourceIdAsync("api-key-123", 50);
+retrievedLogs.Should().HaveCount(2);
+
+// Verify information log was created for the action
+var expectedAction = AuditAction.Create;
+testInstance.VerifyInformationLogForAction(expectedAction);
+
+// Assert on log collection
+logs.ContainOnlyActions(AuditAction.Create, AuditAction.Update);
+logs.ContainOnlySuccessfulOperations();
+```
+
 ### Public Members
 
 - `ShouldHaveApiKeyFormat(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)` - Asserts that a cache key follows the expected format pattern for API keys
