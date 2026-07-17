@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace ApiKeyGateway.Examples
 {
     /// <summary>
-    /// Validation helpers for <see cref="ApiKeyGatewayExample"/> instances.
+    /// Provides validation methods for <see cref="ApiKeyGatewayExample"/> instances.
     /// </summary>
     public static class ApiKeyGatewayExampleValidation
     {
@@ -21,38 +20,38 @@ namespace ApiKeyGateway.Examples
 
             var errors = new List<string>();
 
-            if (string.IsNullOrEmpty(value.Id))
+            if (string.IsNullOrWhiteSpace(value.Id))
             {
-                errors.Add($"Id is required.");
+                errors.Add("Id is required.");
             }
 
-            if (string.IsNullOrEmpty(value.DisplayKey))
+            if (string.IsNullOrWhiteSpace(value.DisplayKey))
             {
-                errors.Add($"DisplayKey is required.");
+                errors.Add("DisplayKey is required.");
             }
 
-            if (string.IsNullOrEmpty(value.ConsumerId))
+            if (string.IsNullOrWhiteSpace(value.ConsumerId))
             {
-                errors.Add($"ConsumerId is required.");
+                errors.Add("ConsumerId is required.");
             }
 
             if (value.CreatedAt == default)
             {
-                errors.Add($"CreatedAt must be a valid date.");
+                errors.Add("CreatedAt must be a valid date.");
             }
 
-            if (string.IsNullOrEmpty(value.Name))
+            if (string.IsNullOrWhiteSpace(value.Name))
             {
-                errors.Add($"Name is required.");
+                errors.Add("Name is required.");
             }
 
-            if (string.IsNullOrEmpty(value.Status))
+            if (string.IsNullOrWhiteSpace(value.Status))
             {
-                errors.Add($"Status is required.");
+                errors.Add("Status is required.");
             }
             else if (value.Status.Length > 20)
             {
-                errors.Add($"Status must be 20 characters or less.");
+                errors.Add("Status must be 20 characters or less.");
             }
 
             return errors.AsReadOnly();
@@ -61,7 +60,7 @@ namespace ApiKeyGateway.Examples
         /// <summary>
         /// Determines whether an <see cref="ApiKeyGatewayExample"/> instance is valid.
         /// </summary>
-        /// <param name="value">The instance to check.</param>
+        /// <param name="value">The instance to validate.</param>
         /// <returns>True if valid; otherwise false.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
         public static bool IsValid(this ApiKeyGatewayExample value)
@@ -74,7 +73,9 @@ namespace ApiKeyGateway.Examples
         /// </summary>
         /// <param name="value">The instance to validate.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is not valid, containing the validation errors.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown if <paramref name="value"/> is not valid, containing the validation errors.
+        /// </exception>
         public static void EnsureValid(this ApiKeyGatewayExample value)
         {
             ArgumentNullException.ThrowIfNull(value);
