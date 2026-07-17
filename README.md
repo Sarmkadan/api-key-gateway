@@ -305,6 +305,46 @@ bool paginationIsValid = paginatedResponse.IsValid();
 paginatedResponse.EnsureValid();
 ```
 
+## ApiResponseBuilderJsonExtensions
+
+The `ApiResponseBuilderJsonExtensions` class provides extension methods for serializing and deserializing `ApiResponseBuilder<T>` objects to and from JSON strings. It includes methods such as `ToJson`, `FromJson`, and `TryFromJson` to convert objects to and from JSON. The `Success` property indicates whether the operation was successful, while `StatusCode`, `Message`, `ErrorCode`, `Data`, `Errors`, and `Metadata` provide additional information about the response.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System;
+
+// Create an ApiResponseBuilder instance
+var responseBuilder = new ApiResponseBuilder<string>
+{
+    Success = true,
+    StatusCode = 200,
+    Message = "Request successful",
+    Data = "api-key-123"
+};
+
+// Serialize the ApiResponseBuilder to a JSON string
+string json = ApiResponseBuilderJsonExtensions.ToJson(responseBuilder);
+
+// Deserialize the JSON string back to an ApiResponseBuilder object
+ApiResponseBuilder<string>? deserialized = ApiResponseBuilderJsonExtensions.FromJson<string>(json);
+
+// Attempt to deserialize using TryFromJson method
+bool success = ApiResponseBuilderJsonExtensions.TryFromJson<string>(json, out var parsedResponse);
+if (success && parsedResponse != null)
+{
+    // Use parsed response
+    bool isSuccess = parsedResponse.Success;
+    int? statusCode = parsedResponse.StatusCode;
+    string? message = parsedResponse.Message;
+    object? data = parsedResponse.Data;
+    string? errorCode = parsedResponse.ErrorCode;
+    List<string>? errors = parsedResponse.Errors;
+    Dictionary<string, object>? metadata = parsedResponse.Metadata;
+}
+```
+
 ## ValidationHelpersJsonExtensions
 
 `ValidationHelpersJsonExtensions` supplies JSON‑serialization utilities for the static `ValidationHelpers` class, allowing you to export metadata about its public validation methods and later reconstruct that information. It serializes a lightweight metadata model containing the type name and a list of method names.
