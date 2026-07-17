@@ -215,6 +215,54 @@ var errorResult = testInstance.CreateValidationResult(false, "Invalid parameter 
 testInstance.ShouldBeInvalid(errorResult);
 ```
 
+## ValidationHelpersTestsExtensions
+
+The `ValidationHelpersTestsExtensions` class provides extension methods for `ValidationHelpersTests` that offer reusable assertion helpers for validating various input types commonly encountered in API key gateway testing scenarios. These extensions simplify test assertions for email addresses, API keys, IP addresses, GUIDs, URLs, and input sanitization by wrapping the underlying `ValidationHelpers` methods with fluent assertions.
+
+### Public Members
+
+- `AssertEmailValidity(this ValidationHelpersTests test, string email, bool expected)` - Asserts that the result of `ValidationHelpers.IsValidEmail` matches the expected value
+- `AssertApiKeyFormat(this ValidationHelpersTests test, string apiKey, bool expected)` - Asserts that the result of `ValidationHelpers.IsValidApiKeyFormat` matches the expected value
+- `AssertIpAddressValidity(this ValidationHelpersTests test, string ipAddress, bool expected)` - Asserts that the result of `ValidationHelpers.IsValidIpAddress` matches the expected value
+- `AssertGuidValidity(this ValidationHelpersTests test, string guidValue, bool expected)` - Asserts that the result of `ValidationHelpers.IsValidGuid` matches the expected value
+- `AssertUrlValidity(this ValidationHelpersTests test, string url, bool expected)` - Asserts that the result of `ValidationHelpers.IsValidUrl` matches the expected value
+- `AssertSanitizedInput(this ValidationHelpersTests test, string input, int maxLength, string expected)` - Asserts that `ValidationHelpers.SanitizeInput` returns the expected sanitized string
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new ValidationHelpersTests();
+
+// Test email validation
+var validEmail = "user@example.com";
+testInstance.AssertEmailValidity(validEmail, true);
+testInstance.AssertEmailValidity("invalid-email", false);
+
+// Test API key format validation
+testInstance.AssertApiKeyFormat("sk_live_abc123xyz789", true);
+testInstance.AssertApiKeyFormat("invalid-key", false);
+
+// Test IP address validation
+testInstance.AssertIpAddressValidity("192.168.1.1", true);
+testInstance.AssertIpAddressValidity("999.999.999.999", false);
+
+// Test GUID validation
+testInstance.AssertGuidValidity("123e4567-e89b-12d3-a456-426614174000", true);
+testInstance.AssertGuidValidity("not-a-guid", false);
+
+// Test URL validation
+testInstance.AssertUrlValidity("https://api.example.com/v1/users", true);
+testInstance.AssertUrlValidity("not-a-url", false);
+
+// Test input sanitization
+var sanitizedInput = "<script>alert('xss')</script>";
+testInstance.AssertSanitizedInput(sanitizedInput, 100, "scriptalertxssscript");
+```
+
 ## ApiKeyModelTestsExtensions
 
 The `ApiKeyModelTestsExtensions` class provides extension methods for `ApiKeyModelTests` that offer reusable test utilities for creating and asserting API key scenarios. These extensions simplify the setup of test API keys with various statuses, IP whitelists, and expiration dates, and provide fluent assertions for verifying API key state and behavior.
