@@ -45,13 +45,21 @@ public static class ApiKeyValidation
         {
             errors.Add("KeyHash must not be empty.");
         }
+        else if (value.KeyHash.Length < 8)
+        {
+            errors.Add("KeyHash must be at least 8 characters long.");
+        }
 
         if (string.IsNullOrEmpty(value.Prefix))
         {
             errors.Add("Prefix must not be empty.");
         }
+        else if (value.Prefix.Length != 8)
+        {
+            errors.Add("Prefix must be exactly 8 characters long.");
+        }
 
-        if (value.Status < 0 || value.Status > (Enums.ApiKeyStatus)5)
+        if (!Enum.IsDefined(value.Status))
         {
             errors.Add("Status must be a valid ApiKeyStatus value.");
         }
@@ -114,6 +122,10 @@ public static class ApiKeyValidation
         {
             errors.Add("Metadata must not be null.");
         }
+        else if (value.Metadata.Count > 50)
+        {
+            errors.Add("Metadata must not contain more than 50 entries.");
+        }
 
         if (value.RequestCount < 0)
         {
@@ -151,6 +163,7 @@ public static class ApiKeyValidation
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid(this ApiKey value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         return Validate(value).Count == 0;
     }
 
@@ -162,6 +175,7 @@ public static class ApiKeyValidation
     /// <exception cref="ArgumentException">Thrown if the instance is invalid, containing all validation errors.</exception>
     public static void EnsureValid(this ApiKey value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         var errors = Validate(value);
         if (errors.Count > 0)
         {
