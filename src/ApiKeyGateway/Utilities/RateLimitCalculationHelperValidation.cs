@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace ApiKeyGateway.Utilities
 {
@@ -17,6 +16,8 @@ namespace ApiKeyGateway.Utilities
         /// <returns>A list of validation errors; empty if valid.</returns>
         public static IReadOnlyList<string> Validate()
         {
+            ArgumentNullException.ThrowIfNull(typeof(RateLimitCalculationHelper));
+
             var errors = new List<string>();
 
             // Validate GetWindowStart with a typical DateTime
@@ -60,9 +61,25 @@ namespace ApiKeyGateway.Utilities
                 errors.Add("CalculateQuotagePercentage returned a value outside the range [0, 100].");
             }
 
-            // Validate ShouldWarnAboutLimit with typical parameters
-            var shouldWarn = RateLimitCalculationHelper.ShouldWarnAboutLimit(85);
-            // Boolean method - no validation needed beyond checking it returns a valid bool
+            // Validate ShouldWarnAboutLimit with typical and edge case parameters
+            var shouldWarnBelowThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(79);
+            var shouldWarnAtThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(80);
+            var shouldWarnAboveThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(95);
+
+            if (shouldWarnBelowThreshold)
+            {
+                errors.Add("ShouldWarnAboutLimit returned true for value below 80% threshold.");
+            }
+
+            if (!shouldWarnAtThreshold)
+            {
+                errors.Add("ShouldWarnAboutLimit returned false for value at 80% threshold.");
+            }
+
+            if (!shouldWarnAboveThreshold)
+            {
+                errors.Add("ShouldWarnAboutLimit returned false for value above 80% threshold.");
+            }
 
             // Validate GetReadableResetTime with typical parameters
             var readableResetTime = RateLimitCalculationHelper.GetReadableResetTime(windowEnd);
@@ -82,22 +99,19 @@ namespace ApiKeyGateway.Utilities
         /// Determines whether the <see cref="RateLimitCalculationHelper"/> methods return valid results.
         /// </summary>
         /// <returns>True if valid; otherwise, false.</returns>
-        public static bool IsValid()
-        {
-            return Validate().Count == 0;
-        }
+        public static bool IsValid() => Validate().Count == 0;
 
         /// <summary>
         /// Ensures that the <see cref="RateLimitCalculationHelper"/> methods return valid results.
         /// Throws an exception if validation fails.
         /// </summary>
-        /// <exception cref="ArgumentException">Thrown if validation fails with a list of validation errors.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if validation fails with a list of validation errors.</exception>
         public static void EnsureValid()
         {
             var errors = Validate();
             if (errors.Count > 0)
             {
-                throw new ArgumentException(
+                throw new InvalidOperationException(
                     $"RateLimitCalculationHelper validation failed. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
             }
         }
