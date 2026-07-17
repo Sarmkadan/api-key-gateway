@@ -5,20 +5,20 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace ApiKeyGateway.Benchmarks;
 
 /// <summary>
-/// Validation helpers for <see cref="CryptoBenchmarks"/>.
+/// Provides validation methods for <see cref="CryptoBenchmarks"/> instances.
 /// </summary>
 public static class CryptoBenchmarksValidation
 {
     /// <summary>
-    /// Validates a <see cref="CryptoBenchmarks"/> instance by invoking its benchmark methods.
+    /// Validates a <see cref="CryptoBenchmarks"/> instance by invoking its benchmark methods and
+    /// verifying their outputs meet expected criteria.
     /// </summary>
     /// <param name="value">The benchmarks instance to validate.</param>
-    /// <returns>A list of validation errors; empty if valid.</returns>
+    /// <returns>A list of validation errors; empty if the instance is valid.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this CryptoBenchmarks value)
     {
@@ -26,102 +26,16 @@ public static class CryptoBenchmarksValidation
 
         var errors = new List<string>();
 
-        // Validate GenerateRandom_32 by invoking the benchmark method
-        try
-        {
-            var result32 = value.GenerateRandom_32();
-            if (result32 is null)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_32)}() returned null.");
-            }
-            else if (result32.Length != 32)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_32)}() must return a string with length 32, but returned length was {result32.Length}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_32)}() threw an exception: {ex.Message}");
-        }
+        ValidateMethod(value, nameof(CryptoBenchmarks.GenerateRandom_32), 32, value.GenerateRandom_32, errors);
+        ValidateMethod(value, nameof(CryptoBenchmarks.GenerateRandom_64), 64, value.GenerateRandom_64, errors);
+        ValidateMethod(value, nameof(CryptoBenchmarks.GenerateRandom_128), 128, value.GenerateRandom_128, errors);
+        ValidateMethod(value, nameof(CryptoBenchmarks.ComputeSha256), 64, value.ComputeSha256, errors);
+        ValidateMethod(value, nameof(CryptoBenchmarks.ComputeHmac), 64, value.ComputeHmac, errors);
 
-        // Validate GenerateRandom_64 by invoking the benchmark method
+        // VerifyHash returns bool, which is always valid - we just check that it doesn't throw
         try
         {
-            var result64 = value.GenerateRandom_64();
-            if (result64 is null)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_64)}() returned null.");
-            }
-            else if (result64.Length != 64)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_64)}() must return a string with length 64, but returned length was {result64.Length}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_64)}() threw an exception: {ex.Message}");
-        }
-
-        // Validate GenerateRandom_128 by invoking the benchmark method
-        try
-        {
-            var result128 = value.GenerateRandom_128();
-            if (result128 is null)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_128)}() returned null.");
-            }
-            else if (result128.Length != 128)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_128)}() must return a string with length 128, but returned length was {result128.Length}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"{nameof(CryptoBenchmarks.GenerateRandom_128)}() threw an exception: {ex.Message}");
-        }
-
-        // Validate ComputeSha256 by invoking the benchmark method
-        try
-        {
-            var resultSha256 = value.ComputeSha256();
-            if (resultSha256 is null)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.ComputeSha256)}() returned null.");
-            }
-            else if (resultSha256.Length != 64)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.ComputeSha256)}() must return a SHA-256 hex string with length 64, but returned length was {resultSha256.Length}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"{nameof(CryptoBenchmarks.ComputeSha256)}() threw an exception: {ex.Message}");
-        }
-
-        // Validate ComputeHmac by invoking the benchmark method
-        try
-        {
-            var resultHmac = value.ComputeHmac();
-            if (resultHmac is null)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.ComputeHmac)}() returned null.");
-            }
-            else if (resultHmac.Length != 64)
-            {
-                errors.Add($"{nameof(CryptoBenchmarks.ComputeHmac)}() must return an HMAC-SHA256 hex string with length 64, but returned length was {resultHmac.Length}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"{nameof(CryptoBenchmarks.ComputeHmac)}() threw an exception: {ex.Message}");
-        }
-
-        // Validate VerifyHash by invoking the benchmark method
-        try
-        {
-            var resultVerify = value.VerifyHash();
-            // VerifyHash returns bool, which is always valid
-            // We just check that it doesn't throw
+            _ = value.VerifyHash();
         }
         catch (Exception ex)
         {
@@ -150,12 +64,43 @@ public static class CryptoBenchmarksValidation
         ArgumentNullException.ThrowIfNull(value);
 
         var errors = Validate(value);
-        if (errors.Count == 0)
+        if (errors.Count > 0)
         {
-            return;
+            throw new ArgumentException(
+                $"The {nameof(CryptoBenchmarks)} instance is invalid. Errors:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
+    }
 
-        throw new ArgumentException(
-            $"The {nameof(CryptoBenchmarks)} instance is invalid. Errors:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+    /// <summary>
+    /// Validates that a benchmark method returns a non-null string of the expected length.
+    /// </summary>
+    /// <param name="benchmark">The benchmark instance.</param>
+    /// <param name="methodName">The name of the benchmark method.</param>
+    /// <param name="expectedLength">The expected length of the returned string.</param>
+    /// <param name="method">The benchmark method to invoke.</param>
+    /// <param name="errors">The list to add validation errors to.</param>
+    private static void ValidateMethod(
+        CryptoBenchmarks benchmark,
+        string methodName,
+        int expectedLength,
+        Func<string> method,
+        List<string> errors)
+    {
+        try
+        {
+            var result = method();
+            if (result is null)
+            {
+                errors.Add($"{methodName}() returned null.");
+            }
+            else if (result.Length != expectedLength)
+            {
+                errors.Add($"{methodName}() must return a string with length {expectedLength}, but returned length was {result.Length}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"{methodName}() threw an exception: {ex.Message}");
+        }
     }
 }
