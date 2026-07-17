@@ -23,19 +23,26 @@ public static class CacheKeyGeneratorJsonExtensions
     public sealed record CacheKeyGeneratorConfiguration
     {
         /// <summary>
-        /// Gets the cache key prefix used for all generated keys.
+        /// Gets or sets the cache key prefix used for all generated keys.
         /// </summary>
+        /// <remarks>Default value: "apigw"</remarks>
         public string Prefix { get; init; } = "apigw";
 
         /// <summary>
-        /// Gets the separator character used between key components.
+        /// Gets or sets the separator character used between key components.
         /// </summary>
+        /// <remarks>Default value: ':' (colon)</remarks>
         public char Separator { get; init; } = ':';
 
         /// <summary>
         /// Creates a <see cref="CacheKeyGeneratorConfiguration"/> with the default cache key generator settings.
         /// </summary>
         /// <returns>A configuration instance representing the default cache key generator settings.</returns>
+        /// <remarks>
+        /// This method provides a convenient way to create a configuration with standard defaults.
+        /// The default prefix is "apigw" and the default separator is ':' (colon).
+        /// </remarks>
+        [Obsolete("This method provides no actual functionality and will be removed in a future version. Use the parameterless constructor instead.")]
         public static CacheKeyGeneratorConfiguration FromCacheKeyGenerator() =>
             new() { Prefix = "apigw", Separator = ':' };
     }
@@ -87,8 +94,15 @@ public static class CacheKeyGeneratorJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized instance, or null on failure.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <remarks>
+    /// This method provides a safe alternative to <see cref="FromJson"/> that does not throw exceptions.
+    /// Returns false for null, empty, or whitespace JSON strings, or when deserialization fails.
+    /// </remarks>
     public static bool TryFromJson(string json, out CacheKeyGeneratorConfiguration? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
         if (string.IsNullOrWhiteSpace(json))
