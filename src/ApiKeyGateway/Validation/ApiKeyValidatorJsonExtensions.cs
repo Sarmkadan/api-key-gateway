@@ -1,11 +1,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-
 // System.Text.Json serialization helpers for ApiKeyValidator configuration.
 // Provides extension-style API for serializing and deserializing ApiKeyValidator
 // validation result structures.
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,16 +31,12 @@ public static class ApiKeyValidatorJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the validation result.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="JsonException">Thrown when serialization fails.</exception>
     public static string ToJson(this ValidationResult value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = new JsonSerializerOptions(_jsonOptions)
-        {
-            WriteIndented = indented
-        };
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, new JsonSerializerOptions(_jsonOptions) { WriteIndented = indented });
     }
 
     /// <summary>
@@ -50,6 +45,7 @@ public static class ApiKeyValidatorJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A ValidationResult instance if successful; otherwise, null.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">Thrown when deserialization fails.</exception>
     public static ValidationResult? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
