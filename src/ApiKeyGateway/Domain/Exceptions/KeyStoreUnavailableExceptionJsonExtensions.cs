@@ -55,20 +55,21 @@ public static class KeyStoreUnavailableExceptionJsonExtensions
     /// Attempts to parse a <see cref="KeyStoreUnavailableException"/> from its JSON representation.
     /// </summary>
     /// <param name="json">The JSON string to parse.</param>
-    /// <param name="value">Receives the deserialized key store unavailable exception if successful.</param>
+    /// <param name="result">Receives the deserialized key store unavailable exception if successful.</param>
     /// <returns>True if parsing succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out KeyStoreUnavailableException? value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    public static bool TryFromJson(string json, out KeyStoreUnavailableException? result)
     {
-        value = null;
+        result = null;
 
         if (string.IsNullOrEmpty(json))
         {
-            return true;
+            return false;
         }
 
         try
         {
-            value = JsonSerializer.Deserialize<KeyStoreUnavailableException>(json, _jsonOptions);
+            result = JsonSerializer.Deserialize<KeyStoreUnavailableException>(json, _jsonOptions);
             return true;
         }
         catch (JsonException)
