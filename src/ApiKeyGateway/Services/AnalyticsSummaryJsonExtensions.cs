@@ -12,68 +12,71 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public static class AnalyticsSummaryJsonExtensions
 {
-    /// <summary>
-    /// Caches JSON serialization options with camelCase property naming.
-    /// </summary>
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
+	/// <summary>
+	/// Caches JSON serialization options with camelCase property naming.
+	/// </summary>
+	private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		WriteIndented = false
+	};
 
-    /// <summary>
-    /// Serializes <see cref="AnalyticsSummary"/> to a JSON string.
-    /// </summary>
-    /// <param name="value">The analytics summary to serialize.</param>
-    /// <param name="indented">Whether to format the JSON with indentation.</param>
-    /// <returns>JSON string representation of the analytics summary.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this AnalyticsSummary value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+	/// <summary>
+	/// Serializes <see cref="AnalyticsSummary"/> to a JSON string.
+	/// </summary>
+	/// <param name="value">The analytics summary to serialize.</param>
+	/// <param name="indented">Whether to format the JSON with indentation.</param>
+	/// <returns>JSON string representation of the analytics summary.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+	public static string ToJson(this AnalyticsSummary value, bool indented = false)
+		=> JsonSerializer.Serialize(value, indented ? new(JsonSerializerOptions) { WriteIndented = true } : JsonSerializerOptions);
 
-        JsonSerializerOptions options = indented
-            ? new(JsonSerializerOptions) { WriteIndented = true }
-            : JsonSerializerOptions;
+	/// <summary>
+	/// Deserializes a JSON string to <see cref="AnalyticsSummary"/>.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <returns>The deserialized analytics summary.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+	/// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
+	public static AnalyticsSummary? FromJson(string json)
+	{
+		ArgumentNullException.ThrowIfNull(json);
+		ArgumentException.ThrowIfNullOrEmpty(json);
 
-        return JsonSerializer.Serialize(value, options);
-    }
+		return JsonSerializer.Deserialize<AnalyticsSummary>(json, JsonSerializerOptions);
+	}
 
-    /// <summary>
-    /// Deserializes a JSON string to <see cref="AnalyticsSummary"/>.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized analytics summary.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
-    /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
-    public static AnalyticsSummary? FromJson(string json)
-    {
-        ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+	/// <summary>
+	/// Tries to deserialize a JSON string to <see cref="AnalyticsSummary"/>.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <param name="value">The deserialized analytics summary if successful.</param>
+	/// <returns>True if deserialization succeeded; otherwise false.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
+	public static bool TryFromJson(string json, out AnalyticsSummary? value)
+		=> TryFromJsonInternal(json, out value);
 
-        return JsonSerializer.Deserialize<AnalyticsSummary>(json, JsonSerializerOptions);
-    }
-
-    /// <summary>
-    /// Tries to deserialize a JSON string to <see cref="AnalyticsSummary"/>.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized analytics summary if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise false.</returns>
-    public static bool TryFromJson(string json, out AnalyticsSummary? value)
-    {
-        try
-        {
-            ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
-            value = JsonSerializer.Deserialize<AnalyticsSummary>(json, JsonSerializerOptions);
-            return value is not null;
-        }
-        catch (JsonException)
-        {
-            value = null;
-            return false;
-        }
-    }
+	/// <summary>
+	/// Internal implementation for <see cref="TryFromJson(string, out AnalyticsSummary?)"/> that performs the actual deserialization.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <param name="value">The deserialized analytics summary if successful.</param>
+	/// <returns>True if deserialization succeeded; otherwise false.</returns>
+	private static bool TryFromJsonInternal(string json, out AnalyticsSummary? value)
+	{
+		try
+		{
+			ArgumentNullException.ThrowIfNull(json);
+			ArgumentException.ThrowIfNullOrEmpty(json);
+			value = JsonSerializer.Deserialize<AnalyticsSummary>(json, JsonSerializerOptions);
+			return value is not null;
+		}
+		catch (JsonException)
+		{
+			value = null;
+			return false;
+		}
+	}
 }
