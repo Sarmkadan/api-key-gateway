@@ -1,6 +1,9 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+//
+// Copyright (c) ApiKeyGateway. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // =============================================================================
 
 using System;
@@ -22,8 +25,9 @@ public static class ApiKeyServiceTestsExtensions
     public static async Task RunDisableKeyTests(this ApiKeyServiceTests sut)
     {
         ArgumentNullException.ThrowIfNull(sut);
-        await sut.DisableKeyAsync_KeyNotFoundInRepository_ReturnsFalse();
-        await sut.DisableKeyAsync_ExistingKey_DisablesAndPersists();
+        await Task.WhenAll(
+            sut.DisableKeyAsync_KeyNotFoundInRepository_ReturnsFalse(),
+            sut.DisableKeyAsync_ExistingKey_DisablesAndPersists());
     }
 
     /// <summary>
@@ -47,11 +51,12 @@ public static class ApiKeyServiceTestsExtensions
     public static async Task RunAllFactTests(this ApiKeyServiceTests sut)
     {
         ArgumentNullException.ThrowIfNull(sut);
-        await sut.CreateKeyAsync_ValidArguments_CreatesKeyWithExpectedPrefix();
-        await sut.DisableKeyAsync_KeyNotFoundInRepository_ReturnsFalse();
-        await sut.DisableKeyAsync_ExistingKey_DisablesAndPersists();
-        await sut.ValidateKeyAsync_EmptyKeyValue_ThrowsUnauthorizedException();
-        await sut.GetConsumerKeysAsync_EmptyConsumerId_ReturnsEmptyListWithoutQueryingRepository();
-        await sut.RevokeKeyAsync_ExistingKey_SetsRevokedStatusAndPersists();
+        await Task.WhenAll(
+            sut.CreateKeyAsync_ValidArguments_CreatesKeyWithExpectedPrefix(),
+            sut.DisableKeyAsync_KeyNotFoundInRepository_ReturnsFalse(),
+            sut.DisableKeyAsync_ExistingKey_DisablesAndPersists(),
+            sut.ValidateKeyAsync_EmptyKeyValue_ThrowsUnauthorizedException(),
+            sut.GetConsumerKeysAsync_EmptyConsumerId_ReturnsEmptyListWithoutQueryingRepository(),
+            sut.RevokeKeyAsync_ExistingKey_SetsRevokedStatusAndPersists());
     }
 }
