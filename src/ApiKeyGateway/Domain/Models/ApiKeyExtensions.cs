@@ -16,17 +16,15 @@ public static class ApiKeyExtensions
     /// <param name="duration">The time span to check against.</param>
     /// <returns>True if the API key has an expiration date and it falls within the specified duration; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="duration"/> is negative.</exception>
     public static bool IsExpiringWithin(this ApiKey apiKey, TimeSpan duration)
     {
         ArgumentNullException.ThrowIfNull(apiKey);
+        ArgumentOutOfRangeException.ThrowIfLessThan(duration, TimeSpan.Zero);
 
-        if (!apiKey.ExpiresAt.HasValue)
-        {
-            return false;
-        }
-
-        var remaining = apiKey.ExpiresAt.Value - DateTime.UtcNow;
-        return remaining <= duration && remaining >= TimeSpan.Zero;
+        return apiKey.ExpiresAt.HasValue
+            && apiKey.ExpiresAt.Value > DateTime.UtcNow
+            && (apiKey.ExpiresAt.Value - DateTime.UtcNow) <= duration;
     }
 
     /// <summary>
@@ -55,15 +53,13 @@ public static class ApiKeyExtensions
     {
         ArgumentNullException.ThrowIfNull(apiKey);
 
-        if (string.IsNullOrWhiteSpace(apiKey.AllowedScopes))
-        {
-            return Array.Empty<string>();
-        }
-
-        return apiKey.AllowedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .ToList()
-            .AsReadOnly();
+        return string.IsNullOrWhiteSpace(apiKey.AllowedScopes)
+            ? Array.Empty<string>()
+            : apiKey.AllowedScopes
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList()
+                .AsReadOnly();
     }
 }
