@@ -13,11 +13,15 @@ public static class UsageControllerExtensions
     /// <summary>
     /// Retrieves a summary of usage statistics for a given API key over the last 30 days.
     /// </summary>
-    /// <param name="controller">The <see cref="UsageController"/> instance.</param>
-    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="controller">The <see cref="UsageController"/> instance. Must not be <see langword="null"/>.</param>
+    /// <param name="apiKeyId">The ID of the API key. Must not be <see langword="null"/>, <see langword="string.Empty"/>, or whitespace.</param>
     /// <returns>A task containing the action result with usage statistics.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="controller"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="controller"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="apiKeyId"/> is <see langword="null"/>, <see langword="string.Empty"/>, or consists only of whitespace.
+    /// </exception>
     public static async Task<ActionResult<UsageStatisticsResponse>> GetUsageStatisticsSummaryAsync(
         this UsageController controller,
         string apiKeyId)
@@ -34,12 +38,16 @@ public static class UsageControllerExtensions
     /// <summary>
     /// Retrieves the most recent usage records for an API key over the last 7 days.
     /// </summary>
-    /// <param name="controller">The <see cref="UsageController"/> instance.</param>
-    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="controller">The <see cref="UsageController"/> instance. Must not be <see langword="null"/>.</param>
+    /// <param name="apiKeyId">The ID of the API key. Must not be <see langword="null"/>, <see langword="string.Empty"/>, or whitespace.</param>
     /// <param name="limit">The maximum number of records to retrieve.</param>
     /// <returns>A task containing the action result with a list of usage records.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="controller"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="controller"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="apiKeyId"/> is <see langword="null"/>, <see langword="string.Empty"/>, or consists only of whitespace.
+    /// </exception>
     public static async Task<ActionResult<List<UsageRecordResponse>>> GetRecentUsageRecordsAsync(
         this UsageController controller,
         string apiKeyId,
