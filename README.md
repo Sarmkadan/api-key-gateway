@@ -631,6 +631,67 @@ else
 }
 ```
 
+## ApiKeyRotationServiceTestsExtensions
+
+The `ApiKeyRotationServiceTestsExtensions` class provides extension methods for testing the `ApiKeyRotationService` class. It simplifies test setup by providing fluent methods to configure mocks and create test data, and includes assertion helpers to verify rotation results. These extensions help ensure proper key rotation behavior and error handling in unit tests.
+
+### Public Members
+
+- `WithTestValues(this ApiKey, string id, string consumerId, ApiKeyStatus status, int expiresInDays, string? ipWhitelist)` - Creates a mock `ApiKey` with common test values
+- `SetupGetById(this Mock<IApiKeyRepository>, ApiKey key)` - Sets up the repository mock to return the specified key
+- `SetupGetKeys(this Mock<IApiKeyRepository>, IEnumerable<ApiKey> keys)` - Sets up the repository mock to return multiple keys
+- `SetupCreateKey(this Mock<IApiKeyService>, string consumerId, string newKeyId, string? ipWhitelist)` - Sets up the API key service mock to create a replacement key
+- `SetupRevokeKey(this Mock<IApiKeyService>, string keyId, bool success)` - Sets up the API key service mock to revoke a key
+- `SetupUpdate(this Mock<IApiKeyRepository>)` - Sets up the repository mock to update keys
+- `ShouldHaveRotated(this RotationResult, string oldKeyId, string newKeyId, string consumerId)` - Verifies that a key rotation occurred successfully
+- `ShouldHaveFailed(this RotationResult, string expectedReason)` - Verifies that a key rotation failed with the expected reason
+- `BuildRotationService(this Mock<IApiKeyService>, Mock<IApiKeyRepository>, Mock<ILogger<ApiKeyRotationService>>)` - Creates a test service with mocked dependencies
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Enums;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+// Create mocks
+var apiKeyServiceMock = new Mock<IApiKeyService>();
+var repositoryMock = new Mock<IApiKeyRepository>();
+var loggerMock = new Mock<ILogger<ApiKeyRotationService>>();
+
+// Create a test API key
+var oldKey = new ApiKey()
+    .WithTestValues("key-12345", "consumer-67890", ApiKeyStatus.Active, 30);
+
+// Setup mocks
+apiKeyServiceMock.SetupCreateKey("consumer-67890", "key-67890")
+    .SetupRevokeKey("key-12345")
+    .SetupUpdate();
+
+repositoryMock.SetupGetById(oldKey)
+    .SetupGetKeys(new[] { oldKey });
+
+// Build the service with mocked dependencies
+var rotationService = apiKeyServiceMock.BuildRotationService(repositoryMock, loggerMock);
+
+// Perform the rotation
+RotationResult result = await rotationService.RotateKeyAsync("key-12345");
+
+// Assert the rotation was successful
+result.ShouldHaveRotated("key-12345", "key-67890", "consumer-67890");
+
+// Verify the old key was revoked and new key was created
+apiKeyServiceMock.Verify(s => s.RevokeKeyAsync("key-12345"), Times.Once);
+apiKeyServiceMock.Verify(s => s.CreateKeyAsync(
+    "consumer-67890",
+    It.Is<string>(name => name.StartsWith("consumer-67890 (rotated")),
+    It.IsAny<int?>()),
+    Times.Once);
+```
+
 ## ApiKeyValidatorValidation
 
 The `ApiKeyValidatorValidation` class provides validation helpers for API key validator parameters. It offers comprehensive validation for inputs to the `ApiKeyValidator` static methods, ensuring API key formats, names, and quota limits meet business requirements before key generation or validation.
