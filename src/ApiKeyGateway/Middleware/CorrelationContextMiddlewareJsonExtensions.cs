@@ -54,7 +54,7 @@ public static class CorrelationContextMiddlewareJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        return TryFromJson(json, out var value) ? value : null;
+        return TryFromJson(json, out var value) ? value : throw new JsonException("Failed to deserialize CorrelationContextMiddleware from JSON");
     }
 
     /// <summary>
@@ -63,14 +63,17 @@ public static class CorrelationContextMiddlewareJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized instance if successful.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     public static bool TryFromJson(string json, out CorrelationContextMiddleware? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
         value = null;
 
         try
         {
-            ArgumentException.ThrowIfNullOrEmpty(json);
-
             var document = JsonDocument.Parse(json);
             if (document.RootElement.TryGetProperty("Type", out var typeElement) &&
                 typeElement.GetString() == nameof(CorrelationContextMiddleware))
