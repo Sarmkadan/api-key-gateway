@@ -155,6 +155,78 @@ await controller.RunComprehensiveDiagnosticsAsync();
 await controller.ResetRateLimitsForKeyAsync("api-key-12345");
 ```
 
+## StatsControllerExtensions
+
+The `StatsControllerExtensions` class provides strongly-typed extension methods for the `StatsController`, enabling easy access to usage statistics, rate-limit status, and endpoint-specific metrics. These extensions deserialize the controller's anonymous object responses into concrete DTOs, eliminating the need for reflection or dynamic typing when working with statistics data.
+
+### Public Members
+
+- `GetUsageStatisticsDto(this StatsController controller, string period = "day")` - Retrieves usage statistics for a specified period (hour/day/month) as a strongly-typed `UsageStatsDto`
+- `GetRateLimitStatusDto(this StatsController controller)` - Retrieves the current rate-limit status for the authenticated API key as a `RateLimitStatusDto`
+- `GetEndpointStatisticsList(this StatsController controller)` - Retrieves endpoint-specific statistics as a read-only list of `EndpointStatDto` objects
+
+### Data Transfer Objects
+
+The extension methods return the following DTO types:
+
+```csharp
+public sealed record UsageStatsDto(
+    string Period,
+    int Requests,
+    int Errors,
+    double TotalDataTransferred,
+    double AverageResponseTime);
+
+public sealed record RateLimitDto(
+    int Limit,
+    int Current,
+    int Remaining,
+    string ResetIn);
+
+public sealed record RateLimitStatusDto(
+    string ApiKeyId,
+    RateLimitDto Hourly,
+    RateLimitDto Daily,
+    RateLimitDto Monthly,
+    string Status);
+
+public sealed record EndpointStatDto(
+    string Path,
+    int Requests,
+    int AvgResponseTime,
+    int ErrorCount);
+```
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+
+// Assuming 'statsController' is an instance of StatsController injected in your controller
+var controller = statsController;
+
+// 1. Get usage statistics for the current day
+UsageStatsDto usageStats = controller.GetUsageStatisticsDto("day");
+Console.WriteLine($"Period: {usageStats.Period}, Requests: {usageStats.Requests}, Errors: {usageStats.Errors}");
+
+// 2. Get usage statistics for the current hour
+UsageStatsDto hourlyStats = controller.GetUsageStatisticsDto("hour");
+Console.WriteLine($"Hourly requests: {hourlyStats.Requests}, Data transferred: {usageStats.TotalDataTransferred} bytes");
+
+// 3. Get rate limit status for the authenticated API key
+RateLimitStatusDto rateLimitStatus = controller.GetRateLimitStatusDto();
+Console.WriteLine($"API Key: {rateLimitStatus.ApiKeyId}, Status: {rateLimitStatus.Status}");
+Console.WriteLine($"Hourly limit: {rateLimitStatus.Hourly.Limit} requests, {rateLimitStatus.Hourly.Remaining} remaining");
+
+// 4. Get endpoint-specific statistics
+IReadOnlyList<EndpointStatDto> endpointStats = controller.GetEndpointStatisticsList();
+foreach (var endpointStat in endpointStats)
+{
+    Console.WriteLine($"Endpoint: {endpointStat.Path}, Requests: {endpointStat.Requests}, Errors: {endpointStat.ErrorCount}");
+}
+```
+
 ## AnalyticsControllerJsonExtensions
 
 The `AnalyticsControllerJsonExtensions` class provides System.Text.Json serialization extensions for analytics response types returned by `AnalyticsController` actions. It enables serialization and deserialization of analytics summary data, endpoint statistics, hourly buckets, and daily buckets with support for both compact and indented JSON formatting.
