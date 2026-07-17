@@ -94,9 +94,7 @@ public static class ServiceCollectionExtensionsValidation
     /// <returns>True if valid, false otherwise.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid(this GatewayConfiguration value)
-    {
-        return Validate(value).Count == 0;
-    }
+        => Validate(value).Count == 0;
 
     /// <summary>
     /// Throws an <see cref="ArgumentException"/> if the gateway configuration is invalid.
@@ -106,10 +104,12 @@ public static class ServiceCollectionExtensionsValidation
     /// <exception cref="ArgumentException">Thrown if the configuration is invalid, containing all validation errors.</exception>
     public static void EnsureValid(this GatewayConfiguration value)
     {
+        ArgumentNullException.ThrowIfNull(value);
+
         var errors = Validate(value);
         if (errors.Count > 0)
         {
-            throw new ArgumentException(string.Join("; ", errors), nameof(value));
+            throw new ArgumentException($"Gateway configuration is invalid: {string.Join("; ", errors)}", nameof(value));
         }
     }
 }
