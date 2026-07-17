@@ -630,3 +630,104 @@ else
     Console.WriteLine("Failed to deserialize analytics summary");
 }
 ```
+
+## ApiKeyValidatorValidation
+
+The `ApiKeyValidatorValidation` class provides validation helpers for API key validator parameters. It offers comprehensive validation for inputs to the `ApiKeyValidator` static methods, ensuring API key formats, names, and quota limits meet business requirements before key generation or validation.
+
+### Public Members
+
+- `ValidateKeyFormat(string key)` - Validates an API key string format and returns a list of human-readable problems
+- `ValidateKeyName(string name)` - Validates an API key name/description and returns a list of human-readable problems
+- `ValidateQuotaLimit(int limit)` - Validates a quota limit value and returns a list of human-readable problems
+- `IsValidKeyFormat(string key)` - Checks if an API key string format is valid
+- `IsValidKeyName(string name)` - Checks if an API key name is valid
+- `IsValidQuotaLimit(int limit)` - Checks if a quota limit is valid
+- `EnsureValidKeyFormat(string key)` - Ensures an API key string format is valid, throwing if not
+- `EnsureValidKeyName(string name)` - Ensures an API key name is valid, throwing if not
+- `EnsureValidQuotaLimit(int limit)` - Ensures a quota limit is valid, throwing if not
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Validation;
+
+// Validate an API key format
+string apiKey = "prod_AbCdEfGh1234567890!@#$%^&*()";
+IReadOnlyList<string> keyFormatErrors = ApiKeyValidatorValidation.ValidateKeyFormat(apiKey);
+
+if (ApiKeyValidatorValidation.IsValidKeyFormat(apiKey))
+{
+Console.WriteLine("API key format is valid.");
+}
+else
+{
+foreach (string error in keyFormatErrors)
+{
+Console.WriteLine($"Key format validation error: {error}");
+}
+}
+
+// Validate an API key name
+string keyName = "Production API Key - Service A";
+IReadOnlyList<string> nameErrors = ApiKeyValidatorValidation.ValidateKeyName(keyName);
+
+if (ApiKeyValidatorValidation.IsValidKeyName(keyName))
+{
+Console.WriteLine("API key name is valid.");
+}
+else
+{
+foreach (string error in nameErrors)
+{
+Console.WriteLine($"Name validation error: {error}");
+}
+}
+
+// Validate a quota limit
+int quotaLimit = 10000;
+IReadOnlyList<string> quotaErrors = ApiKeyValidatorValidation.ValidateQuotaLimit(quotaLimit);
+
+if (ApiKeyValidatorValidation.IsValidQuotaLimit(quotaLimit))
+{
+Console.WriteLine("Quota limit is valid.");
+}
+else
+{
+foreach (string error in quotaErrors)
+{
+Console.WriteLine($"Quota validation error: {error}");
+}
+}
+
+// Alternative: Use EnsureValid methods to throw exceptions on failure
+try
+{
+ApiKeyValidatorValidation.EnsureValidKeyFormat("invalid-key");
+Console.WriteLine("Key format validation passed.");
+}
+catch (ArgumentException ex)
+{
+Console.WriteLine($"Key format validation failed: {ex.Message}");
+}
+
+try
+{
+ApiKeyValidatorValidation.EnsureValidKeyName("AB");
+Console.WriteLine("Key name validation passed.");
+}
+catch (ArgumentException ex)
+{
+Console.WriteLine($"Key name validation failed: {ex.Message}");
+}
+
+try
+{
+ApiKeyValidatorValidation.EnsureValidQuotaLimit(-1);
+Console.WriteLine("Quota limit validation passed.");
+}
+catch (ArgumentException ex)
+{
+Console.WriteLine($"Quota limit validation failed: {ex.Message}");
+}
+```
