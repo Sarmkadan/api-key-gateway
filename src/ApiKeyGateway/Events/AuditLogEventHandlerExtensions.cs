@@ -4,7 +4,7 @@
 //
 // Provides extension methods for <see cref="AuditLogEventHandler"/> that enable
 // bulk operations and common audit logging patterns.
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -19,14 +19,14 @@ namespace ApiKeyGateway.Events;
 /// <remarks>
 /// These extensions simplify common scenarios like:
 /// <list type="bullet">
-///   <item>Handling multiple events in bulk operations</item>
-///   <item>Creating unified event delegates for event processing pipelines</item>
+/// <item>Handling multiple events in bulk operations</item>
+/// <item>Creating unified event delegates for event processing pipelines</item>
 /// </list>
 /// </remarks>
 public static class AuditLogEventHandlerExtensions
 {
     /// <summary>
-    /// Asynchronously handles multiple API key created events.
+    /// Asynchronously handles multiple <see cref="ApiKeyCreatedEvent"/> instances.
     /// </summary>
     /// <param name="handler">The audit log handler.</param>
     /// <param name="events">The events to handle.</param>
@@ -46,7 +46,7 @@ public static class AuditLogEventHandlerExtensions
     }
 
     /// <summary>
-    /// Asynchronously handles multiple API key rotated events.
+    /// Asynchronously handles multiple <see cref="ApiKeyRotatedEvent"/> instances.
     /// </summary>
     /// <param name="handler">The audit log handler.</param>
     /// <param name="events">The events to handle.</param>
@@ -66,7 +66,7 @@ public static class AuditLogEventHandlerExtensions
     }
 
     /// <summary>
-    /// Asynchronously handles multiple API key disabled events.
+    /// Asynchronously handles multiple <see cref="ApiKeyDisabledEvent"/> instances.
     /// </summary>
     /// <param name="handler">The audit log handler.</param>
     /// <param name="events">The events to handle.</param>
@@ -103,12 +103,15 @@ public static class AuditLogEventHandlerExtensions
                 case ApiKeyCreatedEvent created:
                     await handler.HandleApiKeyCreatedAsync(created).ConfigureAwait(false);
                     break;
+
                 case ApiKeyRotatedEvent rotated:
                     await handler.HandleApiKeyRotatedAsync(rotated).ConfigureAwait(false);
                     break;
+
                 case ApiKeyDisabledEvent disabled:
                     await handler.HandleApiKeyDisabledAsync(disabled).ConfigureAwait(false);
                     break;
+
                 default:
                     // Ignore unsupported event types
                     break;
