@@ -1,0 +1,15 @@
+// Example 1: Accessing request information
+public void HandleRequest(RequestContext context)
+{
+    string apiKey = context.ApiKey;
+    string correlationId = context.CorrelationId;
+    // Use the request information as needed
+}
+
+// Example 2: Using pagination information
+public void GetPaginatedData(RequestContext context)
+{
+    int pageNumber = context.PageNumber;
+    int pageSize = context.PageSize;
+    // Retrieve the paginated data using the page number and size
+}
