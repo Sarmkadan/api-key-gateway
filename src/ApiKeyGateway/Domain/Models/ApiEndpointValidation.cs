@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 namespace ApiKeyGateway.Domain.Models;
 
@@ -119,9 +119,9 @@ public static class ApiEndpointValidation
     /// <param name="value">The endpoint to check</param>
     /// <returns>True if the endpoint is valid; otherwise, false</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null</exception>
-    public static bool IsValid(this ApiEndpoint value)
+    public static bool IsValid(this ApiEndpoint? value)
     {
-        return value.Validate().Count == 0;
+        return value?.Validate().Count == 0;
     }
 
     /// <summary>
@@ -138,20 +138,13 @@ public static class ApiEndpointValidation
         if (problems.Count > 0)
         {
             throw new ArgumentException(
-                $"ApiEndpoint is invalid:{Environment.NewLine}- {
-                    string.Join(Environment.NewLine + "- ", problems)
-                }");
+                $"ApiEndpoint is invalid. Problems:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", problems)}"
+            );
         }
     }
 
     private static bool IsValidHttpMethod(string method)
     {
-        return method.Equals("GET", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("POST", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("PUT", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("DELETE", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("PATCH", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("HEAD", StringComparison.OrdinalIgnoreCase) ||
-               method.Equals("OPTIONS", StringComparison.OrdinalIgnoreCase);
+        return method is "GET" or "POST" or "PUT" or "DELETE" or "PATCH" or "HEAD" or "OPTIONS";
     }
 }
