@@ -35,7 +35,11 @@ namespace ApiKeyGateway.Tests
                             m.Name.StartsWith("TruncateWithEllipsis") ||
                             m.Name.StartsWith("ContainsAny") ||
                             m.Name.StartsWith("StartsWithAny") ||
-                            m.Name.StartsWith("ToSlug"));
+                            m.Name.StartsWith("ToSlug") ||
+                            m.Name.StartsWith("CapitalizeFirst") ||
+                            m.Name.StartsWith("ToList") ||
+                            m.Name.StartsWith("IsNumeric") ||
+                            m.Name.StartsWith("TryParse"));
 
             foreach (var method in testMethods)
             {
@@ -59,7 +63,7 @@ namespace ApiKeyGateway.Tests
                 }
             }
 
-            return problems;
+            return problems.AsReadOnly();
         }
 
         /// <summary>
@@ -85,7 +89,7 @@ namespace ApiKeyGateway.Tests
             ArgumentNullException.ThrowIfNull(value);
 
             var problems = value.Validate();
-            if (problems.Any())
+            if (problems.Count > 0)
             {
                 throw new ArgumentException(string.Join("\n", problems), nameof(value));
             }
