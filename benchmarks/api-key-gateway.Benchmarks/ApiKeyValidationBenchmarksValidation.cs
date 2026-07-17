@@ -3,7 +3,7 @@
 // CTO & Software Architect
 // =====================================================================
 
-using System.Globalization;
+using ApiKeyGateway.Validation;
 
 namespace ApiKeyGateway.Benchmarks;
 
@@ -27,126 +27,65 @@ public static class ApiKeyValidationBenchmarksValidation
         var problems = new List<string>();
 
         // Validate benchmark results by invoking the benchmark methods
-        try
-        {
-            var result32 = value.ValidateFormat_32Char_Valid();
-            if (result32 is null)
-            {
-                problems.Add("ValidateFormat_32Char_Valid() returned null");
-            }
-            else if (!result32.IsValid)
-            {
-                problems.Add(result32.Message ?? "Validation failed for ValidateFormat_32Char_Valid");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateFormat_32Char_Valid() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateFormat_32Char_Valid,
+            "ValidateFormat_32Char_Valid");
 
-        try
-        {
-            var result64 = value.ValidateFormat_64Char_Valid();
-            if (result64 is null)
-            {
-                problems.Add("ValidateFormat_64Char_Valid() returned null");
-            }
-            else if (!result64.IsValid)
-            {
-                problems.Add(result64.Message ?? "Validation failed for ValidateFormat_64Char_Valid");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateFormat_64Char_Valid() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateFormat_64Char_Valid,
+            "ValidateFormat_64Char_Valid");
 
-        try
-        {
-            var resultWeak = value.ValidateFormat_WeakEntropy();
-            if (resultWeak is null)
-            {
-                problems.Add("ValidateFormat_WeakEntropy() returned null");
-            }
-            else if (!resultWeak.IsValid)
-            {
-                problems.Add(resultWeak.Message ?? "Validation failed for ValidateFormat_WeakEntropy");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateFormat_WeakEntropy() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateFormat_WeakEntropy,
+            "ValidateFormat_WeakEntropy");
 
-        try
-        {
-            var resultTooShort = value.ValidateFormat_TooShort();
-            if (resultTooShort is null)
-            {
-                problems.Add("ValidateFormat_TooShort() returned null");
-            }
-            else if (!resultTooShort.IsValid)
-            {
-                problems.Add(resultTooShort.Message ?? "Validation failed for ValidateFormat_TooShort");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateFormat_TooShort() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateFormat_TooShort,
+            "ValidateFormat_TooShort");
 
-        try
-        {
-            var resultNameValid = value.ValidateName_Valid();
-            if (resultNameValid is null)
-            {
-                problems.Add("ValidateName_Valid() returned null");
-            }
-            else if (!resultNameValid.IsValid)
-            {
-                problems.Add(resultNameValid.Message ?? "Validation failed for ValidateName_Valid");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateName_Valid() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateName_Valid,
+            "ValidateName_Valid");
 
-        try
-        {
-            var resultNameTooLong = value.ValidateName_TooLong();
-            if (resultNameTooLong is null)
-            {
-                problems.Add("ValidateName_TooLong() returned null");
-            }
-            else if (!resultNameTooLong.IsValid)
-            {
-                problems.Add(resultNameTooLong.Message ?? "Validation failed for ValidateName_TooLong");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateName_TooLong() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateName_TooLong,
+            "ValidateName_TooLong");
 
-        try
-        {
-            var resultQuota = value.ValidateQuota_Valid();
-            if (resultQuota is null)
-            {
-                problems.Add("ValidateQuota_Valid() returned null");
-            }
-            else if (!resultQuota.IsValid)
-            {
-                problems.Add(resultQuota.Message ?? "Validation failed for ValidateQuota_Valid");
-            }
-        }
-        catch (Exception ex)
-        {
-            problems.Add($"ValidateQuota_Valid() threw an exception: {ex.Message}");
-        }
+        ValidateBenchmarkResult(
+            value.ValidateQuota_Valid,
+            "ValidateQuota_Valid");
 
         return problems.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Validates a benchmark method result and adds any problems to the list.
+    /// </summary>
+    /// <param name="benchmarkMethod">The benchmark method to invoke.</param>
+    /// <param name="methodName">The name of the method for error reporting.</param>
+    private static void ValidateBenchmarkResult(
+        Func<ValidationResult> benchmarkMethod,
+        string methodName)
+    {
+        ArgumentNullException.ThrowIfNull(benchmarkMethod);
+
+        try
+        {
+            var result = benchmarkMethod();
+            if (result is null)
+            {
+                throw new InvalidOperationException($"{methodName}() returned null");
+            }
+
+            if (!result.IsValid && result.Message is not null)
+            {
+                throw new InvalidOperationException($"{methodName} validation failed: {result.Message}");
+            }
+        }
+        catch (Exception ex) when (ex is not ArgumentNullException)
+        {
+            throw new InvalidOperationException($"{methodName}() threw an exception: {ex.Message}", ex);
+        }
     }
 
     /// <summary>
@@ -156,9 +95,7 @@ public static class ApiKeyValidationBenchmarksValidation
     /// <returns>True if valid; otherwise false.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid(this ApiKeyValidationBenchmarks value)
-    {
-        return value.Validate().Count == 0;
-    }
+        => value.Validate().Count == 0;
 
     /// <summary>
     /// Ensures that an <see cref="ApiKeyValidationBenchmarks"/> instance is valid.
