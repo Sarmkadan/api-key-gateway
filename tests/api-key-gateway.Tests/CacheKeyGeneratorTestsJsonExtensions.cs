@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 using System.Text.Json;
 
@@ -20,11 +20,11 @@ public static class CacheKeyGeneratorTestsJsonExtensions
     };
 
     /// <summary>
-    /// Serializes the <see cref="CacheKeyGeneratorTests"/> instance to a JSON string.
+    /// Serializes the <see cref="CacheKeyGeneratorTests"/> instance to a JSON string using camelCase property naming.
     /// </summary>
-    /// <param name="value">The test instance to serialize.</param>
+    /// <param name="value">The test instance to serialize. Cannot be null.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
-    /// <returns>A JSON string representation of the test instance.</returns>
+    /// <returns>A JSON string representation of the test instance with camelCase property names.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string ToJson(this CacheKeyGeneratorTests value, bool indented = false)
     {
@@ -34,12 +34,12 @@ public static class CacheKeyGeneratorTestsJsonExtensions
     }
 
     /// <summary>
-    /// Deserializes a JSON string to an <see cref="CacheKeyGeneratorTests"/> instance.
+    /// Deserializes a JSON string to an <see cref="CacheKeyGeneratorTests"/> instance using camelCase property naming.
     /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>An <see cref="CacheKeyGeneratorTests"/> instance deserialized from JSON.</returns>
+    /// <param name="json">The JSON string to deserialize. Cannot be null or empty.</param>
+    /// <returns>An <see cref="CacheKeyGeneratorTests"/> instance deserialized from JSON, or null if the JSON represents a null value.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid, cannot be deserialized, or contains unexpected data.</exception>
     public static CacheKeyGeneratorTests? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -48,9 +48,9 @@ public static class CacheKeyGeneratorTestsJsonExtensions
     }
 
     /// <summary>
-    /// Attempts to deserialize a JSON string to an <see cref="CacheKeyGeneratorTests"/> instance.
+    /// Attempts to deserialize a JSON string to an <see cref="CacheKeyGeneratorTests"/> instance using camelCase property naming.
     /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
+    /// <param name="json">The JSON string to deserialize. Cannot be null or empty.</param>
     /// <param name="value">Receives the deserialized instance if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
