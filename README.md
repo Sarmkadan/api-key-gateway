@@ -227,6 +227,139 @@ foreach (var endpointStat in endpointStats)
 }
 ```
 
+## AnalyticsControllerExtensions
+
+The `AnalyticsControllerExtensions` class provides extension methods for `AnalyticsController` that enable advanced analytics operations by composing existing controller actions. These extensions allow you to compare time periods, filter endpoint statistics by error rates, analyze hourly trends with error filtering, and aggregate daily data into weekly buckets for easier trend analysis.
+
+### Public Members
+
+- `ComparePeriodsAsync(this AnalyticsController controller, string keyId, string period = "30d", string comparisonPeriod = null)` - Returns a comparison of current vs previous period metrics for an API key
+- `GetEndpointsByErrorRateAsync(this AnalyticsController controller, string keyId, double minErrorRate = 0, int limit = 20, DateTime? from = null, DateTime? to = null)` - Returns endpoint statistics with error rate filtering
+- `GetHourlyTrendWithErrorFilterAsync(this AnalyticsController controller, string keyId, double minErrorRate = 0, DateTime? from = null, DateTime? to = null)` - Returns hourly trend data with error rate threshold filtering
+- `GetWeeklyTrendAsync(this AnalyticsController controller, string keyId, int weeks = 4, DateTime? from = null, DateTime? to = null)` - Returns daily trend data aggregated by week
+
+### Data Transfer Objects
+
+The extension methods return the following DTO types:
+
+```csharp
+public sealed class PeriodComparison
+{
+  public required PeriodMetrics CurrentPeriod { get; set; }
+  public required PeriodMetrics ComparisonPeriod { get; set; }
+  public required PeriodChange Change { get; set; }
+}
+
+public sealed class PeriodMetrics
+{
+  public required string Period { get; set; }
+  public required DateTime From { get; set; }
+  public required DateTime To { get; set; }
+  public int TotalRequests { get; set; }
+  public int SuccessfulRequests { get; set; }
+  public int FailedRequests { get; set; }
+  public double SuccessRatePercent { get; set; }
+  public double ErrorRatePercent { get; set; }
+  public double AverageResponseTimeMs { get; set; }
+  public long TotalBytesTransferred { get; set; }
+}
+
+public sealed class PeriodChange
+{
+  public double RequestsChangePercent { get; set; }
+  public double SuccessRateChangePercent { get; set; }
+  public double ErrorRateChangePercent { get; set; }
+  public double AvgResponseTimeChangePercent { get; set; }
+  public double BytesTransferredChangePercent { get; set; }
+}
+
+public sealed class WeeklyBucket
+{
+  public int WeekNumber { get; set; }
+  public int Year { get; set; }
+  public DateTime StartDate { get; set; }
+  public DateTime EndDate { get; set; }
+  public int RequestCount { get; set; }
+  public int ErrorCount { get; set; }
+  public double AverageResponseTimeMs { get; set; }
+  public long TotalBytes { get; set; }
+}
+```
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Controllers;
+using Microsoft.AspNetCore.Mvc;
+
+// Assuming 'analyticsController' is an instance of AnalyticsController injected in your controller
+var controller = analyticsController;
+
+// 1. Compare current 30-day period with previous 30-day period
+ActionResult<PeriodComparison> periodComparison = await controller.ComparePeriodsAsync(
+    keyId: "api-key-12345",
+    period: "30d",
+    comparisonPeriod: "30d"
+);
+
+if (periodComparison.Result is OkObjectResult okResult)
+{
+    PeriodComparison comparison = (PeriodComparison)okResult.Value!;
+    Console.WriteLine($"Current period: {comparison.CurrentPeriod.Period} ({comparison.CurrentPeriod.From:yyyy-MM-dd} to {comparison.CurrentPeriod.To:yyyy-MM-dd})");
+    Console.WriteLine($"Comparison period: {comparison.ComparisonPeriod.Period} ({comparison.ComparisonPeriod.From:yyyy-MM-dd} to {comparison.ComparisonPeriod.To:yyyy-MM-dd})");
+    Console.WriteLine($"Request change: {comparison.Change.RequestsChangePercent}%");
+    Console.WriteLine($"Success rate change: {comparison.Change.SuccessRateChangePercent}%");
+}
+
+// 2. Get endpoints with error rate of at least 5%
+ActionResult<IReadOnlyList<EndpointStat>> endpointsResult = await controller.GetEndpointsByErrorRateAsync(
+    keyId: "api-key-12345",
+    minErrorRate: 5.0,
+    limit: 10
+);
+
+if (endpointsResult.Result is OkObjectResult endpointsOkResult)
+{
+    IReadOnlyList<EndpointStat> endpoints = endpointsOkResult.Value!;
+    foreach (var endpoint in endpoints)
+    {
+        Console.WriteLine($"Endpoint: {endpoint.Path}, Requests: {endpoint.RequestCount}, Errors: {endpoint.ErrorCount}, Error Rate: {endpoint.ErrorRatePercent}%");
+    }
+}
+
+// 3. Get hourly trend data with error rate filtering (minimum 2% error rate)
+ActionResult<IReadOnlyList<HourlyBucket>> hourlyResult = await controller.GetHourlyTrendWithErrorFilterAsync(
+    keyId: "api-key-12345",
+    minErrorRate: 2.0,
+    from: DateTime.UtcNow.AddDays(-7),
+    to: DateTime.UtcNow
+);
+
+if (hourlyResult.Result is OkObjectResult hourlyOkResult)
+{
+    IReadOnlyList<HourlyBucket> hourlyBuckets = hourlyOkResult.Value!;
+    foreach (var bucket in hourlyBuckets)
+    {
+        Console.WriteLine($"Hour {bucket.Hour}: {bucket.RequestCount} requests, {bucket.ErrorCount} errors ({bucket.ErrorRatePercent}% error rate)");
+    }
+}
+
+// 4. Get weekly aggregated trend data for the last 8 weeks
+ActionResult<IReadOnlyList<WeeklyBucket>> weeklyResult = await controller.GetWeeklyTrendAsync(
+    keyId: "api-key-12345",
+    weeks: 8
+);
+
+if (weeklyResult.Result is OkObjectResult weeklyOkResult)
+{
+    IReadOnlyList<WeeklyBucket> weeklyBuckets = weeklyOkResult.Value!;
+    foreach (var week in weeklyBuckets)
+    {
+        Console.WriteLine($"Week {week.Year}-W{week.WeekNumber}: {week.RequestCount} requests, {week.ErrorCount} errors");
+    }
+}
+```
+
 ## AnalyticsControllerJsonExtensions
 
 The `AnalyticsControllerJsonExtensions` class provides System.Text.Json serialization extensions for analytics response types returned by `AnalyticsController` actions. It enables serialization and deserialization of analytics summary data, endpoint statistics, hourly buckets, and daily buckets with support for both compact and indented JSON formatting.
