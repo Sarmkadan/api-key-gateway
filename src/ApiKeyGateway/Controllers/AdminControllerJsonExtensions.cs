@@ -43,8 +43,9 @@ public static class AdminControllerJsonExtensions
     /// Deserializes a JSON string to an <see cref="AdminController"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized <see cref="AdminController"/> instance, or null if JSON is empty.</returns>
-    /// <exception cref="JsonException">Thrown if the JSON is invalid or cannot be deserialized.</exception>
+    /// <returns>The deserialized <see cref="AdminController"/> instance, or null if deserialization fails.</returns>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">The JSON is invalid or cannot be deserialized.</exception>
     public static AdminController? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -56,8 +57,9 @@ public static class AdminControllerJsonExtensions
     /// Attempts to deserialize a JSON string to an <see cref="AdminController"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized instance if successful.</param>
+    /// <param name="value">Receives the deserialized instance if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out AdminController? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
