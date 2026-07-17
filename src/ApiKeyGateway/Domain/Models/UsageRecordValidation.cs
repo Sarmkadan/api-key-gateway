@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 
 namespace ApiKeyGateway.Domain.Models
 {
@@ -114,10 +116,14 @@ namespace ApiKeyGateway.Domain.Models
                 errors.Add("UserAgent must be a non-empty string if provided.");
             }
 
-            // Validate Tags
+            // Validate Tags (must be initialized and not empty)
             if (value.Tags is null)
             {
                 errors.Add("Tags dictionary must be initialized.");
+            }
+            else if (value.Tags.Count == 0)
+            {
+                errors.Add("Tags dictionary should contain at least one tag for better categorization.");
             }
 
             return errors.AsReadOnly();
@@ -131,6 +137,7 @@ namespace ApiKeyGateway.Domain.Models
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
         public static bool IsValid(this UsageRecord value)
         {
+            ArgumentNullException.ThrowIfNull(value);
             return value.Validate().Count == 0;
         }
 
@@ -148,23 +155,27 @@ namespace ApiKeyGateway.Domain.Models
             if (errors.Count > 0)
             {
                 throw new ArgumentException(
-                    $"UsageRecord is invalid. Problems:\n  - {
-                    string.Join("\n  - ", errors)
-                }");
+                    $"UsageRecord is invalid. Problems:\n - {
+                    string.Join("\n - ", errors)
+                    }");
             }
         }
 
         /// <summary>
         /// Checks if a string is a valid HTTP method.
         /// </summary>
+        /// <param name="method">The HTTP method to validate.</param>
+        /// <returns>True if valid; otherwise, false.</returns>
         private static bool IsValidHttpMethod(string method)
         {
             return method is "GET" or "POST" or "PUT" or "DELETE" or "PATCH" or "HEAD" or "OPTIONS";
         }
 
         /// <summary>
-        /// Checks if a string is a valid IP address (IPv4 only for simplicity).
+        /// Checks if a string is a valid IP address (IPv4 or IPv6).
         /// </summary>
+        /// <param name="ip">The IP address to validate.</param>
+        /// <returns>True if valid; otherwise, false.</returns>
         private static bool IsValidIpAddress(string ip)
         {
             if (string.IsNullOrWhiteSpace(ip))
@@ -172,21 +183,18 @@ namespace ApiKeyGateway.Domain.Models
                 return false;
             }
 
-            var parts = ip.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length != 4)
+            // Try IPv4 first
+            if (IPAddress.TryParse(ip, out var address))
             {
-                return false;
-            }
-
-            foreach (var part in parts)
-            {
-                if (!int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out var num) || num < 0 || num > 255)
+                return address.AddressFamily switch
                 {
-                    return false;
-                }
+                    AddressFamily.InterNetwork => true,      // IPv4
+                    AddressFamily.InterNetworkV6 => true,    // IPv6
+                    _ => false
+                };
             }
 
-            return true;
+            return false;
         }
     }
 }
