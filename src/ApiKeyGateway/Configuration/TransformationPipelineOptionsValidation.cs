@@ -3,7 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ApiKeyGateway.Configuration;
 
@@ -17,24 +17,18 @@ public static class TransformationPipelineOptionsValidation
     /// </summary>
     /// <param name="value">The transformation pipeline options to validate.</param>
     /// <returns>A list of validation error messages, or empty list if valid.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this TransformationPipelineOptions value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var errors = new List<string>();
 
-        // Validate IsEnabled (no validation needed - boolean can always be true or false)
-
         // Validate MaxRulesPerRequest
         if (value.MaxRulesPerRequest <= 0)
         {
             errors.Add("MaxRulesPerRequest must be a positive integer greater than zero.");
         }
-
-        // Validate StopOnError (no validation needed - boolean can always be true or false)
-
-        // Validate EnableBodyCapture (no validation needed - boolean can always be true or false)
 
         // Validate MaxBodySizeBytes
         if (value.MaxBodySizeBytes <= 0)
@@ -65,8 +59,6 @@ public static class TransformationPipelineOptionsValidation
         }
         else
         {
-            // Validate Lua.IsEnabled (no validation needed - boolean can always be true or false)
-
             // Validate Lua.MaxExecutionMs
             if (value.Lua.MaxExecutionMs <= 0)
             {
@@ -88,18 +80,16 @@ public static class TransformationPipelineOptionsValidation
     /// </summary>
     /// <param name="value">The transformation pipeline options to check.</param>
     /// <returns>True if the options are valid; otherwise, false.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
-    public static bool IsValid(this TransformationPipelineOptions value)
-    {
-        return Validate(value).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    public static bool IsValid([NotNullWhen(true)] this TransformationPipelineOptions? value) =>
+        value is not null && Validate(value).Count == 0;
 
     /// <summary>
     /// Ensures that a <see cref="TransformationPipelineOptions"/> instance is valid, throwing an exception if not.
     /// </summary>
     /// <param name="value">The transformation pipeline options to validate.</param>
-    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when value contains validation errors.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="value"/> contains validation errors.</exception>
     public static void EnsureValid(this TransformationPipelineOptions value)
     {
         ArgumentNullException.ThrowIfNull(value);
