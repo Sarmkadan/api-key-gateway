@@ -28,6 +28,42 @@ IReadOnlyDictionary<string, object?> correlationContext = context.GetCorrelation
 bool hasContext = context.HasCorrelationContext();
 ```
 
+## CacheKeyGeneratorJsonExtensions
+
+The `CacheKeyGeneratorJsonExtensions` class provides extension methods for serializing and deserializing `CacheKeyGeneratorConfiguration` objects to/from JSON strings. This enables configuration persistence and retrieval for cache key generation settings.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Caching;
+using System;
+
+// Create a CacheKeyGeneratorConfiguration instance
+var config = new CacheKeyGeneratorConfiguration
+{
+    Prefix = "api",
+    Separator = ':'
+};
+
+// Serialize the configuration to a JSON string
+string json = CacheKeyGeneratorJsonExtensions.ToJson(config);
+
+// Deserialize the JSON string back to a configuration object
+CacheKeyGeneratorConfiguration? deserialized = CacheKeyGeneratorJsonExtensions.FromJson(json);
+
+// Attempt to deserialize using TryFromJson method
+bool success = CacheKeyGeneratorJsonExtensions.TryFromJson(json, out var parsedConfig);
+if (success && parsedConfig != null)
+{
+    // Use parsed configuration
+    string prefix = parsedConfig.Prefix;
+    char separator = parsedConfig.Separator;
+}
+
+// Create configuration from an existing CacheKeyGenerator instance
+var fromGenerator = CacheKeyGeneratorJsonExtensions.FromCacheKeyGenerator(config);
+```
+
 ## CacheKeyGeneratorValidation
 
 `CacheKeyGeneratorValidation` offers a set of helper methods to validate the parameters used by `CacheKeyGenerator` when constructing cache keys. It provides overloads for different key types, boolean checks, and methods that throw detailed exceptions when validation fails.
