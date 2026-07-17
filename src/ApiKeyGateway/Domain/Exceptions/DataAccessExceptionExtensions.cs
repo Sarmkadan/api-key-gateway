@@ -51,13 +51,17 @@ public static class DataAccessExceptionExtensions
     }
 
     /// <summary>
-    /// Determines whether the exception is considered critical based on the presence
-    /// of an <c>Entity</c> value. An exception lacking an entity is treated as critical.
+    /// Determines whether the exception lacks entity context, indicating a potentially broader/system-level failure
+    /// rather than a specific entity operation failure.
     /// </summary>
+    /// <remarks>
+    /// Returns <see langword="true"/> when <see cref="DataAccessException.Entity"/> is <see langword="null"/> or empty,
+    /// indicating the failure may not be tied to a specific entity type.
+    /// </remarks>
     /// <param name="exception">The exception to evaluate.</param>
-    /// <returns><c>true</c> if the exception is critical; otherwise, <c>false</c>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <c>null</c>.</exception>
-    public static bool IsCritical(this DataAccessException exception)
+    /// <returns><see langword="true"/> when entity context is missing; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <see langword="null"/>.</exception>
+    public static bool LacksEntityContext(this DataAccessException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
         return string.IsNullOrEmpty(exception.Entity);
