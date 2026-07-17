@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using FluentAssertions;
 using ApiKeyGateway.Caching;
 
@@ -15,6 +14,10 @@ namespace ApiKeyGateway.Tests;
 /// Extension methods for <see cref="CacheKeyGeneratorTests"/> that provide
 /// reusable assertions and helper methods for testing cache key generation.
 /// </summary>
+/// <remarks>
+/// All methods in this class are static and use expression-bodied syntax where appropriate
+/// for better performance and readability.
+/// </remarks>
 public static class CacheKeyGeneratorTestsExtensions
 {
     /// <summary>
@@ -24,6 +27,8 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="apiKey">The API key being tested.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedKey"/> is null.</exception>
     public static void ShouldHaveApiKeyFormat(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -41,6 +46,8 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="apiKey">The API key being tested.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedKey"/> is null.</exception>
     public static void ShouldHaveApiKeyMetadataFormat(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -58,7 +65,8 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="apiKey">The API key being tested.</param>
     /// <param name="endpoint">The endpoint path, or null for wildcard.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> or <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
     public static void ShouldHaveRateLimitKey(this CacheKeyGeneratorTests test, string apiKey, string? endpoint, string expectedKey)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -79,6 +87,7 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="date">The date to format.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
     public static void ShouldHaveUsageStatsKey(this CacheKeyGeneratorTests test, string apiKey, DateTime date, string expectedKey)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -94,7 +103,9 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="test">The test instance.</param>
     /// <param name="apiKey">The API key being tested.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> or <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedKey"/> is null.</exception>
     public static void ShouldHaveQuotaKey(this CacheKeyGeneratorTests test, string apiKey, string expectedKey)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -128,7 +139,9 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="endpoint">The API endpoint path.</param>
     /// <param name="parameters">Optional query parameters.</param>
     /// <param name="expectedKey">The expected cache key string.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/>, <paramref name="provider"/>, or <paramref name="endpoint"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="provider"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="endpoint"/> is null.</exception>
     public static void ShouldHaveExternalApiCacheKey(
         this CacheKeyGeneratorTests test,
         string provider,
@@ -152,7 +165,8 @@ public static class CacheKeyGeneratorTestsExtensions
     /// </summary>
     /// <param name="test">The test instance.</param>
     /// <param name="key">The actual cache key to verify.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> or <paramref name="key"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/> is null.</exception>
     public static void ShouldIncludeHash(this CacheKeyGeneratorTests test, string key)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -170,7 +184,9 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="test">The test instance.</param>
     /// <param name="key1">The first cache key.</param>
     /// <param name="key2">The second cache key.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/>, <paramref name="key1"/>, or <paramref name="key2"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="key1"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="key2"/> is null.</exception>
     public static void ShouldBeHashOrderInvariant(this CacheKeyGeneratorTests test, string key1, string key2)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -186,7 +202,9 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <param name="test">The test instance.</param>
     /// <param name="apiKey">The API key being tested.</param>
     /// <param name="expectedPattern">The expected cache key pattern with wildcards.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> or <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiKey"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedPattern"/> is null.</exception>
     public static void ShouldHaveApiKeyInvalidationPattern(this CacheKeyGeneratorTests test, string apiKey, string expectedPattern)
     {
         ArgumentNullException.ThrowIfNull(test);
@@ -214,8 +232,10 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <summary>
     /// Creates a dictionary of query parameters for testing external API cache keys.
     /// </summary>
+    /// <param name="test">The test instance.</param>
     /// <param name="parameters">Key-value pairs to include in the dictionary.</param>
     /// <returns>An <see cref="IReadOnlyDictionary{TKey,TValue}"/> for testing.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
     public static IReadOnlyDictionary<string, string> CreateParameterDictionary(this CacheKeyGeneratorTests test, params (string Key, string Value)[] parameters)
     {
@@ -234,10 +254,12 @@ public static class CacheKeyGeneratorTestsExtensions
     /// <summary>
     /// Creates a date for testing usage statistics cache keys.
     /// </summary>
+    /// <param name="test">The test instance.</param>
     /// <param name="year">The year component.</param>
     /// <param name="month">The month component (1-12).</param>
     /// <param name="day">The day component (1-31).</param>
     /// <returns>A <see cref="DateTime"/> for testing.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="test"/> is null.</exception>
     public static DateTime CreateDate(this CacheKeyGeneratorTests test, int year, int month, int day)
     {
         ArgumentNullException.ThrowIfNull(test);
