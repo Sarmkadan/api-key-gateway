@@ -1,15 +1,30 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ApiKeyGateway.Extensions;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Provides unit tests for <see cref="StringExtensionsJsonExtensions"/> JSON serialization methods.
+/// </summary>
 public static class StringExtensionsTestsJsonExtensions
 {
+    /// <summary>
+    /// Metadata model for StringExtensionsJsonExtensions type serialization.
+    /// </summary>
+    public sealed class StringExtensionsMetadata
+    {
+        /// <summary>Gets or sets the type name.</summary>
+        public string? TypeName { get; set; }
+
+        /// <summary>Gets or sets the list of public method names.</summary>
+        public IReadOnlyList<string>? Methods { get; set; }
+    }
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -25,53 +40,56 @@ public static class StringExtensionsTestsJsonExtensions
     };
 
     /// <summary>
-    /// Serializes the <see cref="StringExtensionsTests"/> instance to a JSON string.
+    /// Serializes StringExtensionsJsonExtensions metadata to a JSON string.
     /// </summary>
-    /// <param name="value">The value to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation.</param>
-    /// <returns>The JSON representation of the value.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this StringExtensionsTests value, bool indented = false)
+    /// <returns>A JSON string representing StringExtensions metadata.</returns>
+    public static string ToJson(bool indented = false)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
-        return JsonSerializer.Serialize(value, indented ? _jsonOptionsIndented : _jsonOptions);
+        return StringExtensionsJsonExtensions.ToJson(indented);
     }
 
     /// <summary>
-    /// Deserializes a JSON string to a <see cref="StringExtensionsTests"/> instance.
+    /// Deserializes a JSON string to StringExtensionsJsonExtensions metadata.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized instance, or null if the JSON is null or empty.</returns>
+    /// <returns>A StringExtensionsMetadata object, or null if the JSON is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or consists only of whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static StringExtensionsTests? FromJson(string json)
+    public static StringExtensionsMetadata? FromJson(string json)
     {
-        if (string.IsNullOrEmpty(json))
+        ArgumentNullException.ThrowIfNull(json);
+
+        if (string.IsNullOrWhiteSpace(json))
         {
             return null;
         }
 
-        return JsonSerializer.Deserialize<StringExtensionsTests>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<StringExtensionsMetadata>(json, _jsonOptions);
     }
 
     /// <summary>
-    /// Attempts to deserialize a JSON string to a <see cref="StringExtensionsTests"/> instance.
+    /// Attempts to deserialize a JSON string to StringExtensionsJsonExtensions metadata.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized instance, or null if deserialization fails.</param>
+    /// <param name="value">Receives the deserialized metadata if successful.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out StringExtensionsTests? value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    public static bool TryFromJson(string json, out StringExtensionsMetadata? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         value = null;
 
-        if (string.IsNullOrEmpty(json))
+        if (string.IsNullOrWhiteSpace(json))
         {
-            return true;
+            return false;
         }
 
         try
         {
-            value = JsonSerializer.Deserialize<StringExtensionsTests>(json, _jsonOptions);
+            value = JsonSerializer.Deserialize<StringExtensionsMetadata>(json, _jsonOptions);
             return true;
         }
         catch (JsonException)
