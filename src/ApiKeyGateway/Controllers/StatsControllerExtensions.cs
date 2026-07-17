@@ -1,10 +1,9 @@
 // =============================================================================
 // Author: Automated Extension Generator
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiKeyGateway.Controllers;
@@ -36,7 +35,7 @@ public static class StatsControllerExtensions
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the controller does not return an <see cref="ObjectResult"/>
-    /// or the payload cannot be deserialized.
+    /// or the payload is not of the expected type.
     /// </exception>
     public static UsageStatsDto GetUsageStatisticsDto(this StatsController controller, string period = "day")
     {
@@ -44,14 +43,14 @@ public static class StatsControllerExtensions
         ArgumentException.ThrowIfNullOrEmpty(period);
 
         var result = controller.GetUsageStatistics(period);
-        if (result is not ObjectResult objectResult || objectResult.Value is null)
-            throw new InvalidOperationException("Unexpected result type from GetUsageStatistics.");
-
-        var json = JsonSerializer.Serialize(objectResult.Value);
-        var dto = JsonSerializer.Deserialize<UsageStatsDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("Failed to deserialize usage statistics.");
-
-        return dto;
+        return result switch
+        {
+            ObjectResult { Value: UsageStatsDto dto } => dto,
+            ObjectResult { Value: not null } => throw new InvalidOperationException(
+                "Controller returned unexpected type for usage statistics."),
+            _ => throw new InvalidOperationException(
+                "Unexpected result type from GetUsageStatistics.")
+        };
     }
 
     /// <summary>
@@ -65,21 +64,21 @@ public static class StatsControllerExtensions
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the controller does not return an <see cref="ObjectResult"/>
-    /// or the payload cannot be deserialized.
+    /// or the payload is not of the expected type.
     /// </exception>
     public static RateLimitStatusDto GetRateLimitStatusDto(this StatsController controller)
     {
         ArgumentNullException.ThrowIfNull(controller);
 
         var result = controller.GetRateLimitStatus();
-        if (result is not ObjectResult objectResult || objectResult.Value is null)
-            throw new InvalidOperationException("Unexpected result type from GetRateLimitStatus.");
-
-        var json = JsonSerializer.Serialize(objectResult.Value);
-        var dto = JsonSerializer.Deserialize<RateLimitStatusDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("Failed to deserialize rate‑limit status.");
-
-        return dto;
+        return result switch
+        {
+            ObjectResult { Value: RateLimitStatusDto dto } => dto,
+            ObjectResult { Value: not null } => throw new InvalidOperationException(
+                "Controller returned unexpected type for rate-limit status."),
+            _ => throw new InvalidOperationException(
+                "Unexpected result type from GetRateLimitStatus.")
+        };
     }
 
     /// <summary>
@@ -95,21 +94,21 @@ public static class StatsControllerExtensions
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the controller does not return an <see cref="ObjectResult"/>
-    /// or the payload cannot be deserialized.
+    /// or the payload is not of the expected type.
     /// </exception>
     public static IReadOnlyList<EndpointStatDto> GetEndpointStatisticsList(this StatsController controller)
     {
         ArgumentNullException.ThrowIfNull(controller);
 
         var result = controller.GetEndpointStatistics();
-        if (result is not ObjectResult objectResult || objectResult.Value is null)
-            throw new InvalidOperationException("Unexpected result type from GetEndpointStatistics.");
-
-        var json = JsonSerializer.Serialize(objectResult.Value);
-        var wrapper = JsonSerializer.Deserialize<EndpointStatsWrapper>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("Failed to deserialize endpoint statistics.");
-
-        return wrapper.Endpoints;
+        return result switch
+        {
+            ObjectResult { Value: EndpointStatsWrapper { Endpoints: var endpoints } } => endpoints,
+            ObjectResult { Value: not null } => throw new InvalidOperationException(
+                "Controller returned unexpected type for endpoint statistics."),
+            _ => throw new InvalidOperationException(
+                "Unexpected result type from GetEndpointStatistics.")
+        };
     }
 
     // -------------------------------------------------------------------------
