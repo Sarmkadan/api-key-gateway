@@ -378,3 +378,36 @@ if (ok && parsedMetadata != null)
     var methods = parsedMetadata.Methods;
 }
 ```
+
+## CryptoHelpersJsonExtensions
+
+The `CryptoHelpersJsonExtensions` class provides JSON serialization extensions for cryptographic configuration used with the `CryptoHelpers` utility. It enables serialization and deserialization of cryptographic settings including secure random string length and character set configuration.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+
+// Create a cryptographic configuration instance
+var cryptoConfig = new CryptoHelpersJsonExtensions.CryptoConfiguration
+{
+    SecureRandomStringLength = 64,
+    SecureRandomChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+};
+
+// Serialize the configuration to a JSON string
+string json = CryptoHelpersJsonExtensions.ToJson(cryptoConfig);
+
+// Deserialize the JSON string back to a configuration object
+CryptoHelpersJsonExtensions.CryptoConfiguration? deserialized = 
+    CryptoHelpersJsonExtensions.FromJson(json);
+
+// Attempt to deserialize using TryFromJson method
+bool success = CryptoHelpersJsonExtensions.TryFromJson(json, out var parsedConfig);
+if (success && parsedConfig != null)
+{
+    // Use parsed configuration
+    int length = parsedConfig.SecureRandomStringLength;
+    string chars = parsedConfig.SecureRandomChars;
+}
+```
