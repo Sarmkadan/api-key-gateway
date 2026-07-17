@@ -59,18 +59,12 @@ public static class QueryStringHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="QueryStringData"/> instance if successful; otherwise, null.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is malformed or cannot be deserialized into a <see cref="QueryStringData"/> instance.</exception>
     public static QueryStringData? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json, nameof(json));
 
-        try
-        {
-            return JsonSerializer.Deserialize<QueryStringData>(json, _jsonOptions);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        return JsonSerializer.Deserialize<QueryStringData>(json, _jsonOptions);
     }
 
     /// <summary>
