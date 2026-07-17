@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace ApiKeyGateway.Benchmarks;
 
@@ -15,7 +14,8 @@ namespace ApiKeyGateway.Benchmarks;
 public static class RateLimitBenchmarksValidation
 {
     /// <summary>
-    /// Validates a <see cref="RateLimitBenchmarks"/> instance.
+    /// Validates a <see cref="RateLimitBenchmarks"/> instance by executing its benchmark methods
+    /// and verifying they return valid results according to business logic constraints.
     /// </summary>
     /// <param name="value">The benchmarks instance to validate.</param>
     /// <returns>A list of validation errors; empty if valid.</returns>
@@ -26,27 +26,37 @@ public static class RateLimitBenchmarksValidation
 
         var errors = new List<string>();
 
-        if (value.GetWindowEnd_Minute == default)
+        // Validate GetWindowEnd_Minute returns a valid future time
+        var windowEndMinute = value.GetWindowEnd_Minute();
+        if (windowEndMinute <= DateTime.UtcNow)
         {
-            errors.Add("GetWindowEnd_Minute must not be default(DateTime)");
+            errors.Add("GetWindowEnd_Minute must return a time in the future");
         }
 
-        if (value.GetWindowEnd_Hour == default)
+        // Validate GetWindowEnd_Hour returns a valid future time
+        var windowEndHour = value.GetWindowEnd_Hour();
+        if (windowEndHour <= DateTime.UtcNow)
         {
-            errors.Add("GetWindowEnd_Hour must not be default(DateTime)");
+            errors.Add("GetWindowEnd_Hour must return a time in the future");
         }
 
-        if (value.GetWindowStart_Minute == default)
+        // Validate GetWindowStart_Minute returns a valid past time
+        var windowStartMinute = value.GetWindowStart_Minute();
+        if (windowStartMinute >= DateTime.UtcNow)
         {
-            errors.Add("GetWindowStart_Minute must not be default(DateTime)");
+            errors.Add("GetWindowStart_Minute must return a time in the past");
         }
 
-        if (value.GetSecondsUntilAllowed_Limited() < 0)
+        // Validate GetSecondsUntilAllowed_Limited returns non-negative value
+        var secondsUntilAllowed = value.GetSecondsUntilAllowed_Limited();
+        if (secondsUntilAllowed < 0)
         {
             errors.Add("GetSecondsUntilAllowed_Limited must not be negative");
         }
 
-        if (value.CalculateQuotagePercentage() < 0 || value.CalculateQuotagePercentage() > 100)
+        // Validate CalculateQuotagePercentage returns value between 0 and 100
+        var percentage = value.CalculateQuotagePercentage();
+        if (percentage < 0 || percentage > 100)
         {
             errors.Add("CalculateQuotagePercentage must be between 0 and 100");
         }
