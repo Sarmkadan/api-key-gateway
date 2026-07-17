@@ -65,14 +65,6 @@ public static class UsageRepositoryExtensions
         if (retentionDays <= 0)
             throw new ArgumentException("Retention days must be positive", nameof(retentionDays));
 
-        var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);
-        var records = await repository.GetByApiKeyAndDateRangeAsync(apiKeyId, DateTime.MinValue, cutoffDate);
-        foreach (var record in records)
-        {
-            // Note: The UsageRepository class does not have a method to delete a single record.
-            // This method will delete all records older than the retention period for the specified API key.
-            // If you want to delete a single record, you should add a method to the UsageRepository class.
-        }
         await repository.DeleteOldRecordsAsync(retentionDays);
     }
 
