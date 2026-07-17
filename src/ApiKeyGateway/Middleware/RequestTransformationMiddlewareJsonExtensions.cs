@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ===================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 namespace ApiKeyGateway.Middleware;
 
 /// <summary>
-/// Provides JSON serialization helpers for <see cref="RequestTransformationMiddleware"/>.
+/// Provides JSON serialization and deserialization helpers for <see cref="RequestTransformationMiddleware"/>.
 /// </summary>
 public static class RequestTransformationMiddlewareJsonExtensions
 {
@@ -62,8 +62,10 @@ public static class RequestTransformationMiddlewareJsonExtensions
     /// Tries to deserialize a JSON string to <see cref="RequestTransformationMiddleware"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized middleware instance if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <param name="value">When this method returns, contains the deserialized middleware instance if successful; otherwise, <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
     public static bool TryFromJson(string json, out RequestTransformationMiddleware? value)
     {
         try
