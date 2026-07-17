@@ -7,7 +7,7 @@ namespace ApiKeyGateway.Examples;
 /// <summary>
 /// Provides JSON serialization extensions for <see cref="ApiKeyGatewayExample"/> values.
 /// </summary>
-public static class ApiKeyGatewayExampleJsonExtensions
+public sealed class ApiKeyGatewayExampleJsonExtensions
 {
     private static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web)
     {
@@ -19,7 +19,7 @@ public static class ApiKeyGatewayExampleJsonExtensions
     /// <summary>
     /// Serializes an <see cref="ApiKeyGatewayExample"/> instance to a JSON string.
     /// </summary>
-    /// <param name="value">The value to serialize.</param>
+    /// <param name="value">The value to serialize. Must not be <see langword="null"/>.</param>
     /// <param name="indented">Whether to indent the JSON output.</param>
     /// <returns>A JSON string representation of the value.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
@@ -33,8 +33,8 @@ public static class ApiKeyGatewayExampleJsonExtensions
     /// <summary>
     /// Deserializes an <see cref="ApiKeyGatewayExample"/> instance from a JSON string.
     /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized value, or <see langword="null"/> if the JSON is empty.</returns>
+    /// <param name="json">The JSON string to deserialize. Must not be <see langword="null"/> or empty.</param>
+    /// <returns>The deserialized value, or <see langword="null"/> if the JSON is empty or whitespace.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static ApiKeyGatewayExample? FromJson(string json)
@@ -47,7 +47,7 @@ public static class ApiKeyGatewayExampleJsonExtensions
     /// <summary>
     /// Attempts to deserialize an <see cref="ApiKeyGatewayExample"/> instance from a JSON string.
     /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
+    /// <param name="json">The JSON string to deserialize. Must not be <see langword="null"/>.</param>
     /// <param name="value">Receives the deserialized value if successful.</param>
     /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
