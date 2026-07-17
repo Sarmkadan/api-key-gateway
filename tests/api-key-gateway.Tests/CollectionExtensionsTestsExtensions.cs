@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace api_key_gateway.Tests
 {
@@ -16,6 +15,7 @@ namespace api_key_gateway.Tests
         /// <param name="collection">The collection to check.</param>
         /// <param name="paramName">The name of the parameter for error reporting.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="collection"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if the collection is not empty.</exception>
         public static void ShouldBeEmpty<T>(this IEnumerable<T> collection, string paramName = null)
         {
             ArgumentNullException.ThrowIfNull(collection, paramName ?? nameof(collection));
@@ -33,6 +33,7 @@ namespace api_key_gateway.Tests
         /// <param name="collection">The collection to check.</param>
         /// <param name="paramName">The name of the parameter for error reporting.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="collection"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if the collection is empty.</exception>
         public static void ShouldNotBeEmpty<T>(this IEnumerable<T> collection, string paramName = null)
         {
             ArgumentNullException.ThrowIfNull(collection, paramName ?? nameof(collection));
@@ -52,6 +53,7 @@ namespace api_key_gateway.Tests
         /// <param name="paramName">The name of the parameter for error reporting.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="collection"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="expectedCount"/> is negative.</exception>
+        /// <exception cref="ArgumentException">Thrown if the collection count doesn't match the expected count.</exception>
         public static void ShouldHaveCount<T>(this IEnumerable<T> collection, int expectedCount, string paramName = null)
         {
             ArgumentNullException.ThrowIfNull(collection, paramName ?? nameof(collection));
@@ -114,6 +116,7 @@ namespace api_key_gateway.Tests
         /// </summary>
         /// <typeparam name="T">The type of the elements of source.</typeparam>
         /// <param name="source">The collection to get the first element from.</param>
+        /// <param name="defaultValue">The default value to return if the sequence is empty.</param>
         /// <returns><paramref name="defaultValue"/> if source is empty; otherwise, the first element in source.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is null.</exception>
         public static T FirstOrDefault<T>(this IEnumerable<T> source, T defaultValue = default)
@@ -133,6 +136,7 @@ namespace api_key_gateway.Tests
         /// </summary>
         /// <typeparam name="T">The type of the elements of source.</typeparam>
         /// <param name="source">The collection to get the last element from.</param>
+        /// <param name="defaultValue">The default value to return if the sequence is empty.</param>
         /// <returns><paramref name="defaultValue"/> if source is empty; otherwise, the last element in source.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is null.</exception>
         public static T LastOrDefault<T>(this IEnumerable<T> source, T defaultValue = default)
