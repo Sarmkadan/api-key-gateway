@@ -50,8 +50,6 @@ public static class UsageRepositoryJsonExtensions
     /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
     public static UsageRepository? FromJson(string json)
     {
-        ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
         return JsonSerializer.Deserialize<UsageRepository>(json, JsonSerializerOptions);
     }
 
@@ -59,14 +57,14 @@ public static class UsageRepositoryJsonExtensions
     /// Tries to deserialize a JSON string to <see cref="UsageRepository"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized usage repository if successful.</param>
+    /// <param name="value">When this method returns, contains the deserialized usage repository if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
     public static bool TryFromJson(string json, out UsageRepository? value)
     {
         try
         {
-            ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
             value = JsonSerializer.Deserialize<UsageRepository>(json, JsonSerializerOptions);
             return value is not null;
         }
