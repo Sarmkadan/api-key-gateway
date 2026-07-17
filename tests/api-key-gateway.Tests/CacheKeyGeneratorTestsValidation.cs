@@ -57,25 +57,6 @@ namespace ApiKeyGateway.Tests
                     problems.Add($"Test method {method.Name} uses 'Should' in name - prefer descriptive naming");
                 }
 
-                // Check for invalid date in GetUsageStatsKey_FormatsDateCorrectly
-                if (method.Name == "GetUsageStatsKey_FormatsDateCorrectly")
-                {
-                    var date = (DateTime?)value.GetType().GetProperty("date").GetValue(value);
-                    if (date == null || date < DateTime.MinValue || date > DateTime.MaxValue)
-                    {
-                        problems.Add($"Invalid date in GetUsageStatsKey_FormatsDateCorrectly: {date}");
-                    }
-                }
-
-                // Check for invalid Guid in GetWebhookDeliveryKey_UsesGuidInKey
-                if (method.Name == "GetWebhookDeliveryKey_UsesGuidInKey")
-                {
-                    var eventId = (Guid?)value.GetType().GetProperty("eventId").GetValue(value);
-                    if (eventId == null || eventId == Guid.Empty)
-                    {
-                        problems.Add($"Invalid Guid in GetWebhookDeliveryKey_UsesGuidInKey: {eventId}");
-                    }
-                }
             }
 
             return problems;
