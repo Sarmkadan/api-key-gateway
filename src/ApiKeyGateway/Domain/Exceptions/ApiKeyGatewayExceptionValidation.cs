@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace ApiKeyGateway.Domain.Exceptions;
 
+/// <summary>
+/// Provides validation methods for <see cref="ApiKeyGatewayException"/> instances.
+/// </summary>
 public static class ApiKeyGatewayExceptionValidation
 {
     /// <summary>
@@ -18,19 +20,23 @@ public static class ApiKeyGatewayExceptionValidation
 
         var problems = new List<string>();
 
-        if (string.IsNullOrEmpty(value.Message))
+        if (string.IsNullOrWhiteSpace(value.Message))
         {
-            problems.Add($"Message is null or empty (actual: {(value.Message is null ? "null" : $"'{value.Message}'")}).");
+            problems.Add("Message is null, empty, or whitespace.");
         }
 
         if (value.OccurredAt == default)
         {
             problems.Add("OccurredAt is default DateTime (Unix epoch).");
         }
-
-        if (value.ErrorCode is { Length: 0 })
+        else if (value.OccurredAt.Kind != DateTimeKind.Utc)
         {
-            problems.Add("ErrorCode is an empty string.");
+            problems.Add("OccurredAt must be in UTC kind.");
+        }
+
+        if (value.ErrorCode is not null && string.IsNullOrWhiteSpace(value.ErrorCode))
+        {
+            problems.Add("ErrorCode is whitespace.");
         }
 
         return problems;
@@ -45,7 +51,6 @@ public static class ApiKeyGatewayExceptionValidation
     public static bool IsValid(this ApiKeyGatewayException value)
     {
         ArgumentNullException.ThrowIfNull(value);
-
         return value.Validate().Count == 0;
     }
 
@@ -64,9 +69,10 @@ public static class ApiKeyGatewayExceptionValidation
         if (problems.Count > 0)
         {
             throw new ArgumentException(
-                $"ApiKeyGatewayException is invalid:{Environment.NewLine}  - {
-                    string.Join($"{Environment.NewLine}  - ", problems)
-                }");
+                $"ApiKeyGatewayException is invalid:{Environment.NewLine} - {
+                    string.Join($"{Environment.NewLine} - ", problems)
+                }",
+                nameof(value));
         }
     }
 }
