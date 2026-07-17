@@ -44,15 +44,15 @@ public static class ApiKeyGatewayExceptionJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized exception, or null if the JSON is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static ApiKeyGatewayException? FromJson(string json)
+    public static ApiKeyGatewayException? FromJson(string? json)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<ApiKeyGatewayException>(json, _jsonOptions);
+        return string.IsNullOrEmpty(json)
+            ? null
+            : JsonSerializer.Deserialize<ApiKeyGatewayException>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -61,19 +61,20 @@ public static class ApiKeyGatewayExceptionJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized exception if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out ApiKeyGatewayException? value)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    public static bool TryFromJson(string? json, out ApiKeyGatewayException? value)
     {
         value = null;
 
         if (string.IsNullOrEmpty(json))
         {
-            return true;
+            return false;
         }
 
         try
         {
             value = JsonSerializer.Deserialize<ApiKeyGatewayException>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
