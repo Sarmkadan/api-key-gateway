@@ -18,9 +18,9 @@ public static class ApiKeysControllerJsonExtensions
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-            {
-                Modifiers = { JsonContextModifier.ApplyCamelCaseNaming }
-            }
+        {
+            Modifiers = { JsonContextModifier.ApplyCamelCaseNaming }
+        }
     };
 
     /// <summary>
@@ -61,6 +61,7 @@ public static class ApiKeysControllerJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized controller instance, or null on failure.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out ApiKeysController? value)
     {
         value = null;
@@ -84,8 +85,12 @@ public static class ApiKeysControllerJsonExtensions
     /// <summary>
     /// JSON type info modifier that applies camelCase naming policy to property names.
     /// </summary>
-    private static class JsonContextModifier
+    private sealed class JsonContextModifier
     {
+        /// <summary>
+        /// Applies camelCase naming to JSON type info properties.
+        /// </summary>
+        /// <param name="jsonTypeInfo">The JSON type info to modify.</param>
         public static void ApplyCamelCaseNaming(JsonTypeInfo jsonTypeInfo)
         {
             if (jsonTypeInfo.Kind == JsonTypeInfoKind.Object)
