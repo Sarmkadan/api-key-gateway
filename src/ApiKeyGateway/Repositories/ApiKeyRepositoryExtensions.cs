@@ -18,14 +18,25 @@ namespace ApiKeyGateway.Repositories;
 public static class ApiKeyRepositoryExtensions
 {
     /// <summary>
+    /// Validates that the repository instance is not null.
+    /// </summary>
+    /// <param name="repository">The repository instance.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null.</exception>
+    private static void ValidateRepository(ApiKeyRepository repository)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+    }
+
+    /// <summary>
     /// Checks if an API key with the specified ID exists in the repository.
     /// </summary>
     /// <param name="repository">The repository instance.</param>
     /// <param name="id">The ID of the API key to check.</param>
     /// <returns>True if the API key exists, false otherwise.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="id"/> is null or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null or <paramref name="id"/> is null or whitespace.</exception>
     public static async Task<bool> ExistsByIdAsync(this ApiKeyRepository repository, string id)
     {
+        ValidateRepository(repository);
         ArgumentNullException.ThrowIfNullOrEmpty(id);
         return (await repository.GetByIdAsync(id)) is not null;
     }
@@ -36,9 +47,10 @@ public static class ApiKeyRepositoryExtensions
     /// <param name="repository">The repository instance.</param>
     /// <param name="consumerId">The consumer ID to filter by.</param>
     /// <returns>An IReadOnlyList of active <see cref="ApiKey"/> instances.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="consumerId"/> is null or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null or <paramref name="consumerId"/> is null or whitespace.</exception>
     public static async Task<IReadOnlyList<ApiKey>> GetActiveKeysByConsumerAsync(this ApiKeyRepository repository, string consumerId)
     {
+        ValidateRepository(repository);
         ArgumentNullException.ThrowIfNullOrEmpty(consumerId);
         var allKeys = await repository.GetByConsumerIdAsync(consumerId);
         return allKeys
@@ -53,9 +65,10 @@ public static class ApiKeyRepositoryExtensions
     /// <param name="repository">The repository instance.</param>
     /// <param name="consumerId">The consumer ID to count for.</param>
     /// <returns>The number of active API keys.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="consumerId"/> is null or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> is null or <paramref name="consumerId"/> is null or whitespace.</exception>
     public static async Task<int> GetActiveKeyCountByConsumerAsync(this ApiKeyRepository repository, string consumerId)
     {
+        ValidateRepository(repository);
         ArgumentNullException.ThrowIfNullOrEmpty(consumerId);
         return (await repository.GetByConsumerIdAsync(consumerId))
             .Count(k => k.Status == ApiKeyStatus.Active);
