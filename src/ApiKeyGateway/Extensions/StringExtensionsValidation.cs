@@ -92,9 +92,14 @@ public static class StringExtensionsValidation
     /// </summary>
     /// <param name="delimiter">The delimiter character.</param>
     /// <returns>A list of human-readable validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="delimiter"/> is a control character.</exception>
     public static IReadOnlyList<string> ValidateToListParameters(char delimiter)
     {
-        // No validation needed for delimiter character
+        if (char.IsControl(delimiter))
+        {
+            return new[] { "Delimiter character cannot be a control character." };
+        }
+
         return Array.Empty<string>();
     }
 
@@ -193,9 +198,12 @@ public static class StringExtensionsValidation
     /// Ensures ToList parameters are valid, throwing if not.
     /// </summary>
     /// <param name="delimiter">The delimiter character.</param>
-    /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="delimiter"/> is a control character.</exception>
     public static void EnsureValidToListParameters(char delimiter)
     {
-        // No validation needed for delimiter character
+        if (char.IsControl(delimiter))
+        {
+            throw new ArgumentException("Delimiter character cannot be a control character.");
+        }
     }
 }
