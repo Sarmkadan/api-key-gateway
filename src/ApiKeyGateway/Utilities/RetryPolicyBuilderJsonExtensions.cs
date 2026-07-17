@@ -51,6 +51,7 @@ public static class RetryPolicyBuilderJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
         ArgumentException.ThrowIfNullOrEmpty(json);
+
         return JsonSerializer.Deserialize<RetryPolicyBuilder>(json, JsonSerializerOptions);
     }
 
@@ -60,14 +61,17 @@ public static class RetryPolicyBuilderJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized retry policy builder if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
     public static bool TryFromJson(string json, out RetryPolicyBuilder? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
         try
         {
-            ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
             value = JsonSerializer.Deserialize<RetryPolicyBuilder>(json, JsonSerializerOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
