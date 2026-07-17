@@ -1,76 +1,28 @@
-        // Get a non-existent integer property with default value
-        int nonExistentInt = consumer.GetCustomPropertyAsInt("non_existent_key", 0);
-        Console.WriteLine($"Non-existent int property: {nonExistentInt}");
-    }
-}
-```
+## CorrelationContextMiddlewareExtensions
 
-## TransformationRuleExtensions
-
-The `TransformationRuleExtensions` class provides extension methods for the `TransformationRule` class that simplify common operations such as null checks, name validation, and parameter management. These methods enable fluent validation and cloning of transformation rules with modified properties.
+The `CorrelationContextMiddlewareExtensions` class provides extension methods for accessing correlation context information from HTTP contexts. These methods enable extracting correlation IDs, API key IDs, client IPs, and other correlation context data from HTTP requests.
 
 ### Example Usage
 
 ```csharp
-using ApiKeyGateway.Domain.Models;
-using System;
-using System.Collections.Generic;
+using ApiKeyGateway.Middleware;
+using Microsoft.AspNetCore.Http;
 
-class TransformationRuleExample
-{
-    public void Run()
-    {
-        // Create a transformation rule with parameters
-        var rule = new TransformationRule
-        {
-            Name = "rate-limit-transform",
-            Description = "Transforms API requests for rate limiting",
-            Scope = "global",
-            ApiKeyId = "key_001",
-            Type = "rate_limit",
-            Action = "transform",
-            Parameters = new Dictionary<string, string>
-            {
-                { "max_requests", "100" },
-                { "time_window", "60" },
-                { "burst_capacity", "20" }
-            },
-            Priority = 1,
-            IsEnabled = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "admin_user"
-        };
+// Assuming you have an HttpContext instance
+HttpContext context = /* obtain HttpContext */;
 
-        // Validate the rule is not null
-        rule.ThrowIfNull();
+// Get correlation ID from context
+string? correlationId = context.GetCorrelationId();
 
-        // Validate the rule name is not null or empty
-        rule.ThrowIfNameNullOrEmpty();
+// Get API key ID from context
+string? apiKeyId = context.GetApiKeyId();
 
-        // Create a new rule with updated name and description
-        var updatedRule = rule.WithNameAndDescription(
-            "updated-rate-limit-transform",
-            "Updated transformation for rate limiting with additional parameters"
-        );
+// Get client IP address from context
+string? clientIp = context.GetClientIp();
 
-        Console.WriteLine($"Original rule name: {rule.Name}");
-        Console.WriteLine($"Updated rule name: {updatedRule.Name}");
-        Console.WriteLine($"Updated rule description: {updatedRule.Description}");
+// Get the entire correlation context dictionary
+IReadOnlyDictionary<string, object?> correlationContext = context.GetCorrelationContext();
 
-        // Create a new rule with updated parameters
-        var newParameters = new Dictionary<string, string>
-        {
-            { "max_requests", "200" },
-            { "time_window", "30" },
-            { "burst_capacity", "50" },
-            { "retry_after", "5" }
-        };
-
-        var parameterUpdatedRule = rule.WithParameters(newParameters);
-        Console.WriteLine($"Parameters string: {parameterUpdatedRule.GetParametersString()}");
-
-        // Get a string representation of the parameters
-        string parametersString = rule.GetParametersString();
-        Console.WriteLine($"Original parameters: {parametersString}");
-    }
-}
+// Check if correlation context exists
+bool hasContext = context.HasCorrelationContext();
+```
