@@ -18,7 +18,7 @@ public static class ApiResponseBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of the response data.</typeparam>
     /// <param name="builder">The builder instance to extend.</param>
-    /// <param name="metadata">A dictionary containing metadata key/value pairs.</param>
+    /// <param name="metadata">A dictionary containing metadata key/value pairs. Must not be <c>null</c>.</param>
     /// <returns>The same <see cref="ApiResponseBuilder{T}"/> instance for further chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="metadata"/> is <c>null</c>.</exception>
     public static ApiResponseBuilder<T> WithMetadata<T>(this ApiResponseBuilder<T> builder, IDictionary<string, object> metadata)
@@ -39,9 +39,10 @@ public static class ApiResponseBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of the response data.</typeparam>
     /// <param name="builder">The builder instance to extend.</param>
-    /// <param name="errors">A collection of error strings.</param>
+    /// <param name="errors">A collection of error strings. Must not be <c>null</c>.</param>
     /// <returns>The same <see cref="ApiResponseBuilder{T}"/> instance for further chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="errors"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">Thrown when any error string is <c>null</c> or whitespace.</exception>
     public static ApiResponseBuilder<T> AddErrors<T>(this ApiResponseBuilder<T> builder, IEnumerable<string> errors)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -62,18 +63,30 @@ public static class ApiResponseBuilderExtensions
     /// </summary>
     /// <typeparam name="T">The type of the response data.</typeparam>
     /// <param name="builder">The builder instance to extend.</param>
-    /// <param name="pageNumber">The current page number (1‑based).</param>
-    /// <param name="pageSize">The size of each page.</param>
-    /// <param name="totalCount">The total number of items across all pages.</param>
+    /// <param name="pageNumber">The current page number (1-based). Must be greater than zero.</param>
+    /// <param name="pageSize">The size of each page. Must be greater than zero.</param>
+    /// <param name="totalCount">The total number of items across all pages. Must not be negative.</param>
     /// <returns>The same <see cref="ApiResponseBuilder{T}"/> instance for further chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is <c>null</c>.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when any pagination argument is less than zero.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="pageNumber"/> is less than 1, <paramref name="pageSize"/> is less than 1, or <paramref name="totalCount"/> is negative.</exception>
     public static ApiResponseBuilder<T> WithPagination<T>(this ApiResponseBuilder<T> builder, int pageNumber, int pageSize, int totalCount)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        if (pageNumber < 1) throw new ArgumentOutOfRangeException(nameof(pageNumber), "Page number must be greater than zero.");
-        if (pageSize < 0)   throw new ArgumentOutOfRangeException(nameof(pageSize),   "Page size cannot be negative.");
-        if (totalCount < 0) throw new ArgumentOutOfRangeException(nameof(totalCount), "Total count cannot be negative.");
+
+        if (pageNumber < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageNumber), "Page number must be greater than zero.");
+        }
+
+        if (pageSize < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
+        }
+
+        if (totalCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalCount), "Total count cannot be negative.");
+        }
 
         builder
             .WithMetadata("pageNumber", pageNumber)
