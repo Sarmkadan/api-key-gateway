@@ -111,6 +111,31 @@ if (success && parsedSettings != null)
 }
 ```
 
+## RateLimitRepositoryValidation
+
+The `RateLimitRepositoryValidation` class provides static methods for validating rate limit repository configurations. It offers validation through multiple approaches: returning error lists, boolean checks, and exception-throwing validation.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Repositories;
+
+// Validate a rate limit repository configuration and get validation errors
+IReadOnlyList<string> errors = RateLimitRepositoryValidation.Validate("your-repo-config");
+
+// Quick boolean validation
+bool isValid = RateLimitRepositoryValidation.IsValid("your-repo-config");
+
+// Validate and throw ArgumentException if invalid
+RateLimitRepositoryValidation.EnsureValid("your-repo-config");
+
+// Validate with multiple repository configurations
+var configs = new[] { "config1", "config2" };
+IReadOnlyList<string> multiErrors = RateLimitRepositoryValidation.Validate(configs);
+bool multiIsValid = RateLimitRepositoryValidation.IsValid(configs);
+RateLimitRepositoryValidation.EnsureValid(configs);
+```
+
 ## LoggerFactoryHelperJsonExtensions
 
 `LoggerFactoryHelperJsonExtensions` provides System.Text.Json serialization support for logger factory configuration states. It enables converting between `LoggerFactoryConfiguration` objects and JSON strings, facilitating the persistence and retrieval of logging settings.
