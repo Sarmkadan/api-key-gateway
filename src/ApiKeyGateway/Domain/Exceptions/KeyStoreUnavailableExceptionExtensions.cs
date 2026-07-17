@@ -22,6 +22,7 @@ public static class KeyStoreUnavailableExceptionExtensions
     /// <param name="operation">The operation that failed due to unavailable key store.</param>
     /// <returns>A new exception instance with a descriptive message.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="operation"/> is null or empty.</exception>
     public static KeyStoreUnavailableException WithOperation(
         this KeyStoreUnavailableException exception,
         string operation)
@@ -43,6 +44,7 @@ public static class KeyStoreUnavailableExceptionExtensions
     /// <param name="key">The API key that was not found in the store.</param>
     /// <returns>A new exception instance indicating a cache miss scenario.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="key"/> is null or empty.</exception>
     public static KeyStoreUnavailableException WithCacheMiss(
         this KeyStoreUnavailableException exception,
         string key)
@@ -64,6 +66,7 @@ public static class KeyStoreUnavailableExceptionExtensions
     /// <param name="context">Additional context about the failure scenario.</param>
     /// <returns>A new exception instance with formatted message.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="exception"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="context"/> is null or empty.</exception>
     public static KeyStoreUnavailableException WithContext(
         this KeyStoreUnavailableException exception,
         string context)
