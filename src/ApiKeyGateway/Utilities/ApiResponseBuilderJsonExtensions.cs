@@ -8,168 +8,175 @@ using System.Text.Json;
 namespace ApiKeyGateway.Utilities;
 
 /// <summary>
-/// Provides System.Text.Json serialization extensions for <see cref="ApiResponseBuilder{T}"/> instances
+/// Provides System.Text.Json serialization extensions for <see cref="ApiResponseBuilder{T}"/>
+/// instances
 /// </summary>
 public static class ApiResponseBuilderJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
+	private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		WriteIndented = false
+	};
 
-    /// <summary>
-    /// Serializes an ApiResponseBuilder instance to a JSON string
-    /// </summary>
-    /// <typeparam name="T">The type of data contained in the response</typeparam>
-    /// <param name="value">The ApiResponseBuilder instance to serialize</param>
-    /// <param name="indented">Whether to format the JSON with indentation for readability</param>
-    /// <returns>A JSON string representation of the ApiResponseBuilder</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
-    public static string ToJson<T>(this ApiResponseBuilder<T> value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+	/// <summary>
+	/// Serializes an ApiResponseBuilder instance to a JSON string
+	/// </summary>
+	/// <typeparam name="T">The type of data contained in the response</typeparam>
+	/// <param name="value">The ApiResponseBuilder instance to serialize</param>
+	/// <param name="indented">Whether to format the JSON with indentation for readability</param>
+	/// <returns>A JSON string representation of the ApiResponseBuilder</returns>
+	/// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
+	public static string ToJson<T>(this ApiResponseBuilder<T> value, bool indented = false)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonSerializerOptions) { WriteIndented = true }
-            : _jsonSerializerOptions;
+		var options = indented
+			? new JsonSerializerOptions(_jsonSerializerOptions) { WriteIndented = true }
+			: _jsonSerializerOptions;
 
-        var response = value.Build();
-        return JsonSerializer.Serialize(response, options);
-    }
+		var response = value.Build();
+		return JsonSerializer.Serialize(response, options);
+	}
 
-    /// <summary>
-    /// Deserializes a JSON string to an ApiResponseBuilder instance
-    /// </summary>
-    /// <typeparam name="T">The type of data contained in the response</typeparam>
-    /// <param name="json">The JSON string to deserialize</param>
-    /// <returns>An ApiResponseBuilder instance, or null if the JSON is null or whitespace</returns>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty</exception>
-    /// <exception cref="JsonException">Thrown if the JSON is invalid or cannot be deserialized</exception>
-    public static ApiResponseBuilder<T>? FromJson<T>(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
+	/// <summary>
+	/// Deserializes a JSON string to an ApiResponseBuilder instance
+	/// </summary>
+	/// <typeparam name="T">The type of data contained in the response</typeparam>
+	/// <param name="json">The JSON string to deserialize</param>
+	/// <returns>An ApiResponseBuilder instance, or null if the JSON is null or whitespace</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="json"/> is null</exception>
+	/// <exception cref="ArgumentException"><paramref name="json"/> is empty or whitespace</exception>
+	/// <exception cref="JsonException">Thrown if the JSON is invalid or cannot be deserialized</exception>
+	public static ApiResponseBuilder<T>? FromJson<T>(string? json)
+	{
+		ArgumentNullException.ThrowIfNull(json);
 
-        var response = JsonSerializer.Deserialize<ApiResponse>(json, _jsonSerializerOptions);
-        if (response is null)
-        {
-            return null;
-        }
+		if (string.IsNullOrWhiteSpace(json))
+		{
+			return null;
+		}
 
-        var builder = new ApiResponseBuilder<T>();
+		var response = JsonSerializer.Deserialize<ApiResponse>(json, _jsonSerializerOptions);
+		if (response is null)
+		{
+			return null;
+		}
 
-        if (response.Success)
-        {
-            builder.Success(response.Message);
-        }
-        else
-        {
-            builder.Error(response.StatusCode ?? 500, response.Message ?? "Error", response.ErrorCode);
-        }
+		var builder = new ApiResponseBuilder<T>();
 
-        if (response.Data is not null)
-        {
-            builder.WithData((T?)response.Data);
-        }
+		if (response.Success)
+		{
+			builder.Success(response.Message);
+		}
+		else
+		{
+			builder.Error(response.StatusCode ?? 500, response.Message ?? "Error", response.ErrorCode);
+		}
 
-        if (response.Errors is not null)
-        {
-            foreach (var error in response.Errors)
-            {
-                builder.AddError(error);
-            }
-        }
+		if (response.Data is not null)
+		{
+			builder.WithData((T?)response.Data);
+		}
 
-        if (response.Metadata is not null)
-        {
-            foreach (var kvp in response.Metadata)
-            {
-                builder.WithMetadata(kvp.Key, kvp.Value);
-            }
-        }
+		if (response.Errors is not null)
+		{
+			foreach (var error in response.Errors)
+			{
+				builder.AddError(error);
+			}
+		}
 
-        return builder;
-    }
+		if (response.Metadata is not null)
+		{
+			foreach (var kvp in response.Metadata)
+			{
+				builder.WithMetadata(kvp.Key, kvp.Value);
+			}
+		}
 
-    /// <summary>
-    /// Attempts to deserialize a JSON string to an ApiResponseBuilder instance
-    /// </summary>
-    /// <typeparam name="T">The type of data contained in the response</typeparam>
-    /// <param name="json">The JSON string to deserialize</param>
-    /// <param name="value">Receives the deserialized ApiResponseBuilder if successful</param>
-    /// <returns>True if deserialization succeeds; otherwise, false</returns>
-    public static bool TryFromJson<T>(string json, out ApiResponseBuilder<T>? value)
-    {
-        value = null;
+		return builder;
+	}
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return true;
-        }
+	/// <summary>
+	/// Attempts to deserialize a JSON string to an ApiResponseBuilder instance
+	/// </summary>
+	/// <typeparam name="T">The type of data contained in the response</typeparam>
+	/// <param name="json">The JSON string to deserialize</param>
+	/// <param name="value">Receives the deserialized ApiResponseBuilder if successful</param>
+	/// <returns>True if deserialization succeeds; otherwise, false</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="json"/> is null</exception>
+	public static bool TryFromJson<T>(string? json, out ApiResponseBuilder<T>? value)
+	{
+		value = null;
 
-        try
-        {
-            var response = JsonSerializer.Deserialize<ApiResponse>(json, _jsonSerializerOptions);
-            if (response is null)
-            {
-                return true;
-            }
+		ArgumentNullException.ThrowIfNull(json);
 
-            var builder = new ApiResponseBuilder<T>();
+		if (string.IsNullOrWhiteSpace(json))
+		{
+			return true;
+		}
 
-            if (response.Success)
-            {
-                builder.Success(response.Message);
-            }
-            else
-            {
-                builder.Error(response.StatusCode ?? 500, response.Message ?? "Error", response.ErrorCode);
-            }
+		try
+		{
+			var response = JsonSerializer.Deserialize<ApiResponse>(json, _jsonSerializerOptions);
+			if (response is null)
+			{
+				return true;
+			}
 
-            if (response.Data is not null)
-            {
-                builder.WithData((T?)response.Data);
-            }
+			var builder = new ApiResponseBuilder<T>();
 
-            if (response.Errors is not null)
-            {
-                foreach (var error in response.Errors)
-                {
-                    builder.AddError(error);
-                }
-            }
+			if (response.Success)
+			{
+				builder.Success(response.Message);
+			}
+			else
+			{
+				builder.Error(response.StatusCode ?? 500, response.Message ?? "Error", response.ErrorCode);
+			}
 
-            if (response.Metadata is not null)
-            {
-                foreach (var kvp in response.Metadata)
-                {
-                    builder.WithMetadata(kvp.Key, kvp.Value);
-                }
-            }
+			if (response.Data is not null)
+			{
+				builder.WithData((T?)response.Data);
+			}
 
-            value = builder;
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
+			if (response.Errors is not null)
+			{
+				foreach (var error in response.Errors)
+				{
+					builder.AddError(error);
+				}
+			}
 
-    /// <summary>
-    /// Internal model representing the structure of an API response for serialization/deserialization
-    /// </summary>
-    private sealed class ApiResponse
-    {
-        public bool Success { get; set; }
-        public int? StatusCode { get; set; }
-        public string? Message { get; set; }
-        public string? ErrorCode { get; set; }
-        public object? Data { get; set; }
-        public List<string>? Errors { get; set; }
-        public Dictionary<string, object>? Metadata { get; set; }
-    }
+			if (response.Metadata is not null)
+			{
+				foreach (var kvp in response.Metadata)
+				{
+					builder.WithMetadata(kvp.Key, kvp.Value);
+				}
+			}
+
+			value = builder;
+			return true;
+		}
+		catch (JsonException)
+		{
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Internal model representing the structure of an API response for serialization/deserialization
+	/// </summary>
+	private sealed class ApiResponse
+	{
+		public bool Success { get; set; }
+		public int? StatusCode { get; set; }
+		public string? Message { get; set; }
+		public string? ErrorCode { get; set; }
+		public object? Data { get; set; }
+		public List<string>? Errors { get; set; }
+		public Dictionary<string, object>? Metadata { get; set; }
+	}
 }
