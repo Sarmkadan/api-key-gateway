@@ -29,29 +29,20 @@ public static class RateLimitBenchmarksJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the benchmarks.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this RateLimitBenchmarks value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
-    }
+    public static string ToJson(this RateLimitBenchmarks value, bool indented = false) =>
+        JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } : _jsonOptions);
 
     /// <summary>
     /// Deserializes a JSON string to an <see cref="RateLimitBenchmarks"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized benchmarks instance, or null if JSON is empty.</returns>
+    /// <returns>The deserialized benchmarks instance.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static RateLimitBenchmarks? FromJson(string json)
+    public static RateLimitBenchmarks FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
-
-        return JsonSerializer.Deserialize<RateLimitBenchmarks>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<RateLimitBenchmarks>(json, _jsonOptions) ?? throw new JsonException("Deserialized result cannot be null");
     }
 
     /// <summary>
@@ -67,7 +58,7 @@ public static class RateLimitBenchmarksJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<RateLimitBenchmarks>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
