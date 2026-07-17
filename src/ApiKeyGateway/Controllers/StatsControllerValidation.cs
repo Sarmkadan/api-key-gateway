@@ -21,9 +21,9 @@ namespace ApiKeyGateway.Controllers
 
             var problems = new List<string>();
 
-            // No properties to validate in StatsController
+            // StatsController has no properties to validate
 
-            return new ReadOnlyCollection<string>(problems);
+            return problems.AsReadOnly();
         }
 
         /// <summary>
