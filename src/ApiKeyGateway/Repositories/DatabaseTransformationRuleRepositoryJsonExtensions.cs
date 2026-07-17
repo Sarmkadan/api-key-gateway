@@ -9,7 +9,7 @@ using ApiKeyGateway.Domain.Models;
 namespace ApiKeyGateway.Repositories;
 
 /// <summary>
-/// Provides JSON serialization helpers for <see cref="TransformationRule"/>.
+/// Provides JSON serialization and deserialization helpers for <see cref="TransformationRule"/> entities.
 /// </summary>
 public static class DatabaseTransformationRuleRepositoryJsonExtensions
 {
@@ -23,31 +23,26 @@ public static class DatabaseTransformationRuleRepositoryJsonExtensions
     };
 
     /// <summary>
-    /// Serializes <see cref="TransformationRule"/> to a JSON string.
+    /// Serializes a <see cref="TransformationRule"/> to a JSON string.
     /// </summary>
     /// <param name="value">The transformation rule to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation.</param>
     /// <returns>JSON string representation of the transformation rule.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     public static string ToJson(this TransformationRule value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        JsonSerializerOptions options = indented
-            ? new(JsonSerializerOptions) { WriteIndented = true }
-            : JsonSerializerOptions;
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, new JsonSerializerOptions(JsonSerializerOptions) { WriteIndented = indented });
     }
 
     /// <summary>
-    /// Deserializes a JSON string to <see cref="TransformationRule"/>.
+    /// Deserializes a JSON string to a <see cref="TransformationRule"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized transformation rule.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
-    /// <exception cref="JsonException">Thrown when JSON is invalid.</exception>
+    /// <returns>The deserialized transformation rule, or <see langword="null"/> if deserialization fails.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to <see cref="TransformationRule"/>.</exception>
     public static TransformationRule? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -56,17 +51,18 @@ public static class DatabaseTransformationRuleRepositoryJsonExtensions
     }
 
     /// <summary>
-    /// Tries to deserialize a JSON string to <see cref="TransformationRule"/>.
+    /// Attempts to deserialize a JSON string to a <see cref="TransformationRule"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">The deserialized transformation rule if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <param name="value">When this method returns, contains the deserialized transformation rule if successful; otherwise, <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
     public static bool TryFromJson(string json, out TransformationRule? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
         try
         {
-            ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
             value = JsonSerializer.Deserialize<TransformationRule>(json, JsonSerializerOptions);
             return value is not null;
         }
