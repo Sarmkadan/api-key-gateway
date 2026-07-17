@@ -7,6 +7,7 @@
 // serialization settings.
 // =============================================================================
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -70,9 +71,11 @@ public static class JsonSerializationHelperJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A JsonSerializationSettings instance if successful; otherwise, null.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is empty.</exception>
     public static JsonSerializationSettings? FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
         ArgumentException.ThrowIfNullOrEmpty(json);
 
         try
@@ -91,9 +94,11 @@ public static class JsonSerializationHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized JsonSerializationSettings instance if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
-    public static bool TryFromJson(string json, out JsonSerializationSettings? value)
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is empty.</exception>
+    public static bool TryFromJson(string json, [NotNullWhen(true)] out JsonSerializationSettings? value)
     {
+        ArgumentNullException.ThrowIfNull(json);
         ArgumentException.ThrowIfNullOrEmpty(json);
 
         try
