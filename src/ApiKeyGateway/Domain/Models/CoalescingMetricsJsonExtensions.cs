@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 namespace ApiKeyGateway.Domain.Models;
 
 /// <summary>
-/// Provides JSON serialization helpers for <see cref="CoalescingMetrics"/>.
+/// Provides JSON serialization and deserialization helpers for <see cref="CoalescingMetrics"/>.
 /// </summary>
 public static class CoalescingMetricsJsonExtensions
 {
@@ -32,11 +32,11 @@ public static class CoalescingMetricsJsonExtensions
     public static string ToJson(this CoalescingMetrics value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-        
-        JsonSerializerOptions options = indented 
-            ? new(JsonSerializerOptions) { WriteIndented = true } 
+
+        JsonSerializerOptions options = indented
+            ? new(JsonSerializerOptions) { WriteIndented = true }
             : JsonSerializerOptions;
-        
+
         return JsonSerializer.Serialize(value, options);
     }
 
@@ -60,6 +60,8 @@ public static class CoalescingMetricsJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized metrics if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty.</exception>
     public static bool TryFromJson(string json, out CoalescingMetrics? value)
     {
         try
