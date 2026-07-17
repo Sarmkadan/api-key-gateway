@@ -387,6 +387,73 @@ var emptyResult = StringExtensionsTestsJsonExtensions.FromJson("   ");
 emptyResult.Should().BeNull();
 ```
 
+## UsageQuotaServiceTestsExtensions
+
+The `UsageQuotaServiceTestsExtensions` class provides extension methods for `UsageQuotaServiceTests` that offer reusable test utilities for managing and verifying API key usage quotas. It includes methods for setting up mock quota repositories, creating quota services with configured limits, parsing quota limits from strings, and verifying quota operations through assertions.
+
+### Public Members
+
+- `SetupQuotaRepository(this UsageQuotaServiceTests tests, Dictionary<string, long>? quotas = null)` - Sets up the mock quota repository with predefined quota values for testing
+- `CreateQuotaService(this UsageQuotaServiceTests tests, Dictionary<string, long>? quotas = null)` - Creates a configured `UsageQuotaService` instance with mock repository and optional predefined quotas
+- `VerifyQuotaSet(this UsageQuotaServiceTests tests, IUsageQuotaRepository repository, string apiKey, long expectedLimit)` - Verifies that the repository received a call to set the expected quota limit
+- `VerifyQuotaGet(this UsageQuotaServiceTests tests, IUsageQuotaRepository repository, string apiKey, long expectedUsage)` - Verifies that the repository received a call to get the quota usage for the specified API key
+- `CreateQuotaKeys(this UsageQuotaServiceTests tests, params string[] apiKeys)` - Creates a dictionary of quota keys for testing purposes
+- `ParseQuotaLimit(this UsageQuotaServiceTests tests, string limitString)` - Parses a quota limit string into a long value, returning null if parsing fails
+- `CreateCapturingLogger(this UsageQuotaServiceTests tests)` - Creates a mock logger that captures log messages for verification
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Interfaces;
+using ApiKeyGateway.Services;
+using FluentAssertions;
+using Moq;
+
+// Create a test instance
+var testInstance = new UsageQuotaServiceTests();
+
+// Setup quota keys for testing
+var quotaKeys = testInstance.CreateQuotaKeys(
+    "test-api-key-123",
+    "prod-api-key-456",
+    "dev-api-key-789"
+);
+
+// Create a quota service with predefined limits
+var quotas = new Dictionary<string, long>
+{
+    { "test-api-key-123", 1000 },
+    { "prod-api-key-456", 5000 },
+    { "dev-api-key-789", 100 }
+};
+
+var service = testInstance.CreateQuotaService(quotas);
+
+// Test setting a quota limit
+var mockRepository = new Mock<IUsageQuotaRepository>();
+testInstance.VerifyQuotaSet(mockRepository, "new-api-key-abc", 5000);
+
+// Test getting quota usage
+var usage = 42L;
+testInstance.VerifyQuotaGet(mockRepository, "test-api-key-123", usage);
+
+// Create a capturing logger for testing
+var (mockLogger, logMessages) = testInstance.CreateCapturingLogger();
+
+// Parse quota limit from string
+var parsedLimit = testInstance.ParseQuotaLimit("1000");
+parsedLimit.Should().Be(1000L);
+
+var invalidLimit = testInstance.ParseQuotaLimit("invalid");
+invalidLimit.Should().BeNull();
+
+// Verify quota keys were created correctly
+quotaKeys.Should().HaveCount(3);
+quotaKeys.Should().ContainKey("test-api-key-123");
+quotaKeys["test-api-key-123"].Should().Be("quota:test-api-key-123");
+```
+
 ## ApiKeyRotationServiceTestsValidation
 
 The `ApiKeyRotationServiceTestsValidation` class provides validation helpers for `ApiKeyRotationServiceTests` instances. It includes methods for validating test setup, key rotation results, and API key properties to ensure test instances are properly configured and rotation operations produce expected outcomes.
