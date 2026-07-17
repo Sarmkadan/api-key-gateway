@@ -33,7 +33,7 @@ namespace ApiKeyGateway.Utilities
                     problems.Add("Success is true but StatusCode is not in the 2xx range.");
                 }
 
-                if (value.Message is null or { Length: 0 })
+                if (string.IsNullOrEmpty(value.Message))
                 {
                     problems.Add("Success is true but Message is null or empty.");
                 }
@@ -45,12 +45,12 @@ namespace ApiKeyGateway.Utilities
                     problems.Add("Success is false but StatusCode is not in the 4xx or 5xx range.");
                 }
 
-                if (value.Message is null or { Length: 0 })
+                if (string.IsNullOrEmpty(value.Message))
                 {
                     problems.Add("Success is false but Message is null or empty.");
                 }
 
-                if (value.ErrorCode is null or { Length: 0 })
+                if (string.IsNullOrEmpty(value.ErrorCode))
                 {
                     problems.Add("Success is false but ErrorCode is null or empty.");
                 }
@@ -60,8 +60,7 @@ namespace ApiKeyGateway.Utilities
             {
                 problems.Add("Timestamp must be set to a non-default value.");
             }
-
-            if (value.Timestamp.Kind != DateTimeKind.Utc)
+            else if (value.Timestamp.Kind != DateTimeKind.Utc)
             {
                 problems.Add("Timestamp must be in UTC.");
             }
@@ -78,7 +77,7 @@ namespace ApiKeyGateway.Utilities
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
         public static bool IsValid<T>(this ApiResponse<T> value)
         {
-            return value.Validate().Count == 0;
+            return value is not null && value.Validate().Count == 0;
         }
 
         /// <summary>
@@ -98,8 +97,7 @@ namespace ApiKeyGateway.Utilities
                 return;
             }
 
-            throw new ArgumentException(
-                $"ApiResponse is not valid. Problems:\n{string.Join("\n", problems)}");
+            throw new ArgumentException($"ApiResponse is not valid. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
         }
 
         /// <summary>
@@ -149,8 +147,7 @@ namespace ApiKeyGateway.Utilities
             {
                 problems.Add("Timestamp must be set to a non-default value.");
             }
-
-            if (value.Timestamp.Kind != DateTimeKind.Utc)
+            else if (value.Timestamp.Kind != DateTimeKind.Utc)
             {
                 problems.Add("Timestamp must be in UTC.");
             }
@@ -167,7 +164,7 @@ namespace ApiKeyGateway.Utilities
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
         public static bool IsValid<T>(this PaginatedResponse<T> value)
         {
-            return value.Validate().Count == 0;
+            return value is not null && value.Validate().Count == 0;
         }
 
         /// <summary>
@@ -187,8 +184,7 @@ namespace ApiKeyGateway.Utilities
                 return;
             }
 
-            throw new ArgumentException(
-                $"PaginatedResponse is not valid. Problems:\n{string.Join("\n", problems)}");
+            throw new ArgumentException($"PaginatedResponse is not valid. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
         }
     }
 }
