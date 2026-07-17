@@ -3,12 +3,10 @@
 // CTO & Software Architect
 // =====================================================================
 
-using System.Globalization;
-
 namespace ApiKeyGateway.Tests;
 
 /// <summary>
-/// Validation helpers for <see cref="IpWhitelistTests"/> test class.
+/// Provides validation methods for <see cref="IpWhitelistTests"/> instances.
 /// </summary>
 public static class IpWhitelistTestsValidation
 {
@@ -55,7 +53,8 @@ public static class IpWhitelistTestsValidation
         var problems = value.Validate();
         if (problems.Count > 0)
         {
-            throw new ArgumentException($"Validation failed for {nameof(IpWhitelistTests)}.{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
+            throw new ArgumentException(
+                $"Validation failed for {nameof(IpWhitelistTests)}.{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
         }
     }
 }
