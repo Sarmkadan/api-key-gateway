@@ -155,6 +155,7 @@ public static class RequestValidatorValidation
     /// <param name="maximum">Maximum allowed value.</param>
     /// <param name="fieldName">Name of the field for error messages.</param>
     /// <returns>True if valid; otherwise, false.</returns>
+/// <exception cref="ArgumentNullException">Thrown if fieldName is null.</exception>
     public static bool IsValidRange(
         int value,
         int minimum = int.MinValue,
@@ -167,7 +168,8 @@ public static class RequestValidatorValidation
     /// </summary>
     /// <param name="value">The GUID to validate.</param>
     /// <param name="fieldName">Name of the field for error messages.</param>
-    /// <returns>True if valid; otherwise, false.</returns>
+/// <exception cref="ArgumentNullException">Thrown if fieldName is null.</exception>
+/// <returns>True if valid; otherwise, false.</returns>
     public static bool IsValidGuid(Guid value, string fieldName = "ID")
         => ValidateGuid(value, fieldName).Count == 0;
 
@@ -222,6 +224,7 @@ public static class RequestValidatorValidation
     /// <param name="maxLength">Maximum length requirement.</param>
     /// <param name="fieldName">Name of the field for error messages.</param>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+  /// <exception cref="ArgumentNullException">Thrown if fieldName is null.</exception>
     public static void EnsureValidLength(
         string value,
         int minLength = 0,
@@ -243,6 +246,7 @@ public static class RequestValidatorValidation
     /// <param name="maximum">Maximum allowed value.</param>
     /// <param name="fieldName">Name of the field for error messages.</param>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+  /// <exception cref="ArgumentNullException">Thrown if fieldName is null.</exception>
     public static void EnsureValidRange(
         int value,
         int minimum = int.MinValue,
@@ -262,6 +266,7 @@ public static class RequestValidatorValidation
     /// <param name="value">The GUID to validate.</param>
     /// <param name="fieldName">Name of the field for error messages.</param>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+  /// <exception cref="ArgumentNullException">Thrown if fieldName is null.</exception>
     public static void EnsureValidGuid(Guid value, string fieldName = "ID")
     {
         var errors = ValidateGuid(value, fieldName);
