@@ -29,29 +29,21 @@ public static class CacheKeyGenerationBenchmarksJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the benchmarks.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this CacheKeyGenerationBenchmarks value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
-    }
+    public static string ToJson(this CacheKeyGenerationBenchmarks value, bool indented = false) =>
+        JsonSerializer.Serialize(value, indented ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } : _jsonOptions);
 
     /// <summary>
     /// Deserializes a JSON string to an <see cref="CacheKeyGenerationBenchmarks"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized benchmarks instance, or null if JSON is empty.</returns>
+    /// <returns>The deserialized benchmarks instance.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static CacheKeyGenerationBenchmarks? FromJson(string json)
+    public static CacheKeyGenerationBenchmarks FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
-        return JsonSerializer.Deserialize<CacheKeyGenerationBenchmarks>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<CacheKeyGenerationBenchmarks>(json, _jsonOptions) ?? throw new JsonException("Deserialized result cannot be null");
     }
 
     /// <summary>
@@ -60,6 +52,7 @@ public static class CacheKeyGenerationBenchmarksJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized benchmarks instance if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out CacheKeyGenerationBenchmarks? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -67,7 +60,7 @@ public static class CacheKeyGenerationBenchmarksJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<CacheKeyGenerationBenchmarks>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
