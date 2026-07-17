@@ -3,8 +3,6 @@
 // CTO & Software Architect
 // =====================================================================
 
-using System.Globalization;
-
 namespace ApiKeyGateway.Extensions;
 
 /// <summary>
@@ -19,21 +17,20 @@ public static class CollectionExtensionsValidation
     /// <param name="pageNumber">The page number (1-based).</param>
     /// <param name="pageSize">The number of items per page.</param>
     /// <returns>A list of human-readable validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="pageNumber"/> or <paramref name="pageSize"/> is less than 1.</exception>
     public static IReadOnlyList<string> ValidatePaginationParameters(int pageNumber, int pageSize)
     {
-        var problems = new List<string>();
-
         if (pageNumber < 1)
         {
-            problems.Add($"Page number must be 1 or greater, but was {pageNumber}.");
+            throw new ArgumentOutOfRangeException(nameof(pageNumber), pageNumber, "Page number must be 1 or greater.");
         }
 
         if (pageSize < 1)
         {
-            problems.Add($"Page size must be 1 or greater, but was {pageSize}.");
+            throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "Page size must be 1 or greater.");
         }
 
-        return problems.AsReadOnly();
+        return Array.Empty<string>();
     }
 
     /// <summary>
@@ -41,16 +38,15 @@ public static class CollectionExtensionsValidation
     /// </summary>
     /// <param name="batchSize">The maximum number of items per batch.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="batchSize"/> is less than 1.</exception>
     public static IReadOnlyList<string> ValidateBatchParameters(int batchSize)
     {
-        var problems = new List<string>();
-
         if (batchSize < 1)
         {
-            problems.Add($"Batch size must be 1 or greater, but was {batchSize}.");
+            throw new ArgumentOutOfRangeException(nameof(batchSize), batchSize, "Batch size must be 1 or greater.");
         }
 
-        return problems.AsReadOnly();
+        return Array.Empty<string>();
     }
 
     /// <summary>
@@ -102,10 +98,7 @@ public static class CollectionExtensionsValidation
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <param name="source">The source collection to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid<T>(this IEnumerable<T>? source)
-    {
-        return source is not null;
-    }
+    public static bool IsValid<T>(this IEnumerable<T>? source) => source is not null;
 
     /// <summary>
     /// Ensures a collection is valid, throwing if not.
