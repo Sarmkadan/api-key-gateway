@@ -866,3 +866,75 @@ Console.WriteLine("Key is disabled - check key status in the admin portal");
 }
 }
 ```
+
+## ApiKeyConsumerExtensions
+
+The `ApiKeyConsumerExtensions` class provides extension methods for `ApiKeyConsumer` that simplify common operations for checking consumer status, tier management, organization domain extraction, and custom property access. These methods handle null checks and provide type-safe operations for consumer management.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using System;
+using System.Collections.Generic;
+
+class ApiKeyConsumerExample
+{
+public void Run()
+{
+// Create a consumer with custom properties
+var consumer = new ApiKeyConsumer
+{
+Id = "consumer_001",
+Name = "Acme Corporation",
+Email = "admin@acme.com",
+IsActive = true,
+Tier = "pro",
+CustomProperties = new Dictionary<string, string>
+{
+{ "max_requests_per_minute", "1000" },
+{ "support_tier", "priority" },
+{ "billing_id", "billing_12345" }
+},
+LastActivityAt = DateTime.UtcNow.AddDays(-5),
+InactiveSince = null
+};
+
+// Check if consumer is currently active
+bool isActive = consumer.IsCurrentlyActive();
+Console.WriteLine($"Consumer is active: {isActive}");
+
+// Get the consumer's tier as an enum
+ApiKeyTier tier = consumer.GetTier();
+Console.WriteLine($"Consumer tier: {tier}");
+
+// Check if consumer can upgrade to enterprise tier
+bool canUpgrade = consumer.CanUpgradeTo(ApiKeyTier.Enterprise);
+Console.WriteLine($"Can upgrade to Enterprise: {canUpgrade}");
+
+// Get the organization domain from email
+string? organizationDomain = consumer.GetOrganizationDomain();
+Console.WriteLine($"Organization domain: {organizationDomain}");
+
+// Check if consumer has been inactive for more than 30 days
+bool isInactive = consumer.IsInactiveForDays(30);
+Console.WriteLine($"Is inactive for 30+ days: {isInactive}");
+
+// Get a custom property value
+string maxRequests = consumer.GetCustomProperty("max_requests_per_minute", "500");
+Console.WriteLine($"Max requests per minute: {maxRequests}");
+
+// Get a custom property as an integer
+int maxRequestsInt = consumer.GetCustomPropertyAsInt("max_requests_per_minute", 500);
+Console.WriteLine($"Max requests per minute (int): {maxRequestsInt}");
+
+// Get a non-existent property with default value
+string nonExistent = consumer.GetCustomProperty("non_existent_key", "default_value");
+Console.WriteLine($"Non-existent property: {nonExistent}");
+
+// Get a non-existent integer property with default value
+int nonExistentInt = consumer.GetCustomPropertyAsInt("non_existent_key", 0);
+Console.WriteLine($"Non-existent int property: {nonExistentInt}");
+}
+}
+```
