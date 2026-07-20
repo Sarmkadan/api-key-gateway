@@ -42,6 +42,14 @@ public interface ITransformationPipeline
     /// <param name="apiKeyId">Identifier of the authenticated API key.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task WarmAsync(string apiKeyId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validates a Lua script without executing it. Performs static syntax and security checks.
+    /// Safe to call from an admin API endpoint before persisting a new rule.
+    /// </summary>
+    /// <param name="luaScript">Raw Lua source code to validate.</param>
+    /// <returns>A <see cref="ScriptValidationResult"/> containing any errors detected.</returns>
+    ScriptValidationResult ValidateLuaScript(string luaScript);
 }
 
 /// <summary>
