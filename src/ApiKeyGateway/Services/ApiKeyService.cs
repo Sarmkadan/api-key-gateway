@@ -118,6 +118,13 @@ public interface IApiKeyService
     /// <param name="window">The time window to check for expiring keys.</param>
     /// <returns>List of API keys expiring within the window.</returns>
     Task<List<ApiKey>> GetExpiringKeysAsync(TimeSpan window);
+
+    /// <summary>
+    /// Retrieves API keys by their prefix (first 8 characters of the key value)
+    /// </summary>
+    /// <param name="prefix">The prefix to search for (first 8 characters).</param>
+    /// <returns>List of API keys matching the prefix.</returns>
+    Task<List<ApiKey>> FindByPrefixAsync(string prefix);
 }
 
 public class ApiKeyService : IApiKeyService
@@ -564,6 +571,26 @@ public class ApiKeyService : IApiKeyService
             var threshold = DateTime.UtcNow.Add(window);
             return await _repository.GetKeysExpiringBeforeAsync(threshold);
         }
+
+    /// <summary>
+    /// Retrieves API keys by their prefix (first 8 characters of the key value)
+    /// </summary>
+    /// <param name="prefix">The prefix to search for (first 8 characters).</param>
+    /// <returns>List of API keys matching the prefix.</returns>
+    public async Task<List<ApiKey>> FindByPrefixAsync(string prefix)
+    {
+        _logger.LogDebug("Finding API keys by prefix {Prefix}", prefix);
+
+        if (string.IsNullOrWhiteSpace(prefix))
+            throw new ValidationException("Prefix cannot be empty", nameof(prefix), prefix);
+
+        // The prefix should be the first 8 characters of the key value (e.g., "sk_abcdefg")
+        // We need to search for keys where the Prefix field matches and the key value starts with this prefix
+        var keys = await _repository.GetByPrefixAsync(prefix);
+
+        _logger.LogInformation("Found {Count} API keys matching prefix {Prefix}", keys.Count, prefix);
+        return keys;
+    }
 }
 
 /// <summary>
@@ -580,4 +607,5 @@ public interface IApiKeyRepository
     Task<List<ApiKey>> GetExpiredKeysAsync();
     Task<List<ApiKey>> GetAllAsync();
     Task<List<ApiKey>> GetKeysExpiringBeforeAsync(DateTime threshold);
+    Task<List<ApiKey>> GetByPrefixAsync(string prefix);
 }
