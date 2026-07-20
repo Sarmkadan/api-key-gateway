@@ -7,11 +7,12 @@ using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Utilities;
+using System.Text;
 
 namespace ApiKeyGateway.Services;
 
 /// <summary>
-/// Service for exporting data in multiple formats (CSV, XML, JSON).
+/// Service for exporting data in multiple formats (CSV, XML, JSON, NDJSON).
 /// Handles large datasets by streaming to avoid memory exhaustion.
 /// Used for reports, analytics, and system migrations.
 /// </summary>
@@ -61,6 +62,7 @@ public sealed class DataExportService : IDataExportService
                 "csv" => CsvExportHelper.ToCsv(apiKeys),
                 "xml" => XmlExportHelper.ToXml(apiKeys, "apiKeys", "apiKey"),
                 "json" => JsonSerializationHelper.SerializeFormatted(apiKeys),
+                "ndjson" => ToNdJson(apiKeys),
                 _ => CsvExportHelper.ToCsv(apiKeys)
             };
         }
@@ -97,6 +99,7 @@ public sealed class DataExportService : IDataExportService
                 "csv" => CsvExportHelper.ToCsv(auditLogs),
                 "xml" => XmlExportHelper.ToXml(auditLogs, "auditLogs", "log"),
                 "json" => JsonSerializationHelper.SerializeFormatted(auditLogs),
+                "ndjson" => ToNdJson(auditLogs),
                 _ => CsvExportHelper.ToCsv(auditLogs)
             };
         }
@@ -135,6 +138,7 @@ public sealed class DataExportService : IDataExportService
                 "csv" => CsvExportHelper.ToCsv(usageRecords),
                 "xml" => XmlExportHelper.ToXml(usageRecords, "usageRecords", "record"),
                 "json" => JsonSerializationHelper.SerializeFormatted(usageRecords),
+                "ndjson" => ToNdJson(usageRecords),
                 _ => CsvExportHelper.ToCsv(usageRecords)
             };
         }
@@ -148,5 +152,15 @@ public sealed class DataExportService : IDataExportService
             _logger.LogError(ex, "Error exporting usage data");
             throw new DataAccessException("Failed to export usage data", nameof(ExportUsageAsync), nameof(UsageRecord), ex);
         }
+    }
+
+    private static string ToNdJson<T>(IEnumerable<T> items)
+    {
+        var sb = new StringBuilder();
+        foreach (var item in items)
+        {
+            sb.AppendLine(JsonSerializationHelper.SerializeCompact(item));
+        }
+        return sb.ToString();
     }
 }
