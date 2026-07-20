@@ -17,6 +17,7 @@ public interface IUsageTrackingService
     Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
     Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
     Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate);
+    Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
 }
 
 public class UsageTrackingService : IUsageTrackingService
@@ -125,6 +126,25 @@ public class UsageTrackingService : IUsageTrackingService
         {
             _logger.LogError(ex, "Failed to calculate total bytes used for consumer {ConsumerId}", consumerId);
             throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetTotalBytesUsedAsync), nameof(UsageRecord), ex);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all usage records across all API keys within a date range
+    /// </summary>
+    public async Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate)
+    {
+        if (endDate < startDate)
+            throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
+
+        try
+        {
+            return await _repository.GetUsageAsync(startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get all usage records");
+            throw new DataAccessException(Domain.Constants.ErrorMessages.DataAccessFailed, nameof(GetUsageAsync), nameof(UsageRecord), ex);
         }
     }
 }

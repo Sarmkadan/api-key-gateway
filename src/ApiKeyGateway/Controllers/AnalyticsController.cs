@@ -181,4 +181,39 @@ public class AnalyticsController : ControllerBase
 
         return (start, end, null);
     }
+
+    /// <summary>
+    /// Returns the top N API keys by request count over the given date range.
+    /// </summary>
+    /// <param name="from">Start of the date range (UTC). Defaults to 30 days ago.</param>
+    /// <param name="to">End of the date range (UTC). Defaults to now.</param>
+    /// <param name="topN">Number of top consumers to return (default: 10, max: 100).</param>
+    [HttpGet("top-consumers")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<ApiKeyConsumerStat>>> GetTopConsumers(
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] int topN = 10)
+    {
+        if (topN < 1 || topN > 100)
+            return BadRequest(new { error = "topN must be between 1 and 100" });
+
+        var start = from?.ToUniversalTime() ?? DateTime.UtcNow.AddDays(-30);
+        var end = to?.ToUniversalTime() ?? DateTime.UtcNow;
+
+        if (end < start)
+            return BadRequest(new { error = "to must be after from" });
+
+        try
+        {
+            var consumers = await _analytics.GetTopConsumersAsync(start, end, topN);
+            _logger.LogInformation("Top consumers requested (limit: {TopN})", topN);
+            return Ok(consumers);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }
