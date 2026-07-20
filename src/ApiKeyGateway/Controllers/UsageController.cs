@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,11 +18,16 @@ namespace ApiKeyGateway.Controllers;
 public class UsageController : ControllerBase
 {
     private readonly IUsageTrackingService _usageService;
+    private readonly IUsageQuotaService _usageQuotaService;
     private readonly ILogger<UsageController> _logger;
 
-    public UsageController(IUsageTrackingService usageService, ILogger<UsageController> logger)
+    public UsageController(
+        IUsageTrackingService usageService,
+        IUsageQuotaService usageQuotaService,
+        ILogger<UsageController> logger)
     {
         _usageService = usageService ?? throw new ArgumentNullException(nameof(usageService));
+        _usageQuotaService = usageQuotaService ?? throw new ArgumentNullException(nameof(usageQuotaService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -160,6 +166,55 @@ public class UsageController : ControllerBase
                 new { error = "Failed to retrieve consumer usage" });
         }
     }
+
+    /// <summary>
+    /// Retrieves current quota consumption for an API key
+    /// </summary>
+    [HttpGet("quota/{keyId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<QuotaConsumptionResponse>> GetQuotaConsumption(
+        string keyId)
+    {
+        if (string.IsNullOrWhiteSpace(keyId))
+            return BadRequest(new { error = "Key ID is required" });
+
+        try
+        {
+            var quota = await _usageQuotaService.GetQuotaAsync(keyId);
+
+            if (quota == null)
+                return NotFound(new { error = "Quota not configured for this key" });
+
+            var periodEnd = quota.GetPeriodEndUtc();
+            var isExceeded = quota.IsExceeded;
+            var remaining = quota.RemainingRequests;
+            var limit = quota.QuotaLimit;
+            var percent = limit > 0 ? Math.Round(((double)(limit - remaining) / limit) * 100, 2) : 0;
+
+            _logger.LogInformation("Retrieved quota consumption for API key {ApiKeyId}", keyId);
+
+            return Ok(new QuotaConsumptionResponse
+            {
+                KeyId = keyId,
+                Used = quota.CurrentUsage,
+                Limit = quota.QuotaLimit,
+                PercentUsed = percent,
+                IsExceeded = isExceeded,
+                Period = quota.Period.ToString(),
+                PeriodStart = quota.PeriodStartAt,
+                PeriodEnd = periodEnd,
+                Remaining = remaining
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving quota consumption");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { error = "Failed to retrieve quota consumption" });
+        }
+    }
 }
 
 /// <summary>
@@ -205,4 +260,20 @@ public class ConsumerUsageResponse
     public DateTime EndDate { get; set; }
     public long TotalBytesTransferred { get; set; }
     public double TotalGBTransferred { get; set; }
+}
+
+/// <summary>
+/// Response model for quota consumption
+/// </summary>
+public class QuotaConsumptionResponse
+{
+    public string KeyId { get; set; } = string.Empty;
+    public long Used { get; set; }
+    public long Limit { get; set; }
+    public double PercentUsed { get; set; }
+    public bool IsExceeded { get; set; }
+    public string Period { get; set; } = string.Empty;
+    public DateTime PeriodStart { get; set; }
+    public DateTime PeriodEnd { get; set; }
+    public long Remaining { get; set; }
 }
