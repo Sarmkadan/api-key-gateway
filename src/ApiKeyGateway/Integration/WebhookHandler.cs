@@ -11,6 +11,7 @@ using System.Text.Json;
 using ApiKeyGateway.Events;
 using ApiKeyGateway.Utilities;
 using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Integration;
 
@@ -41,11 +42,12 @@ public sealed class WebhookHandler : IWebhookHandler
 {
     private readonly ILogger<WebhookHandler> _logger;
     private readonly List<WebhookSubscription> _subscriptions = new();
-    private const int MaxRetries = 3;
+    private readonly GatewayConfiguration _gatewayConfig;
 
-    public WebhookHandler(ILogger<WebhookHandler> logger)
+    public WebhookHandler(ILogger<WebhookHandler> logger, GatewayConfiguration gatewayConfig)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _gatewayConfig = gatewayConfig ?? throw new ArgumentNullException(nameof(gatewayConfig));
     }
 
     public Task<string> RegisterWebhookAsync(string url, string[] eventTypes, string? secret = null)
@@ -112,85 +114,54 @@ public sealed class WebhookHandler : IWebhookHandler
 
         using var client = HttpClientFactory.CreateWebhookClient();
 
-        for (int attempt = 0; attempt <= MaxRetries; attempt++)
+        // Build retry policy using configurable settings from GatewayConfiguration
+        var retryPolicy = new RetryPolicyBuilder()
+            .WithMaxRetries(_gatewayConfig.WebhookMaxRetries)
+            .WithInitialDelay(_gatewayConfig.WebhookBaseDelayMs)
+            .WithBackoffMultiplier(_gatewayConfig.WebhookBackoffMultiplier)
+            .WithMaxDelay(_gatewayConfig.WebhookMaxDelayMs)
+            .RetryOn<HttpRequestException>()
+            .RetryOn<TaskCanceledException>()
+            .Build<HttpResponseMessage>();
+
+        var request = new HttpRequestMessage(HttpMethod.Post, subscription.Url)
         {
-            try
-            {
-                var request = new HttpRequestMessage(HttpMethod.Post, subscription.Url)
-                {
-                    Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json")
-                };
+            Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json")
+        };
 
-                // Add HMAC signature if secret configured
-                if (!string.IsNullOrEmpty(subscription.Secret))
-                {
-                    var signature = ComputeHmacSignature(payload, subscription.Secret);
-                    request.Headers.Add("X-Webhook-Signature", signature);
-                }
-
-                request.Headers.Add("X-Event-Id", eventId.ToString());
-                request.Headers.Add("X-Delivery-Attempt", (attempt + 1).ToString());
-
-                var response = await client.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    subscription.TotalDeliveries++;
-                    subscription.LastDeliveryAt = DateTime.UtcNow;
-                    _logger.LogInformation(
-                        "Webhook delivered successfully: {SubscriptionId} to {Url}",
-                        subscription.Id,
-                        subscription.Url);
-                    return;
-                }
-
-                subscription.FailedDeliveries++;
-                _logger.LogWarning(
-                    "Webhook delivery failed: {SubscriptionId} - Status {StatusCode} (attempt {Attempt})",
-                    subscription.Id,
-                    response.StatusCode,
-                    attempt + 1);
-            }
-            catch (HttpRequestException ex)
-            {
-                subscription.FailedDeliveries++;
-                _logger.LogError(
-                    ex,
-                    "Webhook delivery exception: {SubscriptionId} (attempt {Attempt})",
-                    subscription.Id,
-                    attempt + 1);
-            }
-            catch (TaskCanceledException ex)
-            {
-                subscription.FailedDeliveries++;
-                _logger.LogError(
-                    ex,
-                    "Webhook delivery timeout: {SubscriptionId} (attempt {Attempt})",
-                    subscription.Id,
-                    attempt + 1);
-            }
-            catch (Exception ex)
-            {
-                subscription.FailedDeliveries++;
-                _logger.LogError(
-                    ex,
-                    "Webhook delivery unexpected error: {SubscriptionId} (attempt {Attempt})",
-                    subscription.Id,
-                    attempt + 1);
-            }
-
-            // Exponential backoff: 1s, 2s, 4s
-            if (attempt < MaxRetries)
-            {
-                var delayMs = (int)Math.Pow(2, attempt) * 1000;
-                await Task.Delay(delayMs);
-            }
+        // Add HMAC signature if secret configured
+        if (!string.IsNullOrEmpty(subscription.Secret))
+        {
+            var signature = ComputeHmacSignature(payload, subscription.Secret);
+            request.Headers.Add("X-Webhook-Signature", signature);
         }
 
-        _logger.LogError(
-            "Webhook delivery failed after {Attempts} attempts: {SubscriptionId}",
-            MaxRetries + 1,
-            subscription.Id);
+        request.Headers.Add("X-Event-Id", eventId.ToString());
+        request.Headers.Add("X-Delivery-Attempt", "1");
+
+        var response = await retryPolicy(async () => await client.SendAsync(request));
+
+        if (response.IsSuccessStatusCode)
+        {
+            subscription.TotalDeliveries++;
+            subscription.LastDeliveryAt = DateTime.UtcNow;
+            _logger.LogInformation(
+                "Webhook delivered successfully: {SubscriptionId} to {Url}",
+                subscription.Id,
+                subscription.Url);
+        }
+        else
+        {
+            subscription.FailedDeliveries++;
+            _logger.LogWarning(
+                "Webhook delivery failed: {SubscriptionId} - Status {StatusCode}",
+                subscription.Id,
+                response.StatusCode);
+            _logger.LogError(
+                "Webhook delivery failed after {Attempts} attempts: {SubscriptionId}",
+                _gatewayConfig.WebhookMaxRetries + 1,
+                subscription.Id);
+        }
     }
 
     private static string ComputeHmacSignature(string payload, string secret)
