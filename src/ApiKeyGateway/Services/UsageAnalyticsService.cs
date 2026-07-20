@@ -63,6 +63,20 @@ public class DailyBucket
 }
 
 /// <summary>
+/// Statistics for an API key consumer (top consumers list)
+/// </summary>
+public class ApiKeyConsumerStat
+{
+    public string ApiKeyId { get; set; } = string.Empty;
+    public string ConsumerId { get; set; } = string.Empty;
+    public int RequestCount { get; set; }
+    public long TotalBytesTransferred { get; set; }
+    public double AverageResponseTimeMs { get; set; }
+    public int ErrorCount { get; set; }
+    public double ErrorRatePercent { get; set; }
+}
+
+/// <summary>
 /// Provides aggregated analytics over raw usage records.
 /// All aggregation runs in-process over records returned by
 /// <see cref="IUsageTrackingService"/>; no additional storage layer is required.
@@ -88,6 +102,11 @@ public interface IUsageAnalyticsService
     /// Returns per-day request counts, error counts, latency and bytes for the date range.
     /// </summary>
     Task<List<DailyBucket>> GetDailyTrendAsync(string apiKeyId, DateTime from, DateTime to);
+
+    /// <summary>
+    /// Returns the top N API keys by request count over the given date range.
+    /// </summary>
+    Task<List<ApiKeyConsumerStat>> GetTopConsumersAsync(DateTime from, DateTime to, int topN = 10);
 }
 
 /// <summary>
@@ -257,5 +276,39 @@ public class UsageAnalyticsService : IUsageAnalyticsService
 
         if (limit <= 0)
             throw new ArgumentException("Limit must be positive", nameof(limit));
+    }
+
+    /// <summary>
+    /// Returns the top N API keys by request count over the given date range.
+    /// </summary>
+    public async Task<List<ApiKeyConsumerStat>> GetTopConsumersAsync(DateTime from, DateTime to, int topN = 10)
+    {
+        if (to < from)
+            throw new ArgumentException("End date must be after start date", nameof(to));
+
+        if (topN <= 0)
+            topN = 10;
+
+        // Get all usage records across all API keys in the date range
+        var allRecords = await _usageTracking.GetUsageAsync(from, to);
+
+        // Group by API key and consumer, then aggregate statistics
+        var consumerStats = allRecords
+            .GroupBy(r => new { r.ApiKeyId, r.ConsumerId })
+            .Select(g => new ApiKeyConsumerStat
+            {
+                ApiKeyId = g.Key.ApiKeyId,
+                ConsumerId = g.Key.ConsumerId,
+                RequestCount = g.Count(),
+                TotalBytesTransferred = g.Sum(r => r.TotalBytes),
+                AverageResponseTimeMs = g.Count() > 0 ? Math.Round(g.Average(r => r.ResponseTimeMs), 2) : 0,
+                ErrorCount = g.Count(r => r.IsError),
+                ErrorRatePercent = g.Count() > 0 ? Math.Round(g.Count(r => r.IsError) * 100.0 / g.Count(), 2) : 0
+            })
+            .OrderByDescending(s => s.RequestCount)
+            .Take(topN)
+            .ToList();
+
+        return consumerStats;
     }
 }
