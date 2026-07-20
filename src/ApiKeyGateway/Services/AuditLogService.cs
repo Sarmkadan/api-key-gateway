@@ -6,6 +6,7 @@
 
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
+using ApiKeyGateway.Utilities;
 
 namespace ApiKeyGateway.Services;
 
@@ -35,6 +36,22 @@ public interface IAuditLogService
     /// <param name="endDate">End of the time period.</param>
     /// <returns>List of audit logs within the time period.</returns>
     Task<List<AuditLog>> GetLogsForPeriodAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Retrieves audit logs for a specific resource and exports them as XML
+    /// </summary>
+    /// <param name="resourceId">ID of the resource to get logs for.</param>
+    /// <param name="limit">Maximum number of logs to return.</param>
+    /// <returns>XML representation of audit logs for the resource.</returns>
+    Task<string> ExportLogsToXmlAsync(string resourceId, int limit = 100);
+
+    /// <summary>
+    /// Retrieves audit logs for a time period and exports them as XML
+    /// </summary>
+    /// <param name="startDate">Start of the time period.</param>
+    /// <param name="endDate">End of the time period.</param>
+    /// <returns>XML representation of audit logs within the time period.</returns>
+    Task<string> ExportLogsForPeriodToXmlAsync(DateTime startDate, DateTime endDate);
 
     /// <summary>
     /// Removes old audit logs based on retention policy
@@ -105,6 +122,28 @@ public class AuditLogService : IAuditLogService
             throw new ArgumentException("End date must be after start date");
 
         return await _repository.GetByDateRangeAsync(startDate, endDate);
+    }
+
+    /// <summary>
+    /// Retrieves audit logs for a specific resource and exports them as XML
+    /// </summary>
+    /// <param name="resourceId">ID of the resource to get logs for.</param>
+    /// <param name="limit">Maximum number of logs to return.</param>
+    /// <returns>XML representation of audit logs for the resource.</returns>
+    public async Task<string> ExportLogsToXmlAsync(string resourceId, int limit = 100)
+    {
+        return await _repository.ExportByResourceIdToXmlAsync(resourceId, limit);
+    }
+
+    /// <summary>
+    /// Retrieves audit logs for a time period and exports them as XML
+    /// </summary>
+    /// <param name="startDate">Start of the time period.</param>
+    /// <param name="endDate">End of the time period.</param>
+    /// <returns>XML representation of audit logs within the time period.</returns>
+    public async Task<string> ExportLogsForPeriodToXmlAsync(DateTime startDate, DateTime endDate)
+    {
+        return await _repository.ExportByDateRangeToXmlAsync(startDate, endDate);
     }
 
     /// <summary>
