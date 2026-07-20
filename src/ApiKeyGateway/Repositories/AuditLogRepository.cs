@@ -9,6 +9,7 @@ using System.Data.Common;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
+using ApiKeyGateway.Domain.Enums; // Added for AuditAction enum
 
 namespace ApiKeyGateway.Repositories;
 
@@ -21,6 +22,7 @@ public interface IAuditLogRepository
     Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100);
     Task<List<AuditLog>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task<int> DeleteOlderThanAsync(DateTime cutoffDate);
+    Task<List<AuditLog>> SearchAsync(AuditAction action, DateTime fromUtc, DateTime toUtc, int limit = 100); // New method
 }
 
 /// <summary>
@@ -147,6 +149,48 @@ public class AuditLogRepository : IAuditLogRepository
         {
             _logger.LogError(ex, "Failed to retrieve audit logs for date range");
             throw new DataAccessException("Failed to retrieve audit logs", "SELECT", "AuditLog", ex);
+        }
+    }
+
+    /// <summary>
+    /// Searches audit logs by action and time range.
+    /// </summary>
+    public async Task<List<AuditLog>> SearchAsync(AuditAction action, DateTime fromUtc, DateTime toUtc, int limit = 100)
+    {
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
+
+        try
+        {
+            const string query = @"
+            SELECT TOP (@Limit) * FROM AuditLogs
+            WHERE Action = @Action AND PerformedAt >= @FromUtc AND PerformedAt <= @ToUtc
+            ORDER BY PerformedAt DESC";
+
+            var logs = new List<AuditLog>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@Action", (int)action));
+            cmd.Parameters.Add(CreateParameter("@FromUtc", fromUtc));
+            cmd.Parameters.Add(CreateParameter("@ToUtc", toUtc));
+            cmd.Parameters.Add(CreateParameter("@Limit", limit));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                logs.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+            return logs;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to search audit logs");
+            throw new DataAccessException("Failed to search audit logs", "SELECT", "AuditLog", ex);
         }
     }
 

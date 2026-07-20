@@ -7,6 +7,8 @@ using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ApiKeyGateway.Domain.Enums;          // Added for AuditAction
+using ApiKeyGateway.Repositories;          // Added for IAuditLogRepository
 
 namespace ApiKeyGateway.Controllers;
 
@@ -26,15 +28,18 @@ public sealed class AdminController : ControllerBase
     private readonly ILogger<AdminController> _logger;
     private readonly IMetricsCollectionService _metricsService;
     private readonly IDataExportService _dataExportService;
+    private readonly IAuditLogRepository _auditLogRepository; // New dependency
 
     public AdminController(
         ILogger<AdminController> logger,
         IMetricsCollectionService metricsService,
-        IDataExportService dataExportService)
+        IDataExportService dataExportService,
+        IAuditLogRepository auditLogRepository) // Updated constructor
     {
         _logger = logger;
         _metricsService = metricsService;
         _dataExportService = dataExportService;
+        _auditLogRepository = auditLogRepository;
     }
 
     /// <summary>
@@ -148,5 +153,35 @@ public sealed class AdminController : ControllerBase
         _logger.LogWarning("Rate limit reset initiated by admin");
 
         return Ok(new { message = "Rate limits have been reset for all API keys" });
+    }
+
+    /// <summary>
+    /// Searches audit logs by action and time range.
+    /// </summary>
+    [HttpGet("audit/search")]
+    public async Task<IActionResult> SearchAuditLogs(
+        [FromQuery] string? action,
+        [FromQuery] DateTime? fromUtc,
+        [FromQuery] DateTime? toUtc,
+        [FromQuery] int limit = 100)
+    {
+        if (string.IsNullOrWhiteSpace(action) ||
+            !Enum.TryParse<AuditAction>(action, true, out var parsedAction))
+        {
+            return BadRequest(new { error = "Invalid or missing 'action' query parameter." });
+        }
+
+        if (!fromUtc.HasValue || !toUtc.HasValue)
+        {
+            return BadRequest(new { error = "'fromUtc' and 'toUtc' query parameters are required." });
+        }
+
+        if (toUtc < fromUtc)
+        {
+            return BadRequest(new { error = "'toUtc' must be after 'fromUtc'." });
+        }
+
+        var logs = await _auditLogRepository.SearchAsync(parsedAction, fromUtc.Value, toUtc.Value, limit);
+        return Ok(logs);
     }
 }
