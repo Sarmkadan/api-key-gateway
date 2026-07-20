@@ -25,6 +25,8 @@ public sealed class KeyRotationScheduler : BackgroundService
     private readonly TimeSpan _checkInterval;
     private readonly int _warningDays;
     private readonly int? _newExpirationDays;
+    private readonly double _jitterPercentage; // 0.0 = no jitter, 0.1 = 10% default
+    private static readonly Random _random = new();
 
     public KeyRotationScheduler(
         IServiceProvider serviceProvider,
@@ -44,6 +46,11 @@ public sealed class KeyRotationScheduler : BackgroundService
         var newTtl = section.GetValue<int?>("NewExpirationDays", null);
         _newExpirationDays = newTtl > 0 ? newTtl : null;
 
+        // Jitter percentage is optional; default to 10% (0.1)
+        _jitterPercentage = section.GetValue<double?>("JitterPercentage", 0.1) ?? 0.1;
+        if (_jitterPercentage < 0 || _jitterPercentage > 1)
+            throw new ConfigurationException("Jitter percentage must be between 0 and 1", "KeyRotation:JitterPercentage");
+
         if (_checkInterval <= TimeSpan.Zero)
             throw new ConfigurationException("Check interval must be positive", "KeyRotation:CheckIntervalHours");
 
@@ -55,16 +62,18 @@ public sealed class KeyRotationScheduler : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "Key rotation scheduler started (interval: {Interval}, warning window: {Days} days)",
+            "Key rotation scheduler started (interval: {Interval}, warning window: {Days} days, jitter: {Jitter:P})",
             _checkInterval,
-            _warningDays);
+            _warningDays,
+            _jitterPercentage);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 await RunRotationCycleAsync(stoppingToken);
-                await Task.Delay(_checkInterval, stoppingToken);
+                var delay = ApplyJitter(_checkInterval);
+                await Task.Delay(delay, stoppingToken);
             }
             catch (OperationCanceledException)
             {
@@ -110,5 +119,31 @@ public sealed class KeyRotationScheduler : BackgroundService
                 failure.ConsumerId,
                 failure.FailureReason);
         }
+    }
+
+    /// <summary>
+    /// Applies a random jitter to the provided interval based on the configured jitter percentage.
+    /// When the jitter percentage is 0, the original interval is returned unchanged.
+    /// </summary>
+    /// <param name="interval">Base interval.</param>
+    /// <returns>Interval with jitter applied.</returns>
+    private TimeSpan ApplyJitter(TimeSpan interval)
+    {
+        if (_jitterPercentage <= 0)
+            return interval;
+
+        // Compute a factor between (1 - jitter) and (1 + jitter)
+        double factor;
+        lock (_random)
+        {
+            factor = 1.0 + (_random.NextDouble() * 2 - 1) * _jitterPercentage;
+        }
+
+        var jitteredTicks = (long)(interval.Ticks * factor);
+        // Ensure we never produce a non‑positive delay
+        if (jitteredTicks < 1)
+            jitteredTicks = 1;
+
+        return TimeSpan.FromTicks(jitteredTicks);
     }
 }
