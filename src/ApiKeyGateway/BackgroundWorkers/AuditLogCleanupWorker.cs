@@ -1,8 +1,4 @@
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
+using System.Diagnostics;
 using ApiKeyGateway.Repositories;
 
 namespace ApiKeyGateway.BackgroundWorkers;
@@ -19,6 +15,7 @@ public sealed class AuditLogCleanupWorker : BackgroundService
     private readonly ILogger<AuditLogCleanupWorker> _logger;
     private readonly TimeSpan _cleanupInterval = TimeSpan.FromDays(1);
     private readonly int _retentionDays = 90;
+    private int _totalDeleted = 0;
 
     public AuditLogCleanupWorker(IServiceProvider serviceProvider, ILogger<AuditLogCleanupWorker> logger)
     {
@@ -46,12 +43,22 @@ public sealed class AuditLogCleanupWorker : BackgroundService
                     "Starting audit log cleanup for logs before {CutoffDate}",
                     cutoffDate);
 
+                var stopwatch = Stopwatch.StartNew();
                 var deletedCount = await auditRepository.DeleteOlderThanAsync(cutoffDate);
+                stopwatch.Stop();
+
+                _totalDeleted += deletedCount;
 
                 _logger.LogInformation(
                     "Cleaned up {Count} audit log entries older than {RetentionDays} days",
                     deletedCount,
                     _retentionDays);
+
+                _logger.LogInformation(
+                    "Cleanup pass summary: deleted {DeletedThisPass} records, total {TotalDeleted} records, duration {DurationMs} ms",
+                    deletedCount,
+                    _totalDeleted,
+                    stopwatch.ElapsedMilliseconds);
 
                 // Wait for next cleanup cycle
                 await Task.Delay(_cleanupInterval, stoppingToken);
