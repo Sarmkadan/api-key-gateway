@@ -322,6 +322,35 @@ public class ApiKeysController : ControllerBase
         await _apiKeyService.RevokeKeyAsync(id);
         return NoContent();
     }
+
+    /// <summary>
+    /// Retrieves API keys that are expiring within the specified number of days
+    /// </summary>
+    [HttpGet("expiring")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<GetKeyResponse>>> GetExpiringKeys([FromQuery] int days = 7)
+    {
+        if (days <= 0)
+            return BadRequest(new { error = "Days parameter must be positive" });
+
+        var window = TimeSpan.FromDays(days);
+        var expiringKeys = await _apiKeyService.GetExpiringKeysAsync(window);
+
+        var response = expiringKeys.Select(k => new GetKeyResponse
+        {
+            KeyId = k.Id,
+            ConsumerId = k.ConsumerId,
+            Name = k.Name,
+            Status = k.Status.ToString(),
+            CreatedAt = k.CreatedAt,
+            ExpiresAt = k.ExpiresAt,
+            LastUsedAt = k.LastUsedAt,
+            RequestCount = k.RequestCount,
+            IsActive = k.IsActive
+        }).ToList();
+
+        return Ok(response);
+    }
 }
 
 /// <summary>
