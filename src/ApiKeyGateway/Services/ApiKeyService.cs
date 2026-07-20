@@ -120,6 +120,13 @@ public interface IApiKeyService
     Task<List<ApiKey>> GetExpiringKeysAsync(TimeSpan window);
 
     /// <summary>
+    /// Retrieves API keys that are expiring within the specified number of days
+    /// </summary>
+    /// <param name="days">The number of days to check for expiring keys.</param>
+    /// <returns>List of API keys expiring within the specified days.</returns>
+    Task<List<ApiKey>> GetExpiringKeysAsync(int days);
+
+    /// <summary>
     /// Retrieves API keys by their prefix (first 8 characters of the key value)
     /// </summary>
     /// <param name="prefix">The prefix to search for (first 8 characters).</param>
@@ -571,6 +578,22 @@ public class ApiKeyService : IApiKeyService
             var threshold = DateTime.UtcNow.Add(window);
             return await _repository.GetKeysExpiringBeforeAsync(threshold);
         }
+
+    /// <summary>
+    /// Retrieves API keys that are expiring within the specified number of days
+    /// </summary>
+    /// <param name="days">The number of days to check for expiring keys.</param>
+    /// <returns>List of API keys expiring within the specified days.</returns>
+    public async Task<List<ApiKey>> GetExpiringKeysAsync(int days)
+    {
+        _logger.LogDebug("Retrieving API keys expiring within {Days} days", days);
+
+        if (days <= 0)
+            throw new ValidationException("Days parameter must be positive", nameof(days), days);
+
+        var window = TimeSpan.FromDays(days);
+        return await GetExpiringKeysAsync(window);
+    }
 
     /// <summary>
     /// Retrieves API keys by their prefix (first 8 characters of the key value)
