@@ -123,6 +123,17 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         _logger.LogDebug("Transformation rule cache warmed for API key {ApiKeyId}", apiKeyId);
     }
 
+/// <summary>
+/// Validates a Lua script without executing it. Performs static syntax and security checks.
+/// Safe to call from an admin API endpoint before persisting a new rule.
+/// </summary>
+/// <param name="luaScript">Raw Lua source code to validate.</param>
+/// <returns>A <see cref="ScriptValidationResult"/> containing any errors detected.</returns>
+public ScriptValidationResult ValidateLuaScript(string luaScript)
+{
+    return _luaExecutor.Validate(luaScript);
+}
+
     // -------------------------------------------------------------------------
     // Rule resolution
     // -------------------------------------------------------------------------
