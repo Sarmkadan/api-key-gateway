@@ -111,6 +111,13 @@ public interface IApiKeyService
     /// <param name="ip">IP address to remove.</param>
     /// <returns>True if the IP was removed; otherwise, false.</returns>
     Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip);
+
+    /// <summary>
+    /// Retrieves API keys that are expiring within the specified time window
+    /// </summary>
+    /// <param name="window">The time window to check for expiring keys.</param>
+    /// <returns>List of API keys expiring within the window.</returns>
+    Task<List<ApiKey>> GetExpiringKeysAsync(TimeSpan window);
 }
 
 public class ApiKeyService : IApiKeyService
@@ -544,6 +551,19 @@ public class ApiKeyService : IApiKeyService
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         return RandomNumberGenerator.GetString(chars, length);
     }
+
+        /// <summary>
+        /// Retrieves API keys that are expiring within the specified time window
+        /// </summary>
+        /// <param name="window">The time window to check for expiring keys.</param>
+        /// <returns>List of API keys expiring within the window.</returns>
+        public async Task<List<ApiKey>> GetExpiringKeysAsync(TimeSpan window)
+        {
+            _logger.LogDebug("Retrieving API keys expiring within window {Window}", window);
+
+            var threshold = DateTime.UtcNow.Add(window);
+            return await _repository.GetKeysExpiringBeforeAsync(threshold);
+        }
 }
 
 /// <summary>
