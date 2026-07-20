@@ -64,6 +64,16 @@ public class ApiKeyAuthenticationMiddleware
                 {
                     await rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
 
+				// Get rate limit configuration for headers
+				var rateLimit = await rateLimitingService.GetLimitAsync(authenticatedKey.Id);
+				if (rateLimit != null && rateLimit.IsEnabled && rateLimit.Unit != Domain.Enums.RateLimitUnit.Unlimited)
+				{
+					context.Response.Headers.Append("X-RateLimit-Limit", rateLimit.RequestsPerUnit.ToString());
+					context.Response.Headers.Append("X-RateLimit-Remaining", rateLimit.RemainingRequests.ToString());
+					context.Response.Headers.Append("X-RateLimit-Reset",
+						new DateTimeOffset(rateLimit.LastResetAt ?? rateLimit.CreatedAt).AddSeconds(rateLimit.GetWindowInSeconds()).ToUnixTimeSeconds().ToString());
+				}
+
                     // Enforce route-scope restrictions
                     var requestPath = context.Request.Path.ToString();
                     if (!authenticatedKey.IsScopeAllowed(requestPath))
