@@ -351,6 +351,48 @@ public class ApiKeysController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Retrieves API keys by their prefix (first 8 characters)
+    /// Returns masked results containing only key ID, consumer ID, name, status, and metadata
+    /// </summary>
+    [HttpGet("by-prefix/{prefix}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<GetKeyByPrefixResponse>>> GetKeysByPrefix(string prefix)
+    {
+        if (string.IsNullOrWhiteSpace(prefix))
+            return BadRequest(new { error = "Prefix is required" });
+
+        try
+        {
+            var keys = await _apiKeyService.FindByPrefixAsync(prefix);
+
+            var response = keys.Select(k => new GetKeyByPrefixResponse
+            {
+                KeyId = k.Id,
+                ConsumerId = k.ConsumerId,
+                Name = k.Name,
+                Status = k.Status.ToString(),
+                CreatedAt = k.CreatedAt,
+                ExpiresAt = k.ExpiresAt,
+                Metadata = k.Metadata
+            }).ToList();
+
+            _logger.LogInformation("Found {Count} API keys matching prefix {Prefix}", response.Count, prefix);
+            return Ok(response);
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid prefix for key lookup: {Prefix}", prefix);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding API keys by prefix {Prefix}", prefix);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to find API keys by prefix" });
+        }
+    }
 }
 
 /// <summary>
@@ -412,6 +454,21 @@ public class RotateKeyResponse
     public string NewKeyId { get; set; } = string.Empty;
     public string ConsumerId { get; set; } = string.Empty;
     public DateTime? NewKeyExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Response model for API key lookup by prefix
+/// Returns masked results containing only non-sensitive information
+/// </summary>
+public class GetKeyByPrefixResponse
+{
+    public string KeyId { get; set; } = string.Empty;
+    public string ConsumerId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public Dictionary<string, string> Metadata { get; set; } = [];
 }
 
 /// <summary>

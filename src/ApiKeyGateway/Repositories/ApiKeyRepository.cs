@@ -319,6 +319,41 @@ public class ApiKeyRepository : IApiKeyRepository
     }
 
     /// <summary>
+    /// Retrieves API keys by their prefix (first 8 characters of the key value)
+    /// </summary>
+    public async Task<List<ApiKey>> GetByPrefixAsync(string prefix)
+    {
+        if (string.IsNullOrWhiteSpace(prefix))
+            return [];
+
+        try
+        {
+            const string query = "SELECT * FROM ApiKeys WHERE Prefix = @Prefix ORDER BY CreatedAt DESC";
+            var keys = new List<ApiKey>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@Prefix", prefix));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                keys.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+            return keys;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve API keys by prefix {Prefix}", prefix);
+            throw new DataAccessException("Failed to retrieve API keys by prefix", "SELECT", "ApiKey", ex);
+        }
+    }
+
+    /// <summary>
     /// Retrieves expired API keys
     /// </summary>
     public async Task<List<ApiKey>> GetExpiredKeysAsync()
