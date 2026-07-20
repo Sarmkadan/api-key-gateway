@@ -9,6 +9,7 @@ using System.Data.Common;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
+using ApiKeyGateway.Utilities;
 using ApiKeyGateway.Domain.Enums; // Added for AuditAction enum
 
 namespace ApiKeyGateway.Repositories;
@@ -22,7 +23,9 @@ public interface IAuditLogRepository
     Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100);
     Task<List<AuditLog>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task<int> DeleteOlderThanAsync(DateTime cutoffDate);
-    Task<List<AuditLog>> SearchAsync(AuditAction action, DateTime fromUtc, DateTime toUtc, int limit = 100); // New method
+    Task<List<AuditLog>> SearchAsync(AuditAction action, DateTime fromUtc, DateTime toUtc, int limit = 100);
+    Task<string> ExportByResourceIdToXmlAsync(string resourceId, int limit = 100);
+    Task<string> ExportByDateRangeToXmlAsync(DateTime startDate, DateTime endDate, int limit = 100);
 }
 
 /// <summary>
@@ -218,6 +221,95 @@ public class AuditLogRepository : IAuditLogRepository
         {
             _logger.LogError(ex, "Failed to delete old audit logs");
             throw new DataAccessException("Failed to delete audit logs", "DELETE", "AuditLog", ex);
+        }
+    }
+
+    /// <summary>
+    /// Exports audit logs for a specific resource as XML
+    /// </summary>
+    public async Task<string> ExportByResourceIdToXmlAsync(string resourceId, int limit = 100)
+    {
+        if (string.IsNullOrWhiteSpace(resourceId))
+            throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
+
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
+
+        try
+        {
+            const string query = @"
+            SELECT TOP (@Limit) * FROM AuditLogs
+            WHERE ResourceId = @ResourceId
+            ORDER BY PerformedAt DESC";
+
+            var logs = new List<AuditLog>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@ResourceId", resourceId));
+            cmd.Parameters.Add(CreateParameter("@Limit", limit));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                logs.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+
+            return XmlExportHelper.ToXml(logs, "AuditLogs");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export audit logs for resource {ResourceId}", resourceId);
+            throw new DataAccessException("Failed to export audit logs", "SELECT", "AuditLog", ex);
+        }
+    }
+
+    /// <summary>
+    /// Exports audit logs for a time period as XML
+    /// </summary>
+    public async Task<string> ExportByDateRangeToXmlAsync(DateTime startDate, DateTime endDate, int limit = 100)
+    {
+        if (endDate < startDate)
+            throw new ArgumentException("End date must be after start date");
+
+        if (limit <= 0)
+            throw new ArgumentException("Limit must be positive", nameof(limit));
+
+        try
+        {
+            const string query = @"
+            SELECT TOP (@Limit) * FROM AuditLogs
+            WHERE PerformedAt >= @StartDate AND PerformedAt <= @EndDate
+            ORDER BY PerformedAt DESC";
+
+            var logs = new List<AuditLog>();
+
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = query;
+            cmd.Parameters.Add(CreateParameter("@StartDate", startDate));
+            cmd.Parameters.Add(CreateParameter("@EndDate", endDate));
+            cmd.Parameters.Add(CreateParameter("@Limit", limit));
+
+            await _connection.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                logs.Add(MapFromReader(reader));
+            }
+
+            await _connection.CloseAsync();
+
+            return XmlExportHelper.ToXml(logs, "AuditLogs");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export audit logs for date range");
+            throw new DataAccessException("Failed to export audit logs", "SELECT", "AuditLog", ex);
         }
     }
 

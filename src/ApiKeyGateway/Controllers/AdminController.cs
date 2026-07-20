@@ -184,4 +184,42 @@ public sealed class AdminController : ControllerBase
         var logs = await _auditLogRepository.SearchAsync(parsedAction, fromUtc.Value, toUtc.Value, limit);
         return Ok(logs);
     }
+
+    /// <summary>
+    /// Exports audit logs for a specific resource as XML.
+    /// </summary>
+    [HttpGet("audit/export/resource/{resourceId}")]
+    public async Task<IActionResult> ExportAuditLogsByResource(
+        [FromRoute] string resourceId,
+        [FromQuery] int limit = 100)
+    {
+        _logger.LogInformation("Export audit logs for resource {ResourceId} requested", resourceId);
+
+        var xml = await _auditLogRepository.ExportByResourceIdToXmlAsync(resourceId, limit);
+        var fileName = $"audit-logs-{resourceId}-{DateTime.UtcNow:yyyy-MM-dd}.xml";
+
+        return File(System.Text.Encoding.UTF8.GetBytes(xml), "application/xml", fileName);
+    }
+
+    /// <summary>
+    /// Exports audit logs for a time period as XML.
+    /// </summary>
+    [HttpGet("audit/export/period")]
+    public async Task<IActionResult> ExportAuditLogsByPeriod(
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate,
+        [FromQuery] int limit = 100)
+    {
+        _logger.LogInformation("Export audit logs for period {StartDate} to {EndDate} requested", startDate, endDate);
+
+        if (endDate < startDate)
+        {
+            return BadRequest(new { error = "End date must be after start date" });
+        }
+
+        var xml = await _auditLogRepository.ExportByDateRangeToXmlAsync(startDate, endDate, limit);
+        var fileName = $"audit-logs-{startDate:yyyy-MM-dd}-to-{endDate:yyyy-MM-dd}.xml";
+
+        return File(System.Text.Encoding.UTF8.GetBytes(xml), "application/xml", fileName);
+    }
 }
