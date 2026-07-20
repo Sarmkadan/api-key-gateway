@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Caching;
+using ApiKeyGateway.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,10 +22,17 @@ namespace ApiKeyGateway.Controllers;
 public sealed class HealthController : ControllerBase
 {
     private readonly ILogger<HealthController> _logger;
+    private readonly IDbConnection _dbConnection;
+    private readonly ICacheProvider _cacheProvider;
 
-    public HealthController(ILogger<HealthController> logger)
+    public HealthController(
+        ILogger<HealthController> logger,
+        IDbConnection dbConnection,
+        ICacheProvider cacheProvider)
     {
         _logger = logger;
+        _dbConnection = dbConnection;
+        _cacheProvider = cacheProvider;
     }
 
     /// <summary>
@@ -41,37 +50,87 @@ public sealed class HealthController : ControllerBase
     /// <summary>
     /// Readiness probe - indicates if the service is ready to handle traffic.
     /// Includes checks for database connectivity and cache availability.
+    /// Returns 503 with detailed error information when dependencies are not ready.
     /// </summary>
     [HttpGet("ready")]
     [AllowAnonymous]
     public async Task<IActionResult> Ready()
     {
+        var checks = new Dictionary<string, object>();
+        var failedChecks = new List<string>();
+        var status = "ready";
+        var httpStatus = 200;
+
         try
         {
-            // In production, add checks for:
-            // - Database connectivity
-            // - Cache connectivity
-            // - Message queue connectivity
-            // - External service dependencies
+            // Check database connectivity
+            try
+            {
+                await _dbConnection.OpenAsync();
+                _dbConnection.CloseAsync().GetAwaiter().GetResult();
+                checks["database"] = "ok";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Database connectivity check failed");
+                checks["database"] = new { status = "failed", error = ex.Message };
+                failedChecks.Add("database");
+                status = "not_ready";
+                httpStatus = 503;
+            }
+
+            // Check cache provider
+            try
+            {
+                var testKey = "health_check_cache_test_" + Guid.NewGuid().ToString();
+                var testValue = new { timestamp = DateTime.UtcNow.Ticks };
+                await _cacheProvider.SetAsync(testKey, testValue, TimeSpan.FromSeconds(10));
+                var retrieved = await _cacheProvider.GetAsync<object>(testKey);
+                await _cacheProvider.RemoveAsync(testKey);
+
+                if (retrieved != null)
+                {
+                    checks["cache"] = "ok";
+                }
+                else
+                {
+                    throw new InvalidOperationException("Cache returned null for stored value");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cache provider check failed");
+                checks["cache"] = new { status = "failed", error = ex.Message };
+                failedChecks.Add("cache");
+                status = "not_ready";
+                httpStatus = 503;
+            }
 
             var readiness = new
             {
-                status = "ready",
+                status,
                 timestamp = DateTime.UtcNow,
                 version = "1.0.0",
-                checks = new
-                {
-                    database = "ok",
-                    cache = "ok"
-                }
+                checks
             };
+
+            if (failedChecks.Count > 0)
+            {
+                return StatusCode(httpStatus, readiness);
+            }
 
             return Ok(readiness);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Readiness probe failed");
-            return StatusCode(503, new { status = "not_ready", error = "Dependency check failed" });
+            return StatusCode(503, new
+            {
+                status = "not_ready",
+                timestamp = DateTime.UtcNow,
+                error = "Dependency check failed",
+                details = new { database = "unknown", cache = "unknown" }
+            });
         }
     }
 
