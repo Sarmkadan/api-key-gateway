@@ -23,6 +23,10 @@ public class GatewayConfiguration
     public int MaxConcurrentRequests { get; set; } = 1000;
     public string JwtSecret { get; set; } = string.Empty;
     public string DatabaseConnectionString { get; set; } = string.Empty;
+    public int WebhookMaxRetries { get; set; } = 3;
+    public int WebhookBaseDelayMs { get; set; } = 1000;
+    public double WebhookBackoffMultiplier { get; set; } = 2.0;
+    public int WebhookMaxDelayMs { get; set; } = 30000;
     public Dictionary<string, string> CustomSettings { get; set; } = [];
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public string? UpdatedBy { get; set; }
