@@ -7,13 +7,14 @@
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Utilities;
+using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
 /// <summary>
 /// Manages audit logging for compliance and security monitoring
 /// </summary>
-public interface IAuditLogService
+public interface IAuditLogService : IDisposable
 {
     /// <summary>
     /// Logs an audit event
@@ -64,11 +65,20 @@ public class AuditLogService : IAuditLogService
 {
     private readonly IAuditLogRepository _repository;
     private readonly ILogger<AuditLogService> _logger;
+    private readonly ConcurrentQueue<AuditLog> _logQueue = new ConcurrentQueue<AuditLog>();
+    private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+    private readonly Task _flushTask;
+    private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(5);
+    private readonly int _batchSize = 50;
+    private bool _disposed;
 
     public AuditLogService(IAuditLogRepository repository, ILogger<AuditLogService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Start background flusher
+        _flushTask = Task.Run(FlushLogsAsync);
     }
 
     /// <summary>
@@ -80,21 +90,81 @@ public class AuditLogService : IAuditLogService
     {
         ArgumentNullException.ThrowIfNull(log);
 
+        // Add to queue instead of writing immediately
+        _logQueue.Enqueue(log);
+    }
+
+    /// <summary>
+    /// Background task that periodically flushes logs from the queue to persistent storage
+    /// </summary>
+    private async Task FlushLogsAsync()
+    {
+        while (!_cancellationTokenSource.Token.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(_flushInterval, _cancellationTokenSource.Token);
+                await FlushBatchAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected during shutdown
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during audit log batch flush");
+                await Task.Delay(TimeSpan.FromSeconds(1), _cancellationTokenSource.Token); // Backoff on error
+            }
+        }
+    }
+
+    /// <summary>
+    /// Flushes a batch of logs from the queue to persistent storage
+    /// </summary>
+    private async Task FlushBatchAsync()
+    {
+        var batch = new List<AuditLog>(_batchSize);
+
+        // Dequeue up to batch size
+        while (batch.Count < _batchSize && _logQueue.TryDequeue(out var log))
+        {
+            batch.Add(log);
+        }
+
+        if (batch.Count == 0)
+        {
+            return; // No logs to flush
+        }
+
         try
         {
-            await _repository.CreateAsync(log);
-            _logger.LogInformation(
-                "Audit log: {Action} on {ResourceType} {ResourceId} by {PerformedBy}",
-                log.Action,
-                log.ResourceType,
-                log.ResourceId,
-                log.PerformedBy);
+            // Write batch to repository
+            foreach (var log in batch)
+            {
+                await _repository.CreateAsync(log);
+            }
+
+            _logger.LogDebug("Flushed {Count} audit logs to persistent storage", batch.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to write audit log for {ResourceType} {ResourceId}",
-                log.ResourceType, log.ResourceId);
+            _logger.LogError(ex, "Failed to flush {Count} audit logs to persistent storage", batch.Count);
+
+            // If batch write fails, requeue the logs for retry
+            foreach (var log in batch)
+            {
+                _logQueue.Enqueue(log);
+            }
         }
+    }
+
+    /// <summary>
+    /// Forces an immediate flush of all queued logs
+    /// </summary>
+    public async Task FlushAsync()
+    {
+        await FlushBatchAsync();
     }
 
     /// <summary>
@@ -167,5 +237,55 @@ public class AuditLogService : IAuditLogService
         {
             _logger.LogError(ex, "Error during audit log cleanup");
         }
+    }
+
+    /// <summary>
+    /// Disposes the service, flushing any remaining logs and stopping the background flusher
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes resources
+    /// </summary>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            // Signal cancellation and wait for flusher to complete
+            _cancellationTokenSource.Cancel();
+
+            try
+            {
+                // Wait for current flush to complete
+                _flushTask?.Wait(TimeSpan.FromSeconds(10));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while waiting for audit log flusher to complete");
+            }
+
+            // Flush any remaining logs
+            _flushTask?.Dispose();
+            _cancellationTokenSource.Dispose();
+
+            // Force final flush of any remaining logs
+            try
+            {
+                FlushAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during final audit log flush on disposal");
+            }
+        }
+
+        _disposed = true;
     }
 }
