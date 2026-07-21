@@ -24,8 +24,15 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the API key.</returns>
-    public static string GetApiKeyKey(string apiKeyId) =>
-        $"{Prefix}{Separator}apikey{Separator}{apiKeyId}";
+    public static string GetApiKeyKey(string apiKeyId)
+    {
+        int idLength = apiKeyId.Length;
+        return string.Create(13 + idLength, apiKeyId, (span, id) =>
+        {
+            "apigw:apikey:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(13));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for API key permissions/metadata.
@@ -33,8 +40,15 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the API key metadata.</returns>
-    public static string GetApiKeyMetadataKey(string apiKeyId) =>
-        $"{Prefix}{Separator}apikey_meta{Separator}{apiKeyId}";
+    public static string GetApiKeyMetadataKey(string apiKeyId)
+    {
+        int idLength = apiKeyId.Length;
+        return string.Create(18 + idLength, apiKeyId, (span, id) =>
+        {
+            "apigw:apikey_meta:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(18));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for rate limit tracking.
@@ -43,8 +57,20 @@ public static class CacheKeyGenerator
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="endpoint">The API endpoint being rate limited (default: "*").</param>
     /// <returns>Cache key string for the rate limit.</returns>
-    public static string GetRateLimitKey(string apiKeyId, string endpoint = "*") =>
-        $"{Prefix}{Separator}ratelimit{Separator}{apiKeyId}{Separator}{endpoint}";
+    public static string GetRateLimitKey(string apiKeyId, string endpoint = "*")
+    {
+        int idLength = apiKeyId.Length;
+        int endpointLength = endpoint.Length;
+        int totalLength = 17 + idLength + 1 + endpointLength; // "apigw:ratelimit:" + id + ":" + endpoint
+        return string.Create(totalLength, (apiKeyId, endpoint), (span, state) =>
+        {
+            var (id, ep) = state;
+            "apigw:ratelimit:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(17));
+            span[17 + idLength] = ':';
+            ep.AsSpan().CopyTo(span.Slice(18 + idLength));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for usage statistics.
@@ -52,16 +78,36 @@ public static class CacheKeyGenerator
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="date">The date for the usage statistics.</param>
     /// <returns>Cache key string for the usage statistics.</returns>
-    public static string GetUsageStatsKey(string apiKeyId, DateTime date) =>
-        $"{Prefix}{Separator}usage{Separator}{apiKeyId}{Separator}{date:yyyy-MM-dd}";
+    public static string GetUsageStatsKey(string apiKeyId, DateTime date)
+    {
+        int idLength = apiKeyId.Length;
+        string dateStr = date.ToString("yyyy-MM-dd");
+        int dateLength = dateStr.Length;
+        int totalLength = 14 + idLength + 1 + dateLength; // "apigw:usage:" + id + ":" + date
+        return string.Create(totalLength, (apiKeyId, dateStr), (span, state) =>
+        {
+            var (id, dt) = state;
+            "apigw:usage:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(14));
+            span[14 + idLength] = ':';
+            dt.AsSpan().CopyTo(span.Slice(15 + idLength));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for quota limits.
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the quota.</returns>
-    public static string GetQuotaKey(string apiKeyId) =>
-        $"{Prefix}{Separator}quota{Separator}{apiKeyId}";
+    public static string GetQuotaKey(string apiKeyId)
+    {
+        int idLength = apiKeyId.Length;
+        return string.Create(13 + idLength, apiKeyId, (span, id) =>
+        {
+            "apigw:quota:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(13));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for webhook delivery status.
@@ -69,8 +115,16 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="eventId">The event ID for the webhook.</param>
     /// <returns>Cache key string for the webhook delivery status.</returns>
-    public static string GetWebhookDeliveryKey(Guid eventId) =>
-        $"{Prefix}{Separator}webhook{Separator}delivery{Separator}{eventId}";
+    public static string GetWebhookDeliveryKey(Guid eventId)
+    {
+        string guidStr = eventId.ToString();
+        int guidLength = guidStr.Length;
+        return string.Create(27 + guidLength, guidStr, (span, id) =>
+        {
+            "apigw:webhook:delivery:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(27));
+        });
+    }
 
     /// <summary>
     /// Generates cache key for external API responses.
@@ -82,16 +136,38 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the external API response.</returns>
     public static string GetExternalApiCacheKey(string apiName, string endpoint, Dictionary<string, string>? parameters = null)
     {
-        var key = $"{Prefix}{Separator}external{Separator}{apiName}{Separator}{endpoint}";
-
         if (parameters?.Count > 0)
         {
-            // Create deterministic parameter hash for consistent cache keys
             var paramHash = ComputeParameterHash(parameters);
-            key += $"{Separator}{paramHash}";
+            int apiLength = apiName.Length;
+            int endpointLength = endpoint.Length;
+            int hashLength = paramHash.Length;
+            int totalLength = 18 + apiLength + 1 + endpointLength + 1 + hashLength; // "apigw:external:" + apiName + ":" + endpoint + ":" + paramHash
+            return string.Create(totalLength, (apiName, endpoint, paramHash), (span, state) =>
+            {
+                var (api, ep, hash) = state;
+                "apigw:external:".AsSpan().CopyTo(span);
+                api.AsSpan().CopyTo(span.Slice(18));
+                span[18 + apiLength] = ':';
+                ep.AsSpan().CopyTo(span.Slice(19 + apiLength));
+                span[19 + apiLength + endpointLength] = ':';
+                hash.AsSpan().CopyTo(span.Slice(20 + apiLength + endpointLength));
+            });
         }
-
-        return key;
+        else
+        {
+            int apiLength = apiName.Length;
+            int endpointLength = endpoint.Length;
+            int totalLength = 18 + apiLength + 1 + endpointLength; // "apigw:external:" + apiName + ":" + endpoint
+            return string.Create(totalLength, (apiName, endpoint), (span, state) =>
+            {
+                var (api, ep) = state;
+                "apigw:external:".AsSpan().CopyTo(span);
+                api.AsSpan().CopyTo(span.Slice(18));
+                span[18 + apiLength] = ':';
+                ep.AsSpan().CopyTo(span.Slice(19 + apiLength));
+            });
+        }
     }
 
     /// <summary>
@@ -99,21 +175,30 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key pattern string for invalidation.</returns>
-    public static string GetApiKeyInvalidationPattern(string apiKeyId) =>
-        $"{Prefix}{Separator}*{Separator}{apiKeyId}{Separator}*";
+    public static string GetApiKeyInvalidationPattern(string apiKeyId)
+    {
+        int idLength = apiKeyId.Length;
+        return string.Create(12 + idLength + 2, apiKeyId, (span, id) =>
+        {
+            "apigw:*:".AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(12));
+            span[12 + idLength] = ':';
+            "*".AsSpan().CopyTo(span.Slice(13 + idLength));
+        });
+    }
 
     /// <summary>
     /// Generates pattern for invalidating all rate limit entries.
     /// </summary>
     /// <returns>Cache key pattern string for rate limit invalidation.</returns>
     public static string GetRateLimitInvalidationPattern() =>
-        $"{Prefix}{Separator}ratelimit{Separator}*";
+        "apigw:ratelimit:*";
 
     /// <summary>
     /// Creates a hash of parameters for consistent cache key generation.
     /// Order-independent so different parameter orders hash to same value.
     /// Uses ArrayPool for the char and byte encoding buffers to avoid
-    /// creating an intermediate List&lt;string&gt;, a joined string, and a
+    /// creating an intermediate List<string>, a joined string, and a
     /// heap-allocated byte array on every external-API cache lookup.
     /// </summary>
     /// <param name="parameters">Dictionary of parameters to hash.</param>
@@ -136,9 +221,11 @@ public static class CacheKeyGenerator
             {
                 if (i > 0) charBuf[pos++] = '&';
                 string k = keys[i], v = parameters[k];
-                k.AsSpan().CopyTo(charBuf.AsSpan(pos)); pos += k.Length;
+                k.AsSpan().CopyTo(charBuf.AsSpan(pos));
+                pos += k.Length;
                 charBuf[pos++] = '=';
-                v.AsSpan().CopyTo(charBuf.AsSpan(pos)); pos += v.Length;
+                v.AsSpan().CopyTo(charBuf.AsSpan(pos));
+                pos += v.Length;
             }
 
             int maxBytes = Encoding.UTF8.GetMaxByteCount(pos);
