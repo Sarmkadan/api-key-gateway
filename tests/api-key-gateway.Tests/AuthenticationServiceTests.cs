@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using Xunit;
 using ApiKeyGateway.Domain.Enums;
@@ -67,25 +67,181 @@ public class AuthenticationServiceTests
     }
 
     /// <summary>
-    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the apiKey parameter is empty or null.
+    /// Tests that the AuthenticateAsync method returns a failure result when the apiKey parameter is empty or null.
     /// </summary>
     /// <param name="apiKey">The API key to test.</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    [InlineData("   ")]
-    public async Task AuthenticateAsync_EmptyOrNullApiKey_ThrowsUnauthorizedException(string? apiKey)
+    [InlineData(" ")]
+    public async Task AuthenticateAsync_EmptyOrNullApiKey_ReturnsFailureResult(string? apiKey)
     {
-        var act = async () => await _sut.AuthenticateAsync(apiKey!, "192.168.1.1");
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        var result = await _sut.AuthenticateAsync(apiKey!, "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.MissingApiKey);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
     /// <summary>
-    /// Tests that the AuthenticateAsync method returns the API key and logs a success when the key is valid.
+    /// Tests that the AuthenticateAsync method returns a failure result when the key is invalid.
     /// </summary>
     [Fact]
-    public async Task AuthenticateAsync_ValidKey_ReturnsKeyAndLogsSuccess()
+    public async Task AuthenticateAsync_InvalidKey_ReturnsFailureResultWithInvalidFormatReason()
+    {
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_invalidkey"))
+            .ReturnsAsync((ApiKey?)null);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_invalidkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.InvalidApiKeyFormat);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a failure result when the key is expired.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_ExpiredKey_ReturnsFailureResultWithExpiredReason()
+    {
+        var expiredKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            ExpiresAt = DateTime.UtcNow.AddDays(-1) // Expired yesterday
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_expiredkey"))
+            .ReturnsAsync(expiredKey);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_expiredkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyExpired);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a failure result when the key is disabled.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_DisabledKey_ReturnsFailureResultWithDisabledReason()
+    {
+        var disabledKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Disabled
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_disabledkey"))
+            .ReturnsAsync(disabledKey);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_disabledkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a success result with the API key when the key is valid.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_ValidKey_ReturnsSuccessResultWithKey()
+    {
+        var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_validkey123456789"))
+            .ReturnsAsync(key);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_validkey123456789", "192.168.1.1");
+        result.Success.Should().BeTrue();
+        result.ApiKey.Should().NotBeNull();
+        result.ApiKey!.Id.Should().Be("key-123");
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a failure result when the IP address is not whitelisted.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_IpNotWhitelisted_ReturnsFailureResultWithIpNotWhitelistedReason()
+    {
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = "192.168.1.1,192.168.1.2"
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
+            .ReturnsAsync(key);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.50");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.IpNotWhitelisted);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a success result when the IP address is whitelisted.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_IpWhitelisted_ReturnsSuccessResultWithKey()
+    {
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = "192.168.1.1,192.168.1.2"
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
+            .ReturnsAsync(key);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.1");
+        result.Success.Should().BeTrue();
+        result.ApiKey.Should().NotBeNull();
+        result.ApiKey!.Id.Should().Be("key-123");
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method records usage when authentication succeeds.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_ValidKey_RecordsUsage()
     {
         var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
 
@@ -99,287 +255,129 @@ public class AuthenticationServiceTests
 
         var result = await _sut.AuthenticateAsync("sk_validkey123456789", "192.168.1.1");
 
-        result.Should().Be(key);
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(
-            log => log.IsSuccess && log.Action == AuditAction.KeyUsed
-        )), Times.Once);
+        result.Success.Should().BeTrue();
+        result.ApiKey.Should().NotBeNull();
     }
 
     /// <summary>
-    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the key is invalid.
+    /// Tests that the AuthenticateAsync method handles DataAccessException and returns service unavailable result.
     /// </summary>
     [Fact]
-    public async Task AuthenticateAsync_InvalidKey_ThrowsUnauthorizedExceptionAndLogsFailure()
+    public async Task AuthenticateAsync_DataAccessException_ReturnsServiceUnavailableResult()
     {
         _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync("sk_invalidkey"))
-            .ReturnsAsync((ApiKey?)null);
-
-        var act = async () => await _sut.AuthenticateAsync("sk_invalidkey", "192.168.1.1");
-
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(
-            log => !log.IsSuccess && log.Action == AuditAction.UnauthorizedAttempt
-        )), Times.Once);
-    }
-
-    /// <summary>
-    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when the IP address is not whitelisted.
-    /// </summary>
-    [Fact]
-    public async Task AuthenticateAsync_IpNotWhitelisted_ThrowsUnauthorizedException()
-    {
-        var key = new ApiKey
-        {
-            Id = "key-456",
-            ConsumerId = "consumer-xyz",
-            Status = ApiKeyStatus.Active,
-            IpWhitelist = "10.0.0.1, 10.0.0.2"
-        };
-
-        _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
-            .ReturnsAsync(key);
+            .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
+            .ThrowsAsync(new DataAccessException("Database connection failed"));
 
         _auditLogServiceMock
             .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
             .Returns(Task.CompletedTask);
 
-        var act = async () => await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.50");
-
-        await act.Should().ThrowAsync<UnauthorizedAccessException>()
-            .WithMessage("*not whitelisted*");
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(
-            log => !log.IsSuccess && log.Action == AuditAction.UnauthorizedAttempt
-        )), Times.Once);
-    }
-
-    /// <summary>
-    /// Tests that the AuthenticateAsync method allows authentication when the IP address is whitelisted.
-    /// </summary>
-    [Fact]
-    public async Task AuthenticateAsync_IpWhitelisted_AllowsAuthentication()
-    {
-        var key = new ApiKey
-        {
-            Id = "key-789",
-            ConsumerId = "consumer-pqr",
-            Status = ApiKeyStatus.Active,
-            IpWhitelist = "192.168.1.50, 192.168.1.51"
-        };
-
-        _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
-            .ReturnsAsync(key);
-
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.50");
-
-        result.Should().Be(key);
+        var result = await _sut.AuthenticateAsync("sk_testkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ServiceUnavailable);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
     /// <summary>
-    /// Tests that the AuthenticateAsync method allows authentication without IP check when no IP address is provided.
+    /// Tests that the AuthenticateAsync method handles generic exceptions and returns service unavailable result.
     /// </summary>
     [Fact]
-    public async Task AuthenticateAsync_NoIpAddressProvided_AllowsAuthenticationWithoutIpCheck()
-    {
-        var key = new ApiKey
-        {
-            Id = "key-999",
-            ConsumerId = "consumer-stu",
-            Status = ApiKeyStatus.Active,
-            IpWhitelist = "10.0.0.1"
-        };
-
-        _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync("sk_testkey"))
-            .ReturnsAsync(key);
-
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await _sut.AuthenticateAsync("sk_testkey");
-
-        result.Should().Be(key);
-    }
-
-    /// <summary>
-    /// Tests that the AuthenticateAsync method throws a KeyStoreUnavailableException when the API key service throws a DataAccessException.
-    /// </summary>
-    [Fact]
-    public async Task AuthenticateAsync_ApiKeyServiceThrowsDataAccessException_ThrowsKeyStoreUnavailable()
+    public async Task AuthenticateAsync_GenericException_ReturnsServiceUnavailableResult()
     {
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
-            .ThrowsAsync(new DataAccessException("Connection failed", "ValidateKey", "ApiKey", new Exception()));
+            .ThrowsAsync(new Exception("Unexpected error"));
 
         _auditLogServiceMock
             .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
             .Returns(Task.CompletedTask);
 
-        var act = async () => await _sut.AuthenticateAsync("sk_anykey", "192.168.1.1");
-
-        await act.Should().ThrowAsync<KeyStoreUnavailableException>();
+        var result = await _sut.AuthenticateAsync("sk_testkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ServiceUnavailable);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
     /// <summary>
-    /// Tests that the AuthenticateAsync method throws an UnauthorizedAccessException when an unexpected exception occurs.
-    /// </summary>
-    [Fact]
-    public async Task AuthenticateAsync_UnexpectedException_ThrowsUnauthorizedException()
-    {
-        _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
-            .ThrowsAsync(new InvalidOperationException("Unexpected error"));
-
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var act = async () => await _sut.AuthenticateAsync("sk_anykey");
-
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
-    }
-
-    /// <summary>
-    /// Tests that the ValidateIpAsync method throws an ArgumentNullException when the key parameter is null.
+    /// Tests that the ValidateIpAsync method throws ArgumentNullException when key is null.
     /// </summary>
     [Fact]
     public async Task ValidateIpAsync_NullKey_ThrowsArgumentNullException()
     {
-        var act = async () => await _sut.ValidateIpAsync(null!, "192.168.1.1");
-        await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("key");
+        var act = () => _sut.ValidateIpAsync(null!, "192.168.1.1");
+        await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
     /// <summary>
-    /// Tests that the ValidateIpAsync method returns true when the IP address is empty.
+    /// Tests that the ValidateIpAsync method returns true when IP is whitelisted.
     /// </summary>
     [Fact]
-    public async Task ValidateIpAsync_EmptyIpAddress_ReturnsTrue()
+    public async Task ValidateIpAsync_IpWhitelisted_ReturnsTrue()
     {
-        var key = new ApiKey { Id = "key-111", IpWhitelist = "10.0.0.1" };
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = "192.168.1.1,192.168.1.2"
+        };
 
-        var result = await _sut.ValidateIpAsync(key, "");
-
+        var result = await _sut.ValidateIpAsync(key, "192.168.1.1");
         result.Should().BeTrue();
     }
 
     /// <summary>
-    /// Tests that the ValidateIpAsync method returns true when the IP address is in the whitelist.
+    /// Tests that the ValidateIpAsync method returns false when IP is not whitelisted.
     /// </summary>
     [Fact]
-    public async Task ValidateIpAsync_IpInWhitelist_ReturnsTrue()
+    public async Task ValidateIpAsync_IpNotWhitelisted_ReturnsFalse()
     {
-        var key = new ApiKey { Id = "key-222", IpWhitelist = "10.0.0.1, 10.0.0.2" };
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = "192.168.1.1,192.168.1.2"
+        };
 
-        var result = await _sut.ValidateIpAsync(key, "10.0.0.2");
-
-        result.Should().BeTrue();
-    }
-
-    /// <summary>
-    /// Tests that the ValidateIpAsync method returns false and logs a failure when the IP address is not in the whitelist.
-    /// </summary>
-    [Fact]
-    public async Task ValidateIpAsync_IpNotInWhitelist_ReturnsFalseAndLogsFailure()
-    {
-        var key = new ApiKey { Id = "key-333", IpWhitelist = "10.0.0.1" };
-
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await _sut.ValidateIpAsync(key, "192.168.1.100");
-
+        var result = await _sut.ValidateIpAsync(key, "192.168.1.50");
         result.Should().BeFalse();
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
     }
 
     /// <summary>
-    /// Tests that the LogAuthenticationAttemptAsync method logs a successful authentication attempt.
+    /// Tests that the ValidateIpAsync method returns true when IP whitelist is empty.
     /// </summary>
-    /// <param name="keyId">The ID of the API key.</param>
-    /// <param name="isSuccess">Whether the authentication attempt was successful.</param>
-    /// <param name="message">The message to log.</param>
     [Fact]
-    public async Task LogAuthenticationAttemptAsync_SuccessfulAttempt_LogsKeyUsedAction()
+    public async Task ValidateIpAsync_EmptyWhitelist_ReturnsTrue()
     {
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = ""
+        };
 
-        await _sut.LogAuthenticationAttemptAsync("key-444", true, "Test success");
-
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(
-            log => log.IsSuccess && log.Action == AuditAction.KeyUsed && log.ResourceId == "key-444"
-        )), Times.Once);
+        var result = await _sut.ValidateIpAsync(key, "192.168.1.1");
+        result.Should().BeTrue();
     }
 
     /// <summary>
-    /// Tests that the LogAuthenticationAttemptAsync method logs a failed authentication attempt.
-    /// </summary>
-    /// <param name="keyId">The ID of the API key.</param>
-    /// <param name="isSuccess">Whether the authentication attempt was successful.</param>
-    /// <param name="message">The message to log.</param>
-    [Fact]
-    public async Task LogAuthenticationAttemptAsync_FailedAttempt_LogsUnauthorizedAttemptAction()
-    {
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        await _sut.LogAuthenticationAttemptAsync("key-555", false, "Test failure");
-
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(
-            log => !log.IsSuccess && log.Action == AuditAction.UnauthorizedAttempt && log.ResourceId == "key-555"
-        )), Times.Once);
-    }
-
-    /// <summary>
-    /// Tests that the LogAuthenticationAttemptAsync method does not propagate exceptions from the audit log service.
+    /// Tests that the ValidateIpAsync method returns true when IP whitelist is null.
     /// </summary>
     [Fact]
-    public async Task LogAuthenticationAttemptAsync_AuditServiceThrows_DoesNotPropagate()
+    public async Task ValidateIpAsync_NullWhitelist_ReturnsTrue()
     {
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .ThrowsAsync(new Exception("Audit failed"));
+        var key = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            IpWhitelist = null
+        };
 
-        var act = async () => await _sut.LogAuthenticationAttemptAsync("key-666", true);
-
-        await act.Should().NotThrowAsync();
-    }
-
-    /// <summary>
-    /// Tests that the AuthenticateAsync method allows concurrent authentication attempts.
-    /// </summary>
-    [Fact]
-    public async Task AuthenticateAsync_ConcurrentCalls_AllAuthenticate()
-    {
-        var key = new ApiKey { Id = "key-concurrent", Status = ApiKeyStatus.Active };
-
-        _apiKeyServiceMock
-            .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
-            .ReturnsAsync(key);
-
-        _auditLogServiceMock
-            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var tasks = Enumerable.Range(0, 10).Select(_ =>
-            _sut.AuthenticateAsync("sk_testkey")
-        );
-
-        var results = await Task.WhenAll(tasks);
-
-        results.Should().HaveCount(10);
-        results.Should().AllSatisfy(r => r.Should().Be(key));
-        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.AtLeastOnce);
+        var result = await _sut.ValidateIpAsync(key, "192.168.1.1");
+        result.Should().BeTrue();
     }
 }

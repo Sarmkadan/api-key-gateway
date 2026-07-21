@@ -1,11 +1,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Exceptions;
-using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.Middleware;
@@ -58,29 +57,29 @@ public class ApiKeyAuthenticationMiddleware
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 var clientIp = ExtractClientIp(context);
-                var authenticatedKey = await authenticationService.AuthenticateAsync(apiKey, clientIp);
+                var authResult = await authenticationService.AuthenticateAsync(apiKey, clientIp);
 
-                if (authenticatedKey != null)
+                if (authResult.Success && authResult.ApiKey != null)
                 {
-                    await rateLimitingService.CheckLimitAsync(authenticatedKey.Id);
+                    await rateLimitingService.CheckLimitAsync(authResult.ApiKey.Id);
 
-				// Get rate limit configuration for headers
-				var rateLimit = await rateLimitingService.GetLimitAsync(authenticatedKey.Id);
-				if (rateLimit != null && rateLimit.IsEnabled && rateLimit.Unit != Domain.Enums.RateLimitUnit.Unlimited)
-				{
-					context.Response.Headers.Append("X-RateLimit-Limit", rateLimit.RequestsPerUnit.ToString());
-					context.Response.Headers.Append("X-RateLimit-Remaining", rateLimit.RemainingRequests.ToString());
-					context.Response.Headers.Append("X-RateLimit-Reset",
-						new DateTimeOffset(rateLimit.LastResetAt ?? rateLimit.CreatedAt).AddSeconds(rateLimit.GetWindowInSeconds()).ToUnixTimeSeconds().ToString());
-				}
+                    // Get rate limit configuration for headers
+                    var rateLimit = await rateLimitingService.GetLimitAsync(authResult.ApiKey.Id);
+                    if (rateLimit != null && rateLimit.IsEnabled && rateLimit.Unit != Domain.Enums.RateLimitUnit.Unlimited)
+                    {
+                        context.Response.Headers.Append("X-RateLimit-Limit", rateLimit.RequestsPerUnit.ToString());
+                        context.Response.Headers.Append("X-RateLimit-Remaining", rateLimit.RemainingRequests.ToString());
+                        context.Response.Headers.Append("X-RateLimit-Reset",
+                            new DateTimeOffset(rateLimit.LastResetAt ?? rateLimit.CreatedAt).AddSeconds(rateLimit.GetWindowInSeconds()).ToUnixTimeSeconds().ToString());
+                    }
 
                     // Enforce route-scope restrictions
                     var requestPath = context.Request.Path.ToString();
-                    if (!authenticatedKey.IsScopeAllowed(requestPath))
+                    if (!authResult.ApiKey.IsScopeAllowed(requestPath))
                     {
                         _logger.LogWarning(
                             "API key {ApiKeyId} does not have scope permission for path {Path}",
-                            authenticatedKey.Id, requestPath);
+                            authResult.ApiKey.Id, requestPath);
                         context.Response.StatusCode = StatusCodes.Status403Forbidden;
                         await context.Response.WriteAsJsonAsync(new
                         {
@@ -90,7 +89,7 @@ public class ApiKeyAuthenticationMiddleware
                     }
 
                     // Check per-key usage quota (daily/monthly hard cap)
-                    var quotaResult = await usageQuotaService.CheckAndRecordAsync(authenticatedKey.Id);
+                    var quotaResult = await usageQuotaService.CheckAndRecordAsync(authResult.ApiKey.Id);
                     if (quotaResult.Limit != long.MaxValue)
                     {
                         context.Response.Headers.Append("X-RateLimit-Quota-Limit", quotaResult.Limit.ToString());
@@ -101,7 +100,7 @@ public class ApiKeyAuthenticationMiddleware
 
                     if (quotaResult.IsExceeded)
                     {
-                        _logger.LogWarning("Usage quota exceeded for API key {ApiKeyId}", authenticatedKey.Id);
+                        _logger.LogWarning("Usage quota exceeded for API key {ApiKeyId}", authResult.ApiKey.Id);
                         context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                         await context.Response.WriteAsJsonAsync(new
                         {
@@ -111,8 +110,39 @@ public class ApiKeyAuthenticationMiddleware
                         return;
                     }
 
-                    context.Items["ApiKey"] = authenticatedKey;
-                    context.Items["ConsumerId"] = authenticatedKey.ConsumerId;
+                    context.Items["ApiKey"] = authResult.ApiKey;
+                    context.Items["ConsumerId"] = authResult.ApiKey.ConsumerId;
+                }
+                else
+                {
+                    // Handle authentication failure based on failure reason
+                    switch (authResult.FailureReason)
+                    {
+                        case Domain.Models.AuthenticationFailureReason.MissingApiKey:
+                        case Domain.Models.AuthenticationFailureReason.InvalidApiKeyFormat:
+                        case Domain.Models.AuthenticationFailureReason.ApiKeyNotFound:
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+                            return;
+                        case Domain.Models.AuthenticationFailureReason.ApiKeyExpired:
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsJsonAsync(new { error = "api_key_expired" });
+                            return;
+                        case Domain.Models.AuthenticationFailureReason.ApiKeyDisabled:
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsJsonAsync(new { error = "API key is disabled" });
+                            return;
+                        case Domain.Models.AuthenticationFailureReason.IpNotWhitelisted:
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsJsonAsync(new { error = "IP address not whitelisted" });
+                            return;
+                        case Domain.Models.AuthenticationFailureReason.ServiceUnavailable:
+                        default:
+                            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                            context.Response.Headers.Append("Retry-After", "30");
+                            await context.Response.WriteAsJsonAsync(new { error = "Authentication service temporarily unavailable. Please retry." });
+                            return;
+                    }
                 }
             }
 
@@ -127,39 +157,6 @@ public class ApiKeyAuthenticationMiddleware
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             context.Response.Headers.Append("Retry-After", ((int)ex.RetryAfter!.Value.Subtract(DateTime.UtcNow).TotalSeconds).ToString());
             await context.Response.WriteAsJsonAsync(new { error = ex.Message });
-        }
-        catch (InvalidApiKeyException ex)
-        {
-            _logger.LogWarning("Invalid API key attempt: {Reason}", ex.Message);
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            if (ex.IsExpired)
-                await context.Response.WriteAsJsonAsync(new { error = "api_key_expired" });
-            else
-                await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access attempt from {SourceIp}: {Reason}", ex.SourceIp, ex.Reason);
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
-        }
-        catch (KeyStoreUnavailableException ex)
-        {
-            _logger.LogError(ex, "Key store unavailable; fail-open={FailOpen}", _failOpenOnKeyStoreUnavailable);
-
-            if (_failOpenOnKeyStoreUnavailable)
-            {
-                // Fail-open: allow the request through without authentication.
-                _logger.LogWarning("Allowing request through unauthenticated due to fail-open policy");
-                await _next(context);
-            }
-            else
-            {
-                // Fail-closed (default): return 503 so clients know to retry.
-                context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-                context.Response.Headers.Append("Retry-After", "30");
-                await context.Response.WriteAsJsonAsync(new { error = "Authentication service temporarily unavailable. Please retry." });
-            }
         }
         catch (Exception ex)
         {

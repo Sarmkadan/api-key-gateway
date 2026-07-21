@@ -1,14 +1,13 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-//
+// ===================================================================
+
 // Extension methods for AuthenticationServiceTests to provide additional test
 // scenarios and helper methods for testing AuthenticationService behavior
-// =============================================================================
 
 using Xunit;
 using ApiKeyGateway.Domain.Enums;
-using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
@@ -39,6 +38,7 @@ public static class AuthenticationServiceTestsExtensions
             Id = "test-key-id",
             ConsumerId = "test-consumer-id",
             Status = apiKeyStatus,
+            ExpiresAt = apiKeyStatus == ApiKeyStatus.Expired ? DateTime.UtcNow.AddDays(-1) : null,
             IpWhitelist = ipWhitelist
         };
 
@@ -63,7 +63,7 @@ public static class AuthenticationServiceTestsExtensions
     /// <param name="deactivatedStatus">The deactivated status to test (Revoked, Expired, or Disabled)</param>
     /// <returns>A task representing the asynchronous operation</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="deactivatedStatus"/> is not a deactivated status</exception>
-    public static async Task AuthenticateAsync_DeactivatedKey_ThrowsUnauthorizedException(
+    public static async Task AuthenticateAsync_DeactivatedKey_ReturnsFailureResult(
         this AuthenticationServiceTests _,
         ApiKeyStatus deactivatedStatus)
     {
@@ -81,11 +81,17 @@ public static class AuthenticationServiceTestsExtensions
         };
 
         // Act
-        var act = async () => await authService.AuthenticateAsync(deactivatedKey, "192.168.1.1");
+        var result = await authService.AuthenticateAsync(deactivatedKey, "192.168.1.1");
 
         // Assert
-        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException>()
-            .WithMessage("*not active*");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(deactivatedStatus switch
+        {
+            ApiKeyStatus.Revoked => AuthenticationFailureReason.ApiKeyNotFound,
+            ApiKeyStatus.Expired => AuthenticationFailureReason.ApiKeyExpired,
+            ApiKeyStatus.Disabled => AuthenticationFailureReason.ApiKeyDisabled,
+            _ => throw new InvalidOperationException("Unexpected status")
+        });
     }
 
     /// <summary>
@@ -121,7 +127,8 @@ public static class AuthenticationServiceTestsExtensions
             {
                 Id = "expired-key-1",
                 ConsumerId = "consumer-4",
-                Status = ApiKeyStatus.Expired
+                Status = ApiKeyStatus.Active,
+                ExpiresAt = DateTime.UtcNow.AddDays(-1)
             }
         }.AsReadOnly();
     }
@@ -131,7 +138,7 @@ public static class AuthenticationServiceTestsExtensions
     /// </summary>
     /// <param name="_">The test class instance</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    public static async Task AuthenticateAsync_InvalidKeyFormat_ThrowsUnauthorizedException(
+    public static async Task AuthenticateAsync_InvalidKeyFormat_ReturnsFailureResult(
         this AuthenticationServiceTests _)
     {
         // Arrange
@@ -141,10 +148,11 @@ public static class AuthenticationServiceTestsExtensions
         foreach (var invalidKey in invalidKeys)
         {
             // Act
-            var act = async () => await authService.AuthenticateAsync(invalidKey, "192.168.1.1");
+            var result = await authService.AuthenticateAsync(invalidKey, "192.168.1.1");
 
             // Assert
-            await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException>();
+            result.Success.Should().BeFalse();
+            result.FailureReason.Should().Be(AuthenticationFailureReason.InvalidApiKeyFormat);
         }
     }
 }
