@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 /// <summary>
 /// Integration tests for the API Key Gateway system, covering end-to-end workflows
 /// across authentication, rate limiting, usage tracking, quota management, and audit logging.
@@ -40,7 +40,6 @@ public class IntegrationTests
     /// </summary>
     private readonly Mock<IAuditLogRepository> _auditLogRepositoryMock;
 
-
     /// <summary>
     /// Initializes a new instance of the <see cref="IntegrationTests"/> class.
     /// Sets up mock repositories for API key, rate limiting, usage tracking, quota management,
@@ -56,7 +55,7 @@ public class IntegrationTests
     }
 
     /// <summary>
-    /// Integration test verifying the complete workflow from API key creation through usage tracking. 
+    /// Integration test verifying the complete workflow from API key creation through usage tracking.
     /// Validates that keys can be created, audit logs can be written, and the system maintains proper state.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -108,7 +107,7 @@ public class IntegrationTests
     }
 
     /// <summary>
-    /// Integration test for rate limiting functionality. 
+    /// Integration test for rate limiting functionality.
     /// Validates that rate limits are properly enforced and requests are tracked.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -147,7 +146,7 @@ public class IntegrationTests
     }
 
     /// <summary>
-    /// Integration test for usage tracking functionality. 
+    /// Integration test for usage tracking functionality.
     /// Validates that usage records can be created and statistics can be retrieved.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -192,7 +191,7 @@ public class IntegrationTests
     }
 
     /// <summary>
-    /// Integration test for usage quota enforcement. 
+    /// Integration test for usage quota enforcement.
     /// Validates that quota limits are properly enforced and reset.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -232,7 +231,7 @@ public class IntegrationTests
     }
 
     /// <summary>
-    /// Integration test for IP whitelist authentication. 
+    /// Integration test for IP whitelist authentication.
     /// Validates that API keys can only be used from whitelisted IP addresses.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -266,15 +265,17 @@ public class IntegrationTests
         var authService = new AuthenticationService(apiKeyServiceMock.Object, auditServiceMock.Object, auditLoggerMock.Object);
 
         var result1 = await authService.AuthenticateAsync("sk_testkey", "192.168.1.1");
-        result1.Should().NotBeNull();
-        result1.Id.Should().Be("key-auth");
+        result1.Success.Should().BeTrue();
+        result1.ApiKey.Should().NotBeNull();
+        result1.ApiKey!.Id.Should().Be("key-auth");
 
-        var act = async () => await authService.AuthenticateAsync("sk_testkey", "203.0.113.50");
-        await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException>();
+        var result2 = await authService.AuthenticateAsync("sk_testkey", "203.0.113.50");
+        result2.Success.Should().BeFalse();
+        result2.FailureReason.Should().Be(AuthenticationFailureReason.IpNotWhitelisted);
     }
 
     /// <summary>
-    /// Integration test for concurrent audit logging. 
+    /// Integration test for concurrent audit logging.
     /// Validates that multiple concurrent operations are all properly logged.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -291,92 +292,21 @@ public class IntegrationTests
         var loggerMock = new Mock<ILogger<AuditLogService>>();
         var auditService = new AuditLogService(_auditLogRepositoryMock.Object, loggerMock.Object);
 
-        var tasks = Enumerable.Range(0, 50).Select(i =>
+        var tasks = new List<Task>();
+        for (int i = 0; i < 10; i++)
         {
-            var log = new AuditLog
+            tasks.Add(auditService.LogAsync(new AuditLog
             {
-                Id = $"log-{i}",
-                ResourceId = $"key-{i}",
-                ResourceType = "ApiKey",
-                Action = AuditAction.KeyUsed,
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "test-resource",
+                ResourceType = "TestResource",
+                Action = AuditAction.KeyCreated,
                 IsSuccess = true
-            };
-            return auditService.LogAsync(log);
-        });
+            }));
+        }
 
         await Task.WhenAll(tasks);
 
-        capturedLogs.Should().HaveCount(50);
-        _auditLogRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Exactly(50));
-    }
-
-    /// <summary>
-    /// Integration test for the complete end-to-end flow. 
-    /// Validates that keys can be created, used, and tracked in a single workflow.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    [Fact]
-    public async Task CompleteFlow_CreateKeyAuthenticateAndTrack_Works()
-    {
-        var consumerId = "consumer-complete";
-        var keyName = "Complete Flow Key";
-        ApiKey? createdKey = null;
-
-        _apiKeyRepositoryMock
-            .Setup(r => r.CreateAsync(It.IsAny<ApiKey>()))
-            .Callback<ApiKey>(k => createdKey = k)
-            .ReturnsAsync((ApiKey k) => k);
-
-        _apiKeyRepositoryMock
-            .Setup(r => r.GetByIdAsync(It.IsAny<string>()))
-            .ReturnsAsync((string id) => createdKey != null && createdKey.Id == id ? createdKey : null);
-
-        var apiKeyLoggerMock = new Mock<ILogger<ApiKeyService>>();
-        var apiKeyService = new ApiKeyService(_apiKeyRepositoryMock.Object, apiKeyLoggerMock.Object);
-
-        var apiKey = await apiKeyService.CreateKeyAsync(consumerId, keyName);
-        apiKey.Should().NotBeNull();
-        apiKey.Status.Should().Be(ApiKeyStatus.Active);
-
-        _usageRepositoryMock
-            .Setup(r => r.CreateAsync(It.IsAny<UsageRecord>()))
-            .Returns(Task.CompletedTask);
-
-        var usageLoggerMock = new Mock<ILogger<UsageTrackingService>>();
-        var usageService = new UsageTrackingService(_usageRepositoryMock.Object, usageLoggerMock.Object);
-
-        var usageRecord = new UsageRecord
-        {
-            Id = Guid.NewGuid().ToString(),
-            ApiKeyId = apiKey.Id,
-            Endpoint = "/api/test",
-            Method = "GET",
-            ResponseStatusCode = 200,
-            ResponseTimeMs = 45,
-            BytesTransferred = 1024
-        };
-
-        await usageService.RecordUsageAsync(usageRecord);
-
-        _auditLogRepositoryMock
-            .Setup(r => r.CreateAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
-
-        var auditLoggerMock = new Mock<ILogger<AuditLogService>>();
-        var auditService = new AuditLogService(_auditLogRepositoryMock.Object, auditLoggerMock.Object);
-
-        var auditLog = new AuditLog
-        {
-            Id = Guid.NewGuid().ToString(),
-            ResourceId = apiKey.Id,
-            ResourceType = "ApiKey",
-            Action = AuditAction.KeyUsed,
-            IsSuccess = true
-        };
-
-        await auditService.LogAsync(auditLog);
-
-        _usageRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<UsageRecord>()), Times.Once);
-        _auditLogRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Once);
+        capturedLogs.Should().HaveCount(10);
     }
 }

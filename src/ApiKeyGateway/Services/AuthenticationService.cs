@@ -1,10 +1,8 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
-using ApiKeyGateway.Domain.Exceptions;
-using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
@@ -19,8 +17,8 @@ public interface IAuthenticationService
     /// </summary>
     /// <param name="apiKey">The API key value to authenticate.</param>
     /// <param name="ipAddress">Optional source IP address for IP whitelist validation.</param>
-    /// <returns>The authenticated API key.</returns>
-    Task<ApiKey> AuthenticateAsync(string apiKey, string? ipAddress = null);
+    /// <returns>Authentication result containing success status, failure reason (if any), and the API key (if authenticated).</returns>
+    Task<AuthenticationResult> AuthenticateAsync(string apiKey, string? ipAddress = null);
 
     /// <summary>
     /// Validates if an IP address is allowed for the key
@@ -39,6 +37,9 @@ public interface IAuthenticationService
     Task LogAuthenticationAttemptAsync(string apiKeyId, bool success, string? reason = null);
 }
 
+/// <summary>
+/// Implementation of IAuthenticationService for API key authentication
+/// </summary>
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IApiKeyService _apiKeyService;
@@ -58,15 +59,12 @@ public class AuthenticationService : IAuthenticationService
     /// <summary>
     /// Authenticates a request using an API key
     /// </summary>
-    public async Task<ApiKey> AuthenticateAsync(string apiKey, string? ipAddress = null)
+    public async Task<AuthenticationResult> AuthenticateAsync(string apiKey, string? ipAddress = null)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             await LogAuthenticationAttemptAsync("unknown", false, "Missing API key");
-            throw new UnauthorizedAccessException(
-                Domain.Constants.ErrorMessages.UnauthorizedAccess,
-                "Missing API key",
-                ipAddress ?? "unknown");
+            return AuthenticationResult.FailureResult(AuthenticationFailureReason.MissingApiKey);
         }
 
         try
@@ -76,10 +74,19 @@ public class AuthenticationService : IAuthenticationService
             if (validKey == null)
             {
                 await LogAuthenticationAttemptAsync("unknown", false, "Invalid API key");
-                throw new UnauthorizedAccessException(
-                    Domain.Constants.ErrorMessages.ApiKeyNotFound,
-                    "Invalid API key format",
-                    ipAddress ?? "unknown");
+                return AuthenticationResult.FailureResult(AuthenticationFailureReason.InvalidApiKeyFormat);
+            }
+
+            if (validKey.IsExpired)
+            {
+                await LogAuthenticationAttemptAsync(validKey.Id, false, "API key expired");
+                return AuthenticationResult.FailureResult(AuthenticationFailureReason.ApiKeyExpired);
+            }
+
+            if (validKey.Status != Domain.Enums.ApiKeyStatus.Active)
+            {
+                await LogAuthenticationAttemptAsync(validKey.Id, false, "API key disabled");
+                return AuthenticationResult.FailureResult(AuthenticationFailureReason.ApiKeyDisabled);
             }
 
             if (!string.IsNullOrWhiteSpace(ipAddress))
@@ -88,10 +95,7 @@ public class AuthenticationService : IAuthenticationService
                 if (!isIpAllowed)
                 {
                     await LogAuthenticationAttemptAsync(validKey.Id, false, $"IP not whitelisted: {ipAddress}");
-                    throw new UnauthorizedAccessException(
-                        $"Access denied: IP address {ipAddress} is not whitelisted",
-                        $"IP address {ipAddress} is not whitelisted",
-                        ipAddress);
+                    return AuthenticationResult.FailureResult(AuthenticationFailureReason.IpNotWhitelisted);
                 }
             }
 
@@ -101,31 +105,19 @@ public class AuthenticationService : IAuthenticationService
             _logger.LogInformation("API key authenticated successfully: {KeyId} from IP {IpAddress}",
                 validKey.Id, ipAddress ?? "unknown");
 
-            return validKey;
+            return AuthenticationResult.SuccessResult(validKey);
         }
-        catch (InvalidApiKeyException)
-        {
-            throw;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            throw;
-        }
-        catch (DataAccessException ex)
+        catch (Domain.Exceptions.DataAccessException ex)
         {
             _logger.LogError(ex, "Key store unavailable during authentication for IP {IpAddress}", ipAddress ?? "unknown");
-            throw new KeyStoreUnavailableException(
-                Domain.Constants.ErrorMessages.KeyStoreUnavailable,
-                "ValidateKey",
-                ex);
+            await LogAuthenticationAttemptAsync("unknown", false, "Key store unavailable");
+            return AuthenticationResult.FailureResult(AuthenticationFailureReason.ServiceUnavailable);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Authentication error");
-            throw new UnauthorizedAccessException(
-                Domain.Constants.ErrorMessages.UnauthorizedAccess,
-                "Authentication service error",
-                ipAddress ?? "unknown");
+            await LogAuthenticationAttemptAsync("unknown", false, "Authentication service error");
+            return AuthenticationResult.FailureResult(AuthenticationFailureReason.ServiceUnavailable);
         }
     }
 
