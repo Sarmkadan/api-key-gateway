@@ -91,6 +91,7 @@ public class AuditLogServiceTests
             .Returns(Task.CompletedTask);
 
         await _sut.LogAsync(log);
+        await _sut.FlushAsync();
 
         _repositoryMock.Verify(r => r.CreateAsync(log), Times.Once);
     }
@@ -117,6 +118,8 @@ public class AuditLogServiceTests
         var act = async () => await _sut.LogAsync(log);
 
         await act.Should().NotThrowAsync("service should handle repository errors gracefully");
+
+        await _sut.FlushAsync();
     }
 
     /// <summary>
@@ -140,12 +143,13 @@ public class AuditLogServiceTests
             .Returns(Task.CompletedTask);
 
         await _sut.LogAsync(log);
+        await _sut.FlushAsync();
 
         _loggerMock.Verify(
             l => l.Log(
-                LogLevel.Information,
+                LogLevel.Debug,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("KeyUsed")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Flushed 1 audit logs")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()
             ),
@@ -383,6 +387,7 @@ public class AuditLogServiceTests
         var act = async () => await Task.WhenAll(tasks);
 
         await act.Should().NotThrowAsync();
+        await _sut.FlushAsync();
         _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Exactly(50));
     }
 
