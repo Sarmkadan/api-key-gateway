@@ -19,46 +19,25 @@ namespace ApiKeyGateway.BackgroundWorkers;
 /// for efficient analytics queries. This reduces database load for reporting.
 /// Runs hourly by default (configurable).
 /// </summary>
-public sealed class UsageAggregationWorker : BackgroundService
+public sealed class UsageAggregationWorker : BackgroundServiceBase<UsageAggregationWorker>
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<UsageAggregationWorker> _logger;
     private readonly TimeSpan _aggregationInterval = TimeSpan.FromHours(1);
 
     public UsageAggregationWorker(IServiceProvider serviceProvider, ILogger<UsageAggregationWorker> logger)
+        : base(serviceProvider, logger)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    /// <inheritdoc/>
+    protected override async Task ExecuteCycleAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Usage aggregation worker started");
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await RunAggregationCycleAsync(stoppingToken);
-                await Task.Delay(_aggregationInterval, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("Usage aggregation worker is shutting down");
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during usage aggregation cycle");
-                // Wait before retry to avoid tight error loop
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-            }
-        }
+        await RunAggregationCycleAsync(stoppingToken);
+        await Task.Delay(_aggregationInterval, stoppingToken);
     }
 
     private async Task RunAggregationCycleAsync(CancellationToken stoppingToken)
     {
-        using var scope = _serviceProvider.CreateScope();
+        using var scope = CreateScope();
         var usageRepository = scope.ServiceProvider.GetRequiredService<IUsageRepository>();
 
         _logger.LogInformation("Starting usage aggregation for records after {Timestamp}", DateTime.UtcNow.AddHours(-1));
@@ -96,5 +75,10 @@ public sealed class UsageAggregationWorker : BackgroundService
         }
 
         _logger.LogInformation("Usage aggregation cycle completed successfully");
+    }
+
+    protected override TimeSpan GetErrorDelay(CancellationToken stoppingToken)
+    {
+        return TimeSpan.FromSeconds(30);
     }
 }

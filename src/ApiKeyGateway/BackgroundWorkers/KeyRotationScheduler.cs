@@ -3,7 +3,8 @@
 // CTO & Software Architect
 // Background worker that automatically rotates API keys nearing expiration.
 // Runs on a daily cadence and delegates rotation logic to
-// <see cref="IApiKeyRotationService"/>. The look-ahead window and replacement
+// <see cref="IApiKeyRotationService"/>.
+// The look-ahead window and replacement
 // key TTL are configurable via appsettings under the <c>KeyRotation</c> section.
 // =============================================================================
 
@@ -15,13 +16,12 @@ namespace ApiKeyGateway.BackgroundWorkers;
 /// <summary>
 /// Background worker that automatically rotates API keys nearing expiration.
 /// Runs on a daily cadence and delegates rotation logic to
-/// <see cref="IApiKeyRotationService"/>. The look-ahead window and replacement
+/// <see cref="IApiKeyRotationService"/>.
+/// The look-ahead window and replacement
 /// key TTL are configurable via appsettings under the <c>KeyRotation</c> section.
 /// </summary>
-public sealed class KeyRotationScheduler : BackgroundService
+public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationScheduler>
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<KeyRotationScheduler> _logger;
     private readonly TimeSpan _checkInterval;
     private readonly int _warningDays;
     private readonly int? _newExpirationDays;
@@ -32,10 +32,8 @@ public sealed class KeyRotationScheduler : BackgroundService
         IServiceProvider serviceProvider,
         ILogger<KeyRotationScheduler> logger,
         IConfiguration configuration)
+        : base(serviceProvider, logger)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration));
 
@@ -59,38 +57,16 @@ public sealed class KeyRotationScheduler : BackgroundService
     }
 
     /// <inheritdoc/>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteCycleAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(
-            "Key rotation scheduler started (interval: {Interval}, warning window: {Days} days, jitter: {Jitter:P})",
-            _checkInterval,
-            _warningDays,
-            _jitterPercentage);
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await RunRotationCycleAsync(stoppingToken);
-                var delay = ApplyJitter(_checkInterval);
-                await Task.Delay(delay, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("Key rotation scheduler shutting down");
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error in key rotation scheduler");
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
-            }
-        }
+        await RunRotationCycleAsync(stoppingToken);
+        var delay = ApplyJitter(_checkInterval);
+        await Task.Delay(delay, stoppingToken);
     }
 
     private async Task RunRotationCycleAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
+        using var scope = CreateScope();
         var rotationService = scope.ServiceProvider.GetRequiredService<IApiKeyRotationService>();
 
         _logger.LogDebug("Starting scheduled key rotation cycle");
