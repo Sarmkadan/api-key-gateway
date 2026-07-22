@@ -199,6 +199,18 @@ public sealed class TransformationContext
     /// </summary>
     public string? BlockReason { get; set; }
 
+        /// <summary>
+        /// Gets or sets the identifier of the currently executing transformation rule.
+        /// Used for event tracking and quarantine management.
+        /// </summary>
+        public string? RuleId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the currently executing transformation rule.
+        /// Used for event tracking and quarantine management.
+        /// </summary>
+        public string? RuleName { get; set; }
+
     private static string ExtractIp(HttpContext ctx)
     {
         if (ctx.Request.Headers.TryGetValue("X-Forwarded-For", out var fwd))
