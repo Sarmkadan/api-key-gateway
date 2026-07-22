@@ -30,17 +30,16 @@ public class UsageRepository : IUsageRepository
     /// </summary>
     public async Task CreateAsync(UsageRecord record)
     {
-        if (record == null)
-            throw new ArgumentNullException(nameof(record));
+        if (record == null) throw new ArgumentNullException(nameof(record));
 
         try
         {
             const string query = @"
-                INSERT INTO UsageRecords
-                (Id, ApiKeyId, ConsumerId, RecordedAt, Endpoint, Method, ResponseStatusCode,
-                 RequestBytes, ResponseBytes, ResponseTimeMs, SourceIp)
-                VALUES (@Id, @ApiKeyId, @ConsumerId, @RecordedAt, @Endpoint, @Method,
-                        @ResponseStatusCode, @RequestBytes, @ResponseBytes, @ResponseTimeMs, @SourceIp)";
+            INSERT INTO UsageRecords
+            (Id, ApiKeyId, ConsumerId, RecordedAt, Endpoint, Method, ResponseStatusCode,
+             RequestBytes, ResponseBytes, ResponseTimeMs, SourceIp)
+            VALUES (@Id, @ApiKeyId, @ConsumerId, @RecordedAt, @Endpoint, @Method,
+            @ResponseStatusCode, @RequestBytes, @ResponseBytes, @ResponseTimeMs, @SourceIp)";
 
             using var cmd = _connection.CreateCommand();
             cmd.CommandText = query;
@@ -60,19 +59,63 @@ public class UsageRepository : IUsageRepository
     }
 
     /// <summary>
-    /// Retrieves usage records for an API key within a date range
+    /// Writes a batch of usage records to the repository in a single database operation
     /// </summary>
-    public async Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate)
+    /// <param name="records">Collection of usage records to write</param>
+    /// <exception cref="ArgumentNullException">Thrown if records is null</exception>
+    public async Task WriteBatchAsync(IReadOnlyList<UsageRecord> records)
     {
-        if (string.IsNullOrWhiteSpace(apiKeyId))
-            return [];
+        if (records == null)
+            throw new ArgumentNullException(nameof(records));
+
+        if (records.Count == 0)
+            return;
 
         try
         {
             const string query = @"
-                SELECT * FROM UsageRecords
-                WHERE ApiKeyId = @ApiKeyId AND RecordedAt >= @StartDate AND RecordedAt <= @EndDate
-                ORDER BY RecordedAt DESC";
+            INSERT INTO UsageRecords
+            (Id, ApiKeyId, ConsumerId, RecordedAt, Endpoint, Method, ResponseStatusCode,
+             RequestBytes, ResponseBytes, ResponseTimeMs, SourceIp)
+            VALUES (@Id, @ApiKeyId, @ConsumerId, @RecordedAt, @Endpoint, @Method,
+            @ResponseStatusCode, @RequestBytes, @ResponseBytes, @ResponseTimeMs, @SourceIp)";
+
+            await _connection.OpenAsync();
+
+            // Execute batch inserts sequentially without transaction
+            // (custom IDbConnection doesn't support transactions)
+            foreach (var record in records)
+            {
+                using var cmd = _connection.CreateCommand();
+                cmd.CommandText = query;
+                AddParameters(cmd, record);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await _connection.CloseAsync();
+
+            _logger.LogDebug("Successfully wrote batch of {Count} usage records", records.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to write batch of {Count} usage records", records.Count);
+            throw new DataAccessException("Failed to write batch of usage records", "BATCH_INSERT", "UsageRecord", ex);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves usage records for an API key within a date range
+    /// </summary>
+    public async Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate)
+    {
+        if (string.IsNullOrWhiteSpace(apiKeyId)) return [];
+
+        try
+        {
+            const string query = @"
+            SELECT * FROM UsageRecords
+            WHERE ApiKeyId = @ApiKeyId AND RecordedAt >= @StartDate AND RecordedAt <= @EndDate
+            ORDER BY RecordedAt DESC";
 
             var records = new List<UsageRecord>();
 
@@ -108,9 +151,9 @@ public class UsageRepository : IUsageRepository
         try
         {
             const string query = @"
-                SELECT * FROM UsageRecords
-                WHERE RecordedAt >= @StartDate AND RecordedAt <= @EndDate
-                ORDER BY RecordedAt DESC";
+            SELECT * FROM UsageRecords
+            WHERE RecordedAt >= @StartDate AND RecordedAt <= @EndDate
+            ORDER BY RecordedAt DESC";
 
             var records = new List<UsageRecord>();
 
@@ -142,15 +185,14 @@ public class UsageRepository : IUsageRepository
     /// </summary>
     public async Task<List<UsageRecord>> GetByConsumerAndDateRangeAsync(string consumerId, DateTime startDate, DateTime endDate)
     {
-        if (string.IsNullOrWhiteSpace(consumerId))
-            return [];
+        if (string.IsNullOrWhiteSpace(consumerId)) return [];
 
         try
         {
             const string query = @"
-                SELECT * FROM UsageRecords
-                WHERE ConsumerId = @ConsumerId AND RecordedAt >= @StartDate AND RecordedAt <= @EndDate
-                ORDER BY RecordedAt DESC";
+            SELECT * FROM UsageRecords
+            WHERE ConsumerId = @ConsumerId AND RecordedAt >= @StartDate AND RecordedAt <= @EndDate
+            ORDER BY RecordedAt DESC";
 
             var records = new List<UsageRecord>();
 

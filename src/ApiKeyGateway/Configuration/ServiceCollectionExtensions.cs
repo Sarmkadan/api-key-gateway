@@ -32,14 +32,14 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found in configuration.");
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found in configuration.");
 
         services.AddScoped<IDbConnection>(sp =>
             new SqlServerConnection(connectionString, sp.GetRequiredService<ILogger<SqlServerConnection>>()));
 
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
-            services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
+        services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
         services.AddScoped<IRateLimitingService>(sp =>
@@ -50,6 +50,22 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
+        services.AddScoped<IUsageTrackingService>(sp =>
+        {
+            var options = new ApiKeyGateway.Services.BufferedUsageTrackingService.BufferedUsageTrackingOptions
+            {
+                MaxBatchSize = 100,
+                MaxFlushInterval = TimeSpan.FromSeconds(2),
+                ChannelFullMode = System.Threading.Channels.BoundedChannelFullMode.Wait,
+                ChannelCapacity = 10000
+            };
+            return new ApiKeyGateway.Services.BufferedUsageTrackingService(
+                sp.GetRequiredService<IUsageTrackingService>(),
+                sp.GetRequiredService<IUsageRepository>(),
+                options,
+                sp.GetRequiredService<ILogger<ApiKeyGateway.Services.BufferedUsageTrackingService>>()
+            );
+        });
         services.AddScoped<IUsageAnalyticsService, UsageAnalyticsService>();
 
         services.AddScoped<IUsageQuotaRepository, UsageQuotaRepository>();
@@ -65,7 +81,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<GatewayConfiguration>(sp =>
             sp.GetRequiredService<IConfiguration>().GetSection("Gateway")
-                .Get<GatewayConfiguration>()
+            .Get<GatewayConfiguration>()
             ?? throw new InvalidOperationException("Gateway configuration section 'Gateway' is missing or invalid."));
 
         return services;

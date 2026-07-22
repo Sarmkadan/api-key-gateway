@@ -172,6 +172,7 @@ public class UsageStatistics
 public interface IUsageRepository
 {
     Task CreateAsync(UsageRecord record);
+    Task WriteBatchAsync(IReadOnlyList<UsageRecord> records);
     Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate);
     Task<List<UsageRecord>> GetByConsumerAndDateRangeAsync(string consumerId, DateTime startDate, DateTime endDate);
     Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
