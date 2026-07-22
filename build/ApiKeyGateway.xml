@@ -162,17 +162,7 @@
             </summary>
             <returns>Cache key pattern string for rate limit invalidation.</returns>
         </member>
-        <member name="M:ApiKeyGateway.Caching.CacheKeyGenerator.ComputeParameterHash(System.Collections.Generic.Dictionary{System.String,System.String})">
-            <summary>
-            Creates a hash of parameters for consistent cache key generation.
-            Order-independent so different parameter orders hash to same value.
-            Uses ArrayPool for the char and byte encoding buffers to avoid
-            creating an intermediate List&lt;string&gt;, a joined string, and a
-            heap-allocated byte array on every external-API cache lookup.
-            </summary>
-            <param name="parameters">Dictionary of parameters to hash.</param>
-            <returns>8-character hexadecimal hash string.</returns>
-        </member>
+        <!-- Badly formed XML comment ignored for member "M:ApiKeyGateway.Caching.CacheKeyGenerator.ComputeParameterHash(System.Collections.Generic.Dictionary{System.String,System.String})" -->
         <member name="T:ApiKeyGateway.Caching.CacheKeyGeneratorJsonExtensions">
             <summary>
             Provides System.Text.Json serialization extensions for cache key generation patterns.
@@ -7633,6 +7623,21 @@
             </summary>
             <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="log"/> is null.</exception>
         </member>
+        <member name="M:ApiKeyGateway.Services.AuditLogService.FlushLogsAsync">
+            <summary>
+            Background task that periodically flushes logs from the queue to persistent storage
+            </summary>
+        </member>
+        <member name="M:ApiKeyGateway.Services.AuditLogService.FlushBatchAsync">
+            <summary>
+            Flushes a batch of logs from the queue to persistent storage
+            </summary>
+        </member>
+        <member name="M:ApiKeyGateway.Services.AuditLogService.FlushAsync">
+            <summary>
+            Forces an immediate flush of all queued logs
+            </summary>
+        </member>
         <member name="M:ApiKeyGateway.Services.AuditLogService.GetLogsAsync(System.String,System.Int32)">
             <summary>
             Retrieves audit logs for a specific resource. An empty resource ID cannot
@@ -7668,6 +7673,16 @@
             running and retries on its next cycle.
             </summary>
             <exception cref="T:System.ArgumentException">Thrown when <paramref name="retentionDays"/> is not positive.</exception>
+        </member>
+        <member name="M:ApiKeyGateway.Services.AuditLogService.Dispose">
+            <summary>
+            Disposes the service, flushing any remaining logs and stopping the background flusher
+            </summary>
+        </member>
+        <member name="M:ApiKeyGateway.Services.AuditLogService.Dispose(System.Boolean)">
+            <summary>
+            Disposes resources
+            </summary>
         </member>
         <member name="T:ApiKeyGateway.Services.IAuthenticationService">
             <summary>
