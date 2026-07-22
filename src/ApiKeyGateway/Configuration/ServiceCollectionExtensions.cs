@@ -6,6 +6,7 @@
 using ApiKeyGateway.Data;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
+using ApiKeyGateway.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -38,6 +39,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
+            services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
         services.AddScoped<IRateLimitingService>(sp =>
