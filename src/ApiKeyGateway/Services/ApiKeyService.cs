@@ -5,11 +5,10 @@
 
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
-using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
-using System.Security.Cryptography;
-using System.Text;
+using ApiKeyGateway.Utilities;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging; // Ensure logging namespace is available
+using System.Security.Cryptography;
+using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Services;
 
@@ -140,11 +139,20 @@ public class ApiKeyService : IApiKeyService
     private const int RandomPartLength = 32;
     private readonly IApiKeyRepository _repository;
     private readonly ILogger<ApiKeyService> _logger;
+    private readonly IApiKeyHasher _hasher;
 
-    public ApiKeyService(IApiKeyRepository repository, ILogger<ApiKeyService> logger)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyService"/> class.
+    /// </summary>
+    /// <param name="repository">The API key repository for data access.</param>
+    /// <param name="logger">The logger for diagnostic messages.</param>
+    /// <param name="hasher">Optional API key hasher. If not provided, a default instance is created.</param>
+    /// <exception cref="ArgumentNullException">Thrown if repository or logger is null.</exception>
+    public ApiKeyService(IApiKeyRepository repository, ILogger<ApiKeyService> logger, IApiKeyHasher? hasher = null)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _hasher = hasher ?? ApiKeyHasherFactory.Create();
     }
 
     /// <summary>
@@ -168,7 +176,7 @@ public class ApiKeyService : IApiKeyService
         {
             var randomPart = GenerateRandomString(RandomPartLength);
             var keyValue = $"{KeyPrefix}_{randomPart}";
-            var keyHash = HashApiKey(keyValue);
+            var keyHash = _hasher.Hash(keyValue);
 
             var apiKey = new ApiKey
             {
@@ -216,7 +224,7 @@ public class ApiKeyService : IApiKeyService
         if (string.IsNullOrWhiteSpace(keyValue))
             throw new UnauthorizedAccessException(Domain.Constants.ErrorMessages.UnauthorizedAccess);
 
-        var keyHash = HashApiKey(keyValue);
+        var keyHash = _hasher.Hash(keyValue);
         var apiKey = await _repository.GetByHashAsync(keyHash);
 
         if (apiKey == null)
@@ -543,16 +551,6 @@ public class ApiKeyService : IApiKeyService
             .ToList();
     }
 
-    /// <summary>
-    /// Hashes an API key using SHA-256
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static string HashApiKey(string keyValue)
-    {
-        using var sha256 = SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyValue));
-        return Convert.ToBase64String(hashedBytes);
-    }
 
     /// <summary>
     /// Generates a cryptographically secure random string of the specified length.
