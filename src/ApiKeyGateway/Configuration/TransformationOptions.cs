@@ -93,6 +93,34 @@ public sealed class LuaExecutionOptions
     /// Defaults to <c>65 536</c> bytes (64 KiB).
     /// </summary>
     public int MaxScriptSizeBytes { get; set; } = 65_536;
+
+    /// <summary>
+    /// Gets or sets the maximum memory in bytes that a Lua script is allowed to consume.
+    /// Scripts exceeding this limit are terminated and marked as failed.
+    /// Defaults to <c>1 048 576</c> bytes (1 MiB).
+    /// </summary>
+    /// <remarks>
+    /// Memory tracking is approximate and measured at intervals during execution.
+    /// Set to <c>0</c> to disable memory enforcement.
+    /// </remarks>
+    public int MaxMemoryBytes { get; set; } = 1_048_576;
+
+    /// <summary>
+    /// Gets or sets the number of consecutive failures/timeouts after which a script
+    /// is automatically quarantined and skipped until an operator re-enables it.
+    /// Defaults to <c>5</c> failures.
+    /// </summary>
+    /// <remarks>
+    /// Set to <c>0</c> to disable automatic quarantine.
+    /// </remarks>
+    public int QuarantineThreshold { get; set; } = 5;
+
+    /// <summary>
+    /// Gets or sets the minimum time interval in seconds that a quarantined script
+    /// must remain disabled before being automatically re-enabled.
+    /// Defaults to <c>300</c> seconds (5 minutes).
+    /// </summary>
+    public int QuarantineDurationSeconds { get; set; } = 300;
 }
 
 // ---------------------------------------------------------------------------
