@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
+using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
@@ -70,6 +71,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
     private readonly IApiKeyService _apiKeyService;
     private readonly IApiKeyRepository _repository;
     private readonly ILogger<ApiKeyRotationService> _logger;
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _rotationLocks = new();
 
     public ApiKeyRotationService(
         IApiKeyService apiKeyService,
@@ -90,30 +92,35 @@ public class ApiKeyRotationService : IApiKeyRotationService
         if (newExpirationDays.HasValue && newExpirationDays <= 0)
             throw new ValidationException("Expiration days must be positive", nameof(newExpirationDays), newExpirationDays);
 
-        var oldKey = await _repository.GetByIdAsync(keyId);
-        if (oldKey is null)
-        {
-            return new RotationResult
-            {
-                OldKeyId = keyId,
-                Success = false,
-                FailureReason = "Key not found"
-            };
-        }
+        // Acquire a per-key lock to prevent concurrent rotations of the same key
+        var keyLock = _rotationLocks.GetOrAdd(keyId, _ => new SemaphoreSlim(1, 1));
+        await keyLock.WaitAsync();
 
-        if (!oldKey.IsActive)
-        {
-            return new RotationResult
-            {
-                OldKeyId = keyId,
-                ConsumerId = oldKey.ConsumerId,
-                Success = false,
-                FailureReason = $"Key is not active (status: {oldKey.Status})"
-            };
-        }
-
+        ApiKey? oldKey = null;
         try
         {
+            oldKey = await _repository.GetByIdAsync(keyId);
+            if (oldKey is null)
+            {
+                return new RotationResult
+                {
+                    OldKeyId = keyId,
+                    Success = false,
+                    FailureReason = "Key not found"
+                };
+            }
+
+            if (!oldKey.IsActive)
+            {
+                return new RotationResult
+                {
+                    OldKeyId = keyId,
+                    ConsumerId = oldKey.ConsumerId,
+                    Success = false,
+                    FailureReason = $"Key is not active (status: {oldKey.Status})"
+                };
+            }
+
             // Determine expiration for the new key
             int? expirationDays = newExpirationDays;
             if (expirationDays is null && oldKey.ExpiresAt.HasValue)
@@ -160,10 +167,19 @@ public class ApiKeyRotationService : IApiKeyRotationService
             return new RotationResult
             {
                 OldKeyId = keyId,
-                ConsumerId = oldKey.ConsumerId,
+                ConsumerId = oldKey?.ConsumerId ?? string.Empty,
                 Success = false,
                 FailureReason = ex.Message
             };
+        }
+        finally
+        {
+            keyLock.Release();
+            // Clean up the lock if no longer needed
+            if (keyLock.CurrentCount == 1)
+            {
+                _rotationLocks.TryRemove(keyId, out _);
+            }
         }
     }
 
