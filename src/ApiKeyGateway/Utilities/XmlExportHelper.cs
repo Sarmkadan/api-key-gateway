@@ -25,7 +25,7 @@ public static class XmlExportHelper
         using var stream = new MemoryStream();
         using (var writer = XmlWriter.Create(stream, new XmlWriterSettings
         {
-            Encoding = Encoding.UTF8,
+            Encoding = new UTF8Encoding(false),
             Indent = true,
             ConformanceLevel = ConformanceLevel.Document
         }))
@@ -47,7 +47,7 @@ public static class XmlExportHelper
         using var stream = new MemoryStream();
         using (var writer = XmlWriter.Create(stream, new XmlWriterSettings
         {
-            Encoding = Encoding.UTF8,
+            Encoding = new UTF8Encoding(false),
             Indent = true,
             ConformanceLevel = ConformanceLevel.Document
         }))
@@ -117,6 +117,7 @@ public static class XmlExportHelper
     {
         DateTime dt => dt.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         DateTimeOffset dto => dto.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+        bool b => b.ToString().ToLowerInvariant(),
         IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty
     };
