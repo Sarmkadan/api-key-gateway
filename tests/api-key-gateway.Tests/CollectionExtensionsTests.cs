@@ -68,6 +68,83 @@ public class CollectionExtensionsTests
         items.Paginate(1, 100).Should().BeEquivalentTo(new[] { 1, 2, 3 });
     }
 
+    /// <summary>
+    /// Tests that Paginate throws ArgumentNullException when source is null.
+    /// </summary>
+    [Fact]
+    public void Paginate_NullSource_ThrowsArgumentNullException()
+    {
+        IEnumerable<int>? nullCollection = null;
+        var act = () => nullCollection.Paginate(1, 10);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that Paginate throws ArgumentOutOfRangeException when pageNumber is 0.
+    /// </summary>
+    [Fact]
+    public void Paginate_ZeroPageNumber_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Paginate(0, 10);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Paginate throws ArgumentOutOfRangeException when pageNumber is negative.
+    /// </summary>
+    [Fact]
+    public void Paginate_NegativePageNumber_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Paginate(-1, 10);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Paginate throws ArgumentOutOfRangeException when pageSize is 0.
+    /// </summary>
+    [Fact]
+    public void Paginate_ZeroPageSize_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Paginate(1, 0);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Paginate throws ArgumentOutOfRangeException when pageSize is negative.
+    /// </summary>
+    [Fact]
+    public void Paginate_NegativePageSize_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Paginate(1, -5);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Paginate returns correct slice when page size exactly matches collection size.
+    /// </summary>
+    [Fact]
+    public void Paginate_PageSizeEqualsCollectionSize_ReturnsAllItems()
+    {
+        var items = new[] { 1, 2, 3, 4, 5 };
+        items.Paginate(1, 5).Should().BeEquivalentTo(new[] { 1, 2, 3, 4, 5 });
+    }
+
+    /// <summary>
+    /// Tests that Paginate returns correct slice for page 1 with various page sizes.
+    /// </summary>
+    [Theory]
+    [InlineData(new[] { 1, 2, 3, 4, 5 }, 1, 1, new[] { 1 })]
+    [InlineData(new[] { 1, 2, 3, 4, 5 }, 1, 2, new[] { 1, 2 })]
+    [InlineData(new[] { 1, 2, 3, 4, 5 }, 1, 3, new[] { 1, 2, 3 })]
+    public void Paginate_PageOneWithVariousSizes_ReturnsCorrectSlice(int[] items, int pageNumber, int pageSize, int[] expected)
+    {
+        items.Paginate(pageNumber, pageSize).Should().BeEquivalentTo(expected);
+    }
+
     // -------------------------------------------------------------------------
     // IsEmpty / HasItems
     // -------------------------------------------------------------------------
@@ -128,6 +205,34 @@ public class CollectionExtensionsTests
         new[] { "a" }.HasItems().Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that IsEmpty returns false when checking a null collection.
+    /// </summary>
+    [Fact]
+    public void IsEmpty_NonNullCollection_ReturnsFalseForNull()
+    {
+        IEnumerable<int>? nullCollection = null;
+        nullCollection.IsEmpty().Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Tests that HasItems returns true for a single item collection.
+    /// </summary>
+    [Fact]
+    public void HasItems_SingleItemCollection_ReturnsTrue()
+    {
+        new[] { 42 }.HasItems().Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Tests that IsEmpty returns true for a collection with whitespace strings.
+    /// </summary>
+    [Fact]
+    public void IsEmpty_CollectionWithWhitespaceStrings_ReturnsFalse()
+    {
+        new[] { " ", "\t", "\n" }.IsEmpty().Should().BeFalse();
+    }
+
     // -------------------------------------------------------------------------
     // CountBy
     // -------------------------------------------------------------------------
@@ -154,6 +259,29 @@ public class CollectionExtensionsTests
     {
         var result = Enumerable.Empty<string>().CountBy(x => x);
         result.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Tests that CountBy throws ArgumentNullException when source is null.
+    /// </summary>
+    [Fact]
+    public void CountBy_NullSource_ThrowsArgumentNullException()
+    {
+        IEnumerable<string>? nullCollection = null;
+        var act = () => nullCollection.CountBy(x => x);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that CountBy throws ArgumentNullException when keySelector is null.
+    /// </summary>
+    [Fact]
+    public void CountBy_NullKeySelector_ThrowsArgumentNullException()
+    {
+        var items = new[] { "a", "b", "c" };
+        Func<string, char>? nullSelector = null;
+        var act = () => items.CountBy(nullSelector);
+        act.Should().Throw<ArgumentNullException>();
     }
 
     // -------------------------------------------------------------------------
@@ -212,6 +340,51 @@ public class CollectionExtensionsTests
         batches[2].Should().BeEquivalentTo(new[] { 30 });
     }
 
+    /// <summary>
+    /// Tests that Batch throws ArgumentNullException when source is null.
+    /// </summary>
+    [Fact]
+    public void Batch_NullSource_ThrowsArgumentNullException()
+    {
+        IEnumerable<int>? nullCollection = null;
+        var act = () => nullCollection.Batch(5);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that Batch throws ArgumentOutOfRangeException when batchSize is 0.
+    /// </summary>
+    [Fact]
+    public void Batch_ZeroBatchSize_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Batch(0);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Batch throws ArgumentOutOfRangeException when batchSize is negative.
+    /// </summary>
+    [Fact]
+    public void Batch_NegativeBatchSize_ThrowsArgumentOutOfRangeException()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.Batch(-3);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// Tests that Batch returns correct batches when batch size is larger than collection.
+    /// </summary>
+    [Fact]
+    public void Batch_BatchSizeLargerThanCollection_ReturnsSingleBatch()
+    {
+        var items = new[] { 1, 2, 3 };
+        var batches = items.Batch(100).Select(b => b.ToList()).ToList();
+        batches.Should().HaveCount(1);
+        batches[0].Should().BeEquivalentTo(new[] { 1, 2, 3 });
+    }
+
     // -------------------------------------------------------------------------
     // DistinctBy
     // -------------------------------------------------------------------------
@@ -245,6 +418,42 @@ public class CollectionExtensionsTests
         ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, x => x).Should().HaveCount(3);
     }
 
+    /// <summary>
+    /// Tests that DistinctBy throws ArgumentNullException when source is null.
+    /// </summary>
+    [Fact]
+    public void DistinctBy_NullSource_ThrowsArgumentNullException()
+    {
+        IEnumerable<int>? nullCollection = null;
+        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(nullCollection, x => x);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that DistinctBy throws ArgumentNullException when keySelector is null.
+    /// </summary>
+    [Fact]
+    public void DistinctBy_NullKeySelector_ThrowsArgumentNullException()
+    {
+        var items = new[] { 1, 2, 3 };
+        Func<int, int>? nullSelector = null;
+        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, nullSelector);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that DistinctBy returns first occurrence when multiple items have same key.
+    /// </summary>
+    [Fact]
+    public void DistinctBy_MultipleSameKeys_ReturnsFirstOccurrence()
+    {
+        var items = new[] { 1, 2, 3, 2, 4, 1 };
+        var result = ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, x => x % 2).ToList(); // Even=0, Odd=1
+        result.Should().HaveCount(2);
+        result.Should().Contain(1); // First odd
+        result.Should().Contain(2); // First even
+    }
+
     // -------------------------------------------------------------------------
     // ForEachSafe
     // -------------------------------------------------------------------------
@@ -275,5 +484,69 @@ public class CollectionExtensionsTests
     {
         var act = () => Enumerable.Empty<int>().ForEachSafe(_ => throw new Exception("should not fire"));
         act.Should().NotThrow();
+    }
+
+    /// <summary>
+    /// Tests that ForEachSafe handles null logger parameter without throwing.
+    /// </summary>
+    [Fact]
+    public void ForEachSafe_NullLogger_DoesNotThrow()
+    {
+        var items = new[] { 1, 2, 3 };
+        var act = () => items.ForEachSafe(item => { }, logger: null);
+        act.Should().NotThrow();
+    }
+
+    /// <summary>
+    /// Tests that ForEachSafe throws ArgumentNullException when source is null.
+    /// </summary>
+    [Fact]
+    public void ForEachSafe_NullSource_ThrowsArgumentNullException()
+    {
+        IEnumerable<int>? nullCollection = null;
+        var act = () => nullCollection.ForEachSafe(item => { });
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that ForEachSafe throws ArgumentNullException when action is null.
+    /// </summary>
+    [Fact]
+    public void ForEachSafe_NullAction_ThrowsArgumentNullException()
+    {
+        var items = new[] { 1, 2, 3 };
+        Action<int>? nullAction = null;
+        var act = () => items.ForEachSafe(nullAction);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    /// <summary>
+    /// Tests that ForEachSafe processes all items when no exceptions are thrown.
+    /// </summary>
+    [Fact]
+    public void ForEachSafe_NoExceptions_ProcessesAllItems()
+    {
+        var processed = new List<int>();
+        var items = new[] { 1, 2, 3, 4, 5 };
+        items.ForEachSafe(item => processed.Add(item));
+        processed.Should().BeEquivalentTo(new[] { 1, 2, 3, 4, 5 });
+    }
+
+    /// <summary>
+    /// Tests that ForEachSafe handles multiple exceptions correctly.
+    /// </summary>
+    [Fact]
+    public void ForEachSafe_MultipleExceptions_ContinuesAfterEachFailure()
+    {
+        var processed = new List<int>();
+        var items = new[] { 1, 2, 3, 4, 5 };
+
+        items.ForEachSafe(item =>
+        {
+            if (item % 2 == 0) throw new InvalidOperationException($"boom {item}");
+            processed.Add(item);
+        });
+
+        processed.Should().BeEquivalentTo(new[] { 1, 3, 5 });
     }
 }
