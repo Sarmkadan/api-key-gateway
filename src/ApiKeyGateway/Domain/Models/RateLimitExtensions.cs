@@ -20,11 +20,14 @@ public static class RateLimitExtensions
     {
         ArgumentNullException.ThrowIfNull(rateLimit);
 
-        return rateLimit.CurrentRequestCount >= rateLimit.RequestsPerUnit && rateLimit.IsEnabled;
+        return !QuotaLimit.IsUnlimited(rateLimit.RequestsPerUnit)
+            && rateLimit.CurrentRequestCount >= rateLimit.RequestsPerUnit
+            && rateLimit.IsEnabled;
     }
 
     /// <summary>
     /// Calculates the number of remaining requests within the current window.
+    /// Returns <see cref="int.MaxValue"/> when the limit is the <see cref="QuotaLimit.Unlimited"/> sentinel.
     /// </summary>
     /// <param name="rateLimit">The rate limit instance to check.</param>
     /// <returns>The number of remaining requests.</returns>
@@ -33,7 +36,9 @@ public static class RateLimitExtensions
     {
         ArgumentNullException.ThrowIfNull(rateLimit);
 
-        return Math.Max(0, rateLimit.RequestsPerUnit - rateLimit.CurrentRequestCount);
+        return QuotaLimit.IsUnlimited(rateLimit.RequestsPerUnit)
+            ? int.MaxValue
+            : Math.Max(0, rateLimit.RequestsPerUnit - rateLimit.CurrentRequestCount);
     }
 
     /// <summary>

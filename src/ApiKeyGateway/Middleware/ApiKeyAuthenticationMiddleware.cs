@@ -43,12 +43,14 @@ public class ApiKeyAuthenticationMiddleware
     /// <param name="usageTrackingService">Scoped usage tracking service for the current request.</param>
     /// <param name="rateLimitingService">Scoped rate limiting service for the current request.</param>
     /// <param name="usageQuotaService">Scoped usage quota service for the current request.</param>
+    /// <param name="quotaAlertEvaluator">Scoped quota alert evaluator for the current request.</param>
     public async Task InvokeAsync(
         HttpContext context,
         IAuthenticationService authenticationService,
         IUsageTrackingService usageTrackingService,
         IRateLimitingService rateLimitingService,
-        IUsageQuotaService usageQuotaService)
+        IUsageQuotaService usageQuotaService,
+        IQuotaAlertEvaluator quotaAlertEvaluator)
     {
         var startTime = DateTime.UtcNow;
         var apiKey = ExtractApiKey(context.Request);
@@ -144,6 +146,7 @@ public class ApiKeyAuthenticationMiddleware
 
             var duration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
             await RecordUsageAsync(context, usageTrackingService, rateLimitingService, duration);
+            await EvaluateQuotaAlertsAsync(context, quotaAlertEvaluator);
         }
         catch (RateLimitExceededException ex)
         {
@@ -224,6 +227,27 @@ public class ApiKeyAuthenticationMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to record usage");
+        }
+    }
+
+    /// <summary>
+    /// Runs quota threshold alerting for the request's consumer.
+    /// Best-effort: failures are logged and never affect the response.
+    /// </summary>
+    private async Task EvaluateQuotaAlertsAsync(HttpContext context, IQuotaAlertEvaluator quotaAlertEvaluator)
+    {
+        try
+        {
+            if (context.Items.TryGetValue("ApiKey", out var keyObj) && keyObj is Domain.Models.ApiKey key &&
+                context.Items.TryGetValue("ConsumerId", out var consumerObj) && consumerObj is string consumerId &&
+                !string.IsNullOrEmpty(consumerId))
+            {
+                await quotaAlertEvaluator.EvaluateAsync(consumerId, key.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Quota alert evaluation failed");
         }
     }
 }
