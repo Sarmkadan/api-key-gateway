@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Text;
 using ApiKeyGateway.Configuration;
@@ -19,8 +19,7 @@ namespace ApiKeyGateway.Middleware;
 /// <remarks>
 /// <para>
 /// The middleware builds a <see cref="TransformationContext"/> from the live
-/// <see cref="HttpRequest"/>, delegates execution to <see cref="ITransformationPipeline"/>,
-/// and then writes any mutations (headers, query parameters, path, body) back onto
+/// <see cref="HttpRequest"/>, delegates execution to <see cref="ITransformationPipeline"/>, and then writes any mutations (headers, query parameters, path, body) back onto
 /// the request before the pipeline continues to the next handler.
 /// </para>
 /// <para>
@@ -50,10 +49,10 @@ public sealed class RequestTransformationMiddleware
         TransformationPipelineOptions options,
         ILogger<RequestTransformationMiddleware> logger)
     {
-        _next     = next     ?? throw new ArgumentNullException(nameof(next));
+        _next = next ?? throw new ArgumentNullException(nameof(next));
         _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
-        _options  = options  ?? throw new ArgumentNullException(nameof(options));
-        _logger   = logger   ?? throw new ArgumentNullException(nameof(logger));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -70,7 +69,7 @@ public sealed class RequestTransformationMiddleware
         }
 
         // Resolve identity written by ApiKeyAuthenticationMiddleware.
-        var apiKey     = context.Items.TryGetValue("ApiKey", out var k) ? k as ApiKey : null;
+        var apiKey = context.Items.TryGetValue("ApiKey", out var k) ? k as ApiKey : null;
         var consumerId = context.Items.TryGetValue("ConsumerId", out var c) ? c as string : null;
 
         // Optionally buffer the request body so scripts can inspect it.
@@ -91,12 +90,10 @@ public sealed class RequestTransformationMiddleware
                 "Request blocked by transformation pipeline — reason: {BlockReason}",
                 result.BlockReason ?? "(no reason supplied)");
 
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new
-            {
-                error  = "Request blocked by transformation policy",
-                reason = result.BlockReason
-            }, context.RequestAborted);
+            var problemDetails = GatewayProblemDetailsFactory.CreateTransformationBlockedProblem(
+                context,
+                result.BlockReason ?? "Request blocked by transformation policy");
+            await context.WriteProblemAsync(problemDetails);
 
             return;
         }
@@ -109,7 +106,7 @@ public sealed class RequestTransformationMiddleware
 
         // Apply path mutation when the script or built-in action rewrote it.
         if (!string.Equals(transformContext.Path, context.Request.Path.ToString(),
-                StringComparison.OrdinalIgnoreCase))
+            StringComparison.OrdinalIgnoreCase))
         {
             context.Request.Path = new PathString(transformContext.Path);
         }
@@ -153,7 +150,7 @@ public sealed class RequestTransformationMiddleware
     private static bool HasBody(HttpRequest request) =>
         request.ContentLength > 0
         || string.Equals(request.Method, "POST", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(request.Method, "PUT",  StringComparison.OrdinalIgnoreCase)
+        || string.Equals(request.Method, "PUT", StringComparison.OrdinalIgnoreCase)
         || string.Equals(request.Method, "PATCH", StringComparison.OrdinalIgnoreCase);
 
     private static async Task<string?> ReadBodyAsync(HttpRequest request, CancellationToken ct)
@@ -167,9 +164,9 @@ public sealed class RequestTransformationMiddleware
 
     private static async Task ReplaceBodyAsync(HttpRequest request, string body)
     {
-        var bytes  = Encoding.UTF8.GetBytes(body);
+        var bytes = Encoding.UTF8.GetBytes(body);
         var stream = new MemoryStream(bytes);
-        request.Body          = stream;
+        request.Body = stream;
         request.ContentLength = bytes.Length;
         request.Body.Position = 0;
         await Task.CompletedTask;

@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Middleware;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.Middleware;
@@ -79,12 +80,10 @@ public class ApiKeyAuthenticationMiddleware
                     {
                         _logger.LogWarning(
                             "API key {ApiKeyId} does not have scope permission for path {Path}",
-                            authResult.ApiKey.Id, requestPath);
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        await context.Response.WriteAsJsonAsync(new
-                        {
-                            error = "The API key does not have permission to access this route"
-                        });
+                            authResult.ApiKey.Id,
+                            requestPath);
+                        var problemDetails = GatewayProblemDetailsFactory.CreateRouteScopeRestrictedProblem(context);
+                        await context.WriteProblemAsync(problemDetails);
                         return;
                     }
 
@@ -101,12 +100,8 @@ public class ApiKeyAuthenticationMiddleware
                     if (quotaResult.IsExceeded)
                     {
                         _logger.LogWarning("Usage quota exceeded for API key {ApiKeyId}", authResult.ApiKey.Id);
-                        context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                        await context.Response.WriteAsJsonAsync(new
-                        {
-                            error = "Usage quota exceeded for this period",
-                            quotaResetAt = quotaResult.PeriodEnd
-                        });
+                        var problemDetails = GatewayProblemDetailsFactory.CreateQuotaExceededProblem(context, quotaResult.PeriodEnd);
+                        await context.WriteProblemAsync(problemDetails);
                         return;
                     }
 
@@ -121,26 +116,25 @@ public class ApiKeyAuthenticationMiddleware
                         case Domain.Models.AuthenticationFailureReason.MissingApiKey:
                         case Domain.Models.AuthenticationFailureReason.InvalidApiKeyFormat:
                         case Domain.Models.AuthenticationFailureReason.ApiKeyNotFound:
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            await context.Response.WriteAsJsonAsync(new { error = "Invalid API key" });
+                            var invalidKeyProblem = GatewayProblemDetailsFactory.CreateInvalidKeyProblem(context, "Invalid API key");
+                            await context.WriteProblemAsync(invalidKeyProblem);
                             return;
                         case Domain.Models.AuthenticationFailureReason.ApiKeyExpired:
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            await context.Response.WriteAsJsonAsync(new { error = "api_key_expired" });
+                            var expiredProblem = GatewayProblemDetailsFactory.CreateKeyExpiredProblem(context);
+                            await context.WriteProblemAsync(expiredProblem);
                             return;
                         case Domain.Models.AuthenticationFailureReason.ApiKeyDisabled:
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            await context.Response.WriteAsJsonAsync(new { error = "API key is disabled" });
+                            var disabledProblem = GatewayProblemDetailsFactory.CreateKeyDisabledProblem(context);
+                            await context.WriteProblemAsync(disabledProblem);
                             return;
                         case Domain.Models.AuthenticationFailureReason.IpNotWhitelisted:
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            await context.Response.WriteAsJsonAsync(new { error = "IP address not whitelisted" });
+                            var ipProblem = GatewayProblemDetailsFactory.CreateIpNotWhitelistedProblem(context);
+                            await context.WriteProblemAsync(ipProblem);
                             return;
                         case Domain.Models.AuthenticationFailureReason.ServiceUnavailable:
                         default:
-                            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-                            context.Response.Headers.Append("Retry-After", "30");
-                            await context.Response.WriteAsJsonAsync(new { error = "Authentication service temporarily unavailable. Please retry." });
+                            var serviceUnavailableProblem = GatewayProblemDetailsFactory.CreateServiceUnavailableProblem(context);
+                            await context.WriteProblemAsync(serviceUnavailableProblem);
                             return;
                     }
                 }
@@ -154,15 +148,18 @@ public class ApiKeyAuthenticationMiddleware
         catch (RateLimitExceededException ex)
         {
             _logger.LogWarning("Rate limit exceeded for key {ApiKeyId}", ex.ApiKeyId);
-            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-            context.Response.Headers.Append("Retry-After", ((int)ex.RetryAfter!.Value.Subtract(DateTime.UtcNow).TotalSeconds).ToString());
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            var problemDetails = GatewayProblemDetailsFactory.CreateRateLimitExceededProblem(
+                context,
+                ex.RetryAfter ?? DateTime.UtcNow.AddSeconds(ex.WindowInSeconds),
+                ex.Limit,
+                ex.WindowInSeconds);
+            await context.WriteProblemAsync(problemDetails);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in authentication middleware");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
+            var problemDetails = GatewayProblemDetailsFactory.CreateInternalServerErrorProblem(context);
+            await context.WriteProblemAsync(problemDetails);
         }
     }
 
