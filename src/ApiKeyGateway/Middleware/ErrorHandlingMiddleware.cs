@@ -1,10 +1,11 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
-using System.Text.Json;
 using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Middleware;
+using System.Text.Json;
 using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Middleware;
@@ -41,52 +42,24 @@ public sealed class ErrorHandlingMiddleware
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = "application/problem+json";
 
-        var response = exception switch
+        var problemDetails = exception switch
         {
-            InvalidApiKeyException => new
-            {
-                statusCode = 401,
-                message = exception.Message,
-                error = "INVALID_API_KEY"
-            },
-            RateLimitExceededException => new
-            {
-                statusCode = 429,
-                message = exception.Message,
-                error = "RATE_LIMIT_EXCEEDED"
-            },
-            UnauthorizedAccessException => new
-            {
-                statusCode = 403,
-                message = exception.Message,
-                error = "UNAUTHORIZED_ACCESS"
-            },
-            DataAccessException => new
-            {
-                statusCode = 500,
-                message = "Database operation failed",
-                error = "DATABASE_ERROR"
-            },
-            _ => new
-            {
-                statusCode = 500,
-                message = "An unexpected error occurred",
-                error = "INTERNAL_SERVER_ERROR"
-            }
+            InvalidApiKeyException => GatewayProblemDetailsFactory.CreateInvalidKeyProblem(context, exception.Message),
+            RateLimitExceededException ex => GatewayProblemDetailsFactory.CreateRateLimitExceededProblem(
+                context,
+                ex.RetryAfter ?? DateTime.UtcNow.AddSeconds(ex.WindowInSeconds),
+                ex.Limit,
+                ex.WindowInSeconds),
+            UnauthorizedAccessException => GatewayProblemDetailsFactory.CreateUnauthorizedAccessProblem(context),
+            DataAccessException => GatewayProblemDetailsFactory.CreateInternalServerErrorProblem(context),
+            _ => GatewayProblemDetailsFactory.CreateInternalServerErrorProblem(context)
         };
 
-        // Only set status code if not already set
-        if (context.Response.StatusCode == 200)
-        {
-            // All switch arms above produce the same anonymous type, so the
-            // property is statically available; reflection via typeof(object)
-            // returned null and threw NullReferenceException here.
-            context.Response.StatusCode = response.statusCode;
-        }
+        // Set status code from ProblemDetails
+        context.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
 
-        var jsonResponse = JsonSerializer.Serialize(response);
-        return context.Response.WriteAsync(jsonResponse);
+        return context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails));
     }
 }

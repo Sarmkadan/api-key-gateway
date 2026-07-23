@@ -4,6 +4,7 @@
 // =============================================================================
 
 using System.Text;
+using ApiKeyGateway.Middleware;
 
 namespace ApiKeyGateway.Middleware;
 
@@ -45,11 +46,8 @@ public sealed class RequestValidationMiddleware
                     context.Request.Path);
 
                 context.Response.StatusCode = 415;
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    error = "UNSUPPORTED_MEDIA_TYPE",
-                    message = "Content-Type must be application/json"
-                });
+                var problemDetails = GatewayProblemDetailsFactory.CreateUnsupportedMediaTypeProblem(context);
+                await context.WriteProblemAsync(problemDetails);
                 return;
             }
 
@@ -62,11 +60,8 @@ public sealed class RequestValidationMiddleware
                     MaxBodySizeBytes);
 
                 context.Response.StatusCode = 413;
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    error = "PAYLOAD_TOO_LARGE",
-                    message = $"Request body must be smaller than {MaxBodySizeBytes} bytes"
-                });
+                var problemDetails = GatewayProblemDetailsFactory.CreatePayloadTooLargeProblem(context, MaxBodySizeBytes);
+                await context.WriteProblemAsync(problemDetails);
                 return;
             }
         }
@@ -83,11 +78,8 @@ public sealed class RequestValidationMiddleware
                     context.Request.Path);
 
                 context.Response.StatusCode = 400;
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    error = "MISSING_API_KEY",
-                    message = "X-API-Key header is required"
-                });
+                var problemDetails = GatewayProblemDetailsFactory.CreateMissingKeyHeaderProblem(context);
+                await context.WriteProblemAsync(problemDetails);
                 return;
             }
         }
