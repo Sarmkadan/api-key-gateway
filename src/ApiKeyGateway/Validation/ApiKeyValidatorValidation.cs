@@ -113,20 +113,28 @@ public static class ApiKeyValidatorValidation
     }
 
     /// <summary>
-    /// Validates a quota limit value.
+    /// Validates a quota limit value against the shared <see cref="Domain.Models.QuotaLimit"/> contract:
+    /// the <see cref="Domain.Models.QuotaLimit.Unlimited"/> sentinel (-1) is accepted,
+    /// otherwise the limit must be between 1 and <see cref="Domain.Models.QuotaLimit.MaxValue"/>.
     /// </summary>
     /// <param name="limit">The quota limit to validate.</param>
     /// <returns>An IReadOnlyList of validation problems; empty if valid.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown if limit is negative.</exception>
     public static IReadOnlyList<string> ValidateQuotaLimit(int limit)
     {
         var problems = new List<string>();
 
+        if (limit is Domain.Models.QuotaLimit.Unlimited)
+        {
+            return problems.AsReadOnly();
+        }
+
         if (limit <= 0)
         {
-            problems.Add("Quota limit must be greater than 0.");
+            problems.Add(string.Format(CultureInfo.InvariantCulture,
+                "Quota limit must be greater than 0, or {0} for unlimited.",
+                Domain.Models.QuotaLimit.Unlimited));
         }
-        else if (limit > 1_000_000_000)
+        else if (limit > Domain.Models.QuotaLimit.MaxValue)
         {
             problems.Add("Quota limit cannot exceed 1 billion.");
         }
@@ -189,16 +197,17 @@ public static class ApiKeyValidatorValidation
 
     /// <summary>
     /// Ensures that the quota limit is valid, throwing if not.
+    /// The <see cref="Domain.Models.QuotaLimit.Unlimited"/> sentinel (-1) is accepted;
+    /// zero, other negatives, and values above <see cref="Domain.Models.QuotaLimit.MaxValue"/> are rejected.
     /// </summary>
     /// <param name="limit">The quota limit to validate.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown if limit is negative.</exception>
-    /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the limit is out of range (zero, a negative other than -1, or above the maximum).</exception>
     public static void EnsureValidQuotaLimit(int limit)
     {
         var problems = ValidateQuotaLimit(limit);
         if (problems.Count > 0)
         {
-            throw new ArgumentException(string.Join(" ", problems));
+            throw new ArgumentOutOfRangeException(nameof(limit), limit, string.Join(" ", problems));
         }
     }
 }

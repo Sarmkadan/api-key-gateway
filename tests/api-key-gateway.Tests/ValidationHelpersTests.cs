@@ -194,7 +194,8 @@ public class ApiKeyValidatorTests
     [InlineData(1000, true)]
     [InlineData(1_000_000_000, true)]
     [InlineData(0, false)]
-    [InlineData(-1, false)]
+    [InlineData(-1, true)] // -1 is the unlimited sentinel (QuotaLimit.Unlimited)
+    [InlineData(-2, false)]
     [InlineData(1_000_000_001, false)]
     public void ValidateQuotaLimit_VariousLimits_ReturnsExpectedValidity(int limit, bool expected)
     {

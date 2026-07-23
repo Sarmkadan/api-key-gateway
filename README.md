@@ -1,9 +1,13 @@
 try
 {
-  ApiKeyValidatorValidation.EnsureValidQuotaLimit(-1);
+  // QuotaLimit.Unlimited (-1) is a valid sentinel meaning "no quota enforced"
+  ApiKeyValidatorValidation.EnsureValidQuotaLimit(QuotaLimit.Unlimited);
   Console.WriteLine("Quota limit validation passed.");
+
+  // Zero and other negative values are rejected
+  ApiKeyValidatorValidation.EnsureValidQuotaLimit(-5);
 }
-catch (ArgumentException ex)
+catch (ArgumentOutOfRangeException ex)
 {
   Console.WriteLine($"Quota limit validation failed: {ex.Message}");
 }

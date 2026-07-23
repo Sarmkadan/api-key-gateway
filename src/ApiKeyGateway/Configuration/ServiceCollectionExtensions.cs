@@ -42,11 +42,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
+        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
         services.AddScoped<IRateLimitingService>(sp =>
             new RateLimitingService(
                 sp.GetRequiredService<IRateLimitRepository>(),
                 sp.GetRequiredService<ILogger<RateLimitingService>>(),
-                sp.GetRequiredService<GatewayConfiguration>().ClockSkewToleranceSeconds));
+                sp.GetRequiredService<GatewayConfiguration>().ClockSkewToleranceSeconds,
+                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<RateLimitingOptions>>().Value,
+                sp.GetService<Events.IEventPublisher>()));
 
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
@@ -70,6 +73,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IUsageQuotaRepository, UsageQuotaRepository>();
         services.AddScoped<IUsageQuotaService, UsageQuotaService>();
+
+        services.Configure<QuotaAlertOptions>(configuration.GetSection(QuotaAlertOptions.SectionName));
+        services.AddSingleton<QuotaAlertStateCache>();
+        services.AddScoped<IQuotaAlertEvaluator, QuotaAlertEvaluator>();
 
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();

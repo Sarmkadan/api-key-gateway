@@ -33,10 +33,10 @@ public static class UsageQuotaValidation
             errors.Add("ApiKeyId must not be null or empty.");
         }
 
-        // QuotaLimit must be non-negative
-        if (value.QuotaLimit < 0)
+        // QuotaLimit must be non-negative or the unlimited sentinel (-1)
+        if (value.QuotaLimit < 0 && value.QuotaLimit != Models.QuotaLimit.Unlimited)
         {
-            errors.Add($"QuotaLimit must be non-negative (found {value.QuotaLimit}).");
+            errors.Add($"QuotaLimit must be non-negative or {Models.QuotaLimit.Unlimited} for unlimited (found {value.QuotaLimit}).");
         }
 
         // Period must be a defined enum value
@@ -63,8 +63,8 @@ public static class UsageQuotaValidation
             errors.Add($"CurrentUsage must be non-negative (found {value.CurrentUsage}).");
         }
 
-        // If the quota is enabled, CurrentUsage must not exceed QuotaLimit
-        if (value.IsEnabled && value.CurrentUsage > value.QuotaLimit)
+        // If the quota is enabled and not unlimited, CurrentUsage must not exceed QuotaLimit
+        if (value.IsEnabled && value.QuotaLimit != Models.QuotaLimit.Unlimited && value.CurrentUsage > value.QuotaLimit)
         {
             errors.Add($"CurrentUsage ({value.CurrentUsage}) exceeds QuotaLimit ({value.QuotaLimit}).");
         }

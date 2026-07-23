@@ -108,14 +108,18 @@ public static class ApiKeyValidator
     }
 
     /// <summary>
-    /// Validates quota limits are reasonable.
+    /// Validates quota limits are reasonable. The <see cref="Domain.Models.QuotaLimit.Unlimited"/>
+    /// sentinel (-1) is valid; otherwise the limit must be between 1 and <see cref="Domain.Models.QuotaLimit.MaxValue"/>.
     /// </summary>
     public static ValidationResult ValidateQuotaLimit(int limit)
     {
-        if (limit <= 0)
-            return new ValidationResult { IsValid = false, Message = "Quota limit must be greater than 0" };
+        if (limit is Domain.Models.QuotaLimit.Unlimited)
+            return new ValidationResult { IsValid = true };
 
-        if (limit > 1_000_000_000)
+        if (limit <= 0)
+            return new ValidationResult { IsValid = false, Message = "Quota limit must be greater than 0, or -1 for unlimited" };
+
+        if (limit > Domain.Models.QuotaLimit.MaxValue)
             return new ValidationResult { IsValid = false, Message = "Quota limit cannot exceed 1 billion" };
 
         return new ValidationResult { IsValid = true };
