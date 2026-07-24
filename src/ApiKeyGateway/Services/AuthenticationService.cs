@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =====================================================================
 
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
@@ -107,6 +108,18 @@ public class AuthenticationService : IAuthenticationService
 
             return AuthenticationResult.SuccessResult(validKey);
         }
+    catch (InvalidApiKeyException ex) when (ex.IsExpired)
+    {
+        _logger.LogWarning(ex, "API key expired during authentication for IP {IpAddress}", ipAddress ?? "unknown");
+        await LogAuthenticationAttemptAsync("unknown", false, "API key expired");
+        return AuthenticationResult.FailureResult(AuthenticationFailureReason.ApiKeyExpired);
+    }
+    catch (InvalidApiKeyException ex)
+    {
+        _logger.LogWarning(ex, "Invalid API key during authentication for IP {IpAddress}", ipAddress ?? "unknown");
+        await LogAuthenticationAttemptAsync("unknown", false, "Invalid API key");
+        return AuthenticationResult.FailureResult(AuthenticationFailureReason.InvalidApiKeyFormat);
+    }
         catch (Domain.Exceptions.DataAccessException ex)
         {
             _logger.LogError(ex, "Key store unavailable during authentication for IP {IpAddress}", ipAddress ?? "unknown");

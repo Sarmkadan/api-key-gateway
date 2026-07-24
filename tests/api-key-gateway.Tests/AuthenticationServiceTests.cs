@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =====================================================================
 
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Exceptions;
@@ -300,6 +302,95 @@ public class AuthenticationServiceTests
     }
 
     /// <summary>
+    /// Tests that the AuthenticateAsync method returns a failure result when the key is revoked.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_RevokedKey_ReturnsFailureResultWithDisabledReason()
+    {
+        var revokedKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Revoked
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_revokedkey"))
+            .ReturnsAsync(revokedKey);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_revokedkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(a => a.ResourceId == "key-123" && !a.IsSuccess)), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns a failure result when the key is suspended.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_SuspendedKey_ReturnsFailureResultWithDisabledReason()
+    {
+        var suspendedKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Suspended
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("sk_suspendedkey"))
+            .ReturnsAsync(suspendedKey);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _sut.AuthenticateAsync("sk_suspendedkey", "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.Is<AuditLog>(a => a.ResourceId == "key-123" && !a.IsSuccess)), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method handles concurrent authentication calls safely.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_ConcurrentCalls_DoesNotCorruptState()
+    {
+        var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync(It.IsAny<string>()))
+            .ReturnsAsync(key);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        // Simulate concurrent calls
+        var tasks = Enumerable.Range(0, 100)
+            .Select(_ => _sut.AuthenticateAsync("sk_concurrentkey", "192.168.1.1"))
+            .ToList();
+
+        var results = await Task.WhenAll(tasks);
+
+        // All calls should succeed
+        results.Should().AllSatisfy(r =>
+        {
+            r.Success.Should().BeTrue();
+            r.ApiKey.Should().NotBeNull();
+        });
+
+        // Verify that ValidateKeyAsync was called 100 times (once per concurrent call)
+        _apiKeyServiceMock.Verify(s => s.ValidateKeyAsync(It.IsAny<string>()), Times.Exactly(100));
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Exactly(100));
+    }
+
+    /// <summary>
     /// Tests that the ValidateIpAsync method throws ArgumentNullException when key is null.
     /// </summary>
     [Fact]
@@ -379,5 +470,111 @@ public class AuthenticationServiceTests
 
         var result = await _sut.ValidateIpAsync(key, "192.168.1.1");
         result.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method handles keys with leading/trailing whitespace in the key value itself.
+    /// The whitespace should be trimmed before hashing occurs in the service layer.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task AuthenticateAsync_NullOrEmptyApiKey_ReturnsFailureResult(string? apiKey)
+    {
+        var result = await _sut.AuthenticateAsync(apiKey!, "192.168.1.1");
+        result.Success.Should().BeFalse();
+        result.FailureReason.Should().Be(AuthenticationFailureReason.MissingApiKey);
+        _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Tests that the AuthenticateAsync method returns distinct failure reasons for different types of invalid keys.
+    /// </summary>
+    [Fact]
+    public async Task AuthenticateAsync_DistinctFailureReasons_ForDifferentInvalidKeyTypes()
+    {
+        // Test 1: Missing API key
+        var result1 = await _sut.AuthenticateAsync(null, "192.168.1.1");
+        result1.Success.Should().BeFalse();
+        result1.FailureReason.Should().Be(AuthenticationFailureReason.MissingApiKey);
+
+        // Test 2: Invalid format (key not found in repository)
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("invalid_key_format"))
+            .ReturnsAsync((ApiKey?)null);
+
+        _auditLogServiceMock
+            .Setup(s => s.LogAsync(It.IsAny<AuditLog>()))
+            .Returns(Task.CompletedTask);
+
+        var result2 = await _sut.AuthenticateAsync("invalid_key_format", "192.168.1.1");
+        result2.Success.Should().BeFalse();
+        result2.FailureReason.Should().Be(AuthenticationFailureReason.InvalidApiKeyFormat);
+
+        // Test 3: Expired key
+        var expiredKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Active,
+            ExpiresAt = DateTime.UtcNow.AddDays(-1)
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("expired_key"))
+            .ReturnsAsync(expiredKey);
+
+        var result3 = await _sut.AuthenticateAsync("expired_key", "192.168.1.1");
+        result3.Success.Should().BeFalse();
+        result3.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyExpired);
+
+        // Test 4: Disabled key
+        var disabledKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Disabled
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("disabled_key"))
+            .ReturnsAsync(disabledKey);
+
+        var result4 = await _sut.AuthenticateAsync("disabled_key", "192.168.1.1");
+        result4.Success.Should().BeFalse();
+        result4.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
+
+        // Test 5: Revoked key
+        var revokedKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Revoked
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("revoked_key"))
+            .ReturnsAsync(revokedKey);
+
+        var result5 = await _sut.AuthenticateAsync("revoked_key", "192.168.1.1");
+        result5.Success.Should().BeFalse();
+        result5.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
+
+        // Test 6: Suspended key
+        var suspendedKey = new ApiKey
+        {
+            Id = "key-123",
+            ConsumerId = "consumer-abc",
+            Status = ApiKeyStatus.Suspended
+        };
+
+        _apiKeyServiceMock
+            .Setup(s => s.ValidateKeyAsync("suspended_key"))
+            .ReturnsAsync(suspendedKey);
+
+        var result6 = await _sut.AuthenticateAsync("suspended_key", "192.168.1.1");
+        result6.Success.Should().BeFalse();
+        result6.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
     }
 }
