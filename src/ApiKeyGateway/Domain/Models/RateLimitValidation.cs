@@ -92,7 +92,8 @@ public static class RateLimitValidation
     /// <exception cref="ArgumentNullException">Thrown when value is null</exception>
     public static bool IsValid(this RateLimit? value)
     {
-        return value?.Validate().Count == 0;
+        ArgumentNullException.ThrowIfNull(value);
+    return value.Validate().Count == 0;
     }
 
     /// <summary>
