@@ -9,22 +9,26 @@ using System.Collections.Generic;
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
-/// Validation extension methods for RateLimitExceededException.
-/// Provides validation helpers to ensure RateLimitExceededException instances are valid.
+/// Provides validation helpers for <see cref="RateLimitExceededException"/> instances
 /// </summary>
 public static class RateLimitExceededExceptionValidation
 {
     /// <summary>
-    /// Validates the RateLimitExceededException instance.
+    /// Validates the specified <see cref="RateLimitExceededException"/> instance
     /// </summary>
-    /// <param name="value">The RateLimitExceededException instance to validate.</param>
-    /// <returns>A list of human-readable validation problems; empty if valid.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <param name="value">The exception to validate</param>
+    /// <returns>A list of validation problems; empty if valid</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate(this RateLimitExceededException value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var problems = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(value.Message))
+        {
+            problems.Add("Message cannot be null, empty, or whitespace.");
+        }
 
         if (string.IsNullOrWhiteSpace(value.ApiKeyId))
         {
@@ -66,15 +70,15 @@ public static class RateLimitExceededExceptionValidation
             }
         }
 
-        return problems;
+        return problems.AsReadOnly();
     }
 
     /// <summary>
-    /// Checks if the RateLimitExceededException instance is valid.
+    /// Determines whether the specified <see cref="RateLimitExceededException"/> is valid
     /// </summary>
-    /// <param name="value">The RateLimitExceededException instance to check.</param>
-    /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <param name="value">The exception to check</param>
+    /// <returns>True if valid; otherwise false</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static bool IsValid(this RateLimitExceededException value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -82,17 +86,20 @@ public static class RateLimitExceededExceptionValidation
     }
 
     /// <summary>
-    /// Ensures the RateLimitExceededException instance is valid, throwing if not.
+    /// Ensures that the specified <see cref="RateLimitExceededException"/> is valid
     /// </summary>
-    /// <param name="value">The RateLimitExceededException instance to validate.</param>
-    /// <exception cref="ArgumentException">Thrown when validation fails with a list of problems.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    /// <param name="value">The exception to validate</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid, containing the validation problems</exception>
     public static void EnsureValid(this RateLimitExceededException value)
     {
+        ArgumentNullException.ThrowIfNull(value);
+
         var problems = Validate(value);
         if (problems.Count > 0)
         {
-            throw new ArgumentException(string.Join(" ", problems));
+            throw new ArgumentException(
+                $"RateLimitExceededException is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
         }
     }
 }
