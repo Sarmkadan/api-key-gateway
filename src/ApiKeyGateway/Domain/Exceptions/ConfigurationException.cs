@@ -2,7 +2,8 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // Thrown when gateway configuration is invalid or incomplete
-// =============================================================================
+// =====================================================================
+using System.Text.Json.Serialization;
 
 namespace ApiKeyGateway.Domain.Exceptions;
 
@@ -18,6 +19,7 @@ public class ConfigurationException : ApiKeyGatewayException
     /// Initializes a new instance of <see cref="ConfigurationException"/>
     /// </summary>
     /// <param name="message">The error message.</param>
+    [JsonConstructor]
     public ConfigurationException(string message) : base(message) { }
 
     /// <summary>
