@@ -1,7 +1,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// ===================================================================
 
 using ApiKeyGateway.Domain.Enums;
 
@@ -54,12 +54,23 @@ public static class RateLimitCalculationHelper
     /// Determines if a request is allowed based on current usage and limit.
     /// Returns the number of seconds until the next request can be made,
     /// or 0 if the request is allowed immediately.
+    /// When the request would exceed the limit (currentUsage >= limit), returns
+    /// <see cref="int.MaxValue"/> to indicate the request should be rejected immediately rather than delayed.
     /// </summary>
+    /// <param name="currentUsage">Current number of requests in the window.</param>
+    /// <param name="limit">Maximum allowed requests per window.</param>
+    /// <param name="windowStart">Start time of the current rate limit window.</param>
+    /// <param name="unit">Time unit for the rate limit window.</param>
+    /// <returns>
+    /// 0 if the request is allowed immediately (currentUsage &lt; limit),
+    /// <see cref="int.MaxValue"/> if the request exceeds the limit (currentUsage &gt;= limit),
+    /// or the number of seconds until the window resets (0 &lt; result &lt; int.MaxValue).
+    /// </returns>
     public static int GetSecondsUntilAllowed(int currentUsage, int limit, DateTime windowStart, RateLimitUnit unit)
     {
-        // If under limit, request is allowed immediately
-        if (currentUsage < limit)
-            return 0;
+        // If at or over the limit, reject immediately (consistent with RateLimit.CanProcessRequest())
+        if (currentUsage >= limit)
+            return int.MaxValue;
 
         // Calculate when the window resets
         var windowEnd = GetWindowEnd(windowStart, unit);

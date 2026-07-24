@@ -207,10 +207,10 @@ public class RateLimitCalculationHelperUnitTests
     }
 
     /// <summary>
-    /// Tests GetSecondsUntilAllowed returns positive value when at limit (needs to wait for window reset).
+    /// Tests GetSecondsUntilAllowed returns int.MaxValue when at limit (immediate rejection).
     /// </summary>
     [Fact]
-    public void GetSecondsUntilAllowed_AtLimit_ReturnsPositiveValue()
+    public void GetSecondsUntilAllowed_AtLimit_ReturnsMaxValue()
     {
         // Arrange
         var windowStart = DateTime.UtcNow.AddSeconds(-1); // 1 second ago
@@ -221,20 +221,18 @@ public class RateLimitCalculationHelperUnitTests
         // Act
         var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(currentUsage, limit, windowStart, unit);
 
-        // Assert - at limit means you need to wait for window to reset
-        result.Should().BeGreaterThan(0, "at limit needs to wait for window reset");
+        // Assert - at limit means immediate rejection (consistent with RateLimit.CanProcessRequest())
+        result.Should().Be(int.MaxValue, "at limit should return int.MaxValue for immediate rejection");
     }
 
     /// <summary>
-    /// Tests GetSecondsUntilAllowed returns positive value when over limit and window hasn't expired.
+    /// Tests GetSecondsUntilAllowed returns int.MaxValue when over limit (immediate rejection).
     /// </summary>
     [Fact]
-    public void GetSecondsUntilAllowed_OverLimit_ReturnsPositiveValue()
+    public void GetSecondsUntilAllowed_OverLimit_ReturnsMaxValue()
     {
-        // Arrange - use a very recent window start so window hasn't expired
-        // For Minute unit, window is 60 seconds. Set window start to 1 second ago,
-        // so window ends in ~59 seconds
-        var windowStart = DateTime.UtcNow.AddSeconds(-1);
+        // Arrange
+        var windowStart = DateTime.UtcNow.AddSeconds(-1); // 1 second ago
         var currentUsage = 15;
         var limit = 10;
         var unit = RateLimitUnit.Minute;
@@ -242,8 +240,8 @@ public class RateLimitCalculationHelperUnitTests
         // Act
         var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(currentUsage, limit, windowStart, unit);
 
-        // Assert - should be positive (around 59 seconds)
-        result.Should().BeGreaterThan(0, "over limit with active window should return positive seconds until reset");
+        // Assert - over limit means immediate rejection (consistent with RateLimit.CanProcessRequest())
+        result.Should().Be(int.MaxValue, "over limit should return int.MaxValue for immediate rejection");
     }
 
     /// <summary>
@@ -531,12 +529,13 @@ public class RateLimitCalculationHelperUnitTests
     }
 
     /// <summary>
-    /// Tests GetSecondsUntilAllowed with negative secondsUntilReset - should return 0.
+    /// Tests GetSecondsUntilAllowed with expired window - should return 0.
     /// </summary>
     [Fact]
-    public void GetSecondsUntilAllowed_NegativeSecondsUntilReset_ReturnsZero()
+    public void GetSecondsUntilAllowed_ExpiredWindow_ReturnsZero()
     {
-        // This test verifies the Math.Max(0, secondsUntilReset) behavior
+        // This test verifies that when the window has already expired,
+        // the method returns 0 (window has reset)
         // Arrange
         var currentUsage = 15;
         var limit = 10;
