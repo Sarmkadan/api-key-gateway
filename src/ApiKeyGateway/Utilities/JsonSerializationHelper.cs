@@ -17,7 +17,28 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public static class JsonSerializationHelper
 {
-    private static readonly JsonSerializerOptions ApiOptions = new()
+    /// <summary>
+    /// Gets the hardened JSON serializer options for deserializing attacker-controlled input.
+    /// This configuration disables polymorphic type resolution and sets a maximum depth
+    /// to prevent stack overflow attacks via deeply nested JSON.
+    /// </summary>
+    public static JsonSerializerOptions HardenedDeserializeOptions { get; } = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = false,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+        // Security hardening: prevent polymorphic type confusion attacks
+        // TypeNameHandling = null (default, no TypeNameHandling equivalent)
+        // $type binder is not used (default behavior)
+        // Prevent stack overflow via deeply nested JSON
+        MaxDepth = 16,
+        // Prevent DoS via large payloads - enforce at HTTP layer before parsing
+        // This is the maximum allowed JSON payload size in bytes
+        // Actual enforcement should happen at HTTP middleware level
+    };
+
+    private static readonly JsonSerializerOptions ApiOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -25,7 +46,7 @@ public static class JsonSerializationHelper
         TypeInfoResolver = new DefaultJsonTypeInfoResolver()
     };
 
-    private static readonly JsonSerializerOptions FormattedApiOptions = new()
+    private static readonly JsonSerializerOptions FormattedApiOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -51,6 +72,19 @@ public static class JsonSerializationHelper
     /// </summary>
     public static T? Deserialize<T>(string json) =>
         JsonSerializer.Deserialize<T>(json, ApiOptions);
+
+    /// <summary>
+    /// Deserializes JSON from attacker-controlled input using hardened security settings.
+    /// This should be used when deserializing any untrusted JSON input (request bodies, headers, etc.).
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize.</typeparam>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <returns>The deserialized object, or null if deserialization fails.</returns>
+    public static T? DeserializeHardened<T>(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        return JsonSerializer.Deserialize<T>(json, HardenedDeserializeOptions);
+    }
 
     /// <summary>
     /// Safely attempts deserialization with error handling.

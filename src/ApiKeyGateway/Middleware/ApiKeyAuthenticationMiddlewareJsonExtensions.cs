@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using ApiKeyGateway.Utilities;
 
 namespace ApiKeyGateway.Middleware;
 
@@ -23,9 +24,12 @@ public static class ApiKeyAuthenticationMiddlewareJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = indented,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+        };
 
         return JsonSerializer.Serialize(value, options);
     }
@@ -43,7 +47,7 @@ public static class ApiKeyAuthenticationMiddlewareJsonExtensions
 
         return string.IsNullOrWhiteSpace(json)
             ? null
-            : JsonSerializer.Deserialize<ApiKeyAuthenticationMiddleware>(json, _jsonOptions);
+            : JsonSerializer.Deserialize<ApiKeyAuthenticationMiddleware>(json, JsonSerializationHelper.HardenedDeserializeOptions);
     }
 
     /// <summary>
@@ -66,7 +70,7 @@ public static class ApiKeyAuthenticationMiddlewareJsonExtensions
 
         try
         {
-            value = JsonSerializer.Deserialize<ApiKeyAuthenticationMiddleware>(json, _jsonOptions);
+            value = JsonSerializer.Deserialize<ApiKeyAuthenticationMiddleware>(json, JsonSerializationHelper.HardenedDeserializeOptions);
             return value is not null;
         }
         catch (JsonException)

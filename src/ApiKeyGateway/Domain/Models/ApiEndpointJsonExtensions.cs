@@ -1,10 +1,11 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ApiKeyGateway.Utilities;
 
 namespace ApiKeyGateway.Domain.Models;
 
@@ -34,11 +35,15 @@ public static class ApiEndpointJsonExtensions
     public static string ToJson(this ApiEndpoint value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
-        
-        var options = indented 
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } 
-             : _jsonOptions;
-        
+
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = indented,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
+
         return JsonSerializer.Serialize(value, options);
     }
 
@@ -54,33 +59,33 @@ public static class ApiEndpointJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
         ArgumentException.ThrowIfNullOrEmpty(json);
-        return JsonSerializer.Deserialize<ApiEndpoint>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<ApiEndpoint>(json, JsonSerializationHelper.HardenedDeserializeOptions);
     }
 
-/// <summary>
-/// Attempts to deserialize a JSON string to a <see cref="ApiEndpoint"/> instance.
-/// </summary>
-/// <param name="json">The JSON string to deserialize.</param>
-/// <param name="value">Receives the deserialized endpoint if successful, otherwise null.</param>
-/// <returns>True if deserialization succeeded; otherwise, false.</returns>
-public static bool TryFromJson(string json, out ApiEndpoint? value)
-{
-    value = null;
+    /// <summary>
+    /// Attempts to deserialize a JSON string to a <see cref="ApiEndpoint"/> instance.
+    /// </summary>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <param name="value">Receives the deserialized endpoint if successful, otherwise null.</param>
+    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    public static bool TryFromJson(string json, out ApiEndpoint? value)
+    {
+        value = null;
 
-    if (string.IsNullOrWhiteSpace(json))
-    {
-        return false;
-    }
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
 
-    try
-    {
-        value = JsonSerializer.Deserialize<ApiEndpoint>(json, _jsonOptions);
-        return value is not null;
+        try
+        {
+            value = JsonSerializer.Deserialize<ApiEndpoint>(json, JsonSerializationHelper.HardenedDeserializeOptions);
+            return value is not null;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
-    catch (JsonException)
-    {
-        return false;
-    }
-}
 
 }
