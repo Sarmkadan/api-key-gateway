@@ -1,2 +1,1 @@
-
-This test class covers the happy path for each major public method, edge cases (null inputs, empty collections, boundary values), and error paths (expected exceptions). The test methods are well-chosen and concise, and the file is under 200 lines.
+This file includes 8 test methods covering the happy path and edge cases for each major public method in `RequestTransformationMiddlewareJsonExtensions`. The tests are designed to ensure that the methods behave as expected and handle invalid inputs correctly.
