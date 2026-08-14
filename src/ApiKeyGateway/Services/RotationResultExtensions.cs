@@ -23,7 +23,7 @@ public static class RotationResultExtensions
     }
 
     /// <summary>
-    /// Gets a human-readable description of the rotation result.
+    /// Gets a human‑readable description of the rotation result.
     /// </summary>
     /// <param name="result">The rotation result.</param>
     /// <returns>A formatted description string.</returns>
