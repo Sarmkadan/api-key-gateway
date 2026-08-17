@@ -152,9 +152,50 @@ public sealed record ApiResponse<T>
     public object? Details { get; set; }
 
     /// <summary>
+    /// Gets or sets pagination metadata for list responses.
+    /// </summary>
+    public PaginationMetadata? Pagination { get; set; }
+
+    /// <summary>
+    /// Gets or sets non-fatal warnings associated with the response.
+    /// </summary>
+    public List<string>? Warnings { get; set; }
+
+    /// <summary>
     /// Gets the timestamp when the response was created (UTC).
     /// </summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Pagination metadata attached to list responses.
+/// </summary>
+public sealed record PaginationMetadata
+{
+    /// <summary>
+    /// Gets the current page number (1-based).
+    /// </summary>
+    public int PageNumber { get; init; }
+
+    /// <summary>
+    /// Gets the number of items per page.
+    /// </summary>
+    public int PageSize { get; init; }
+
+    /// <summary>
+    /// Gets the total number of items across all pages.
+    /// </summary>
+    public int TotalCount { get; init; }
+
+    /// <summary>
+    /// Gets the total number of pages.
+    /// </summary>
+    public int TotalPages { get; init; }
+
+    /// <summary>
+    /// Gets whether there are more pages available.
+    /// </summary>
+    public bool HasMore { get; init; }
 }
 
 /// <summary>
