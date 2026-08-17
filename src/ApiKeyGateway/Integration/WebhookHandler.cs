@@ -16,25 +16,6 @@ using ApiKeyGateway.Domain.Models;
 namespace ApiKeyGateway.Integration;
 
 /// <summary>
-/// Handles webhook subscriptions and deliveries for domain events.
-/// When certain events occur (key created, quota exceeded), webhooks
-/// are delivered to configured endpoints. This enables real-time integrations.
-/// </summary>
-public interface IWebhookHandler
-{
-    /// <summary>
-    /// Registers a webhook endpoint to receive notifications.
-    /// </summary>
-    Task<string> RegisterWebhookAsync(string url, string[] eventTypes, string? secret = null);
-
-    /// <summary>
-    /// Delivers an event to registered webhook endpoints.
-    /// Handles retries, timeouts, and signature verification.
-    /// </summary>
-    Task DeliverWebhookAsync<T>(T @event) where T : ApiKeyEvent;
-}
-
-/// <summary>
 /// Production webhook handler with retry logic and HMAC signing.
 /// Uses exponential backoff for retries to avoid overwhelming target services.
 /// </summary>
