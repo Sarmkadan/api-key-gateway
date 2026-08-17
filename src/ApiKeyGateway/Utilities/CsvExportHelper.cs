@@ -40,10 +40,13 @@ public static class CsvExportHelper
         // Write data rows
         foreach (var item in items)
         {
-            var values = properties
-                .Select(p => QuoteCsvField(p.GetValue(item)))
-                .ToList();
-            sb.AppendLine(string.Join(",", values));
+            for (int i = 0; i < properties.Length; i++)
+            {
+                if (i > 0)
+                    sb.Append(',');
+                sb.Append(QuoteCsvField(properties[i].GetValue(item)));
+            }
+            sb.AppendLine();
         }
 
         return sb.ToString();
