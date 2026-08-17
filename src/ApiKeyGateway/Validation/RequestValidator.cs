@@ -15,6 +15,8 @@ namespace ApiKeyGateway.Validation;
 /// </summary>
 public static class RequestValidator
 {
+    private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+
     /// <summary>
     /// Validates an email address format.
     /// </summary>
@@ -23,9 +25,7 @@ public static class RequestValidator
         if (string.IsNullOrWhiteSpace(email))
             return new ValidationResult { IsValid = false, Message = "Email is required" };
 
-        // Simple email validation - in production, use a library
-        var emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-        if (!Regex.IsMatch(email, emailPattern))
+        if (!EmailRegex.IsMatch(email))
             return new ValidationResult { IsValid = false, Message = "Email format is invalid" };
 
         return new ValidationResult { IsValid = true };
