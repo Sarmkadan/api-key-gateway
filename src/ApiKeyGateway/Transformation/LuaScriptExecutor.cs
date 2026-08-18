@@ -231,7 +231,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
             throw new TransformationScriptException(
                 $"Lua script exceeded memory limit of {_options.MaxMemoryBytes} bytes", ex);
         }
-        catch (Exception ex) when (ex is not TransformationScriptException)
+        catch (Exception ex) when (ex is not TransformationScriptException && !(ex is OutOfMemoryException || ex is SyntaxErrorException))
         {
             await PublishFailedEvent(
                 context.ApiKeyId,
@@ -294,10 +294,12 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         }
         catch (SyntaxErrorException ex)
         {
+            _logger.LogError(ex, "Lua script validation syntax error");
             errors.Add($"Syntax error: {ex.DecoratedMessage}");
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Lua script validation error");
             errors.Add($"Validation error: {ex.Message}");
         }
 
