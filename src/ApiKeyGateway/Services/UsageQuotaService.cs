@@ -89,7 +89,7 @@ public class UsageQuotaService : IUsageQuotaService
             quota.ResetPeriod(now);
         }
 
-        if (quota.IsExceeded)
+        if (quota.IsExceeded || now >= quota.GetPeriodEndUtc())
         {
             _logger.LogWarning(
                 "Quota exceeded for API key {ApiKeyId}: {Usage}/{Limit} in {Period} period",
