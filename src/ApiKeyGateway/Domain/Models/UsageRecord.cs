@@ -79,6 +79,7 @@ public class UsageRecord
     /// <returns>Sum of all bytes transferred</returns>
     public static long CalculateTotalBytes(IEnumerable<UsageRecord> records)
     {
+        ArgumentNullException.ThrowIfNull(records);
         return records.Sum(r => r.TotalBytes);
     }
 
@@ -89,6 +90,7 @@ public class UsageRecord
     /// <returns>Average response time in milliseconds, or 0 if no records</returns>
     public static double CalculateAverageResponseTime(IEnumerable<UsageRecord> records)
     {
+        ArgumentNullException.ThrowIfNull(records);
         var recordList = records.ToList();
         return recordList.Count > 0 ? recordList.Average(r => r.ResponseTimeMs) : 0;
     }
@@ -100,6 +102,7 @@ public class UsageRecord
     /// <returns>Number of successful requests (status code < 400)</returns>
     public static int CountSuccessfulRequests(IEnumerable<UsageRecord> records)
     {
+        ArgumentNullException.ThrowIfNull(records);
         return records.Count(r => !r.IsError);
     }
 
