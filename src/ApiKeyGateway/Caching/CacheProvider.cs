@@ -53,7 +53,7 @@ public interface ICacheProvider
 /// In-memory cache implementation using MemoryCache.
 /// Best for single-instance deployments. Use Redis adapter for clusters.
 /// </summary>
-public sealed class InMemoryCacheProvider : ICacheProvider
+public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<InMemoryCacheProvider> _logger;
@@ -163,5 +163,11 @@ public sealed class InMemoryCacheProvider : ICacheProvider
     {
         var escaped = Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".");
         return new Regex($"^{escaped}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+    }
+
+    public void Dispose()
+    {
+        _counters.Clear();
+        _trackedKeys.Clear();
     }
 }
