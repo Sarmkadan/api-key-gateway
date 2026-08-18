@@ -1,8 +1,3 @@
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 namespace ApiKeyGateway.Domain.Models;
 
 /// <summary>
@@ -48,6 +43,7 @@ public class GatewayConfiguration
     /// </summary>
     public string? GetSetting(string key)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
         return CustomSettings.TryGetValue(key, out var value) ? value : null;
     }
 
@@ -56,6 +52,8 @@ public class GatewayConfiguration
     /// </summary>
     public void SetSetting(string key, string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        ArgumentException.ThrowIfNullOrEmpty(value);
         CustomSettings[key] = value;
         UpdatedAt = DateTime.UtcNow;
     }
