@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Text.Json.Serialization;
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
@@ -15,6 +16,12 @@ public class UnauthorizedAccessException : Exception
 
     /// <summary>Source IP address where the unauthorized request originated</summary>
     public string? SourceIp { get; init; }
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="UnauthorizedAccessException"/>
+    /// </summary>
+    [JsonConstructor]
+    public UnauthorizedAccessException() : base() { }
 
     /// <summary>
     /// Initializes a new instance of <see cref="UnauthorizedAccessException"/>
