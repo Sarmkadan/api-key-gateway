@@ -20,7 +20,10 @@ public static class QueryStringHelper
     /// </summary>
     public static string BuildQueryString(IDictionary<string, string> parameters)
     {
-        if (parameters == null || parameters.Count == 0)
+        if (parameters == null)
+            throw new ArgumentNullException(nameof(parameters), "Parameters cannot be null");
+
+        if (parameters.Count == 0)
             return string.Empty;
 
         var sb = new StringBuilder();
@@ -71,6 +74,8 @@ public static class QueryStringHelper
     /// </summary>
     public static string AppendParameters(string baseUrl, IDictionary<string, string> parameters)
     {
+        ArgumentException.ThrowIfNullOrEmpty(baseUrl);
+        
         if (parameters == null || parameters.Count == 0)
             return baseUrl;
 
@@ -87,6 +92,9 @@ public static class QueryStringHelper
     /// </summary>
     public static string RemoveParameter(string url, params string[] parameterNames)
     {
+        ArgumentException.ThrowIfNullOrEmpty(url);
+        ArgumentNullException.ThrowIfNull(parameterNames);
+
         var uriBuilder = new UriBuilder(url);
         var parameters = ParseQueryString(uriBuilder.Query);
 
