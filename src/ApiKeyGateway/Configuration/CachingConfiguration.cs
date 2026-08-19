@@ -22,6 +22,8 @@ public static class CachingConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
         // Add memory cache
         services.AddMemoryCache(options =>
         {
@@ -51,6 +53,7 @@ public static class CachingConfiguration
     /// </summary>
     public static async Task ValidateCacheConfiguration(IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
         var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(CachingConfiguration).FullName!);
         var cacheProvider = serviceProvider.GetRequiredService<ICacheProvider>();
 
