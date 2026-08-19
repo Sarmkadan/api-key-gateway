@@ -22,6 +22,8 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateEmail(string email)
     {
+        ArgumentException.ThrowIfNullOrEmpty(email);
+
         if (string.IsNullOrWhiteSpace(email))
             return new ValidationResult { IsValid = false, Message = "Email is required" };
 
@@ -36,6 +38,8 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateUrl(string url, bool requireHttps = true)
     {
+        ArgumentException.ThrowIfNullOrEmpty(url);
+
         if (string.IsNullOrWhiteSpace(url))
             return new ValidationResult { IsValid = false, Message = "URL is required" };
 
@@ -53,6 +57,8 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateIpAddress(string ip)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ip);
+
         if (string.IsNullOrWhiteSpace(ip))
             return new ValidationResult { IsValid = false, Message = "IP address is required" };
 
@@ -71,6 +77,9 @@ public static class RequestValidator
         int maxLength = int.MaxValue,
         string fieldName = "Value")
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+
         if (string.IsNullOrEmpty(value))
         {
             if (minLength > 0)
@@ -104,6 +113,8 @@ public static class RequestValidator
         int maximum = int.MaxValue,
         string fieldName = "Value")
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+
         if (value < minimum || value > maximum)
             return new ValidationResult
             {
@@ -119,6 +130,8 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateGuid(Guid value, string fieldName = "ID")
     {
+        ArgumentException.ThrowIfNullOrEmpty(fieldName);
+
         if (value == Guid.Empty)
             return new ValidationResult { IsValid = false, Message = $"{fieldName} is required" };
 
