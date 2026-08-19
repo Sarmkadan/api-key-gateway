@@ -1,8 +1,3 @@
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 namespace ApiKeyGateway.Utilities;
 
 /// <summary>
@@ -20,6 +15,10 @@ public static class LoggerFactoryHelper
         IConfiguration configuration,
         string environmentName)
     {
+        ArgumentNullException.ThrowIfNull(logging);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentException.ThrowIfNullOrEmpty(environmentName);
+
         var logLevel = configuration["Logging:LogLevel:Default"] ?? "Information";
 
         // Clear default providers and add console with color
@@ -48,6 +47,8 @@ public static class LoggerFactoryHelper
     /// </summary>
     public static string MaskSensitiveData(string value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(value);
+
         if (string.IsNullOrEmpty(value) || value.Length < 8)
             return "***";
 
@@ -66,6 +67,10 @@ public static class LoggerFactoryHelper
         string resource,
         Dictionary<string, object>? context = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(action);
+        ArgumentException.ThrowIfNullOrEmpty(resource);
+        // context has default null, so skip
+
         var message = $"[{action}] {resource}";
 
         if (context?.Count > 0)
