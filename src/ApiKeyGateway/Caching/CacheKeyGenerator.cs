@@ -26,6 +26,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the API key.</returns>
     public static string GetApiKeyKey(string apiKeyId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
         return string.Create(13 + idLength, apiKeyId, (span, id) =>
         {
@@ -42,6 +43,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the API key metadata.</returns>
     public static string GetApiKeyMetadataKey(string apiKeyId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
         return string.Create(18 + idLength, apiKeyId, (span, id) =>
         {
@@ -59,6 +61,8 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the rate limit.</returns>
     public static string GetRateLimitKey(string apiKeyId, string endpoint = "*")
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
         int idLength = apiKeyId.Length;
         int endpointLength = endpoint.Length;
         int totalLength = 17 + idLength + 1 + endpointLength; // "apigw:ratelimit:" + id + ":" + endpoint
@@ -80,6 +84,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the usage statistics.</returns>
     public static string GetUsageStatsKey(string apiKeyId, DateTime date)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
         string dateStr = date.ToString("yyyy-MM-dd");
         int dateLength = dateStr.Length;
@@ -101,6 +106,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the quota.</returns>
     public static string GetQuotaKey(string apiKeyId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
         return string.Create(13 + idLength, apiKeyId, (span, id) =>
         {
@@ -136,6 +142,8 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the external API response.</returns>
     public static string GetExternalApiCacheKey(string apiName, string endpoint, Dictionary<string, string>? parameters = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiName);
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
         if (parameters?.Count > 0)
         {
             var paramHash = ComputeParameterHash(parameters);
@@ -177,6 +185,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key pattern string for invalidation.</returns>
     public static string GetApiKeyInvalidationPattern(string apiKeyId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
         return string.Create(12 + idLength + 2, apiKeyId, (span, id) =>
         {
