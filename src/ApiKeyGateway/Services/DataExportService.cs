@@ -47,8 +47,7 @@ public sealed class DataExportService : IDataExportService
 
     public async Task<string> ExportApiKeysAsync(string format)
     {
-        if (string.IsNullOrWhiteSpace(format))
-            throw new ValidationException("Format cannot be empty", nameof(format), format);
+        ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         _logger.LogInformation("Exporting API keys in {Format} format", format);
 
@@ -80,8 +79,7 @@ public sealed class DataExportService : IDataExportService
 
     public async Task<string> ExportAuditLogsAsync(string format, DateTime? since = null)
     {
-        if (string.IsNullOrWhiteSpace(format))
-            throw new ValidationException("Format cannot be empty", nameof(format), format);
+        ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         _logger.LogInformation(
             "Exporting audit logs in {Format} format since {Since}",
@@ -117,8 +115,7 @@ public sealed class DataExportService : IDataExportService
 
     public async Task<string> ExportUsageAsync(string format, DateTime startDate, DateTime endDate)
     {
-        if (string.IsNullOrWhiteSpace(format))
-            throw new ValidationException("Format cannot be empty", nameof(format), format);
+        ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         if (endDate < startDate)
             throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
