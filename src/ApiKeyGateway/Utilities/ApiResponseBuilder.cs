@@ -45,6 +45,7 @@ public sealed class ApiResponseBuilder<T>
     /// </summary>
     public ApiResponseBuilder<T> Error(int statusCode, string message, string? errorCode = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(message);
         _success = false;
         _statusCode = statusCode;
         _message = message;
@@ -57,6 +58,8 @@ public sealed class ApiResponseBuilder<T>
     /// </summary>
     public ApiResponseBuilder<T> WithMetadata(string key, object value)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        ArgumentNullException.ThrowIfNull(value);
         _metadata ??= new();
         _metadata[key] = value;
         return this;
@@ -67,6 +70,7 @@ public sealed class ApiResponseBuilder<T>
     /// </summary>
     public ApiResponseBuilder<T> AddError(string error)
     {
+        ArgumentException.ThrowIfNullOrEmpty(error);
         _errors ??= new();
         _errors.Add(error);
         return this;
@@ -124,6 +128,8 @@ public static class ApiResponseBuilderFactory
     /// </summary>
     public static object BadRequest(string message, params string[] errors)
     {
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        ArgumentNullException.ThrowIfNull(errors);
         var builder = Error<object?>(400, message, "BAD_REQUEST");
         foreach (var error in errors)
         {
