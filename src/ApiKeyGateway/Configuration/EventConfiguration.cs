@@ -26,6 +26,8 @@ public static class EventConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
         // Configure event publisher options from configuration
         services.Configure<EventPublisherOptions>(configuration.GetSection("EventPublishing"));
 
@@ -78,6 +80,7 @@ public static class EventConfiguration
     /// </remarks>
     public static void SubscribeEventHandlers(this IApplicationBuilder app)
     {
+        ArgumentNullException.ThrowIfNull(app);
         // Get the inner InMemoryEventPublisher that's wrapped by RetryingEventPublisher
         var innerPublisher = app.ApplicationServices.GetRequiredService<InMemoryEventPublisher>();
 
