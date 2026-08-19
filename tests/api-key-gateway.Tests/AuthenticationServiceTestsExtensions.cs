@@ -29,6 +29,7 @@ public static class AuthenticationServiceTestsExtensions
         ApiKeyStatus apiKeyStatus = ApiKeyStatus.Active,
         string? ipWhitelist = null)
     {
+        ArgumentNullException.ThrowIfNull(_);
         var apiKeyServiceMock = new Mock<IApiKeyService>();
         var auditLogServiceMock = new Mock<IAuditLogService>();
         var loggerMock = new Mock<ILogger<AuthenticationService>>();
@@ -67,6 +68,7 @@ public static class AuthenticationServiceTestsExtensions
         this AuthenticationServiceTests _,
         ApiKeyStatus deactivatedStatus)
     {
+        ArgumentNullException.ThrowIfNull(_);
         // Arrange
         var authService = _.CreateMockAuthenticationService(apiKeyStatus: deactivatedStatus);
         var deactivatedKey = deactivatedStatus switch
@@ -101,6 +103,7 @@ public static class AuthenticationServiceTestsExtensions
     /// <returns>Read-only list of test API keys</returns>
     public static IReadOnlyList<ApiKey> CreateTestApiKeys(this AuthenticationServiceTests _)
     {
+        ArgumentNullException.ThrowIfNull(_);
         return new List<ApiKey>
         {
             new ApiKey
@@ -141,6 +144,7 @@ public static class AuthenticationServiceTestsExtensions
     public static async Task AuthenticateAsync_InvalidKeyFormat_ReturnsFailureResult(
         this AuthenticationServiceTests _)
     {
+        ArgumentNullException.ThrowIfNull(_);
         // Arrange
         var authService = _.CreateMockAuthenticationService();
         var invalidKeys = new[] { "invalid", "short", "no-prefix", "sk_", "SK_VALIDKEY123" };
