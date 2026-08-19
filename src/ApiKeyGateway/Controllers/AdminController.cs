@@ -36,6 +36,11 @@ public sealed class AdminController : ControllerBase
         IDataExportService dataExportService,
         IAuditLogRepository auditLogRepository) // Updated constructor
     {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(metricsService);
+        ArgumentNullException.ThrowIfNull(dataExportService);
+        ArgumentNullException.ThrowIfNull(auditLogRepository);
+
         _logger = logger;
         _metricsService = metricsService;
         _dataExportService = dataExportService;
@@ -78,6 +83,8 @@ public sealed class AdminController : ControllerBase
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(format);
+
         _logger.LogInformation("Export usage data requested in {Format} format", format);
 
         var now = DateTime.UtcNow;
