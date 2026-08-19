@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using ApiKeyGateway.Middleware;
 
 namespace ApiKeyGateway.Configuration;
@@ -20,6 +21,9 @@ public static class MiddlewareConfiguration
     /// </summary>
     public static void UseGatewayMiddleware(this WebApplication app)
     {
+        // Guard against null arguments
+        ArgumentNullException.ThrowIfNull(app);
+
         // 1. Error handling should be first to catch all exceptions
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
@@ -48,6 +52,10 @@ public static class MiddlewareConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Guard against null arguments
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         // Configure logging
         services.AddLogging(configure =>
         {
