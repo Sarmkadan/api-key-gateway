@@ -62,9 +62,9 @@ public static class RateLimitCalculationHelper
     /// <param name="windowStart">Start time of the current rate limit window.</param>
     /// <param name="unit">Time unit for the rate limit window.</param>
     /// <returns>
-    /// 0 if the request is allowed immediately (currentUsage &lt; limit),
-    /// <see cref="int.MaxValue"/> if the request exceeds the limit (currentUsage &gt;= limit),
-    /// or the number of seconds until the window resets (0 &lt; result &lt; int.MaxValue).
+    /// 0 if the request is allowed immediately (currentUsage < limit),
+    /// <see cref="int.MaxValue"/> if the request exceeds the limit (currentUsage >= limit),
+    /// or the number of seconds until the window resets (0 < result < int.MaxValue).
     /// </returns>
     public static int GetSecondsUntilAllowed(int currentUsage, int limit, DateTime windowStart, RateLimitUnit unit)
     {
