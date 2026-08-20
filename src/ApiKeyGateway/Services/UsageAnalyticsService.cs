@@ -134,13 +134,14 @@ public class UsageAnalyticsService : IUsageAnalyticsService
         if (to < from)
             throw new ArgumentException("End date must be after start date", nameof(to));
 
+        _logger.LogInformation("Getting summary for {ApiKeyId} from {From} to {To}", apiKeyId, from, to);
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
         var total = records.Count;
         var failed = records.Count(r => r.IsError);
         var succeeded = total - failed;
 
-        return new AnalyticsSummary
+        var summary = new AnalyticsSummary
         {
             ApiKeyId = apiKeyId,
             From = from,
@@ -159,6 +160,8 @@ public class UsageAnalyticsService : IUsageAnalyticsService
                 .Distinct()
                 .Count()
         };
+        _logger.LogInformation("Finished getting summary for {ApiKeyId}", apiKeyId);
+        return summary;
     }
 
     /// <inheritdoc/>
