@@ -62,68 +62,80 @@ public sealed class RequestTransformationMiddleware
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
+        _logger.LogInformation("InvokeAsync called. IsEnabled: {IsEnabled}", _options.IsEnabled);
+
         if (!_options.IsEnabled)
         {
+            _logger.LogInformation("Middleware is disabled. Passing request to next middleware.");
             await _next(context);
             return;
         }
 
-        // Resolve identity written by ApiKeyAuthenticationMiddleware.
-        var apiKey = context.Items.TryGetValue("ApiKey", out var k) ? k as ApiKey : null;
-        var consumerId = context.Items.TryGetValue("ConsumerId", out var c) ? c as string : null;
-
-        // Optionally buffer the request body so scripts can inspect it.
-        if (_options.EnableBodyCapture && HasBody(context.Request))
-            context.Request.EnableBuffering(_options.MaxBodySizeBytes);
-
-        var transformContext = new TransformationContext(context.Request, apiKey?.Id, consumerId);
-
-        // Capture body when buffering is enabled and the request has one.
-        if (_options.EnableBodyCapture && HasBody(context.Request))
-            transformContext.Body = await ReadBodyAsync(context.Request, context.RequestAborted);
-
-        var result = await _pipeline.ApplyAsync(transformContext, context.RequestAborted);
-
-        if (result.IsBlocked)
+        try
         {
-            _logger.LogWarning(
-                "Request blocked by transformation pipeline — reason: {BlockReason}",
-                result.BlockReason ?? "(no reason supplied)");
+            // Resolve identity written by ApiKeyAuthenticationMiddleware.
+            var apiKey = context.Items.TryGetValue("ApiKey", out var k) ? k as ApiKey : null;
+            var consumerId = context.Items.TryGetValue("ConsumerId", out var c) ? c as string : null;
 
-            var problemDetails = GatewayProblemDetailsFactory.CreateTransformationBlockedProblem(
-                context,
-                result.BlockReason ?? "Request blocked by transformation policy");
-            await context.WriteProblemAsync(problemDetails);
+            // Optionally buffer the request body so scripts can inspect it.
+            if (_options.EnableBodyCapture && HasBody(context.Request))
+                context.Request.EnableBuffering(_options.MaxBodySizeBytes);
 
-            return;
+            var transformContext = new TransformationContext(context.Request, apiKey?.Id, consumerId);
+
+            // Capture body when buffering is enabled and the request has one.
+            if (_options.EnableBodyCapture && HasBody(context.Request))
+                transformContext.Body = await ReadBodyAsync(context.Request, context.RequestAborted);
+
+            var result = await _pipeline.ApplyAsync(transformContext, context.RequestAborted);
+
+            if (result.IsBlocked)
+            {
+                _logger.LogWarning(
+                    "Request blocked by transformation pipeline — reason: {BlockReason}",
+                    result.BlockReason ?? "(no reason supplied)");
+
+                var problemDetails = GatewayProblemDetailsFactory.CreateTransformationBlockedProblem(
+                    context,
+                    result.BlockReason ?? "Request blocked by transformation policy");
+                await context.WriteProblemAsync(problemDetails);
+
+                return;
+            }
+
+            // Apply header mutations back onto the live request.
+            ApplyHeaderMutations(context.Request, transformContext);
+
+            // Apply query-string mutations.
+            ApplyQueryMutations(context.Request, transformContext);
+
+            // Apply path mutation when the script or built-in action rewrote it.
+            if (!string.Equals(transformContext.Path, context.Request.Path.ToString(),
+                StringComparison.OrdinalIgnoreCase))
+            {
+                context.Request.Path = new PathString(transformContext.Path);
+            }
+
+            // If the body was modified, swap in the rewritten content.
+            if (_options.EnableBodyCapture && transformContext.Body is not null)
+                await ReplaceBodyAsync(context.Request, transformContext.Body);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning(
+                    "Transformation pipeline completed with {ErrorCount} non-fatal error(s): {Errors}",
+                    result.Errors.Count,
+                    string.Join("; ", result.Errors.Select(e => $"{e.Key}: {e.Value}")));
+            }
+
+            _logger.LogInformation("Transformation completed. Passing request to next middleware.");
+            await _next(context);
         }
-
-        // Apply header mutations back onto the live request.
-        ApplyHeaderMutations(context.Request, transformContext);
-
-        // Apply query-string mutations.
-        ApplyQueryMutations(context.Request, transformContext);
-
-        // Apply path mutation when the script or built-in action rewrote it.
-        if (!string.Equals(transformContext.Path, context.Request.Path.ToString(),
-            StringComparison.OrdinalIgnoreCase))
+        catch (Exception ex)
         {
-            context.Request.Path = new PathString(transformContext.Path);
+            _logger.LogError(ex, "An error occurred during request transformation.");
+            throw;
         }
-
-        // If the body was modified, swap in the rewritten content.
-        if (_options.EnableBodyCapture && transformContext.Body is not null)
-            await ReplaceBodyAsync(context.Request, transformContext.Body);
-
-        if (!result.Success)
-        {
-            _logger.LogWarning(
-                "Transformation pipeline completed with {ErrorCount} non-fatal error(s): {Errors}",
-                result.Errors.Count,
-                string.Join("; ", result.Errors.Select(e => $"{e.Key}: {e.Value}")));
-        }
-
-        await _next(context);
     }
 
     // -------------------------------------------------------------------------
