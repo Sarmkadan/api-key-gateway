@@ -1,9 +1,5 @@
-// =============================================================================
-// Author: Vladyslav Zaiets | https://sarmkadan.com
-// CTO & Software Architect
-// =============================================================================
-
 using ApiKeyGateway.Utilities;
+using Microsoft.Extensions.Logging;
 
 namespace ApiKeyGateway.Middleware;
 
@@ -41,18 +37,10 @@ public sealed class CorrelationContextMiddleware
         // Add correlation ID to response headers
         context.Response.Headers.Add(CorrelationIdHeader, correlationId);
 
-        _logger.LogDebug(
-            "Request initiated | Correlation: {CorrelationId} | API-Key: {ApiKey} | Client: {ClientIp}",
-            correlationId,
-            apiKey?.Substring(0, 4) + "..." ?? "NONE",
-            context.Items["ClientIp"]);
-
+        _logger.LogInformation("InvokeAsync called with {CorrelationId}", correlationId);
+        _logger.LogInformation("Request initiated | Correlation: {CorrelationId} | API-Key: {ApiKey} | Client: {ClientIp}", correlationId, apiKey?.Substring(0, 4) + "..." ?? "NONE", context.Items["ClientIp"]);
         await _next(context);
-
-        _logger.LogDebug(
-            "Request completed | Correlation: {CorrelationId} | Status: {StatusCode}",
-            correlationId,
-            context.Response.StatusCode);
+        _logger.LogInformation("Request completed | Correlation: {CorrelationId} | Status: {StatusCode}", correlationId, context.Response.StatusCode);
     }
 }
 
