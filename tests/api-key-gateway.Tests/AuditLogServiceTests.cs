@@ -23,6 +23,7 @@ public class AuditLogServiceTests
 {
     private readonly Mock<IAuditLogRepository> _repositoryMock;
     private readonly Mock<ILogger<AuditLogService>> _loggerMock;
+    private readonly ILogger<AuditLogService> _logger;
     private readonly AuditLogService _sut;
 
     /// <summary>
@@ -33,7 +34,10 @@ public class AuditLogServiceTests
     {
         _repositoryMock = new Mock<IAuditLogRepository>();
         _loggerMock = new Mock<ILogger<AuditLogService>>();
+        _logger = _loggerMock.Object;
         _sut = new AuditLogService(_repositoryMock.Object, _loggerMock.Object);
+
+        _logger.LogInformation("Initialized {TestClass} with mocked repository and logger", nameof(AuditLogServiceTests));
     }
 
     /// <summary>
@@ -43,8 +47,12 @@ public class AuditLogServiceTests
     [Fact]
     public void Constructor_NullRepository_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Validating {Scenario} throws {ExceptionType}", "null repository", nameof(ArgumentNullException));
+
         var act = () => new AuditLogService(null!, _loggerMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
+
+        _logger.LogInformation("Validation completed for {Scenario}", "null repository");
     }
 
     /// <summary>
@@ -54,8 +62,12 @@ public class AuditLogServiceTests
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Validating {Scenario} throws {ExceptionType}", "null logger", nameof(ArgumentNullException));
+
         var act = () => new AuditLogService(_repositoryMock.Object, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+
+        _logger.LogInformation("Validation completed for {Scenario}", "null logger");
     }
 
     /// <summary>
@@ -65,8 +77,12 @@ public class AuditLogServiceTests
     [Fact]
     public async Task LogAsync_NullLog_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Validating {Operation} rejects a null log", nameof(AuditLogService.LogAsync));
+
         var act = async () => await _sut.LogAsync(null!);
         await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("log");
+
+        _logger.LogInformation("Null-log rejection validated for {Operation}", nameof(AuditLogService.LogAsync));
     }
 
     /// <summary>
@@ -86,12 +102,16 @@ public class AuditLogServiceTests
             PerformedBy = "admin-user"
         };
 
+        _logger.LogInformation("Logging audit entry {LogId} for resource {ResourceId} with action {Action}", log.Id, log.ResourceId, log.Action);
+
         _repositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<AuditLog>()))
             .Returns(Task.CompletedTask);
 
         await _sut.LogAsync(log);
         await _sut.FlushAsync();
+
+        _logger.LogInformation("Audit entry {LogId} persisted for resource {ResourceId}", log.Id, log.ResourceId);
 
         _repositoryMock.Verify(r => r.CreateAsync(log), Times.Once);
     }
@@ -111,6 +131,9 @@ public class AuditLogServiceTests
             IsSuccess = false
         };
 
+        _logger.LogInformation("Logging audit entry for resource {ResourceId} with action {Action}", log.ResourceId, log.Action);
+        _logger.LogWarning("Repository failure injected for resource {ResourceId}; degraded path expected", log.ResourceId);
+
         _repositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<AuditLog>()))
             .ThrowsAsync(new InvalidOperationException("DB error"));
@@ -120,6 +143,8 @@ public class AuditLogServiceTests
         await act.Should().NotThrowAsync("service should handle repository errors gracefully");
 
         await _sut.FlushAsync();
+
+        _logger.LogInformation("Degraded logging path handled gracefully for resource {ResourceId}", log.ResourceId);
     }
 
     /// <summary>
@@ -138,12 +163,16 @@ public class AuditLogServiceTests
             PerformedBy = "consumer-abc"
         };
 
+        _logger.LogInformation("Verifying successful audit log for resource {ResourceId} performed by {PerformedBy}", log.ResourceId, log.PerformedBy);
+
         _repositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<AuditLog>()))
             .Returns(Task.CompletedTask);
 
         await _sut.LogAsync(log);
         await _sut.FlushAsync();
+
+        _logger.LogInformation("Successful audit log verified for resource {ResourceId}", log.ResourceId);
 
         _loggerMock.Verify(
             l => l.Log(
@@ -163,7 +192,11 @@ public class AuditLogServiceTests
     [InlineData("   ")]
     public async Task GetLogsAsync_EmptyOrNullResourceId_ReturnsEmptyList(string? resourceId)
     {
+        _logger.LogInformation("Querying audit logs with invalid resource id: {ResourceId}", resourceId);
+
         var result = await _sut.GetLogsAsync(resourceId!);
+
+        _logger.LogInformation("Invalid resource id query returned {Count} logs for {ResourceId}", result.Count, resourceId);
 
         result.Should().BeEmpty();
         _repositoryMock.Verify(r => r.GetByResourceIdAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
@@ -176,6 +209,8 @@ public class AuditLogServiceTests
     [Fact]
     public async Task GetLogsAsync_ValidResourceId_ReturnsLogsFromRepository()
     {
+        _logger.LogInformation("Retrieving audit logs for resource {ResourceId}", "key-789");
+
         var logs = new List<AuditLog>
         {
             new() { ResourceId = "key-789", ResourceType = "ApiKey", Action = AuditAction.KeyCreated },
@@ -189,6 +224,8 @@ public class AuditLogServiceTests
 
         var result = await _sut.GetLogsAsync("key-789");
 
+        _logger.LogInformation("Retrieved {Count} audit logs for resource {ResourceId}", result.Count, "key-789");
+
         result.Should().HaveCount(3);
         result.Should().BeEquivalentTo(logs);
     }
@@ -200,6 +237,8 @@ public class AuditLogServiceTests
     [Fact]
     public async Task GetLogsAsync_WithCustomLimit_PassesLimitToRepository()
     {
+        _logger.LogInformation("Retrieving audit logs for resource {ResourceId} with custom limit {Limit}", "key-999", 50);
+
         var logs = new List<AuditLog> { new() { ResourceId = "key-999", ResourceType = "ApiKey" } };
 
         _repositoryMock
@@ -207,6 +246,8 @@ public class AuditLogServiceTests
             .ReturnsAsync(logs);
 
         var result = await _sut.GetLogsAsync("key-999", 50);
+
+        _logger.LogInformation("Retrieved {Count} audit logs for resource {ResourceId} with limit {Limit}", result.Count, "key-999", 50);
 
         result.Should().HaveCount(1);
         _repositoryMock.Verify(r => r.GetByResourceIdAsync("key-999", 50), Times.Once);
@@ -219,11 +260,15 @@ public class AuditLogServiceTests
     [Fact]
     public async Task GetLogsAsync_NoLogsFound_ReturnsEmptyList()
     {
+        _logger.LogInformation("Retrieving audit logs for resource {ResourceId}", "key-notfound");
+
         _repositoryMock
             .Setup(r => r.GetByResourceIdAsync("key-notfound", 100))
             .ReturnsAsync(new List<AuditLog>());
 
         var result = await _sut.GetLogsAsync("key-notfound");
+
+        _logger.LogInformation("No audit logs found for resource {ResourceId}", "key-notfound");
 
         result.Should().BeEmpty();
     }
@@ -238,9 +283,13 @@ public class AuditLogServiceTests
         var startDate = DateTime.UtcNow;
         var endDate = startDate.AddDays(-1);
 
+        _logger.LogInformation("Validating period query with start {StartDate} and end {EndDate}", startDate, endDate);
+
         var act = async () => await _sut.GetLogsForPeriodAsync(startDate, endDate);
 
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("*End date must be after start date*");
+
+        _logger.LogInformation("Invalid period rejected for range {StartDate} - {EndDate}", startDate, endDate);
     }
 
     /// <summary>
@@ -252,6 +301,9 @@ public class AuditLogServiceTests
     {
         var startDate = DateTime.UtcNow.AddDays(-7);
         var endDate = DateTime.UtcNow;
+
+        _logger.LogInformation("Retrieving audit logs between {StartDate} and {EndDate}", startDate, endDate);
+
         var logs = new List<AuditLog>
         {
             new() { ResourceId = "key-aaa", Action = AuditAction.KeyCreated, PerformedAt = startDate.AddHours(1) },
@@ -264,6 +316,8 @@ public class AuditLogServiceTests
             .ReturnsAsync(logs);
 
         var result = await _sut.GetLogsForPeriodAsync(startDate, endDate);
+
+        _logger.LogInformation("Retrieved {Count} audit logs between {StartDate} and {EndDate}", result.Count, startDate, endDate);
 
         result.Should().HaveCount(3);
         result.Should().BeEquivalentTo(logs);
@@ -279,11 +333,15 @@ public class AuditLogServiceTests
         var startDate = DateTime.UtcNow.AddDays(-30);
         var endDate = DateTime.UtcNow.AddDays(-25);
 
+        _logger.LogInformation("Retrieving audit logs between {StartDate} and {EndDate}", startDate, endDate);
+
         _repositoryMock
             .Setup(r => r.GetByDateRangeAsync(startDate, endDate))
             .ReturnsAsync(new List<AuditLog>());
 
         var result = await _sut.GetLogsForPeriodAsync(startDate, endDate);
+
+        _logger.LogInformation("No audit logs found between {StartDate} and {EndDate}", startDate, endDate);
 
         result.Should().BeEmpty();
     }
@@ -299,8 +357,12 @@ public class AuditLogServiceTests
     [InlineData(-100)]
     public async Task CleanupOldLogsAsync_InvalidRetentionDays_ThrowsArgumentException(int retentionDays)
     {
+        _logger.LogWarning("Cleanup requested with invalid retention days: {RetentionDays}", retentionDays);
+
         var act = async () => await _sut.CleanupOldLogsAsync(retentionDays);
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("*Retention days must be positive*");
+
+        _logger.LogInformation("Invalid retention days rejected: {RetentionDays}", retentionDays);
     }
 
     /// <summary>
@@ -310,11 +372,15 @@ public class AuditLogServiceTests
     [Fact]
     public async Task CleanupOldLogsAsync_ValidRetentionDays_DeletesOldLogsAndLogsSuccess()
     {
+        _logger.LogInformation("Cleaning up audit logs older than {RetentionDays} days", 30);
+
         _repositoryMock
             .Setup(r => r.DeleteOlderThanAsync(It.IsAny<DateTime>()))
             .ReturnsAsync(42);
 
         await _sut.CleanupOldLogsAsync(30);
+
+        _logger.LogInformation("Cleanup removed {DeletedCount} logs for retention of {RetentionDays} days", 42, 30);
 
         _repositoryMock.Verify(r => r.DeleteOlderThanAsync(It.Is<DateTime>(
             dt => dt < DateTime.UtcNow && dt > DateTime.UtcNow.AddDays(-31)
@@ -328,11 +394,15 @@ public class AuditLogServiceTests
     [Fact]
     public async Task CleanupOldLogsAsync_NoLogsDeleted_LogsZeroCount()
     {
+        _logger.LogInformation("Cleaning up audit logs older than {RetentionDays} days", 90);
+
         _repositoryMock
             .Setup(r => r.DeleteOlderThanAsync(It.IsAny<DateTime>()))
             .ReturnsAsync(0);
 
         await _sut.CleanupOldLogsAsync(90);
+
+        _logger.LogInformation("Cleanup completed with {DeletedCount} logs deleted for retention of {RetentionDays} days", 0, 90);
 
         _repositoryMock.Verify(r => r.DeleteOlderThanAsync(It.IsAny<DateTime>()), Times.Once);
     }
@@ -344,6 +414,9 @@ public class AuditLogServiceTests
     [Fact]
     public async Task CleanupOldLogsAsync_RepositoryThrows_FailsSilently()
     {
+        _logger.LogInformation("Cleaning up audit logs older than {RetentionDays} days", 30);
+        _logger.LogWarning("Repository failure injected during cleanup; degraded path expected");
+
         _repositoryMock
             .Setup(r => r.DeleteOlderThanAsync(It.IsAny<DateTime>()))
             .ThrowsAsync(new InvalidOperationException("DB error"));
@@ -351,6 +424,9 @@ public class AuditLogServiceTests
         var act = async () => await _sut.CleanupOldLogsAsync(30);
 
         await act.Should().NotThrowAsync();
+
+        _logger.LogInformation("Cleanup degradation handled gracefully for retention of {RetentionDays} days", 30);
+
         _loggerMock.Verify(
             l => l.Log(
                 LogLevel.Error,
@@ -382,12 +458,17 @@ public class AuditLogServiceTests
             Action = AuditAction.KeyUsed
         }).ToList();
 
+        _logger.LogInformation("Logging {LogCount} audit entries concurrently", logs.Count);
+
         var tasks = logs.Select(log => _sut.LogAsync(log));
 
         var act = async () => await Task.WhenAll(tasks);
 
         await act.Should().NotThrowAsync();
         await _sut.FlushAsync();
+
+        _logger.LogInformation("Concurrent logging completed for {LogCount} entries", logs.Count);
+
         _repositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Exactly(50));
     }
 
@@ -398,6 +479,8 @@ public class AuditLogServiceTests
     [Fact]
     public async Task GetLogsAsync_DefaultLimit_Uses100()
     {
+        _logger.LogInformation("Retrieving audit logs for resource {ResourceId} with default limit {Limit}", "key-batch", 100);
+
         var logs = Enumerable.Range(0, 50).Select(i => new AuditLog
         {
             ResourceId = "key-batch",
@@ -409,6 +492,8 @@ public class AuditLogServiceTests
             .ReturnsAsync(logs);
 
         var result = await _sut.GetLogsAsync("key-batch");
+
+        _logger.LogInformation("Retrieved {Count} audit logs for resource {ResourceId} using default limit {Limit}", result.Count, "key-batch", 100);
 
         result.Should().HaveCount(50);
         _repositoryMock.Verify(r => r.GetByResourceIdAsync("key-batch", 100), Times.Once);
