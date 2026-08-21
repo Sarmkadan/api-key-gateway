@@ -32,11 +32,15 @@ public class MetricsCollectionServiceTests
     [Fact]
     public void RecordRequest_ValidData_UpdatesMetrics()
     {
+        // Arrange
+        _loggerMock.Object.LogInformation("Recording request for {ApiKeyId} with endpoint {Endpoint}", "api-1", "GET /test");
+
         // Act
         _sut.RecordRequest("api-1", "GET /test", 200, 100);
         var snapshot = _sut.GetSnapshot();
 
         // Assert
+        _loggerMock.Object.LogInformation("Snapshot after request has {TotalRequests} total requests and {AverageLatencyMs} average latency", snapshot.TotalRequests, snapshot.AverageLatencyMs);
         snapshot.TotalRequests.Should().Be(1);
         snapshot.AverageLatencyMs.Should().Be(100);
     }
@@ -48,11 +52,15 @@ public class MetricsCollectionServiceTests
     [Fact]
     public void RecordError_ValidData_UpdatesMetrics()
     {
+        // Arrange
+        _loggerMock.Object.LogInformation("Recording error for {ApiKeyId} with error code {ErrorCode}", "api-1", "ERR_01");
+
         // Act
         _sut.RecordError("api-1", "ERR_01");
         var snapshot = _sut.GetSnapshot();
 
         // Assert
+        _loggerMock.Object.LogInformation("Snapshot after error has {TotalErrors} total errors and error code {ErrorCode}", snapshot.TotalErrors, "ERR_01");
         snapshot.TotalErrors.Should().Be(1);
         snapshot.ErrorsByCode.Should().ContainKey("ERR_01");
     }
