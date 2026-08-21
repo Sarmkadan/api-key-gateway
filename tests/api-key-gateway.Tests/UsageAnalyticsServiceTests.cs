@@ -64,8 +64,10 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_EmptyKeyId_ThrowsArgumentException()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetSummaryAsync_EmptyKeyId_ThrowsArgumentException));
 		var act = async () => await _sut.GetSummaryAsync(string.Empty, From, To);
 		await act.Should().ThrowAsync<ArgumentException>();
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetSummaryAsync_EmptyKeyId_ThrowsArgumentException));
 	}
 
 	[Fact]
@@ -75,8 +77,10 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_EndBeforeStart_ThrowsArgumentException()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetSummaryAsync_EndBeforeStart_ThrowsArgumentException));
 		var act = async () => await _sut.GetSummaryAsync("key-1", To, From);
 		await act.Should().ThrowAsync<ArgumentException>();
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetSummaryAsync_EndBeforeStart_ThrowsArgumentException));
 	}
 
 	[Fact]
@@ -86,6 +90,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_NoRecords_ReturnsZeroMetrics()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetSummaryAsync_NoRecords_ReturnsZeroMetrics));
 		// Arrange
 		_trackingMock
 			.Setup(t => t.GetUsageRecordsAsync("key-1", From, To))
@@ -103,6 +108,7 @@ public class UsageAnalyticsServiceTests
 		summary.AverageResponseTimeMs.Should().Be(0);
 		summary.UniqueEndpoints.Should().Be(0);
 		summary.UniqueSourceIps.Should().Be(0);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetSummaryAsync_NoRecords_ReturnsZeroMetrics));
 	}
 
 	[Fact]
@@ -112,6 +118,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetSummaryAsync_MixedRecords_CalculatesMetricsCorrectly()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetSummaryAsync_MixedRecords_CalculatesMetricsCorrectly));
 		// Arrange
 		var records = BuildRecords(new[]
 		{
@@ -137,6 +144,7 @@ public class UsageAnalyticsServiceTests
 		summary.AverageResponseTimeMs.Should().Be(106.25); // (100+200+50+75)/4
 		summary.UniqueEndpoints.Should().Be(3);
 		summary.UniqueSourceIps.Should().Be(3);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetSummaryAsync_MixedRecords_CalculatesMetricsCorrectly));
 	}
 
 	[Fact]
@@ -146,6 +154,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetTopEndpointsAsync_ReturnsEndpointsOrderedByCount()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetTopEndpointsAsync_ReturnsEndpointsOrderedByCount));
 		// Arrange
 		var records = BuildRecords(new[]
 		{
@@ -173,6 +182,7 @@ public class UsageAnalyticsServiceTests
 		endpoints[2].Endpoint.Should().Be("/api/items");
 		endpoints[2].ErrorCount.Should().Be(1);
 		endpoints[2].ErrorRatePercent.Should().Be(100);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetTopEndpointsAsync_ReturnsEndpointsOrderedByCount));
 	}
 
 	[Fact]
@@ -182,6 +192,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetTopEndpointsAsync_LimitRespected()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetTopEndpointsAsync_LimitRespected));
 		// Arrange
 		var records = BuildRecords(new[]
 		{
@@ -199,6 +210,7 @@ public class UsageAnalyticsServiceTests
 
 		// Assert
 		endpoints.Should().HaveCount(2);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetTopEndpointsAsync_LimitRespected));
 	}
 
 	[Fact]
@@ -208,6 +220,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetHourlyTrendAsync_GroupsByHour()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetHourlyTrendAsync_GroupsByHour));
 		// Arrange
 		var hour1 = new DateTime(2025, 1, 1, 10, 0, 0, DateTimeKind.Utc);
 		var hour2 = new DateTime(2025, 1, 1, 11, 0, 0, DateTimeKind.Utc);
@@ -233,6 +246,7 @@ public class UsageAnalyticsServiceTests
 		buckets[1].Hour.Should().Be(hour2);
 		buckets[1].RequestCount.Should().Be(1);
 		buckets[1].ErrorCount.Should().Be(1);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetHourlyTrendAsync_GroupsByHour));
 	}
 
 	[Fact]
@@ -242,6 +256,7 @@ public class UsageAnalyticsServiceTests
 	/// <returns>A task representing the asynchronous test operation.</returns>
 	public async Task GetDailyTrendAsync_GroupsByDay()
 	{
+		_loggerMock.Object.LogInformation("Executing test: {TestName}", nameof(GetDailyTrendAsync_GroupsByDay));
 		// Arrange
 		var day1 = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		var day2 = new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc);
@@ -267,6 +282,7 @@ public class UsageAnalyticsServiceTests
 		buckets[0].TotalBytes.Should().Be(450); // 100+200+50+100
 		buckets[1].Date.Should().Be(day2);
 		buckets[1].ErrorCount.Should().Be(1);
+		_loggerMock.Object.LogInformation("Finished test: {TestName}", nameof(GetDailyTrendAsync_GroupsByDay));
 	}
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
