@@ -25,6 +25,7 @@ public class AuthenticationServiceTests
     private readonly Mock<IApiKeyService> _apiKeyServiceMock;
     private readonly Mock<IAuditLogService> _auditLogServiceMock;
     private readonly Mock<ILogger<AuthenticationService>> _loggerMock;
+    private readonly ILogger<AuthenticationService> _logger;
     private readonly AuthenticationService _sut;
 
     /// <summary>
@@ -35,7 +36,10 @@ public class AuthenticationServiceTests
         _apiKeyServiceMock = new Mock<IApiKeyService>();
         _auditLogServiceMock = new Mock<IAuditLogService>();
         _loggerMock = new Mock<ILogger<AuthenticationService>>();
+        _logger = _loggerMock.Object;
         _sut = new AuthenticationService(_apiKeyServiceMock.Object, _auditLogServiceMock.Object, _loggerMock.Object);
+
+        _logger.LogInformation("Initialized {TestClass} with mocked api key service, audit log service and logger", nameof(AuthenticationServiceTests));
     }
 
     /// <summary>
@@ -44,8 +48,12 @@ public class AuthenticationServiceTests
     [Fact]
     public void Constructor_NullApiKeyService_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Validating {Scenario} throws {ExceptionType}", "null api key service", nameof(ArgumentNullException));
+
         var act = () => new AuthenticationService(null!, _auditLogServiceMock.Object, _loggerMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("apiKeyService");
+
+        _logger.LogInformation("Validation completed for {Scenario}", "null api key service");
     }
 
     /// <summary>
@@ -54,8 +62,12 @@ public class AuthenticationServiceTests
     [Fact]
     public void Constructor_NullAuditLogService_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Validating {Scenario} throws {ExceptionType}", "null audit log service", nameof(ArgumentNullException));
+
         var act = () => new AuthenticationService(_apiKeyServiceMock.Object, null!, _loggerMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("auditLogService");
+
+        _logger.LogInformation("Validation completed for {Scenario}", "null audit log service");
     }
 
     /// <summary>
@@ -78,7 +90,12 @@ public class AuthenticationServiceTests
     [InlineData(" ")]
     public async Task AuthenticateAsync_EmptyOrNullApiKey_ReturnsFailureResult(string? apiKey)
     {
+        _logger.LogInformation("Querying authentication with invalid api key: {ApiKey}", apiKey);
+
         var result = await _sut.AuthenticateAsync(apiKey!, "192.168.1.1");
+
+        _logger.LogInformation("Invalid api key query returned {FailureReason} for {ApiKey}", result.FailureReason, apiKey);
+
         result.Success.Should().BeFalse();
         result.FailureReason.Should().Be(AuthenticationFailureReason.MissingApiKey);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
@@ -90,6 +107,8 @@ public class AuthenticationServiceTests
     [Fact]
     public async Task AuthenticateAsync_InvalidKey_ReturnsFailureResultWithInvalidFormatReason()
     {
+        _logger.LogInformation("Validating invalid key {ApiKey}", "sk_invalidkey");
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_invalidkey"))
             .ReturnsAsync((ApiKey?)null);
@@ -99,6 +118,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_invalidkey", "192.168.1.1");
+
+        _logger.LogWarning("Invalid key format detected for key {ApiKey}", "sk_invalidkey");
+
         result.Success.Should().BeFalse();
         result.FailureReason.Should().Be(AuthenticationFailureReason.InvalidApiKeyFormat);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
@@ -118,6 +140,8 @@ public class AuthenticationServiceTests
             ExpiresAt = DateTime.UtcNow.AddDays(-1) // Expired yesterday
         };
 
+        _logger.LogInformation("Validating expired key {KeyId} for consumer {ConsumerId}", expiredKey.Id, expiredKey.ConsumerId);
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_expiredkey"))
             .ReturnsAsync(expiredKey);
@@ -127,6 +151,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_expiredkey", "192.168.1.1");
+
+        _logger.LogWarning("Expired key {KeyId} rejected for consumer {ConsumerId}", expiredKey.Id, expiredKey.ConsumerId);
+
         result.Success.Should().BeFalse();
         result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyExpired);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
@@ -145,6 +172,8 @@ public class AuthenticationServiceTests
             Status = ApiKeyStatus.Disabled
         };
 
+        _logger.LogInformation("Validating disabled key {KeyId} for consumer {ConsumerId}", disabledKey.Id, disabledKey.ConsumerId);
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_disabledkey"))
             .ReturnsAsync(disabledKey);
@@ -154,6 +183,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_disabledkey", "192.168.1.1");
+
+        _logger.LogWarning("Disabled key {KeyId} rejected for consumer {ConsumerId}", disabledKey.Id, disabledKey.ConsumerId);
+
         result.Success.Should().BeFalse();
         result.FailureReason.Should().Be(AuthenticationFailureReason.ApiKeyDisabled);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
@@ -167,6 +199,8 @@ public class AuthenticationServiceTests
     {
         var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
 
+        _logger.LogInformation("Validating valid key {KeyId} for consumer {ConsumerId}", key.Id, key.ConsumerId);
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_validkey123456789"))
             .ReturnsAsync(key);
@@ -176,6 +210,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_validkey123456789", "192.168.1.1");
+
+        _logger.LogInformation("Valid key {KeyId} authenticated successfully for consumer {ConsumerId}", key.Id, key.ConsumerId);
+
         result.Success.Should().BeTrue();
         result.ApiKey.Should().NotBeNull();
         result.ApiKey!.Id.Should().Be("key-123");
@@ -196,6 +233,8 @@ public class AuthenticationServiceTests
             IpWhitelist = "192.168.1.1,192.168.1.2"
         };
 
+        _logger.LogInformation("Validating key {KeyId} from ip {IpAddress} against whitelist", key.Id, "192.168.1.50");
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
             .ReturnsAsync(key);
@@ -205,6 +244,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.50");
+
+        _logger.LogWarning("Key {KeyId} rejected: ip {IpAddress} not in whitelist", key.Id, "192.168.1.50");
+
         result.Success.Should().BeFalse();
         result.FailureReason.Should().Be(AuthenticationFailureReason.IpNotWhitelisted);
         _auditLogServiceMock.Verify(s => s.LogAsync(It.IsAny<AuditLog>()), Times.Once);
@@ -224,6 +266,8 @@ public class AuthenticationServiceTests
             IpWhitelist = "192.168.1.1,192.168.1.2"
         };
 
+        _logger.LogInformation("Validating key {KeyId} from ip {IpAddress} against whitelist", key.Id, "192.168.1.1");
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_whitelistedkey"))
             .ReturnsAsync(key);
@@ -233,6 +277,9 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_whitelistedkey", "192.168.1.1");
+
+        _logger.LogInformation("Key {KeyId} authenticated from whitelisted ip {IpAddress}", key.Id, "192.168.1.1");
+
         result.Success.Should().BeTrue();
         result.ApiKey.Should().NotBeNull();
         result.ApiKey!.Id.Should().Be("key-123");
@@ -247,6 +294,8 @@ public class AuthenticationServiceTests
     {
         var key = new ApiKey { Id = "key-123", ConsumerId = "consumer-abc", Status = ApiKeyStatus.Active };
 
+        _logger.LogInformation("Recording usage for valid key {KeyId} of consumer {ConsumerId}", key.Id, key.ConsumerId);
+
         _apiKeyServiceMock
             .Setup(s => s.ValidateKeyAsync("sk_validkey123456789"))
             .ReturnsAsync(key);
@@ -256,6 +305,8 @@ public class AuthenticationServiceTests
             .Returns(Task.CompletedTask);
 
         var result = await _sut.AuthenticateAsync("sk_validkey123456789", "192.168.1.1");
+
+        _logger.LogInformation("Usage recorded for key {KeyId}", key.Id);
 
         result.Success.Should().BeTrue();
         result.ApiKey.Should().NotBeNull();
