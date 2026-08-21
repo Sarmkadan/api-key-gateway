@@ -8,6 +8,7 @@ using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace ApiKeyGateway.Tests;
@@ -21,6 +22,7 @@ public class UsageTrackingServiceTests
     private readonly Mock<IUsageRepository> _repositoryMock;
     private readonly Mock<ILogger<UsageTrackingService>> _loggerMock;
     private readonly UsageTrackingService _sut;
+    private readonly ILogger<UsageTrackingServiceTests> _logger = NullLogger<UsageTrackingServiceTests>.Instance;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UsageTrackingServiceTests"/> class.
@@ -40,8 +42,10 @@ public class UsageTrackingServiceTests
     [Fact]
     public void Constructor_NullRepository_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Executing test: {TestName}", "Constructor_NullRepository_ThrowsArgumentNullException");
         var act = () => new UsageTrackingService(null!, _loggerMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
+        _logger.LogInformation("Test completed: {TestName}", "Constructor_NullRepository_ThrowsArgumentNullException");
     }
 
     /// <summary>
@@ -51,8 +55,10 @@ public class UsageTrackingServiceTests
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
+        _logger.LogInformation("Executing test: {TestName}", "Constructor_NullLogger_ThrowsArgumentNullException");
         var act = () => new UsageTrackingService(_repositoryMock.Object, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+        _logger.LogInformation("Test completed: {TestName}", "Constructor_NullLogger_ThrowsArgumentNullException");
     }
 
     /// <summary>
@@ -62,8 +68,11 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task RecordUsageAsync_NullRecord_ThrowsArgumentNullException()
     {
-        var act = async () => await _sut.RecordUsageAsync(null!);\n        _loggerMock.Verify(r => r.LogError(It.IsAny<Exception>(), "Failed to record usage"));
+        _logger.LogInformation("Executing test: {TestName}", "RecordUsageAsync_NullRecord_ThrowsArgumentNullException");
+        var act = async () => await _sut.RecordUsageAsync(null!);
+        _loggerMock.Verify(r => r.LogError(It.IsAny<Exception>(), "Failed to record usage"));
         await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("record");
+        _logger.LogInformation("Test completed: {TestName}", "RecordUsageAsync_NullRecord_ThrowsArgumentNullException");
     }
 
     /// <summary>
@@ -73,6 +82,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task RecordUsageAsync_ValidRecord_CreatesInRepository()
     {
+        _logger.LogInformation("Executing test: {TestName}", "RecordUsageAsync_ValidRecord_CreatesInRepository");
         var record = new UsageRecord
         {
             Id = "usage-001",
@@ -91,6 +101,7 @@ public class UsageTrackingServiceTests
         await _sut.RecordUsageAsync(record);
 
         _repositoryMock.Verify(r => r.CreateAsync(record), Times.Once);
+        _logger.LogInformation("Test completed: {TestName}", "RecordUsageAsync_ValidRecord_CreatesInRepository");
     }
 
     /// <summary>
@@ -100,6 +111,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task RecordUsageAsync_RepositoryThrows_WrapsInDataAccessException()
     {
+        _logger.LogInformation("Executing test: {TestName}", "RecordUsageAsync_RepositoryThrows_WrapsInDataAccessException");
         var record = new UsageRecord { ApiKeyId = "key-123" };
 
         _repositoryMock
@@ -110,6 +122,7 @@ public class UsageTrackingServiceTests
         (await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.DataAccessException>())
             .WithInnerException<InvalidOperationException>()
             .WithMessage("DB error");
+        _logger.LogInformation("Test completed: {TestName}", "RecordUsageAsync_RepositoryThrows_WrapsInDataAccessException");
     }
 
     /// <summary>
@@ -122,8 +135,10 @@ public class UsageTrackingServiceTests
     [InlineData(" ")]
     public async Task GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
+        _logger.LogInformation("Executing test: {TestName} with keyId: {KeyId}", "GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsValidationException", keyId);
         var act = async () => await _sut.GetUsageStatisticsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageStatisticsAsync_EmptyOrNullKeyId_ThrowsValidationException");
     }
 
     /// <summary>
@@ -133,11 +148,13 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsValidationException()
     {
+        _logger.LogInformation("Executing test: {TestName}", "GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsValidationException");
         var startDate = DateTime.UtcNow;
         var endDate = startDate.AddDays(-1);
 
         var act = async () => await _sut.GetUsageStatisticsAsync("key-123", startDate, endDate);
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageStatisticsAsync_EndDateBeforeStartDate_ThrowsValidationException");
     }
 
     /// <summary>
@@ -147,6 +164,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetUsageStatisticsAsync_ValidDateRange_ReturnsStatisticsWithCorrectAggregates()
     {
+        _logger.LogInformation("Executing test: {TestName} for ApiKeyId: {ApiKeyId}", "GetUsageStatisticsAsync_ValidDateRange_ReturnsStatisticsWithCorrectAggregates", "key-123");
         var startDate = DateTime.UtcNow.AddDays(-7);
         var endDate = DateTime.UtcNow;
         var records = new List<UsageRecord>
@@ -173,6 +191,7 @@ public class UsageTrackingServiceTests
         result.FailedRequests.Should().Be(1);
         result.AverageResponseTimeMs.Should().Be(60);
         result.SuccessRate.Should().Be(75);
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageStatisticsAsync_ValidDateRange_ReturnsStatisticsWithCorrectAggregates");
     }
 
     /// <summary>
@@ -182,6 +201,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetUsageStatisticsAsync_NoRecords_ReturnsZeroedStatistics()
     {
+        _logger.LogInformation("Executing test: {TestName} for ApiKeyId: {ApiKeyId}", "GetUsageStatisticsAsync_NoRecords_ReturnsZeroedStatistics", "key-missing");
         var startDate = DateTime.UtcNow.AddDays(-7);
         var endDate = DateTime.UtcNow;
 
@@ -195,6 +215,7 @@ public class UsageTrackingServiceTests
         result.SuccessfulRequests.Should().Be(0);
         result.FailedRequests.Should().Be(0);
         result.SuccessRate.Should().Be(0);
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageStatisticsAsync_NoRecords_ReturnsZeroedStatistics");
     }
 
     /// <summary>
@@ -207,8 +228,10 @@ public class UsageTrackingServiceTests
     [InlineData(" ")]
     public async Task GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsValidationException(string? keyId)
     {
+        _logger.LogInformation("Executing test: {TestName} with keyId: {KeyId}", "GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsValidationException", keyId);
         var act = async () => await _sut.GetUsageRecordsAsync(keyId!, DateTime.UtcNow, DateTime.UtcNow);
         await act.Should().ThrowAsync<ApiKeyGateway.Domain.Exceptions.ValidationException>();
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageRecordsAsync_EmptyOrNullKeyId_ThrowsValidationException");
     }
 
     /// <summary>
@@ -218,6 +241,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetUsageRecordsAsync_ValidDateRange_ReturnsRecordsFromRepository()
     {
+        _logger.LogInformation("Executing test: {TestName} for ApiKeyId: {ApiKeyId}", "GetUsageRecordsAsync_ValidDateRange_ReturnsRecordsFromRepository", "key-456");
         var startDate = DateTime.UtcNow.AddDays(-1);
         var endDate = DateTime.UtcNow;
         var records = new List<UsageRecord>
@@ -234,6 +258,7 @@ public class UsageTrackingServiceTests
 
         result.Should().HaveCount(2);
         result.Should().BeEquivalentTo(records);
+        _logger.LogInformation("Test completed: {TestName}", "GetUsageRecordsAsync_ValidDateRange_ReturnsRecordsFromRepository");
     }
 
     /// <summary>
@@ -245,9 +270,11 @@ public class UsageTrackingServiceTests
     [InlineData(null)]
     public async Task GetTotalBytesUsedAsync_EmptyOrNullConsumerId_ReturnsZero(string? consumerId)
     {
+        _logger.LogInformation("Executing test: {TestName} with consumerId: {ConsumerId}", "GetTotalBytesUsedAsync_EmptyOrNullConsumerId_ReturnsZero", consumerId);
         var result = await _sut.GetTotalBytesUsedAsync(consumerId!, DateTime.UtcNow.AddDays(-7), DateTime.UtcNow);
         result.Should().Be(0);
         _repositoryMock.Verify(r => r.GetByConsumerAndDateRangeAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Never);
+        _logger.LogInformation("Test completed: {TestName}", "GetTotalBytesUsedAsync_EmptyOrNullConsumerId_ReturnsZero");
     }
 
     /// <summary>
@@ -257,6 +284,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetTotalBytesUsedAsync_ValidConsumerId_ReturnsAggregatedBytes()
     {
+        _logger.LogInformation("Executing test: {TestName} for ConsumerId: {ConsumerId}", "GetTotalBytesUsedAsync_ValidConsumerId_ReturnsAggregatedBytes", "consumer-789");
         var consumerId = "consumer-789";
         var startDate = DateTime.UtcNow.AddDays(-30);
         var endDate = DateTime.UtcNow;
@@ -274,6 +302,7 @@ public class UsageTrackingServiceTests
         var result = await _sut.GetTotalBytesUsedAsync(consumerId, startDate, endDate);
 
         result.Should().Be(3584);
+        _logger.LogInformation("Test completed: {TestName}", "GetTotalBytesUsedAsync_ValidConsumerId_ReturnsAggregatedBytes");
     }
 
     /// <summary>
@@ -283,6 +312,7 @@ public class UsageTrackingServiceTests
     [Fact]
     public async Task GetTotalBytesUsedAsync_NoRecords_ReturnsZero()
     {
+        _logger.LogInformation("Executing test: {TestName} for ConsumerId: {ConsumerId}", "GetTotalBytesUsedAsync_NoRecords_ReturnsZero", "consumer-missing");
         var consumerId = "consumer-missing";
         var startDate = DateTime.UtcNow.AddDays(-30);
         var endDate = DateTime.UtcNow;
@@ -294,5 +324,6 @@ public class UsageTrackingServiceTests
         var result = await _sut.GetTotalBytesUsedAsync(consumerId, startDate, endDate);
 
         result.Should().Be(0);
+        _logger.LogInformation("Test completed: {TestName}", "GetTotalBytesUsedAsync_NoRecords_ReturnsZero");
     }
 }
