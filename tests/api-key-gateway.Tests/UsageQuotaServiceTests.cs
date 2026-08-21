@@ -38,6 +38,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public void Constructor_NullRepository_ThrowsArgumentNullException()
 	{
+		_loggerMock.Object.LogInformation("Validating constructor rejects null {Dependency}", "repository");
+
 		var act = () => new UsageQuotaService(null!, _loggerMock.Object);
 		act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
 	}
@@ -48,6 +50,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public void Constructor_NullLogger_ThrowsArgumentNullException()
 	{
+		_loggerMock.Object.LogInformation("Validating constructor rejects null {Dependency}", "logger");
+
 		var act = () => new UsageQuotaService(_repositoryMock.Object, null!);
 		act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
 	}
@@ -62,12 +66,16 @@ public class UsageQuotaServiceTests
 	/// <param name="apiKeyId">The API key ID to test with (empty, null, or whitespace).</param>
 	public async Task CheckAndRecordAsync_EmptyOrNullKeyId_ReturnsUnlimitedQuota(string? apiKeyId)
 	{
+		_loggerMock.Object.LogWarning("Blank {ApiKeyId} supplied to CheckAndRecordAsync; expecting unlimited-quota fallback", apiKeyId ?? string.Empty);
+
 		var result = await _sut.CheckAndRecordAsync(apiKeyId!);
 
 		result.IsExceeded.Should().BeFalse();
 		result.Remaining.Should().Be(long.MaxValue);
 		result.Limit.Should().Be(long.MaxValue);
 		_repositoryMock.Verify(r => r.GetByApiKeyIdAsync(It.IsAny<string>()), Times.Never);
+
+		_loggerMock.Object.LogInformation("Unlimited quota returned for blank {ApiKeyId}", apiKeyId ?? string.Empty);
 	}
 
 	[Fact]
@@ -76,6 +84,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_NoQuotaConfigured_ReturnsUnlimitedQuota()
 	{
+		_loggerMock.Object.LogInformation("Checking quota recording for {ApiKeyId}", "key-no-quota");
+
 		_repositoryMock
 			.Setup(r => r.GetByApiKeyIdAsync("key-no-quota"))
 			.ReturnsAsync((UsageQuota?)null);
@@ -85,6 +95,8 @@ public class UsageQuotaServiceTests
 		result.IsExceeded.Should().BeFalse();
 		result.Remaining.Should().Be(long.MaxValue);
 		result.Limit.Should().Be(long.MaxValue);
+
+		_loggerMock.Object.LogWarning("No quota configured for {ApiKeyId}; applying unlimited-quota fallback", "key-no-quota");
 	}
 
 	[Fact]
@@ -93,6 +105,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_QuotaDisabled_ReturnsUnlimitedQuota()
 	{
+		_loggerMock.Object.LogInformation("Checking quota recording for {ApiKeyId}", "key-disabled");
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-disabled",
@@ -109,6 +123,8 @@ public class UsageQuotaServiceTests
 
 		result.IsExceeded.Should().BeFalse();
 		result.Remaining.Should().Be(long.MaxValue);
+
+		_loggerMock.Object.LogWarning("Quota for {ApiKeyId} is disabled; treating usage as unlimited", "key-disabled");
 	}
 
 	[Fact]
@@ -117,6 +133,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_BelowQuota_IncrementsUsageAndReturnsRemaining()
 	{
+		_loggerMock.Object.LogInformation("Recording usage for {ApiKeyId} with limit {QuotaLimit} and current usage {CurrentUsage}", "key-below", 1000L, 500L);
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-below",
@@ -141,6 +159,8 @@ public class UsageQuotaServiceTests
 		result.Remaining.Should().Be(499);
 		quota.CurrentUsage.Should().Be(501);
 		_repositoryMock.Verify(r => r.UpdateAsync(quota), Times.Once);
+
+		_loggerMock.Object.LogInformation("Usage recorded for {ApiKeyId}; remaining quota {Remaining}", "key-below", 499L);
 	}
 
 	[Fact]
@@ -149,6 +169,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_AtQuota_ReturnsExceededWithNoRemaining()
 	{
+		_loggerMock.Object.LogInformation("Checking quota enforcement for {ApiKeyId} at limit {QuotaLimit}", "key-at-limit", 100L);
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-at-limit",
@@ -170,6 +192,8 @@ public class UsageQuotaServiceTests
 		result.Remaining.Should().Be(0);
 		result.Limit.Should().Be(100);
 		_repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Never);
+
+		_loggerMock.Object.LogWarning("Quota exhausted for {ApiKeyId}; limit {QuotaLimit} reached with {Remaining} remaining", "key-at-limit", 100L, 0L);
 	}
 
 	[Fact]
@@ -178,6 +202,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_PeriodRolledOver_ResetsCounterBeforeRecording()
 	{
+		_loggerMock.Object.LogInformation("Recording usage for {ApiKeyId} with previous usage {PreviousUsage}", "key-rollover", 450L);
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-rollover",
@@ -201,6 +227,8 @@ public class UsageQuotaServiceTests
 		result.Remaining.Should().Be(499);
 		quota.CurrentUsage.Should().Be(1);
 		_repositoryMock.Verify(r => r.UpdateAsync(quota), Times.Once);
+
+		_loggerMock.Object.LogInformation("Period rolled over for {ApiKeyId}; usage counter reset to {CurrentUsage}", "key-rollover", 1L);
 	}
 
 	[Fact]
@@ -209,6 +237,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task GetQuotaAsync_KeyExists_ReturnsQuota()
 	{
+		_loggerMock.Object.LogInformation("Retrieving quota for {ApiKeyId}", "key-get");
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-get",
@@ -223,6 +253,8 @@ public class UsageQuotaServiceTests
 		var result = await _sut.GetQuotaAsync("key-get");
 
 		result.Should().Be(quota);
+
+		_loggerMock.Object.LogInformation("Quota retrieved for {ApiKeyId} with limit {QuotaLimit}", "key-get", 1000L);
 	}
 
 	[Fact]
@@ -231,6 +263,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task GetQuotaAsync_KeyDoesNotExist_ReturnsNull()
 	{
+		_loggerMock.Object.LogInformation("Retrieving quota for {ApiKeyId}", "key-missing");
+
 		_repositoryMock
 			.Setup(r => r.GetByApiKeyIdAsync("key-missing"))
 			.ReturnsAsync((UsageQuota?)null);
@@ -238,6 +272,8 @@ public class UsageQuotaServiceTests
 		var result = await _sut.GetQuotaAsync("key-missing");
 
 		result.Should().BeNull();
+
+		_loggerMock.Object.LogInformation("No quota found for {ApiKeyId}; returning null", "key-missing");
 	}
 
 	[Theory]
@@ -249,6 +285,8 @@ public class UsageQuotaServiceTests
 	/// <param name="apiKeyId">The API key ID to test with (empty or null).</param>
 	public async Task SetQuotaAsync_EmptyOrNullKeyId_ReturnsFalse(string? apiKeyId)
 	{
+		_loggerMock.Object.LogWarning("SetQuotaAsync called with blank {ApiKeyId}; rejecting without creating quota", apiKeyId ?? string.Empty);
+
 		var result = await _sut.SetQuotaAsync(apiKeyId!, 1000, QuotaPeriod.Day);
 		result.Should().BeFalse();
 		_repositoryMock.Verify(r => r.CreateAsync(It.IsAny<UsageQuota>()), Times.Never);
@@ -264,6 +302,8 @@ public class UsageQuotaServiceTests
 	/// <param name="quotaLimit">The invalid quota limit to test.</param>
 	public async Task SetQuotaAsync_InvalidQuotaLimit_ReturnsFalse(long quotaLimit)
 	{
+		_loggerMock.Object.LogWarning("SetQuotaAsync called with invalid {QuotaLimit}; rejecting", quotaLimit);
+
 		var result = await _sut.SetQuotaAsync("key-set", quotaLimit, QuotaPeriod.Day);
 		result.Should().BeFalse();
 	}
@@ -274,6 +314,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task SetQuotaAsync_NewQuota_CreatesAndReturnsTrue()
 	{
+		_loggerMock.Object.LogInformation("Creating quota for {ApiKeyId} with limit {QuotaLimit} and period {Period}", "key-new-quota", 5000L, QuotaPeriod.Month);
+
 		_repositoryMock
 			.Setup(r => r.GetByApiKeyIdAsync("key-new-quota"))
 			.ReturnsAsync((UsageQuota?)null);
@@ -287,6 +329,8 @@ public class UsageQuotaServiceTests
 		_repositoryMock.Verify(r => r.CreateAsync(It.Is<UsageQuota>(
 			q => q.ApiKeyId == "key-new-quota" && q.QuotaLimit == 5000 && q.Period == QuotaPeriod.Month
 		)), Times.Once);
+
+		_loggerMock.Object.LogInformation("Quota created for {ApiKeyId}", "key-new-quota");
 	}
 
 	[Fact]
@@ -295,6 +339,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task SetQuotaAsync_ExistingQuota_UpdatesAndReturnsTrue()
 	{
+		_loggerMock.Object.LogInformation("Updating quota for {ApiKeyId} to limit {QuotaLimit} and period {Period}", "key-existing", 2000L, QuotaPeriod.Week);
+
 		var existingQuota = new UsageQuota
 		{
 			Id = "quota-123",
@@ -323,6 +369,8 @@ public class UsageQuotaServiceTests
 			q.CurrentUsage == 250 &&
 			q.CreatedAt == existingQuota.CreatedAt
 		)), Times.Once);
+
+		_loggerMock.Object.LogInformation("Quota updated for {ApiKeyId}; preserving usage {CurrentUsage}", "key-existing", 250L);
 	}
 
 	[Fact]
@@ -331,6 +379,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_ConcurrentCalls_AllIncrementCountCorrectly()
 	{
+		_loggerMock.Object.LogInformation("Issuing {CallCount} concurrent CheckAndRecordAsync calls for {ApiKeyId}", 100, "key-concurrent");
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-concurrent",
@@ -356,6 +406,8 @@ public class UsageQuotaServiceTests
 
 		results.Should().AllSatisfy(r => r.IsExceeded.Should().BeFalse());
 		_repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Exactly(100));
+
+		_loggerMock.Object.LogInformation("All {CallCount} concurrent calls completed for {ApiKeyId}", 100, "key-concurrent");
 	}
 
 	[Fact]
@@ -364,6 +416,8 @@ public class UsageQuotaServiceTests
 	/// </summary>
 	public async Task CheckAndRecordAsync_ExceededQuota_DoesNotUpdate()
 	{
+		_loggerMock.Object.LogInformation("Checking quota enforcement for {ApiKeyId} at limit {QuotaLimit}", "key-exceeded", 100L);
+
 		var quota = new UsageQuota
 		{
 			ApiKeyId = "key-exceeded",
@@ -383,5 +437,7 @@ public class UsageQuotaServiceTests
 
 		result.IsExceeded.Should().BeTrue();
 		_repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Never);
+
+		_loggerMock.Object.LogWarning("Quota exhausted for {ApiKeyId}; no further usage accepted", "key-exceeded");
 	}
 }
