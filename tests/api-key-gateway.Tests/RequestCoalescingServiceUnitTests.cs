@@ -34,18 +34,26 @@ public class RequestCoalescingServiceUnitTests
     [Fact]
     public void ExecuteAsync_NullRequestKey_ThrowsArgumentException()
     {
-        // Arrange
-        Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_NullRequestKey_ThrowsArgumentException));
+        try
+        {
+            // Arrange
+            Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
 
-        // Act
-        Func<Task> act = async () => await _service.ExecuteAsync(
-            null!,
-            operation,
-            CancellationToken.None);
+            // Act
+            Func<Task> act = async () => await _service.ExecuteAsync(
+                null!,
+                operation,
+                CancellationToken.None);
 
-        // Assert
-        act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*Request key cannot be empty*");
+            // Assert
+            act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*Request key cannot be empty*");
+        }
+        finally
+        {
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(ExecuteAsync_NullRequestKey_ThrowsArgumentException));
+        }
     }
 
     /// <summary>
@@ -54,18 +62,26 @@ public class RequestCoalescingServiceUnitTests
     [Fact]
     public void ExecuteAsync_EmptyRequestKey_ThrowsArgumentException()
     {
-        // Arrange
-        Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_EmptyRequestKey_ThrowsArgumentException));
+        try
+        {
+            // Arrange
+            Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
 
-        // Act
-        Func<Task> act = async () => await _service.ExecuteAsync(
-            string.Empty,
-            operation,
-            CancellationToken.None);
+            // Act
+            Func<Task> act = async () => await _service.ExecuteAsync(
+                string.Empty,
+                operation,
+                CancellationToken.None);
 
-        // Assert
-        act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*Request key cannot be empty*");
+            // Assert
+            act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*Request key cannot be empty*");
+        }
+        finally
+        {
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(ExecuteAsync_EmptyRequestKey_ThrowsArgumentException));
+        }
     }
 
     /// <summary>
@@ -74,18 +90,26 @@ public class RequestCoalescingServiceUnitTests
     [Fact]
     public void ExecuteAsync_WhitespaceRequestKey_ThrowsArgumentException()
     {
-        // Arrange
-        Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_WhitespaceRequestKey_ThrowsArgumentException));
+        try
+        {
+            // Arrange
+            Func<CancellationToken, Task<string>> operation = _ => Task.FromResult("result");
 
-        // Act
-        Func<Task> act = async () => await _service.ExecuteAsync(
-            "   ",
-            operation,
-            CancellationToken.None);
+            // Act
+            Func<Task> act = async () => await _service.ExecuteAsync(
+                "   ",
+                operation,
+                CancellationToken.None);
 
-        // Assert
-        act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*Request key cannot be empty*");
+            // Assert
+            act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*Request key cannot be empty*");
+        }
+        finally
+        {
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(ExecuteAsync_WhitespaceRequestKey_ThrowsArgumentException));
+        }
     }
 
     /// <summary>
@@ -94,18 +118,26 @@ public class RequestCoalescingServiceUnitTests
     [Fact]
     public void ExecuteAsync_NullOperation_ThrowsArgumentNullException()
     {
-        // Arrange
-        Func<CancellationToken, Task<string>>? operation = null;
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_NullOperation_ThrowsArgumentNullException));
+        try
+        {
+            // Arrange
+            Func<CancellationToken, Task<string>>? operation = null;
 
-        // Act
-        Func<Task> act = async () => await _service.ExecuteAsync(
-            "valid-key",
-            operation!,
-            CancellationToken.None);
+            // Act
+            Func<Task> act = async () => await _service.ExecuteAsync(
+                "valid-key",
+                operation!,
+                CancellationToken.None);
 
-        // Assert
-        act.Should().ThrowAsync<ArgumentNullException>()
-            .WithMessage("*operation*");
+            // Assert
+            act.Should().ThrowAsync<ArgumentNullException>()
+                .WithMessage("*operation*");
+        }
+        finally
+        {
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(ExecuteAsync_NullOperation_ThrowsArgumentNullException));
+        }
     }
 
     /// <summary>
@@ -114,19 +146,27 @@ public class RequestCoalescingServiceUnitTests
     [Fact]
     public async Task ExecuteAsync_NoCoalescing_ReturnsOperationResult()
     {
-        // Arrange
-        const string requestKey = "unique-key-1";
-        const string expectedResult = "test-result";
-        Func<CancellationToken, Task<string>> operation = _ => Task.FromResult(expectedResult);
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_NoCoalescing_ReturnsOperationResult));
+        try
+        {
+            // Arrange
+            const string requestKey = "unique-key-1";
+            const string expectedResult = "test-result";
+            Func<CancellationToken, Task<string>> operation = _ => Task.FromResult(expectedResult);
 
-        // Act
-        var result = await _service.ExecuteAsync(
-            requestKey,
-            operation,
-            CancellationToken.None);
+            // Act
+            var result = await _service.ExecuteAsync(
+                requestKey,
+                operation,
+                CancellationToken.None);
 
-        // Assert
-        result.Should().Be(expectedResult);
+            // Assert
+            result.Should().Be(expectedResult);
+        }
+        finally
+        {
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(ExecuteAsync_NoCoalescing_ReturnsOperationResult));
+        }
     }
 
     /// <summary>
