@@ -81,40 +81,51 @@ public class AuditLogEventHandlerTests
     /// </summary>
     public async Task HandleApiKeyCreatedAsync_HappyPath_LogsAndPersists()
     {
-        // Arrange
-        var apiKeyId = Guid.NewGuid().ToString();
-        var @event = new ApiKeyCreatedEvent
+        // Log test start
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(HandleApiKeyCreatedAsync_HappyPath_LogsAndPersists));
+
+        try
         {
-            ApiKeyId = apiKeyId,
-            Name = "Test API Key",
-            CreatedBy = "admin-user"
-        };
+            // Arrange
+            var apiKeyId = Guid.NewGuid().ToString();
+            var @event = new ApiKeyCreatedEvent
+            {
+                ApiKeyId = apiKeyId,
+                Name = "Test API Key",
+                CreatedBy = "admin-user"
+            };
 
-        _auditRepositoryMock
-            .Setup(x => x.CreateAsync(It.IsAny<AuditLog>()))
-            .Returns(Task.CompletedTask);
+            _auditRepositoryMock
+                .Setup(x => x.CreateAsync(It.IsAny<AuditLog>()))
+                .Returns(Task.CompletedTask);
 
-        // Act
-        await _auditHandler.HandleApiKeyCreatedAsync(@event);
+            // Act
+            await _auditHandler.HandleApiKeyCreatedAsync(@event);
 
-        // Assert
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Recording audit: API key created")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-            Times.Once);
+            // Assert
+            _loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Recording audit: API key created")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
 
-        _auditRepositoryMock.Verify(
-            x => x.CreateAsync(It.Is<AuditLog>(log =>
-                log.ResourceId == apiKeyId &&
-                log.ResourceType == "ApiKey" &&
-                log.Action == AuditAction.KeyCreated &&
-                log.PerformedBy == "admin-user" &&
-                log.Reason == "API key 'Test API Key' created")),
-            Times.Once);
+            _auditRepositoryMock.Verify(
+                x => x.CreateAsync(It.Is<AuditLog>(log =>
+                    log.ResourceId == apiKeyId &&
+                    log.ResourceType == "ApiKey" &&
+                    log.Action == AuditAction.KeyCreated &&
+                    log.PerformedBy == "admin-user" &&
+                    log.Reason == "API key 'Test API Key' created")),
+                Times.Once);
+        }
+        finally
+        {
+            // Log test completion
+            _loggerMock.Object.LogInformation("Completed test {TestName}", nameof(HandleApiKeyCreatedAsync_HappyPath_LogsAndPersists));
+        }
     }
 
     [Fact]
