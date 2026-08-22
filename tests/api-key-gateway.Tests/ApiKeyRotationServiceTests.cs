@@ -45,6 +45,7 @@ public class ApiKeyRotationServiceTests
     [Fact]
     public async Task RotateKeyAsync_KeyNotFound_ReturnsFailureResult()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestMethod}", nameof(RotateKeyAsync_KeyNotFound_ReturnsFailureResult));
         // Arrange
         _repositoryMock
             .Setup(r => r.GetByIdAsync("missing"))
@@ -58,6 +59,7 @@ public class ApiKeyRotationServiceTests
         result.FailureReason.Should().Be("Key not found");
         _apiKeyServiceMock.Verify(s => s.CreateKeyAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
+        _loggerMock.Object.LogInformation("Finished test {TestMethod}", nameof(RotateKeyAsync_KeyNotFound_ReturnsFailureResult));
     }
 
     /// <summary>
