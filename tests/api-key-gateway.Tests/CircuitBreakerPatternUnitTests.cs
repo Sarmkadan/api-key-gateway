@@ -71,6 +71,7 @@ public class CircuitBreakerPatternUnitTests
         var operationExecuted = false;
 
         // Act
+        _loggerMock.Object.LogInformation("Executing operation with expected result {Expected}", expected);
         var result = await _sut.ExecuteAsync(() =>
         {
             operationExecuted = true;
@@ -81,6 +82,7 @@ public class CircuitBreakerPatternUnitTests
         result.Should().Be(expected);
         operationExecuted.Should().BeTrue();
         _sut.GetState().Should().Be(CircuitBreakerState.Closed);
+        _loggerMock.Object.LogInformation("Operation completed with result {Result}", result);
     }
 
     /// <summary>
