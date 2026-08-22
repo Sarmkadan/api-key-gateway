@@ -31,6 +31,7 @@ public class CacheProviderUnitTests
         _loggerMock = new Mock<ILogger<InMemoryCacheProvider>>();
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
         _cacheProvider = new InMemoryCacheProvider(_memoryCache, _loggerMock.Object);
+        _testLogger = NullLogger<CacheProviderUnitTests>.Instance;
     }
 
     #region GetAsync Tests
@@ -41,6 +42,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task GetAsync_NonExistentKey_ReturnsNull()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "GetAsync_NonExistentKey_ReturnsNull");
+        
         // Arrange
         const string key = "non-existent-key";
 
@@ -56,6 +59,8 @@ public class CacheProviderUnitTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "GetAsync_NonExistentKey_ReturnsNull");
     }
 
     /// <summary>
@@ -64,6 +69,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task GetAsync_ExistingKey_ReturnsCachedValue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "GetAsync_ExistingKey_ReturnsCachedValue");
+        
         // Arrange
         const string key = "existing-key";
         var expectedValue = new TestModel { Id = 1, Name = "Test" };
@@ -81,6 +88,8 @@ public class CacheProviderUnitTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "GetAsync_ExistingKey_ReturnsCachedValue");
     }
 
     /// <summary>
@@ -89,14 +98,19 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task GetAsync_EmptyKey_ReturnsNull()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "GetAsync_EmptyKey_ReturnsNull");
+        
         // Arrange
         var key = string.Empty;
+        _testLogger.LogWarning("Edge case: {KeyType} key provided", "empty");
 
         // Act
         var result = await _cacheProvider.GetAsync<TestModel>(key);
 
         // Assert
         result.Should().BeNull();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "GetAsync_EmptyKey_ReturnsNull");
     }
 
     /// <summary>
@@ -105,14 +119,19 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task GetAsync_WhitespaceKey_ReturnsNull()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "GetAsync_WhitespaceKey_ReturnsNull");
+        
         // Arrange
         var key = "   ";
+        _testLogger.LogWarning("Edge case: {KeyType} key provided", "whitespace");
 
         // Act
         var result = await _cacheProvider.GetAsync<TestModel>(key);
 
         // Assert
         result.Should().BeNull();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "GetAsync_WhitespaceKey_ReturnsNull");
     }
 
     #endregion
@@ -125,6 +144,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task SetAsync_NoExpiration_StoresValueWithDefaultExpiration()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "SetAsync_NoExpiration_StoresValueWithDefaultExpiration");
+        
         // Arrange
         const string key = "test-key";
         var value = new TestModel { Id = 1, Name = "Test" };
@@ -142,6 +163,8 @@ public class CacheProviderUnitTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "SetAsync_NoExpiration_StoresValueWithDefaultExpiration");
     }
 
     /// <summary>
@@ -150,6 +173,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task SetAsync_WithExpiration_StoresValueWithSpecifiedExpiration()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "SetAsync_WithExpiration_StoresValueWithSpecifiedExpiration");
+        
         // Arrange
         const string key = "test-key";
         var value = new TestModel { Id = 1, Name = "Test" };
@@ -161,6 +186,8 @@ public class CacheProviderUnitTests
         // Assert - value should be retrievable within expiration time
         var result = await _cacheProvider.GetAsync<TestModel>(key);
         result.Should().BeSameAs(value);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "SetAsync_WithExpiration_StoresValueWithSpecifiedExpiration");
     }
 
     /// <summary>
@@ -169,6 +196,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task SetAsync_VeryShortExpiration_StoresValueWithVeryShortExpiration()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "SetAsync_VeryShortExpiration_StoresValueWithVeryShortExpiration");
+        
         // Arrange
         const string key = "test-key";
         var value = new TestModel { Id = 1, Name = "Test" };
@@ -180,6 +209,8 @@ public class CacheProviderUnitTests
         // Assert - value should be retrievable immediately
         var result = await _cacheProvider.GetAsync<TestModel>(key);
         result.Should().BeSameAs(value);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "SetAsync_VeryShortExpiration_StoresValueWithVeryShortExpiration");
     }
 
     /// <summary>
@@ -188,6 +219,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task SetAsync_OverwritesExistingValue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "SetAsync_OverwritesExistingValue");
+        
         // Arrange
         const string key = "test-key";
         var oldValue = new TestModel { Id = 1, Name = "Old" };
@@ -202,6 +235,8 @@ public class CacheProviderUnitTests
         var result = await _cacheProvider.GetAsync<TestModel>(key);
         result.Should().BeSameAs(newValue);
         result.Should().NotBeSameAs(oldValue);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "SetAsync_OverwritesExistingValue");
     }
 
     #endregion
@@ -214,6 +249,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveAsync_ExistingKey_RemovesValue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveAsync_ExistingKey_RemovesValue");
+        
         // Arrange
         const string key = "test-key";
         var value = new TestModel { Id = 1, Name = "Test" };
@@ -236,6 +273,8 @@ public class CacheProviderUnitTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveAsync_ExistingKey_RemovesValue");
     }
 
     /// <summary>
@@ -244,6 +283,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveAsync_NonExistentKey_CompletesWithoutError()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveAsync_NonExistentKey_CompletesWithoutError");
+        
         // Arrange
         const string key = "non-existent-key";
 
@@ -251,6 +292,8 @@ public class CacheProviderUnitTests
         await _cacheProvider.RemoveAsync(key);
 
         // Assert - No exception should be thrown
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveAsync_NonExistentKey_CompletesWithoutError");
     }
 
     #endregion
@@ -263,6 +306,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task ExistsAsync_ExistingKey_ReturnsTrue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "ExistsAsync_ExistingKey_ReturnsTrue");
+        
         // Arrange
         const string key = "existing-key";
         var value = new TestModel { Id = 1, Name = "Test" };
@@ -273,6 +318,8 @@ public class CacheProviderUnitTests
 
         // Assert
         result.Should().BeTrue();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "ExistsAsync_ExistingKey_ReturnsTrue");
     }
 
     /// <summary>
@@ -281,6 +328,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task ExistsAsync_NonExistentKey_ReturnsFalse()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "ExistsAsync_NonExistentKey_ReturnsFalse");
+        
         // Arrange
         const string key = "non-existent-key";
 
@@ -289,6 +338,8 @@ public class CacheProviderUnitTests
 
         // Assert
         result.Should().BeFalse();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "ExistsAsync_NonExistentKey_ReturnsFalse");
     }
 
     #endregion
@@ -301,6 +352,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task IncrementAsync_NewKey_InitializesToDefaultIncrement()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "IncrementAsync_NewKey_InitializesToDefaultIncrement");
+        
         // Arrange
         const string key = "counter-key";
 
@@ -316,6 +369,8 @@ public class CacheProviderUnitTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "IncrementAsync_NewKey_InitializesToDefaultIncrement");
     }
 
     /// <summary>
@@ -324,6 +379,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task IncrementAsync_CustomIncrement_InitializesToCustomValue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "IncrementAsync_CustomIncrement_InitializesToCustomValue");
+        
         // Arrange
         const string key = "counter-key";
         const long increment = 5;
@@ -333,6 +390,8 @@ public class CacheProviderUnitTests
 
         // Assert
         result.Should().Be(increment);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "IncrementAsync_CustomIncrement_InitializesToCustomValue");
     }
 
     /// <summary>
@@ -341,6 +400,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task IncrementAsync_ExistingCounter_IncrementsValue()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "IncrementAsync_ExistingCounter_IncrementsValue");
+        
         // Arrange
         const string key = "counter-key";
         await _cacheProvider.IncrementAsync(key, 10); // Initialize
@@ -350,6 +411,8 @@ public class CacheProviderUnitTests
 
         // Assert
         result.Should().Be(17);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "IncrementAsync_ExistingCounter_IncrementsValue");
     }
 
     /// <summary>
@@ -358,6 +421,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task IncrementAsync_LargeIncrementValue_HandlesCorrectly()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "IncrementAsync_LargeIncrementValue_HandlesCorrectly");
+        
         // Arrange
         const string key = "counter-key";
         const long largeIncrement = long.MaxValue / 2;
@@ -367,6 +432,8 @@ public class CacheProviderUnitTests
 
         // Assert
         result.Should().Be(largeIncrement);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "IncrementAsync_LargeIncrementValue_HandlesCorrectly");
     }
 
     #endregion
@@ -379,14 +446,19 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveByPatternAsync_NullPattern_ReturnsZero()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveByPatternAsync_NullPattern_ReturnsZero");
+        
         // Arrange
         string? pattern = null;
+        _testLogger.LogWarning("Edge case: {KeyType} pattern provided", "null");
 
         // Act
         var result = await _cacheProvider.RemoveByPatternAsync(pattern!);
 
         // Assert
         result.Should().Be(0);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveByPatternAsync_NullPattern_ReturnsZero");
     }
 
     /// <summary>
@@ -395,14 +467,19 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveByPatternAsync_EmptyPattern_ReturnsZero()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveByPatternAsync_EmptyPattern_ReturnsZero");
+        
         // Arrange
         var pattern = string.Empty;
+        _testLogger.LogWarning("Edge case: {KeyType} pattern provided", "empty");
 
         // Act
         var result = await _cacheProvider.RemoveByPatternAsync(pattern);
 
         // Assert
         result.Should().Be(0);
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveByPatternAsync_EmptyPattern_ReturnsZero");
     }
 
     /// <summary>
@@ -411,6 +488,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveByPatternAsync_SimpleWildcardPattern_RemovesMatchingEntries()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveByPatternAsync_SimpleWildcardPattern_RemovesMatchingEntries");
+        
         // Arrange
         const string pattern = "test-*";
         const string key1 = "test-key1";
@@ -434,6 +513,8 @@ public class CacheProviderUnitTests
         key1Exists.Should().BeFalse();
         key2Exists.Should().BeFalse();
         otherKeyExists.Should().BeTrue();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveByPatternAsync_SimpleWildcardPattern_RemovesMatchingEntries");
     }
 
     /// <summary>
@@ -442,6 +523,8 @@ public class CacheProviderUnitTests
     [Fact]
     public async Task RemoveByPatternAsync_QuestionMarkWildcard_RemovesMatchingEntries()
     {
+        _testLogger.LogInformation("Executing test: {TestName}", "RemoveByPatternAsync_QuestionMarkWildcard_RemovesMatchingEntries");
+        
         // Arrange
         const string pattern = "test-*";
 
@@ -468,6 +551,8 @@ public class CacheProviderUnitTests
         testKeyExists.Should().BeFalse();
         test12Exists.Should().BeFalse();
         otherTestExists.Should().BeTrue();
+            
+        _testLogger.LogInformation("Completed test: {TestName}", "RemoveByPatternAsync_QuestionMarkWildcard_RemovesMatchingEntries");
     }
 
     #endregion
