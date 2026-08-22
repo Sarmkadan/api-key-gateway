@@ -174,6 +174,8 @@ public class AuditLogService : IAuditLogService
     /// <exception cref="ArgumentException">Thrown when <paramref name="limit"/> is not positive.</exception>
     public async Task<List<AuditLog>> GetLogsAsync(string resourceId, int limit = 100)
     {
+        ArgumentException.ThrowIfNullOrEmpty(resourceId);
+
         if (limit <= 0)
             throw new ArgumentException("Limit must be positive", nameof(limit));
 
@@ -202,6 +204,8 @@ public class AuditLogService : IAuditLogService
     /// <returns>XML representation of audit logs for the resource.</returns>
     public async Task<string> ExportLogsToXmlAsync(string resourceId, int limit = 100)
     {
+        ArgumentException.ThrowIfNullOrEmpty(resourceId);
+
         return await _repository.ExportByResourceIdToXmlAsync(resourceId, limit);
     }
 
