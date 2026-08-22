@@ -10,6 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ApiKeyGateway.Tests;
 
@@ -23,6 +24,7 @@ public class CacheProviderUnitTests
     private readonly Mock<ILogger<InMemoryCacheProvider>> _loggerMock;
     private readonly InMemoryCacheProvider _cacheProvider;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILogger<CacheProviderUnitTests> _testLogger;
 
     public CacheProviderUnitTests()
     {
