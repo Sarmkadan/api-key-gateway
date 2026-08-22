@@ -50,12 +50,14 @@ public class AuditLogEventHandlerJsonExtensionsTests
     {
         // Arrange
         var handler = _handler;
+        _loggerMock.Object.LogInformation("Serializing handler {HandlerType} to JSON", handler.GetType().Name);
 
         // Act
         var json = handler.ToJson();
 
         // Assert
         json.Should().NotBeNull();
+        _loggerMock.Object.LogInformation("Serialized handler {HandlerType} to JSON with length {JsonLength}", handler.GetType().Name, json.Length);
     }
 
     [Fact]
