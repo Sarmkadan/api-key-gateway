@@ -19,6 +19,7 @@ public class AuditLogEventHandlerValidationTests
     private readonly Mock<ILogger<AuditLogEventHandler>> _loggerMock;
     private readonly AuditLogEventHandler _handler;
     private readonly Mock<IServiceScope> _scopeMock;
+    private readonly ILogger<AuditLogEventHandlerValidationTests> _logger;
 
     public AuditLogEventHandlerValidationTests()
     {
@@ -26,6 +27,7 @@ public class AuditLogEventHandlerValidationTests
         _loggerMock = new Mock<ILogger<AuditLogEventHandler>>();
         _handler = new AuditLogEventHandler(_scopeFactoryMock.Object, _loggerMock.Object);
         _scopeMock = new Mock<IServiceScope>();
+        _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<AuditLogEventHandlerValidationTests>();
 
         _scopeFactoryMock
             .Setup(x => x.CreateScope())
