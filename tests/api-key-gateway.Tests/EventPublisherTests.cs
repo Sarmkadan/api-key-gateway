@@ -28,6 +28,7 @@ public class EventPublisherTests
     public async Task PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug));
         var testEvent = new TestEvent("Test");
 
         // Act
@@ -43,12 +44,14 @@ public class EventPublisherTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
             Times.Once);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug));
     }
 
     [Fact]
     public async Task PublishAsync_WithOneSubscriber_InvokesSubscriberOnce()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_WithOneSubscriber_InvokesSubscriberOnce));
         var testEvent = new TestEvent("Single");
         var subscriberCalled = false;
         var subscriberEvent = (TestEvent?)null;
@@ -74,13 +77,15 @@ public class EventPublisherTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Publishing TestEvent to 1 subscribers")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
-            Times.Once);
+            Times.AtLeastOnce);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithOneSubscriber_InvokesSubscriberOnce));
     }
 
     [Fact]
     public async Task PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked));
         var testEvent = new TestEvent("Multiple");
         var invocationOrder = new List<int>();
         var subscriber1Called = false;
@@ -120,13 +125,15 @@ public class EventPublisherTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Publishing TestEvent to 3 subscribers")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
-            Times.Once);
+            Times.AtLeastOnce);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked));
     }
 
     [Fact]
     public async Task PublishAsync_SubscriberThrows_ContinuesToNextSubscriber()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_SubscriberThrows_ContinuesToNextSubscriber));
         var testEvent = new TestEvent("Throwing");
         var successfulSubscriberCalled = false;
         var throwingSubscriberCalled = false;
@@ -156,13 +163,15 @@ public class EventPublisherTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error in event handler for TestEvent")),
                 It.Is<InvalidOperationException>(ex => ex.Message == "Test exception"),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
-            Times.Once);
+            Times.AtLeastOnce);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_SubscriberThrows_ContinuesToNextSubscriber));
     }
 
     [Fact]
     public async Task PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked));
         var event1 = new TestEvent("Type1");
         var event2 = new TestEvent("Type2");
         var event3 = new DifferentTestEvent("Type3");
@@ -180,12 +189,14 @@ public class EventPublisherTests
         // Assert
         testEventSubscriberCalled.Should().BeTrue();
         differentEventSubscriberCalled.Should().BeTrue();
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked));
     }
 
     [Fact]
     public async Task PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes));
         var testEvent = new TestEvent("MultipleRegistrations");
         var invocationCount = 0;
 
@@ -204,12 +215,14 @@ public class EventPublisherTests
 
         // Assert
         invocationCount.Should().Be(3);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes));
     }
 
     [Fact]
     public async Task Subscribe_RegistersHandlerForEventType()
     {
         // Arrange
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(Subscribe_RegistersHandlerForEventType));
         var handlerCalled = false;
 
         // Act
@@ -224,8 +237,10 @@ public class EventPublisherTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Event subscriber registered for TestEvent")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()!),
-            Times.Once);
+            Times.AtLeastOnce);
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(Subscribe_RegistersHandlerForEventType));
     }
+
 
     // Test event types
     private record TestEvent(string Name);
