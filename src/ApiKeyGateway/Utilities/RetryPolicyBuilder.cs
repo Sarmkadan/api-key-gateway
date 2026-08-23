@@ -41,6 +41,8 @@ public sealed class RetryPolicyBuilder
     /// <summary>
     /// Sets maximum number of retry attempts.
     /// </summary>
+    /// <param name="maxRetries">The maximum number of retry attempts.</param>
+    /// <returns>This instance for fluent chaining.</returns>
     public RetryPolicyBuilder WithMaxRetries(int maxRetries)
     {
         _maxRetries = maxRetries;
@@ -50,6 +52,8 @@ public sealed class RetryPolicyBuilder
     /// <summary>
     /// Sets initial delay before first retry in milliseconds.
     /// </summary>
+    /// <param name="delayMs">The initial delay before first retry in milliseconds.</param>
+    /// <returns>This instance for fluent chaining.</returns>
     public RetryPolicyBuilder WithInitialDelay(int delayMs)
     {
         _initialDelayMs = delayMs;
@@ -60,6 +64,8 @@ public sealed class RetryPolicyBuilder
     /// Sets exponential backoff multiplier (default: 2.0).
     /// Each retry waits longer: delay = delay * multiplier.
     /// </summary>
+    /// <param name="multiplier">The exponential backoff multiplier.</param>
+    /// <returns>This instance for fluent chaining.</returns>
     public RetryPolicyBuilder WithBackoffMultiplier(double multiplier)
     {
         _backoffMultiplier = multiplier;
@@ -69,6 +75,8 @@ public sealed class RetryPolicyBuilder
     /// <summary>
     /// Sets maximum delay to prevent waiting too long.
     /// </summary>
+    /// <param name="delayMs">The maximum delay in milliseconds.</param>
+    /// <returns>This instance for fluent chaining.</returns>
     public RetryPolicyBuilder WithMaxDelay(int delayMs)
     {
         _maxDelayMs = delayMs;
@@ -78,6 +86,8 @@ public sealed class RetryPolicyBuilder
     /// <summary>
     /// Adds exception type that should trigger a retry.
     /// </summary>
+    /// <typeparam name="TException">The type of exception to retry on.</typeparam>
+    /// <returns>This instance for fluent chaining.</returns>
     public RetryPolicyBuilder RetryOn<TException>() where TException : Exception
     {
         _retryableExceptions.Add(typeof(TException));
@@ -87,6 +97,9 @@ public sealed class RetryPolicyBuilder
     /// <summary>
     /// Builds and returns the retry policy function.
     /// </summary>
+    /// <typeparam name="T">The type of the operation result.</typeparam>
+    /// <param name="operation">The asynchronous operation to retry.</param>
+    /// <returns>A function that executes the operation with retry logic.</returns>
     public Func<Func<Task<T>>, Task<T>> Build<T>()
     {
         return async (operation) =>
