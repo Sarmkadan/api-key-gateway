@@ -47,8 +47,10 @@ public class RateLimitingServiceTests
     [Fact]
     public void Constructor_NullRepository_ThrowsArgumentNullException()
     {
+        _loggerMock.Object.LogInformation("Constructor_NullRepository_ThrowsArgumentNullException called");
         var act = () => new RateLimitingService(null!, _loggerMock.Object);
         act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
+        _loggerMock.Object.LogInformation("Constructor_NullRepository_ThrowsArgumentNullException finished");
     }
 
     /// <summary>
@@ -59,8 +61,10 @@ public class RateLimitingServiceTests
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
+        _loggerMock.Object.LogInformation("Constructor_NullLogger_ThrowsArgumentNullException called");
         var act = () => new RateLimitingService(_repositoryMock.Object, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+        _loggerMock.Object.LogInformation("Constructor_NullLogger_ThrowsArgumentNullException finished");
     }
 
     // -------------------------------------------------------------------------
@@ -79,8 +83,10 @@ public class RateLimitingServiceTests
     [InlineData(null)]
     public async Task CheckLimitAsync_EmptyOrNullKeyId_ThrowsArgumentException(string? apiKeyId)
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_EmptyOrNullKeyId_ThrowsArgumentException called with {ApiKeyId}", apiKeyId);
         var act = async () => await _sut.CheckLimitAsync(apiKeyId!);
         await act.Should().ThrowAsync<ArgumentException>();
+        _loggerMock.Object.LogInformation("CheckLimitAsync_EmptyOrNullKeyId_ThrowsArgumentException finished");
     }
 
     /// <summary>
@@ -91,12 +97,14 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_NoRateLimitConfigured_ReturnsTrue()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_NoRateLimitConfigured_ReturnsTrue called");
         _repositoryMock
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync((RateLimit?)null);
 
         var result = await _sut.CheckLimitAsync("key-001");
         result.Should().BeTrue();
+        _loggerMock.Object.LogInformation("CheckLimitAsync_NoRateLimitConfigured_ReturnsTrue finished");
     }
 
     /// <summary>
@@ -107,6 +115,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_BelowLimit_ReturnsTrue()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_BelowLimit_ReturnsTrue called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-001",
@@ -121,6 +130,7 @@ public class RateLimitingServiceTests
 
         var result = await _sut.CheckLimitAsync("key-001");
         result.Should().BeTrue();
+        _loggerMock.Object.LogInformation("CheckLimitAsync_BelowLimit_ReturnsTrue finished");
     }
 
     /// <summary>
@@ -131,6 +141,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_AtLimit_ThrowsRateLimitExceededException()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_AtLimit_ThrowsRateLimitExceededException called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-001",
@@ -144,7 +155,16 @@ public class RateLimitingServiceTests
             .ReturnsAsync(rateLimit);
 
         var act = async () => await _sut.CheckLimitAsync("key-001");
-        await act.Should().ThrowAsync<RateLimitExceededException>();
+        try
+        {
+            await act.Should().ThrowAsync<RateLimitExceededException>();
+        }
+        catch (Exception ex)
+        {
+            _loggerMock.Object.LogError(ex, "CheckLimitAsync_AtLimit_ThrowsRateLimitExceededException failed");
+            throw;
+        }
+        _loggerMock.Object.LogInformation("CheckLimitAsync_AtLimit_ThrowsRateLimitExceededException finished");
     }
 
     /// <summary>
@@ -155,6 +175,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_ExpiredWindow_ResetsCounterAndAllows()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ExpiredWindow_ResetsCounterAndAllows called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-001",
@@ -172,6 +193,7 @@ public class RateLimitingServiceTests
 
         var result = await _sut.CheckLimitAsync("key-001");
         result.Should().BeTrue();
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ExpiredWindow_ResetsCounterAndAllows finished");
     }
 
     // -------------------------------------------------------------------------
@@ -186,8 +208,10 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task RecordRequestAsync_EmptyKeyId_DoesNotQueryRepository()
     {
+        _loggerMock.Object.LogInformation("RecordRequestAsync_EmptyKeyId_DoesNotQueryRepository called");
         await _sut.RecordRequestAsync("");
         _repositoryMock.Verify(r => r.GetByApiKeyIdAsync(It.IsAny<string>()), Times.Never);
+        _loggerMock.Object.LogInformation("RecordRequestAsync_EmptyKeyId_DoesNotQueryRepository finished");
     }
 
     /// <summary>
@@ -198,12 +222,14 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task RecordRequestAsync_NoRateLimitConfigured_DoesNothing()
     {
+        _loggerMock.Object.LogInformation("RecordRequestAsync_NoRateLimitConfigured_DoesNothing called");
         _repositoryMock
             .Setup(r => r.GetByApiKeyIdAsync("key-001"))
             .ReturnsAsync((RateLimit?)null);
 
         await _sut.RecordRequestAsync("key-001");
         _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<RateLimit>()), Times.Never);
+        _loggerMock.Object.LogInformation("RecordRequestAsync_NoRateLimitConfigured_DoesNothing finished");
     }
 
     /// <summary>
@@ -214,6 +240,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task RecordRequestAsync_ValidKey_IncrementsCountAndPersists()
     {
+        _loggerMock.Object.LogInformation("RecordRequestAsync_ValidKey_IncrementsCountAndPersists called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-001",
@@ -233,6 +260,7 @@ public class RateLimitingServiceTests
 
         rateLimit.CurrentRequestCount.Should().Be(6);
         _repositoryMock.Verify(r => r.UpdateAsync(rateLimit), Times.Once);
+        _loggerMock.Object.LogInformation("RecordRequestAsync_ValidKey_IncrementsCountAndPersists finished");
     }
 
     // -------------------------------------------------------------------------
@@ -246,12 +274,14 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task UpdateLimitAsync_NonExistentKey_ReturnsFalse()
     {
+        _loggerMock.Object.LogInformation("UpdateLimitAsync_NonExistentKey_ReturnsFalse called");
         _repositoryMock
             .Setup(r => r.GetByApiKeyIdAsync("missing"))
             .ReturnsAsync((RateLimit?)null);
 
         var result = await _sut.UpdateLimitAsync("missing", 100, RateLimitUnit.Hour);
         result.Should().BeFalse();
+        _loggerMock.Object.LogInformation("UpdateLimitAsync_NonExistentKey_ReturnsFalse finished");
     }
 
     /// <summary>
@@ -262,6 +292,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue()
     {
+        _loggerMock.Object.LogInformation("UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue called");
         var rateLimit = new RateLimit
         {
             Id = "rl-001",
@@ -283,6 +314,7 @@ public class RateLimitingServiceTests
         _repositoryMock.Verify(r => r.UpdateAsync(It.Is<RateLimit>(
             rl => rl.RequestsPerUnit == 500 && rl.Unit == RateLimitUnit.Hour
         )), Times.Once);
+        _loggerMock.Object.LogInformation("UpdateLimitAsync_ExistingKey_UpdatesAndReturnsTrue finished");
     }
 
     // -------------------------------------------------------------------------
@@ -296,12 +328,14 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task ResetWindowAsync_NonExistentKey_DoesNotThrow()
     {
+        _loggerMock.Object.LogInformation("ResetWindowAsync_NonExistentKey_DoesNotThrow called");
         _repositoryMock
             .Setup(r => r.GetByApiKeyIdAsync("missing"))
             .ReturnsAsync((RateLimit?)null);
 
         var act = async () => await _sut.ResetWindowAsync("missing");
         await act.Should().NotThrowAsync();
+        _loggerMock.Object.LogInformation("ResetWindowAsync_NonExistentKey_DoesNotThrow finished");
     }
 
     /// <summary>
@@ -312,6 +346,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task ResetWindowAsync_ExistingKey_ResetsCounterAndPersists()
     {
+        _loggerMock.Object.LogInformation("ResetWindowAsync_ExistingKey_ResetsCounterAndPersists called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-001",
@@ -330,6 +365,7 @@ public class RateLimitingServiceTests
 
         rateLimit.CurrentRequestCount.Should().Be(0);
         _repositoryMock.Verify(r => r.UpdateAsync(rateLimit), Times.Once);
+        _loggerMock.Object.LogInformation("ResetWindowAsync_ExistingKey_ResetsCounterAndPersists finished");
     }
 
     // -------------------------------------------------------------------------
@@ -344,6 +380,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsAtLimit_AllThrowRateLimitExceededException()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsAtLimit_AllThrowRateLimitExceededException called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-concurrent",
@@ -367,6 +404,7 @@ public class RateLimitingServiceTests
 
         exceptions.Should().HaveCount(10);
         exceptions.Should().AllSatisfy(ex => ex.Should().BeOfType<RateLimitExceededException>());
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsAtLimit_AllThrowRateLimitExceededException finished");
     }
 
     /// <summary>
@@ -377,6 +415,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsOnExpiredWindow_AllRequestsAllowed()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsOnExpiredWindow_AllRequestsAllowed called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-expired-window",
@@ -402,6 +441,7 @@ public class RateLimitingServiceTests
         await Task.WhenAll(tasks);
 
         exceptions.Should().BeEmpty("all requests should be allowed after window expires");
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsOnExpiredWindow_AllRequestsAllowed finished");
     }
 
     /// <summary>
@@ -412,6 +452,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task ResetWindowAsync_ConcurrentCalls_DoesNotThrowAndUpdatesCache()
     {
+        _loggerMock.Object.LogInformation("ResetWindowAsync_ConcurrentCalls_DoesNotThrowAndUpdatesCache called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-reset",
@@ -437,6 +478,7 @@ public class RateLimitingServiceTests
 
         exceptions.Should().BeEmpty("concurrent resets must not throw");
         rateLimit.CurrentRequestCount.Should().Be(0);
+        _loggerMock.Object.LogInformation("ResetWindowAsync_ConcurrentCalls_DoesNotThrowAndUpdatesCache finished");
     }
 
     /// <summary>
@@ -447,6 +489,7 @@ public class RateLimitingServiceTests
     [Fact]
     public async Task CheckLimitAsync_ConcurrentCallsBelowLimit_AllReturnTrue()
     {
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsBelowLimit_AllReturnTrue called");
         var rateLimit = new RateLimit
         {
             ApiKeyId = "key-below-limit",
@@ -470,5 +513,6 @@ public class RateLimitingServiceTests
 
         results.Should().HaveCount(50);
         results.Should().OnlyContain(r => r, "all requests should pass when well below limit");
+        _loggerMock.Object.LogInformation("CheckLimitAsync_ConcurrentCallsBelowLimit_AllReturnTrue finished");
     }
 }
