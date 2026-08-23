@@ -12,6 +12,9 @@ namespace ApiKeyGateway.Utilities;
 /// Prevents cascading failures by stopping requests to failing services.
 /// Automatically recovers when service becomes healthy again.
 /// </summary>
+/// <summary>
+/// Interface for circuit breaker pattern implementation.
+/// </summary>
 public interface ICircuitBreaker
 {
     Task<T> ExecuteAsync<T>(Func<Task<T>> operation);
@@ -23,6 +26,9 @@ public interface ICircuitBreaker
 /// <summary>
 /// Circuit breaker state enumeration.
 /// </summary>
+/// <summary>
+/// Represents the state of a circuit breaker.
+/// </summary>
 public enum CircuitBreakerState
 {
     Closed,      // Operating normally, requests pass through
@@ -30,6 +36,9 @@ public enum CircuitBreakerState
     HalfOpen     // Testing if service recovered
 }
 
+/// <summary>
+/// Production circuit breaker with configurable thresholds.
+/// </summary>
 /// <summary>
 /// Production circuit breaker with configurable thresholds.
 /// </summary>
