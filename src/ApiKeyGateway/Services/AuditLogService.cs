@@ -61,6 +61,10 @@ public interface IAuditLogService : IDisposable
     Task CleanupOldLogsAsync(int retentionDays);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IAuditLogService"/> that queues audit
+/// events and flushes them to persistent storage in batches on a background task.
+/// </summary>
 public class AuditLogService : IAuditLogService
 {
     private readonly IAuditLogRepository _repository;
@@ -72,6 +76,13 @@ public class AuditLogService : IAuditLogService
     private readonly int _batchSize = 50;
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuditLogService"/> class and
+    /// starts the background flusher.
+    /// </summary>
+    /// <param name="repository">The repository used to persist audit logs.</param>
+    /// <param name="logger">The logger used to record service activity.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="repository"/> or <paramref name="logger"/> is null.</exception>
     public AuditLogService(IAuditLogRepository repository, ILogger<AuditLogService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
