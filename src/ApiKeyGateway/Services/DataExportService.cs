@@ -18,8 +18,28 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IDataExportService
 {
+    /// <summary>
+    /// Exports all API keys in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <returns>The serialized API key data as a string.</returns>
     Task<string> ExportApiKeysAsync(string format);
+
+    /// <summary>
+    /// Exports audit logs in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <param name="since">The start date for the export window; defaults to the last 30 days.</param>
+    /// <returns>The serialized audit log data as a string.</returns>
     Task<string> ExportAuditLogsAsync(string format, DateTime? since = null);
+
+    /// <summary>
+    /// Exports usage records within the given date range in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <param name="startDate">The inclusive start of the export window.</param>
+    /// <param name="endDate">The inclusive end of the export window.</param>
+    /// <returns>The serialized usage data as a string.</returns>
     Task<string> ExportUsageAsync(string format, DateTime startDate, DateTime endDate);
 }
 
@@ -33,7 +53,14 @@ public sealed class DataExportService : IDataExportService
     private readonly IUsageRepository _usageRepository;
     private readonly ILogger<DataExportService> _logger;
 
-    public DataExportService(
+            /// <summary>
+        /// Initializes a new instance of the DataExportService class.
+        /// </summary>
+        /// <param name="apiKeyRepository">The repository for accessing API key data.</param>
+        /// <param name="auditLogRepository">The repository for accessing audit log data.</param>
+        /// <param name="usageRepository">The repository for accessing usage data.</param>
+        /// <param name="logger">The logger for writing application logs.</param>
+        public DataExportService(
         IApiKeyRepository apiKeyRepository,
         IAuditLogRepository auditLogRepository,
         IUsageRepository usageRepository,
@@ -45,6 +72,11 @@ public sealed class DataExportService : IDataExportService
         _logger = logger;
     }
 
+        /// <summary>
+    /// Exports all API keys in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <returns>The serialized API key data as a string.</returns>
     public async Task<string> ExportApiKeysAsync(string format)
     {
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
@@ -77,6 +109,12 @@ public sealed class DataExportService : IDataExportService
         }
     }
 
+    /// <summary>
+    /// Exports audit logs in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <param name="since">The start date for the export window; defaults to the last 30 days.</param>
+    /// <returns>The serialized audit log data as a string.</returns>
     public async Task<string> ExportAuditLogsAsync(string format, DateTime? since = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
@@ -113,6 +151,13 @@ public sealed class DataExportService : IDataExportService
         }
     }
 
+    /// <summary>
+    /// Exports usage records within the given date range in the requested format.
+    /// </summary>
+    /// <param name="format">The export format: "csv", "xml", "json", or "ndjson".</param>
+    /// <param name="startDate">The inclusive start of the export window.</param>
+    /// <param name="endDate">The inclusive end of the export window.</param>
+    /// <returns>The serialized usage data as a string.</returns>
     public async Task<string> ExportUsageAsync(string format, DateTime startDate, DateTime endDate)
     {
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
