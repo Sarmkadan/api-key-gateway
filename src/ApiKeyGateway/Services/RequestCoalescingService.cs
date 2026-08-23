@@ -42,6 +42,7 @@ public interface IRequestCoalescingService
     /// <returns>The result produced by the leading operation.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="requestKey"/> is null or whitespace.</exception>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="operation"/> is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when <paramref name="cancellationToken"/> is cancelled.</exception>
     Task<T> ExecuteAsync<T>(
         string requestKey,
         Func<CancellationToken, Task<T>> operation,
@@ -50,6 +51,7 @@ public interface IRequestCoalescingService
     /// <summary>
     /// Returns a snapshot of coalescing metrics for observability and diagnostics.
     /// </summary>
+    /// <returns>A <see cref="CoalescingMetrics"/> instance containing the current coalescing statistics.</returns>
     CoalescingMetrics GetMetrics();
 }
 
@@ -76,7 +78,27 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Executes <paramref name="operation"/> if no identical request is currently in flight;
+    /// otherwise waits for the in-flight request to complete and returns its shared result.
+    /// </summary>
+    /// <typeparam name="T">The result type produced by the operation.</typeparam>
+    /// <param name="requestKey">
+    /// A unique string key that identifies the logical request (e.g. a cache key, a hashed API key,
+    /// or a resource identifier). Callers with the same key are coalesced.
+    /// </param>
+    /// <param name="operation">
+    /// A factory delegate that performs the actual work. Invoked only by the leading caller;
+    /// followers share its result without invoking this delegate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// Token used to cancel a waiting follower. Cancellation of a follower does not abort the
+    /// leader's operation; other followers continue to wait.
+    /// </param>
+    /// <returns>The result produced by the leading operation.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="requestKey"/> is null or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="operation"/> is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when <paramref name="cancellationToken"/> is cancelled.</exception>
     public async Task<T> ExecuteAsync<T>(
         string requestKey,
         Func<CancellationToken, Task<T>> operation,
@@ -142,13 +164,17 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
         return await operation(cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Returns a snapshot of coalescing metrics for observability and diagnostics.
+    /// </summary>
+    /// <returns>A <see cref="CoalescingMetrics"/> instance containing the current coalescing statistics.</returns>
     public CoalescingMetrics GetMetrics() => new()
     {
         TotalRequests = Interlocked.Read(ref _totalRequests),
         CoalescedRequests = Interlocked.Read(ref _coalescedRequests),
         ActiveRequests = _pending.Count
     };
+
 
     /// <summary>
     /// Disposes the service and cancels any pending in-flight entries so waiting followers do not
