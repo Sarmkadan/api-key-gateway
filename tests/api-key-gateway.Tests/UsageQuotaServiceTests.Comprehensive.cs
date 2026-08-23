@@ -41,6 +41,7 @@ public class UsageQuotaServiceTestsComprehensive
     /// </summary>
     public async Task CheckAndRecordAsync_UsageExactlyAtLimit_ReturnsExceededWithZeroRemaining()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(CheckAndRecordAsync_UsageExactlyAtLimit_ReturnsExceededWithZeroRemaining));
         // Arrange
         var quota = new UsageQuota
         {
@@ -67,6 +68,7 @@ public class UsageQuotaServiceTestsComprehensive
 
         _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Never,
             "because exceeded quota should not update repository");
+        _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(CheckAndRecordAsync_UsageExactlyAtLimit_ReturnsExceededWithZeroRemaining));
     }
 
     [Fact]
@@ -75,31 +77,39 @@ public class UsageQuotaServiceTestsComprehensive
     /// </summary>
     public async Task CheckAndRecordAsync_UsageExceedsLimit_ReturnsExceededWithZeroRemaining()
     {
-        // Arrange
-        var quota = new UsageQuota
+        try
         {
-            ApiKeyId = "key-exceeds-limit",
-            QuotaLimit = 100,
-            Period = QuotaPeriod.Hour,
-            CurrentUsage = 150,
-            IsEnabled = true,
-            PeriodStartAt = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Hour)
-        };
+            // Arrange
+            var quota = new UsageQuota
+            {
+                ApiKeyId = "key-exceeds-limit",
+                QuotaLimit = 100,
+                Period = QuotaPeriod.Hour,
+                CurrentUsage = 150,
+                IsEnabled = true,
+                PeriodStartAt = UsageQuota.GetPeriodStart(DateTime.UtcNow, QuotaPeriod.Hour)
+            };
 
-        _repositoryMock
-            .Setup(r => r.GetByApiKeyIdAsync("key-exceeds-limit"))
-            .ReturnsAsync(quota);
+            _repositoryMock
+                .Setup(r => r.GetByApiKeyIdAsync("key-exceeds-limit"))
+                .ReturnsAsync(quota);
 
-        // Act
-        var result = await _sut.CheckAndRecordAsync("key-exceeds-limit");
+            // Act
+            var result = await _sut.CheckAndRecordAsync("key-exceeds-limit");
 
-        // Assert
-        result.IsExceeded.Should().BeTrue("because usage exceeds quota limit");
-        result.Remaining.Should().Be(0, "because no requests remain when quota is exceeded");
-        result.Limit.Should().Be(100);
+            // Assert
+            result.IsExceeded.Should().BeTrue("because usage exceeds quota limit");
+            result.Remaining.Should().Be(0, "because no requests remain when quota is exceeded");
+            result.Limit.Should().Be(100);
 
-        _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Never,
-            "because exceeded quota should not update repository");
+            _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UsageQuota>()), Times.Never,
+                "because exceeded quota should not update repository");
+        }
+        catch (Exception ex)
+        {
+            _loggerMock.Object.LogError(ex, "Error processing quota for {ApiKeyId}", "key-exceeds-limit");
+            throw;
+        }
     }
 
     [Fact]
@@ -122,6 +132,8 @@ public class UsageQuotaServiceTestsComprehensive
         _repositoryMock
             .Setup(r => r.GetByApiKeyIdAsync("key-disabled-high-usage"))
             .ReturnsAsync(quota);
+
+        _loggerMock.Object.LogWarning("Processing disabled quota for {ApiKeyId}", "key-disabled-high-usage");
 
         // Act
         var result = await _sut.CheckAndRecordAsync("key-disabled-high-usage");
