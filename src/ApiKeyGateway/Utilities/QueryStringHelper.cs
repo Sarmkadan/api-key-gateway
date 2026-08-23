@@ -18,6 +18,12 @@ public static class QueryStringHelper
     /// Builds a query string from a dictionary of parameters.
     /// Properly encodes values for safe URL usage.
     /// </summary>
+    /// <param name="parameters">The dictionary of parameter names and values. Cannot be null.</param>
+    /// <returns>A query string including the encoded parameters, or an empty string if parameters is empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
+    /// <param name="parameters">The dictionary of parameter names and values. Cannot be null.</param>
+    /// <returns>A query string including the encoded parameters, or an empty string if parameters is empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
     public static string BuildQueryString(IDictionary<string, string> parameters)
     {
         if (parameters == null)
@@ -90,6 +96,9 @@ public static class QueryStringHelper
     /// <summary>
     /// Removes specific parameters from a URL's query string.
     /// </summary>
+    /// <param name="url">The URL to remove parameters from. Cannot be null or empty.</param>
+    /// <param name="parameterNames">The names of the parameters to remove. Cannot be null.</param>
+    /// <returns>The URL with the specified parameters removed from the query string.</returns>
     public static string RemoveParameter(string url, params string[] parameterNames)
     {
         ArgumentException.ThrowIfNullOrEmpty(url);
