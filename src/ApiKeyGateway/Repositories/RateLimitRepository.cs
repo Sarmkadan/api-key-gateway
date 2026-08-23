@@ -12,13 +12,19 @@ using ApiKeyGateway.Services;
 namespace ApiKeyGateway.Repositories;
 
 /// <summary>
-/// Repository implementation for rate limit data persistence
+/// Repository implementation for rate limit data persistence.
 /// </summary>
 public class RateLimitRepository : IRateLimitRepository
 {
     private readonly IDbConnection _connection;
     private readonly ILogger<RateLimitRepository> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitRepository"/> class.
+    /// </summary>
+    /// <param name="connection">The database connection.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <exception cref="ArgumentNullException">Thrown when connection or logger is null.</exception>
     public RateLimitRepository(IDbConnection connection, ILogger<RateLimitRepository> logger)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -26,8 +32,10 @@ public class RateLimitRepository : IRateLimitRepository
     }
 
     /// <summary>
-    /// Retrieves a rate limit by API key ID
+    /// Retrieves a rate limit by API key ID asynchronously.
     /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>The <see cref="RateLimit"/> found, or null if not found or an error occurs.</returns>
     public async Task<RateLimit?> GetByApiKeyIdAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
@@ -62,8 +70,12 @@ public class RateLimitRepository : IRateLimitRepository
     }
 
     /// <summary>
-    /// Creates a new rate limit configuration
+    /// Creates a new rate limit configuration asynchronously.
     /// </summary>
+    /// <param name="rateLimit">The rate limit configuration to create.</param>
+    /// <returns>The created <see cref="RateLimit"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when rateLimit is null.</exception>
+    /// <exception cref="DataAccessException">Thrown when creation fails.</exception>
     public async Task<RateLimit> CreateAsync(RateLimit rateLimit)
     {
         if (rateLimit == null)
@@ -95,8 +107,11 @@ public class RateLimitRepository : IRateLimitRepository
     }
 
     /// <summary>
-    /// Updates an existing rate limit
+    /// Updates an existing rate limit asynchronously.
     /// </summary>
+    /// <param name="rateLimit">The rate limit configuration to update.</param>
+    /// <exception cref="ArgumentNullException">Thrown when rateLimit is null.</exception>
+    /// <exception cref="DataAccessException">Thrown when update fails.</exception>
     public async Task UpdateAsync(RateLimit rateLimit)
     {
         if (rateLimit == null)
@@ -133,8 +148,10 @@ public class RateLimitRepository : IRateLimitRepository
     }
 
     /// <summary>
-    /// Deletes a rate limit configuration
+    /// Deletes a rate limit configuration asynchronously.
     /// </summary>
+    /// <param name="id">The ID of the rate limit to delete.</param>
+    /// <exception cref="DataAccessException">Thrown when deletion fails.</exception>
     public async Task DeleteAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
