@@ -32,12 +32,23 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     private readonly ConcurrentBag<long> _latencies = new();
     private readonly ILogger<MetricsCollectionService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MetricsCollectionService"/> class.
+    /// </summary>
+    /// <param name="logger">Logger used for diagnostics</param>
     public MetricsCollectionService(ILogger<MetricsCollectionService> logger)
     {
         _logger = logger;
     }
 
-    public void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs)
+            /// <summary>
+        /// Records a request metric with API key, endpoint, status code, and latency.
+        /// </summary>
+        /// <param name="apiKeyId">Identifier of the API key used in the request</param>
+        /// <param name="endpoint">API endpoint that was requested</param>
+        /// <param name="statusCode">HTTP status code of the response</param>
+        /// <param name="latencyMs">Request latency in milliseconds</param>
+        public void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs)
     {
         var key = $"{apiKeyId}:{endpoint}";
         _requestCounters.AddOrUpdate(key, 1, (_, v) => v + 1);
@@ -50,17 +61,30 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
         }
     }
 
-    public void RecordRateLimitExceeded(string apiKeyId)
+            /// <summary>
+        /// Records a rate limit exceeded event for the given API key.
+        /// </summary>
+        /// <param name="apiKeyId">Identifier of the API key that exceeded rate limits</param>
+        public void RecordRateLimitExceeded(string apiKeyId)
     {
         _rateLimitCounters.AddOrUpdate(apiKeyId, 1, (_, v) => v + 1);
     }
 
-    public void RecordError(string apiKeyId, string errorCode)
+    /// <summary>
+        /// Records an error metric for the given API key and error code.
+        /// </summary>
+        /// <param name="apiKeyId">Identifier of the API key associated with the error</param>
+        /// <param name="errorCode">Error code to record</param>
+        public void RecordError(string apiKeyId, string errorCode)
     {
         _errorCounters.AddOrUpdate(errorCode, 1, (_, v) => v + 1);
     }
 
-    public MetricsSnapshot GetSnapshot()
+    /// <summary>
+        /// Returns a snapshot of the current metrics.
+        /// </summary>
+        /// <returns>A snapshot of the current metrics</returns>
+        public MetricsSnapshot GetSnapshot()
     {
         var latenciesArray = _latencies.ToArray();
         var avgLatency = latenciesArray.Length > 0 ? latenciesArray.Average() : 0;
@@ -92,7 +116,10 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
 /// <summary>
 /// Snapshot of current metrics at a point in time.
 /// </summary>
-public record MetricsSnapshot
+/// <summary>
+        /// Represents a snapshot of metrics at a specific point in time.
+        /// </summary>
+        public record MetricsSnapshot
 {
     public DateTime Timestamp { get; set; }
     public long TotalRequests { get; set; }
