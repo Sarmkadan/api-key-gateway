@@ -41,6 +41,11 @@ public sealed class TransformationPipelineService : ITransformationPipeline
     /// <summary>
     /// Initialises a new instance of <see cref="TransformationPipelineService"/>.
     /// </summary>
+    /// <param name="repository">The <see cref="ITransformationRuleRepository"/> to load transformation rules.</param>
+    /// <param name="luaExecutor">The <see cref="ILuaScriptExecutor"/> to execute Lua scripts.</param>
+    /// <param name="options">The <see cref="TransformationPipelineOptions"/> to configure the pipeline.</param>
+    /// <param name="logger">The <see cref="ILogger{TransformationPipelineService}"/> to log pipeline activities.</param>
+    /// <exception cref="ArgumentNullException">Thrown if any of the dependencies are null.</exception>
     public TransformationPipelineService(
         ITransformationRuleRepository repository,
         ILuaScriptExecutor luaExecutor,
@@ -53,7 +58,12 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         _logger      = logger      ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Applies the transformation pipeline to the specified <see cref="TransformationContext"/>.
+    /// </summary>
+    /// <param name="context">The <see cref="TransformationContext"/> to transform.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while performing the transformation.</param>
+    /// <returns>A <see cref="TransformationResult"/> indicating the result of the transformation.</returns>
     public async Task<TransformationResult> ApplyAsync(
         TransformationContext context,
         CancellationToken cancellationToken = default)
@@ -116,23 +126,28 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         };
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Warms up the rule cache for the specified API key.
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key to warm up the cache for.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while warming up the cache.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task WarmAsync(string apiKeyId, CancellationToken cancellationToken = default)
     {
         _ = await LoadKeyRulesAsync(apiKeyId, cancellationToken);
         _logger.LogDebug("Transformation rule cache warmed for API key {ApiKeyId}", apiKeyId);
     }
 
-/// <summary>
-/// Validates a Lua script without executing it. Performs static syntax and security checks.
-/// Safe to call from an admin API endpoint before persisting a new rule.
-/// </summary>
-/// <param name="luaScript">Raw Lua source code to validate.</param>
-/// <returns>A <see cref="ScriptValidationResult"/> containing any errors detected.</returns>
-public ScriptValidationResult ValidateLuaScript(string luaScript)
-{
-    return _luaExecutor.Validate(luaScript);
-}
+    /// <summary>
+    /// Validates a Lua script without executing it. Performs static syntax and security checks.
+    /// Safe to call from an admin API endpoint before persisting a new rule.
+    /// </summary>
+    /// <param name="luaScript">Raw Lua source code to validate.</param>
+    /// <returns>A <see cref="ScriptValidationResult"/> containing any errors detected.</returns>
+    public ScriptValidationResult ValidateLuaScript(string luaScript)
+    {
+        return _luaExecutor.Validate(luaScript);
+    }
 
     // -------------------------------------------------------------------------
     // Rule resolution
