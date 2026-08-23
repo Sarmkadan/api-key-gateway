@@ -21,6 +21,7 @@ public class BatchOperationHandlerTests
     [Fact]
     public async Task ExecuteAsync_EmptyBatch_ThrowsValidationException()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_EmptyBatch_ThrowsValidationException));
         // Arrange
         var operation = new BatchOperation
         {
@@ -49,6 +50,7 @@ public class BatchOperationHandlerTests
     [Fact]
     public async Task ExecuteAsync_SingleItemBatch_ProcessesSuccessfully()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_SingleItemBatch_ProcessesSuccessfully));
         // Arrange
         var operation = new BatchOperation
         {
@@ -75,6 +77,7 @@ public class BatchOperationHandlerTests
     [Fact]
     public async Task ExecuteAsync_MultipleItemsBatch_ProcessesAllSuccessfully()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_MultipleItemsBatch_ProcessesAllSuccessfully));
         // Arrange
         var operation = new BatchOperation
         {
@@ -103,6 +106,7 @@ public class BatchOperationHandlerTests
     [Fact]
     public async Task ExecuteAsync_BatchLargerThanChunkSize_ProcessesAllItems()
     {
+        _loggerMock.Object.LogInformation("Starting test {TestName}", nameof(ExecuteAsync_BatchLargerThanChunkSize_ProcessesAllItems));
         // Arrange - Create a batch larger than typical chunk sizes
         var largeBatch = new List<string>();
         for (int i = 0; i < 100; i++)
