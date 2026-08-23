@@ -24,6 +24,7 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the API key.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     public static string GetApiKeyKey(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -41,6 +42,7 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the API key metadata.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     public static string GetApiKeyMetadataKey(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -59,6 +61,7 @@ public static class CacheKeyGenerator
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="endpoint">The API endpoint being rate limited (default: "*").</param>
     /// <returns>Cache key string for the rate limit.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> or <paramref name="endpoint"/> is null or empty.</exception>
     public static string GetRateLimitKey(string apiKeyId, string endpoint = "*")
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -82,6 +85,7 @@ public static class CacheKeyGenerator
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="date">The date for the usage statistics.</param>
     /// <returns>Cache key string for the usage statistics.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     public static string GetUsageStatsKey(string apiKeyId, DateTime date)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -104,6 +108,7 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key string for the quota.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     public static string GetQuotaKey(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -140,6 +145,7 @@ public static class CacheKeyGenerator
     /// <param name="endpoint">API endpoint path.</param>
     /// <param name="parameters">Optional query parameters for cache key differentiation.</param>
     /// <returns>Cache key string for the external API response.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiName"/> or <paramref name="endpoint"/> is null or empty.</exception>
     public static string GetExternalApiCacheKey(string apiName, string endpoint, Dictionary<string, string>? parameters = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiName);
@@ -183,6 +189,7 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <returns>Cache key pattern string for invalidation.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="apiKeyId"/> is null or empty.</exception>
     public static string GetApiKeyInvalidationPattern(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
