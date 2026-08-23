@@ -14,6 +14,12 @@ public sealed class CorrelationContextMiddleware
     private readonly ILogger<CorrelationContextMiddleware> _logger;
     private const string CorrelationIdHeader = "X-Correlation-ID";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CorrelationContextMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
+    /// <param name="logger">The logger instance.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="next"/> or <paramref name="logger"/> is null.</exception>
     public CorrelationContextMiddleware(RequestDelegate next, ILogger<CorrelationContextMiddleware> logger)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -24,6 +30,11 @@ public sealed class CorrelationContextMiddleware
 
     internal ILogger<CorrelationContextMiddleware> GetLogger() => _logger;
 
+    /// <summary>
+    /// Invokes the middleware to handle the request context.
+    /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>A task that represents the completion of request processing.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         var correlationId = RequestContextHelper.GetOrCreateCorrelationId(context.Request);
@@ -52,18 +63,24 @@ public static class CorrelationContextExtensions
     /// <summary>
     /// Gets correlation ID from the current HttpContext.
     /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>The correlation ID if found; otherwise, "unknown".</returns>
     public static string GetCorrelationId(this HttpContext context) =>
         context.Items["CorrelationId"] as string ?? "unknown";
 
     /// <summary>
     /// Gets API key from the current HttpContext.
     /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>The API key ID if found; otherwise, "anonymous".</returns>
     public static string GetApiKeyId(this HttpContext context) =>
         context.Items["ApiKeyId"] as string ?? "anonymous";
 
     /// <summary>
     /// Gets client IP address from the current HttpContext.
     /// </summary>
+    /// <param name="context">The HTTP context.</param>
+    /// <returns>The client IP address if found; otherwise, "unknown".</returns>
     public static string GetClientIp(this HttpContext context) =>
         context.Items["ClientIp"] as string ?? "unknown";
 }
