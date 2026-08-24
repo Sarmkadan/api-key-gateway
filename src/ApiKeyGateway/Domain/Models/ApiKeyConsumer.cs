@@ -61,4 +61,6 @@ public class ApiKeyConsumer
                !string.IsNullOrWhiteSpace(Organization) &&
                Email.Contains('@');
     }
+
+    public override string ToString() => $"ApiKeyConsumer {{ IsActive = {IsActive}, InactiveSince = {InactiveSince}, ContactPerson = {ContactPerson}, Notes = {Notes}, TotalApiKeys = {TotalApiKeys}, LastActivityAt = {LastActivityAt} }}";
 }
