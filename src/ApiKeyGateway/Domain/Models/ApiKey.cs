@@ -115,4 +115,9 @@ public class ApiKey
         return scopes.Any(scope =>
             requestPath.StartsWith(scope, StringComparison.OrdinalIgnoreCase));
     }
+
+    /// <summary>
+    /// Returns a concise, informative representation of the API key
+    /// </summary>
+    public override string ToString() => $"ApiKey {{ ExpiresAt = {ExpiresAt}, LastUsedAt = {LastUsedAt}, DisabledAt = {DisabledAt}, Description = {Description}, Metadata = {Metadata}, RequestCount = {RequestCount} }}";
 }
