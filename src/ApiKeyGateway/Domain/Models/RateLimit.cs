@@ -85,4 +85,9 @@ public class RateLimit
         CurrentRequestCount = 0;
         LastResetAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Returns a concise, informative representation of the rate limit configuration
+    /// </summary>
+    public override string ToString() => $"RateLimit {{ IsEnabled = {IsEnabled}, LastResetAt = {LastResetAt}, CurrentRequestCount = {CurrentRequestCount} }}";
 }
