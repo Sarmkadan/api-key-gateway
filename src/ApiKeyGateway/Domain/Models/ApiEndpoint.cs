@@ -59,4 +59,6 @@ public class ApiEndpoint
     {
         return $"{Method} {Path}";
     }
+
+    public override string ToString() => $"ApiEndpoint {{ IsActive = {IsActive}, RequireApiKey = {RequireApiKey}, TimeoutMs = {TimeoutMs}, MaxPayloadBytes = {MaxPayloadBytes}, Description = {Description}, AllowedConsumers = {AllowedConsumers} }}";
 }
