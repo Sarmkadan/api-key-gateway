@@ -9,6 +9,12 @@ namespace ApiKeyGateway.Tests;
 
 public class CollectionExtensionsJsonExtensionsTests
 {
+    public override string ToString()
+    {
+        var sample = new TestItem();
+        return $"CollectionExtensionsJsonExtensionsTests {{ Id = {sample.Id}, Name = {sample.Name} }}";
+    }
+
     private class TestItem
     {
         public int Id { get; set; }
