@@ -77,4 +77,6 @@ public class UsageQuota
         if (IsEnabled)
             CurrentUsage++;
     }
+
+    public override string ToString() => $"UsageQuota {{ IsEnabled = {IsEnabled}, PeriodStartAt = {PeriodStartAt}, CurrentUsage = {CurrentUsage} }}";
 }
