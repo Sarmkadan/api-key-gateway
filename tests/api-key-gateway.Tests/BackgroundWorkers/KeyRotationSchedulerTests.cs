@@ -16,6 +16,10 @@ using Xunit;
 
 namespace ApiKeyGateway.Tests.BackgroundWorkers;
 
+/// <summary>
+/// Unit tests for the KeyRotationScheduler background worker class.
+/// Verifies constructor validation, configuration handling, and rotation cycle execution.
+/// </summary>
 public class KeyRotationSchedulerTests
 {
     private readonly Mock<IServiceProvider> _serviceProviderMock = new();
@@ -25,11 +29,18 @@ public class KeyRotationSchedulerTests
     private readonly Mock<IApiKeyRotationService> _rotationServiceMock = new();
     private readonly ServiceCollection _services = new();
 
-    public KeyRotationSchedulerTests()
+    /// <summary>
+/// Initializes a new instance of the KeyRotationSchedulerTests class.
+/// Sets up the configuration mock to return the key rotation section mock when GetSection("KeyRotation") is called.
+/// </summary>
+public KeyRotationSchedulerTests()
     {
         _configurationMock.Setup(c => c.GetSection("KeyRotation")).Returns(_keyRotationSectionMock.Object);
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws an ArgumentNullException when the serviceProvider parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_WithNullServiceProvider_ThrowsArgumentNullException()
     {
@@ -39,6 +50,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws an ArgumentNullException when the logger parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_WithNullLogger_ThrowsArgumentNullException()
     {
@@ -49,6 +63,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws an ArgumentNullException when the configuration parameter is null.
+    /// </summary>
     [Fact]
     public void Constructor_WithNullConfiguration_ThrowsArgumentNullException()
     {
@@ -59,6 +76,9 @@ public class KeyRotationSchedulerTests
             null!));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws a ConfigurationException when the jitter percentage is invalid.
+    /// </summary>
     [Fact]
     public void Constructor_WithInvalidJitterPercentage_ThrowsConfigurationException()
     {
@@ -70,6 +90,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws a ConfigurationException when the check interval is zero.
+    /// </summary>
     [Fact]
     public void Constructor_WithZeroCheckInterval_ThrowsConfigurationException()
     {
@@ -81,6 +104,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws a ConfigurationException when the warning days are zero.
+    /// </summary>
     [Fact]
     public void Constructor_WithZeroWarningDays_ThrowsConfigurationException()
     {
@@ -92,6 +118,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor throws a ConfigurationException when the warning days are negative.
+    /// </summary>
     [Fact]
     public void Constructor_WithNegativeWarningDays_ThrowsConfigurationException()
     {
@@ -103,6 +132,9 @@ public class KeyRotationSchedulerTests
             _configurationMock.Object));
     }
 
+    /// <summary>
+    /// Verifies that the constructor creates a new instance with valid configuration.
+    /// </summary>
     [Fact]
     public void Constructor_WithValidConfiguration_CreatesInstance()
     {
@@ -122,6 +154,9 @@ public class KeyRotationSchedulerTests
         scheduler.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifies that when ExecuteCycleAsync is called, it calls the rotation service and logs appropriate messages.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_WhenCalled_CallsRotationServiceAndDelays()
     {
@@ -168,6 +203,9 @@ public class KeyRotationSchedulerTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()!), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that when no keys need rotation, a debug message is logged.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_WhenNoKeysNeedRotation_LogsDebugMessage()
     {
@@ -197,6 +235,9 @@ public class KeyRotationSchedulerTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()!), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that when rotation fails, warning messages are logged for each failed rotation.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_WhenRotationFails_LogsWarningMessages()
     {
@@ -233,6 +274,9 @@ public class KeyRotationSchedulerTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()!), Times.Exactly(2));
     }
 
+    /// <summary>
+    /// Verifies that when the operation is cancelled, the rotation service is not called.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_WithCancellationToken_CancelsOperation()
     {
@@ -257,6 +301,9 @@ public class KeyRotationSchedulerTests
         _rotationServiceMock.Verify(s => s.RotateExpiringSoonAsync(5, null), Times.AtLeastOnce);
     }
 
+    /// <summary>
+    /// Verifies that when new expiration days are configured, they are passed correctly to the rotation service.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_WithNewExpirationDays_UsesCorrectParameters()
     {
@@ -282,6 +329,9 @@ public class KeyRotationSchedulerTests
         _rotationServiceMock.Verify(s => s.RotateExpiringSoonAsync(5, 60), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies that when the rotation service throws an exception, it is logged as an error.
+    /// </summary>
     [Fact]
     public async Task ExecuteCycleAsync_HandlesExceptionFromRotationService()
     {
