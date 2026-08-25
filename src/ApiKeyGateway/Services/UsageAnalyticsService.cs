@@ -24,6 +24,8 @@ public class AnalyticsSummary
     public long TotalBytesTransferred { get; set; }
     public int UniqueEndpoints { get; set; }
     public int UniqueSourceIps { get; set; }
+
+    public override string ToString() => $"AnalyticsSummary {{ ApiKeyId = {ApiKeyId}, From = {From}, To = {To}, TotalRequests = {TotalRequests}, SuccessfulRequests = {SuccessfulRequests}, FailedRequests = {FailedRequests} }}";
 }
 
 /// <summary>
