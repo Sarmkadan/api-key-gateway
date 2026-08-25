@@ -7,17 +7,27 @@ using Xunit;
 
 namespace ApiKeyGateway.Tests.Integration;
 
+/// <summary>
+/// Test class for <see cref="BatchOperationHandler"/>.
+/// </summary>
 public class BatchOperationHandlerTests
 {
     private readonly Mock<ILogger<BatchOperationHandler>> _loggerMock;
     private readonly BatchOperationHandler _handler;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BatchOperationHandlerTests"/> class.
+    /// Sets up the mock logger and the handler under test.
+    /// </summary>
     public BatchOperationHandlerTests()
     {
         _loggerMock = new Mock<ILogger<BatchOperationHandler>>();
         _handler = new BatchOperationHandler(_loggerMock.Object);
     }
 
+    /// <summary>
+    /// Verifies that executing an empty batch operation throws a validation exception.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_EmptyBatch_ThrowsValidationException()
     {
@@ -35,6 +45,9 @@ public class BatchOperationHandlerTests
             "At least one API key ID must be specified");
     }
 
+    /// <summary>
+    /// Verifies that executing a null operation throws an argument null exception.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_NullOperation_ThrowsArgumentNullException()
     {
@@ -47,6 +60,9 @@ public class BatchOperationHandlerTests
             "Value cannot be null. (Parameter 'operation')");
     }
 
+    /// <summary>
+    /// Verifies that a single item batch is processed successfully.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_SingleItemBatch_ProcessesSuccessfully()
     {
@@ -74,6 +90,9 @@ public class BatchOperationHandlerTests
         result.Items[0].Result.Should().Be("Key disabled");
     }
 
+    /// <summary>
+    /// Verifies that a multiple item batch is processed successfully.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_MultipleItemsBatch_ProcessesAllSuccessfully()
     {
@@ -103,6 +122,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a batch larger than the chunk size is processed completely.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_BatchLargerThanChunkSize_ProcessesAllItems()
     {
@@ -138,6 +160,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a set-quota operation with parameters is processed successfully.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_SetQuotaOperation_ProcessesWithParameters()
     {
@@ -167,6 +192,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a set-quota operation without parameters results in failure for all items.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_SetQuotaWithoutParameters_ReturnsFailureForAllItems()
     {
@@ -195,6 +223,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a set-quota operation with an invalid quota parameter results in failure for all items.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_InvalidQuotaParameter_ReturnsFailureForAllItems()
     {
@@ -224,6 +255,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that an unknown operation type results in failure for all items.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_UnknownOperationType_ReturnsFailureForAllItems()
     {
@@ -252,6 +286,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a batch with mixed success and failure items reports correct counts.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_MixedSuccessAndFailureItems_ReportsCorrectCounts()
     {
@@ -280,6 +317,9 @@ public class BatchOperationHandlerTests
         result.Items.Count(x => x.ApiKeyId.StartsWith("key-invalid") && !x.Success).Should().Be(2);
     }
 
+    /// <summary>
+    /// Verifies that when an exception occurs in a single item, processing continues and the error is reported.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_ExceptionInSingleItem_ContinuesProcessingAndReportsError()
     {
@@ -316,6 +356,9 @@ public class BatchOperationHandlerTests
         result.Items[2].Success.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that when all items fail, all failures are reported.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_AllItemsFail_ReportsAllFailures()
     {
@@ -343,6 +386,9 @@ public class BatchOperationHandlerTests
         }
     }
 
+    /// <summary>
+    /// Verifies that the result properties (like OperationId, CompletedAt) are correctly set.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_ResultPropertiesAreCorrectlySet()
     {
@@ -367,6 +413,9 @@ public class BatchOperationHandlerTests
         result.CompletedAt.Should().BeBefore(endTime);
     }
 
+    /// <summary>
+    /// Verifies that the item results contain the correct API key IDs.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_ItemResultsContainCorrectApiKeyIds()
     {
