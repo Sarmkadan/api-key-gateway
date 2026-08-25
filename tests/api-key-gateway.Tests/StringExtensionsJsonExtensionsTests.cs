@@ -10,9 +10,24 @@ using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Contains tests for JSON serialization and deserialization extensions of string manipulation methods.
+/// </summary>
+/// <summary>
+/// Contains tests for JSON serialization and deserialization extensions of string manipulation methods.
+/// </summary>
+/// <summary>
+/// Contains tests for JSON serialization and deserialization extensions of string manipulation methods.
+/// </summary>
 public class StringExtensionsJsonExtensionsTests
 {
-    public class ToJson
+    /// <summary>
+    /// Tests for the ToJson method that serializes StringExtensionsMetadata to JSON.
+    /// </summary>
+    /// <summary>
+/// Serializes a StringExtensionsMetadata object into a JSON string.
+/// </summary>
+public class ToJson
     {
         [Fact]
         public void ToJson_WithDefaultIndentedFalse_ReturnsCompactJson()
@@ -58,7 +73,22 @@ public class StringExtensionsJsonExtensionsTests
         }
     }
 
-    public class FromJson
+    /// <summary>
+/// Deserializes a JSON string into a StringExtensionsMetadata object.
+/// </summary>
+/// <summary>
+/// Tests for the FromJson method that deserializes JSON into StringExtensionsMetadata.
+/// </summary>
+/// <summary>
+/// Deserializes a JSON string into a StringExtensionsMetadata object.
+/// </summary>
+/// <summary>
+/// Deserializes a JSON string into a StringExtensionsMetadata object.
+/// </summary>
+/// <summary>
+/// Deserializes a JSON string into a StringExtensionsMetadata object.
+/// </summary>
+public class FromJson
     {
         [Fact]
         public void FromJson_WithValidJson_ReturnsDeserializedMetadata()
