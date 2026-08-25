@@ -127,6 +127,8 @@ public sealed class TransformationRule
     /// Common keys: <c>HeaderName</c>, <c>HeaderValue</c>, <c>ParamName</c>,
     /// <c>ParamValue</c>, <c>PathTemplate</c>.
     /// </summary>
+    public override string ToString() => $"TransformationRule {{ Id = {Id}, Name = {Name}, Description = {Description}, Scope = {Scope}, ApiKeyId = {ApiKeyId}, ConsumerId = {ConsumerId} }}";
+
     public Dictionary<string, string> Parameters { get; set; } = [];
 
     /// <summary>
