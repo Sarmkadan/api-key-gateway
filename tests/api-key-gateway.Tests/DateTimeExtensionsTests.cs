@@ -5,6 +5,9 @@ using ApiKeyGateway.Utilities;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Tests for extension methods on the DateTime class, verifying behavior of date/time manipulations and formatting.
+/// </summary>
 public class DateTimeExtensionsTests
 {
     [Fact]
