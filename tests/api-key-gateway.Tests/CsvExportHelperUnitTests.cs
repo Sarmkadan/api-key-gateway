@@ -21,6 +21,16 @@ namespace ApiKeyGateway.Tests;
 public class CsvExportHelperUnitTests
 {
     /// <summary>
+    /// Returns a concise, informative representation of the test class,
+    /// summarizing the <see cref="TestModel"/> properties exercised by these tests.
+    /// </summary>
+    public override string ToString()
+    {
+        var sample = new TestModel();
+        return $"CsvExportHelperUnitTests {{ Id = {sample.Id}, Name = {sample.Name}, Description = {sample.Description}, IsActive = {sample.IsActive}, CreatedAt = {sample.CreatedAt} }}";
+    }
+
+    /// <summary>
     /// Simple test model for CSV export testing.
     /// </summary>
     private class TestModel
