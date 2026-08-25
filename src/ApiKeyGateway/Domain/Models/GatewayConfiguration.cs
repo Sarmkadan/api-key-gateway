@@ -57,4 +57,7 @@ public class GatewayConfiguration
         CustomSettings[key] = value;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public override string ToString() =>
+        $"GatewayConfiguration {{ RequireSsl = {RequireSsl}, LogAllRequests = {LogAllRequests}, MaxKeyLength = {MaxKeyLength}, MinKeyLength = {MinKeyLength}, DefaultKeyExpirationDays = {DefaultKeyExpirationDays}, AuditLogRetentionDays = {AuditLogRetentionDays} }}";
 }
