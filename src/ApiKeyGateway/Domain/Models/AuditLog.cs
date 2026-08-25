@@ -78,4 +78,6 @@ public class AuditLog
             ChangedAt = DateTime.UtcNow
         };
     }
+
+    public override string ToString() => $"AuditLog {{ Id = {Id}, ResourceId = {ResourceId}, ResourceType = {ResourceType}, Action = {Action}, PerformedBy = {PerformedBy}, PerformedAt = {PerformedAt}, HttpStatusCode = {HttpStatusCode}, SourceIp = {SourceIp}, Reason = {Reason}, Changes = {Changes}, ErrorMessage = {ErrorMessage}, IsSuccess = {IsSuccess} }}";
 }
