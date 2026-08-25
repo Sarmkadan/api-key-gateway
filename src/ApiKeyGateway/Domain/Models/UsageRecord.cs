@@ -115,4 +115,7 @@ public class UsageRecord
     {
         return records.Count(r => r.IsError);
     }
+
+    public override string ToString() =>
+        $"UsageRecord {{ ErrorCode = {ErrorCode}, SourceIp = {SourceIp}, UserAgent = {UserAgent}, Tags = {Tags} }}";
 }
