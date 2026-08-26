@@ -254,6 +254,9 @@ public class ApiKeyResponse
     public string DisplayKey { get; set; } = string.Empty;
     public string ConsumerId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+
+    public override string ToString() =>
+        $"ApiKeyResponse {{ Id = {Id}, DisplayKey = {DisplayKey}, ConsumerId = {ConsumerId}, CreatedAt = {CreatedAt} }}";
 }
 
 public class ApiKeyInfo
