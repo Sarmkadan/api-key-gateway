@@ -377,5 +377,8 @@ public class CollectionExtensionsTests_EdgeCases
     {
         public string Category { get; set; } = string.Empty;
         public int Value { get; set; }
+
+        public override string ToString() =>
+            $"TestItem {{ Category = {Category}, Value = {Value} }}";
     }
 }
