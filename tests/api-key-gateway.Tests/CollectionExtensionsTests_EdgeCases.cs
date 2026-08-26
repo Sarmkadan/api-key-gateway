@@ -18,6 +18,11 @@ namespace ApiKeyGateway.Tests;
 /// </summary>
 public class CollectionExtensionsTests_EdgeCases
 {
+    public string Category { get; set; } = string.Empty;
+    public int Value { get; set; }
+
+    public override string ToString() =>
+        $"CollectionExtensionsTests_EdgeCases {{ Category = {Category}, Value = {Value} }}";
     // -------------------------------------------------------------------------
     // Paginate edge cases
     // -------------------------------------------------------------------------
