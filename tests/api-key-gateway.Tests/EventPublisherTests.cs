@@ -13,17 +13,27 @@ using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Tests for the <see cref="InMemoryEventPublisher"/> to verify event publishing behavior.
+/// </summary>
 public class EventPublisherTests
 {
     private readonly Mock<ILogger<InMemoryEventPublisher>> _loggerMock;
     private readonly InMemoryEventPublisher _publisher;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventPublisherTests"/> class.
+    /// Sets up a mock logger and an instance of the <see cref="InMemoryEventPublisher"/>.
+    /// </summary>
     public EventPublisherTests()
     {
         _loggerMock = new Mock<ILogger<InMemoryEventPublisher>>();
         _publisher = new InMemoryEventPublisher(_loggerMock.Object);
     }
 
+    /// <summary>
+    /// Verifies that publishing an event with zero subscribers does not throw and logs a debug message.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug()
     {
@@ -47,6 +57,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug));
     }
 
+    /// <summary>
+    /// Verifies that publishing an event with one subscriber invokes the subscriber exactly once.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_WithOneSubscriber_InvokesSubscriberOnce()
     {
@@ -81,6 +94,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithOneSubscriber_InvokesSubscriberOnce));
     }
 
+    /// <summary>
+    /// Verifies that publishing an event with multiple subscribers invokes all subscribers.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked()
     {
@@ -129,6 +145,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked));
     }
 
+    /// <summary>
+    /// Verifies that when a subscriber throws an exception, the publisher continues to invoke the remaining subscribers.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_SubscriberThrows_ContinuesToNextSubscriber()
     {
@@ -167,6 +186,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_SubscriberThrows_ContinuesToNextSubscriber));
     }
 
+    /// <summary>
+    /// Verifies that when publishing different event types, only subscribers for the specific event type are invoked.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked()
     {
@@ -192,6 +214,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked));
     }
 
+    /// <summary>
+    /// Verifies that registering the same handler multiple times results in the handler being invoked multiple times for a single event.
+    /// </summary>
     [Fact]
     public async Task PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes()
     {
@@ -218,6 +243,9 @@ public class EventPublisherTests
         _loggerMock.Object.LogInformation("Finished test {TestName}", nameof(PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes));
     }
 
+    /// <summary>
+    /// Verifies that subscribing to an event type registers the handler for that event type.
+    /// </summary>
     [Fact]
     public async Task Subscribe_RegistersHandlerForEventType()
     {
