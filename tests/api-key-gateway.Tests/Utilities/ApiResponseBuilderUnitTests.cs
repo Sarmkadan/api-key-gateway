@@ -19,6 +19,11 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public class ApiResponseBuilderUnitTests
 {
+    public int Id { get; set; }
+    public string? Name { get; set; }
+
+    public override string ToString() =>
+        $"ApiResponseBuilderUnitTests {{ Id = {Id}, Name = {Name} }}";
     /// <summary>
     /// Test model for response data.
     /// </summary>
