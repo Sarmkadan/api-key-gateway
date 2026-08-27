@@ -13,16 +13,27 @@ using Xunit;
 
 namespace api_key_gateway.Tests
 {
+    /// <summary>
+    /// Test suite for the <see cref="WebhookManager"/> class.
+    /// </summary>
     public class WebhookManagerTests
     {
         private readonly WebhookManager _manager;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebhookManagerTests"/> class.
+        /// Creates a <see cref="WebhookManager"/> instance with a null logger for testing.
+        /// </summary>
         public WebhookManagerTests()
         {
             // Use a null logger to avoid noisy output during tests
             _manager = new WebhookManager(NullLogger<WebhookManager>.Instance);
         }
 
+        /// <summary>
+        /// Tests that registering a webhook with valid parameters returns a non-empty ID and stores the subscription.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         [Fact]
         public async Task RegisterWebhookAsync_Valid_ReturnsIdAndStoresSubscription()
         {
@@ -46,6 +57,10 @@ namespace api_key_gateway.Tests
             Assert.True(stored.IsActive);
         }
 
+        /// <summary>
+        /// Tests that getting webhooks for a key with no webhooks returns an empty collection.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         [Fact]
         public async Task GetWebhooksForKeyAsync_NoWebhooks_ReturnsEmpty()
         {
@@ -59,6 +74,10 @@ namespace api_key_gateway.Tests
             Assert.Empty(subscriptions);
         }
 
+        /// <summary>
+        /// Tests that registering two webhooks with the same parameters returns distinct IDs and both are stored.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         [Fact]
         public async Task RegisterWebhookAsync_DuplicateRegistration_ReturnsDistinctIds()
         {
@@ -82,6 +101,10 @@ namespace api_key_gateway.Tests
             Assert.Contains(id2, ids);
         }
 
+        /// <summary>
+        /// Tests that registering a webhook with an invalid URL (non-HTTPS) throws a ValidationException.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         [Fact]
         public async Task RegisterWebhookAsync_InvalidUrl_ThrowsValidationException()
         {
@@ -95,6 +118,10 @@ namespace api_key_gateway.Tests
                 await _manager.RegisterWebhookAsync(apiKeyId, targetUrl, events));
         }
 
+        /// <summary>
+        /// Tests that registering a webhook with null or empty parameters throws an ArgumentException.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         [Fact]
         public async Task RegisterWebhookAsync_NullOrEmptyParameters_ThrowArgumentException()
         {
