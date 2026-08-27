@@ -7,8 +7,16 @@ using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
+/// <summary>
+/// Tests for the <see cref="CollectionExtensionsJsonExtensions"/> class.
+/// Contains test cases for JSON serialization and deserialization extension methods.
+/// </summary>
 public class CollectionExtensionsJsonExtensionsTests
 {
+    /// <summary>
+    /// Returns a string representation of the test class using a sample <see cref="TestItem"/>.
+    /// </summary>
+    /// <returns>A formatted string showing the class name and sample item properties.</returns>
     public override string ToString()
     {
         var sample = new TestItem();
@@ -21,8 +29,14 @@ public class CollectionExtensionsJsonExtensionsTests
         public string? Name { get; set; }
     }
 
+    /// <summary>
+    /// Tests for the <see cref="CollectionExtensionsJsonExtensions.ToJson{T}(IEnumerable{T}, bool)"/> method.
+    /// </summary>
     public class ToJson
     {
+        /// <summary>
+        /// Verifies that converting a non-empty collection to JSON produces a valid JSON string containing all items.
+        /// </summary>
         [Fact]
         public void ToJson_WithNonEmptyCollection_ReturnsValidJsonString()
         {
@@ -39,6 +53,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().Contain("item3");
         }
 
+        /// <summary>
+        /// Verifies that converting an empty collection to JSON produces an empty JSON array.
+        /// </summary>
         [Fact]
         public void ToJson_WithEmptyCollection_ReturnsEmptyArrayJson()
         {
@@ -52,6 +69,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().Be("[]");
         }
 
+        /// <summary>
+        /// Verifies that converting a collection to JSON with indentation produces formatted JSON containing newlines.
+        /// </summary>
         [Fact]
         public void ToJson_WithIndentedTrue_ReturnsFormattedJson()
         {
@@ -72,6 +92,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().Contain("\n");
         }
 
+        /// <summary>
+        /// Verifies that converting a null collection throws an <see cref="ArgumentNullException"/>.
+        /// </summary>
         [Fact]
         public void ToJson_WithNullCollection_ThrowsArgumentNullException()
         {
@@ -82,6 +105,9 @@ public class CollectionExtensionsJsonExtensionsTests
             Assert.Throws<ArgumentNullException>(() => collection!.ToJson());
         }
 
+        /// <summary>
+        /// Verifies that converting a collection of complex objects serializes correctly with camelCase property names.
+        /// </summary>
         [Fact]
         public void ToJson_WithComplexObjectCollection_SerializesCorrectly()
         {
@@ -107,8 +133,14 @@ public class CollectionExtensionsJsonExtensionsTests
         }
     }
 
+    /// <summary>
+    /// Tests for the <see cref="CollectionExtensionsJsonExtensions.FromJson{T}(string)"/> method.
+    /// </summary>
     public class FromJson
     {
+        /// <summary>
+        /// Verifies that deserializing a valid JSON array produces a collection equivalent to the expected values.
+        /// </summary>
         [Fact]
         public void FromJson_WithValidJson_ReturnsDeserializedCollection()
         {
@@ -123,6 +155,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeEquivalentTo(new List<string> { "item1", "item2", "item3" });
         }
 
+        /// <summary>
+        /// Verifies that deserializing an empty JSON array produces an empty collection.
+        /// </summary>
         [Fact]
         public void FromJson_WithEmptyArray_ReturnsEmptyCollection()
         {
@@ -137,6 +172,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeEmpty();
         }
 
+        /// <summary>
+        /// Verifies that deserializing null, empty, or whitespace-only JSON returns null.
+        /// </summary>
         [Fact]
         public void FromJson_WithNullOrWhitespaceJson_ReturnsNull()
         {
@@ -151,6 +189,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result3.Should().BeNull();
         }
 
+        /// <summary>
+        /// Verifies that deserializing invalid JSON throws a <see cref="JsonException"/>.
+        /// </summary>
         [Fact]
         public void FromJson_WithInvalidJson_ThrowsJsonException()
         {
@@ -161,6 +202,9 @@ public class CollectionExtensionsJsonExtensionsTests
             Assert.Throws<JsonException>(() => CollectionExtensionsJsonExtensions.FromJson<string>(json));
         }
 
+        /// <summary>
+        /// Verifies that deserializing a JSON array of complex objects produces the correct collection with expected property values.
+        /// </summary>
         [Fact]
         public void FromJson_WithComplexObjectCollection_DeserializesCorrectly()
         {
@@ -177,6 +221,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().ContainSingle(x => x.Id == 2 && x.Name == "Second");
         }
 
+        /// <summary>
+        /// Verifies that deserializing an empty string returns null.
+        /// </summary>
         [Fact]
         public void FromJson_WithEmptyString_ReturnsNull()
         {
@@ -191,8 +238,14 @@ public class CollectionExtensionsJsonExtensionsTests
         }
     }
 
+    /// <summary>
+    /// Tests for the <see cref="CollectionExtensionsJsonExtensions.TryFromJson{T}(string, out IEnumerable{T}?)"/> method.
+    /// </summary>
     public class TryFromJson
     {
+        /// <summary>
+        /// Verifies that trying to deserialize a valid JSON array returns true and produces the expected collection.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithValidJson_ReturnsTrueAndDeserializesCollection()
         {
@@ -209,6 +262,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeEquivalentTo(new List<int> { 1, 2, 3 });
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize an empty JSON array returns true and produces an empty collection.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithEmptyArray_ReturnsTrueAndEmptyCollection()
         {
@@ -225,6 +281,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeEmpty();
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize null JSON throws an <see cref="ArgumentNullException"/>.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithNullJson_ThrowsArgumentNullException()
         {
@@ -236,6 +295,9 @@ public class CollectionExtensionsJsonExtensionsTests
             Assert.Throws<ArgumentNullException>(() => CollectionExtensionsJsonExtensions.TryFromJson(json!, out result));
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize whitespace-only JSON returns true and produces null.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithWhitespaceJson_ReturnsTrueAndNull()
         {
@@ -251,6 +313,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize an empty string returns true and produces null.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithEmptyString_ReturnsTrueAndNull()
         {
@@ -266,6 +331,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize invalid JSON returns false and produces null.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithInvalidJson_ReturnsFalseAndNull()
         {
@@ -281,6 +349,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize a JSON array of complex objects returns true and produces the correct collection.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithComplexObjectCollection_DeserializesCorrectly()
         {
@@ -299,6 +370,9 @@ public class CollectionExtensionsJsonExtensionsTests
             result.Should().ContainSingle(x => x.Id == 2 && x.Name == "Second");
         }
 
+        /// <summary>
+        /// Verifies that trying to deserialize a JSON array of strings works correctly with mixed valid types.
+        /// </summary>
         [Fact]
         public void TryFromJson_WithMixedValidTypes_WorksCorrectly()
         {
