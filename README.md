@@ -959,3 +959,44 @@ var invalidLogProblems = testInstance.ValidateAuditLog(
 );
 invalidLogProblems.Should().HaveCount(6); // Multiple validation failures
 ```
+
+## AuthenticationResult
+
+The `AuthenticationResult` record (in `ApiKeyGateway.Domain.Models`) represents the outcome of an authentication attempt against the API key gateway. It exposes a `Success` flag, an optional `AuthenticationFailureReason` populated when authentication fails, and the authenticated `ApiKey` when it succeeds. Static factory methods `SuccessResult` and `FailureResult` provide a clean way to construct results without manually setting properties.
+
+### Public Members
+
+- `Success` (bool) - Indicates whether authentication was successful
+- `FailureReason` (AuthenticationFailureReason?) - The failure reason when `Success` is false
+- `ApiKey` (ApiKey?) - The authenticated API key when `Success` is true
+- `SuccessResult(ApiKey apiKey)` (static) - Creates a successful authentication result with the given API key
+- `FailureResult(AuthenticationFailureReason failureReason)` (static) - Creates a failed authentication result with a specific reason
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Domain.Enums;
+
+// Build a successful result from an authenticated API key
+var apiKey = new ApiKey
+{
+    Id = "key-123",
+    ConsumerId = "consumer-789",
+    Name = "Production Key",
+    Status = ApiKeyStatus.Active
+};
+
+AuthenticationResult success = AuthenticationResult.SuccessResult(apiKey);
+if (success.Success)
+{
+    Console.WriteLine($"Authenticated as {success.ApiKey!.ConsumerId}");
+}
+
+// Build a failure result with a specific reason
+AuthenticationResult failure = AuthenticationResult.FailureResult(AuthenticationFailureReason.ApiKeyExpired);
+if (!failure.Success)
+{
+    Console.WriteLine($"Authentication failed: {failure.FailureReason}");
+}
+```
