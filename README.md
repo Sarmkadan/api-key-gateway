@@ -1293,3 +1293,40 @@ await testInstance.HandleApiKeyCreatedAsync_HappyPath_LogsAndPersists();
 await Assert.ThrowsAsync<ArgumentNullException>(
     () => testInstance.HandleApiKeyCreatedAsync_NullEvent_ThrowsArgumentNullException());
 ```
+
+## StringExtensionsJsonExtensionsTests
+
+The `StringExtensionsJsonExtensionsTests` class contains unit tests for the JSON serialization and deserialization extensions of the `StringExtensions` class. These tests verify the behavior of the `ToJson`, `FromJson`, and `TryFromJson` methods under various conditions, including handling of null, empty, whitespace, and invalid JSON inputs, as well as checking the serialized metadata properties.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+// Create a test instance
+var test = new StringExtensionsJsonExtensionsTests();
+
+// Test serializing to compact JSON (default)
+test.ToJson_WithDefaultIndentedFalse_ReturnsCompactJson();
+
+// Test serializing to formatted JSON
+test.ToJson_WithIndentedTrue_ReturnsFormattedJson();
+
+// Test deserializing valid JSON
+test.FromJson_WithValidJson_ReturnsDeserializedMetadata();
+
+// Test deserializing camelCase JSON
+test.FromJson_WithCamelCaseJson_ReturnsDeserializedMetadata();
+
+// Test TryFromJson with valid JSON
+test.TryFromJson_WithValidJson_ReturnsTrueAndDeserializedMetadata();
+
+// Test TypeName property
+test.TypeName_Property_ReturnsCorrectTypeName();
+
+// Test Methods property returns list
+test.Methods_Property_ReturnsListOfExtensionMethods();
+
+// Test Methods property returns read-only list
+test.Methods_Property_ReturnsReadOnlyList();
+```
