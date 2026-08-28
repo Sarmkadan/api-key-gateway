@@ -1034,6 +1034,30 @@ var invalidLogProblems = testInstance.ValidateAuditLog(
 invalidLogProblems.Should().HaveCount(6); // Multiple validation failures
 ```
 
+## WebhookManagerTests
+
+The `WebhookManagerTests` class contains unit tests for the `WebhookManager` class, verifying the behavior of webhook registration, retrieval, and validation. It tests scenarios such as successful registration, duplicate registration, invalid URLs, and null or empty parameters.
+
+### Example Usage
+
+```csharp
+using api_key_gateway.Tests;
+using FluentAssertions;
+using System.Threading.Tasks;
+
+// Create a test instance
+var testInstance = new WebhookManagerTests();
+
+// Test registering a webhook with valid parameters
+await testInstance.RegisterWebhookAsync_Valid_ReturnsIdAndStoresSubscription();
+
+// Test that getting webhooks for a key with no webhooks returns empty
+await testInstance.GetWebhooksForKeyAsync_NoWebhooks_ReturnsEmpty();
+
+// Test duplicate registration returns distinct IDs
+await testInstance.RegisterWebhookAsync_DuplicateRegistration_ReturnsDistinctIds();
+```
+
 ## AuthenticationResult
 
 The `AuthenticationResult` record (in `ApiKeyGateway.Domain.Models`) represents the outcome of an authentication attempt against the API key gateway. It exposes a `Success` flag, an optional `AuthenticationFailureReason` populated when authentication fails, and the authenticated `ApiKey` when it succeeds. Static factory methods `SuccessResult` and `FailureResult` provide a clean way to construct results without manually setting properties.
