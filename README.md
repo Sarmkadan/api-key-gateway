@@ -1074,3 +1074,51 @@ if (!failure.Success)
     Console.WriteLine($"Authentication failed: {failure.FailureReason}");
 }
 ```
+
+## CollectionExtensionsJsonExtensionsTests
+
+The `CollectionExtensionsJsonExtensionsTests` class contains unit tests for the `CollectionExtensionsJsonExtensions` class, which provides JSON serialization and deserialization extension methods for collections. These tests verify correct behavior for various scenarios including non-empty and empty collections, null inputs, indentation, complex objects, and error conditions such as invalid JSON.
+
+### Public Members
+
+- `CollectionExtensionsJsonExtensionsTests()` - Constructor for the test class.
+- `Id` - Gets or sets the identifier for the test instance.
+- `Name` - Gets or sets the name for the test instance.
+- `ToJson_WithNonEmptyCollection_ReturnsValidJsonString()` - Tests that converting a non-empty collection to JSON produces a valid JSON string containing all items.
+- `ToJson_WithEmptyCollection_ReturnsEmptyArrayJson()` - Tests that converting an empty collection to JSON produces an empty JSON array.
+- `ToJson_WithIndentedTrue_ReturnsFormattedJson()` - Tests that converting a collection to JSON with indentation produces formatted JSON containing newlines.
+- `ToJson_WithNullCollection_ThrowsArgumentNullException()` - Tests that converting a null collection throws an `ArgumentNullException`.
+- `ToJson_WithComplexObjectCollection_SerializesCorrectly()` - Tests that converting a collection of complex objects serializes correctly with camelCase property names.
+- `FromJson_WithValidJson_ReturnsDeserializedCollection()` - Tests that deserializing a valid JSON array produces a collection equivalent to the expected values.
+- `FromJson_WithEmptyArray_ReturnsEmptyCollection()` - Tests that deserializing an empty JSON array produces an empty collection.
+- `FromJson_WithNullOrWhitespaceJson_ReturnsNull()` - Tests that deserializing null, empty, or whitespace-only JSON returns null.
+- `FromJson_WithInvalidJson_ThrowsJsonException()` - Tests that deserializing invalid JSON throws a `JsonException`.
+- `FromJson_WithComplexObjectCollection_DeserializesCorrectly()` - Tests that deserializing a JSON array of complex objects produces the correct collection with expected property values.
+- `FromJson_WithEmptyString_ReturnsNull()` - Tests that deserializing an empty string returns null.
+- `TryFromJson_WithValidJson_ReturnsTrueAndDeserializesCollection()` - Tests that trying to deserialize a valid JSON array returns true and produces the expected collection.
+- `TryFromJson_WithEmptyArray_ReturnsTrueAndEmptyCollection()` - Tests that trying to deserialize an empty JSON array returns true and produces an empty collection.
+- `TryFromJson_WithNullJson_ThrowsArgumentNullException()` - Tests that trying to deserialize null JSON throws an `ArgumentNullException`.
+- `TryFromJson_WithWhitespaceJson_ReturnsTrueAndNull()` - Tests that trying to deserialize whitespace-only JSON returns true and produces null.
+- `TryFromJson_WithEmptyString_ReturnsTrueAndNull()` - Tests that trying to deserialize an empty string returns true and produces null.
+- `TryFromJson_WithInvalidJson_ReturnsFalseAndNull()` - Tests that trying to deserialize invalid JSON returns false and produces null.
+- `TryFromJson_WithComplexObjectCollection_DeserializesCorrectly()` - Tests that trying to deserialize a JSON array of complex objects returns true and produces the correct collection.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using FluentAssertions;
+
+var test = new CollectionExtensionsJsonExtensionsTests();
+test.Id = 1;
+test.Name = "Sample Test";
+
+// Test serializing a non-empty collection to JSON
+test.ToJson_WithNonEmptyCollection_ReturnsValidJsonString();
+
+// Test deserializing valid JSON
+test.FromJson_WithValidJson_ReturnsDeserializedCollection();
+
+// Test trying to deserialize valid JSON
+test.TryFromJson_WithValidJson_ReturnsTrueAndDeserializesCollection();
+```
