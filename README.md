@@ -1330,3 +1330,81 @@ test.Methods_Property_ReturnsListOfExtensionMethods();
 // Test Methods property returns read-only list
 test.Methods_Property_ReturnsReadOnlyList();
 ```
+
+## BatchOperationHandlerTests
+
+The `BatchOperationHandlerTests` class contains unit tests for the `BatchOperationHandler` class, verifying the behavior of batch operations such as enabling, disabling, rotating, and setting quotas on API keys. It tests scenarios such as empty batches, null operations, single and multiple item batches, batches larger than chunk size, set-quota operations with and without parameters, invalid quota parameters, unknown operation types, mixed success and failure items, exceptions in single items, all items failing, result properties, and item results containing correct API key IDs.
+
+### Public Members
+
+- `BatchOperationHandlerTests()` - Constructor for the test class.
+- `ExecuteAsync_EmptyBatch_ThrowsValidationException` - Verifies that executing an empty batch operation throws a validation exception.
+- `ExecuteAsync_NullOperation_ThrowsArgumentNullException` - Verifies that executing a null operation throws an argument null exception.
+- `ExecuteAsync_SingleItemBatch_ProcessesSuccessfully` - Verifies that a single item batch is processed successfully.
+- `ExecuteAsync_MultipleItemsBatch_ProcessesAllSuccessfully` - Verifies that a multiple item batch is processed successfully.
+- `ExecuteAsync_BatchLargerThanChunkSize_ProcessesAllItems` - Verifies that a batch larger than the chunk size is processed completely.
+- `ExecuteAsync_SetQuotaOperation_ProcessesWithParameters` - Verifies that a set-quota operation with parameters is processed successfully.
+- `ExecuteAsync_SetQuotaWithoutParameters_ReturnsFailureForAllItems` - Verifies that a set-quota operation without parameters results in failure for all items.
+- `ExecuteAsync_InvalidQuotaParameter_ReturnsFailureForAllItems` - Verifies that a set-quota operation with an invalid quota parameter results in failure for all items.
+- `ExecuteAsync_UnknownOperationType_ReturnsFailureForAllItems` - Verifies that an unknown operation type results in failure for all items.
+- `ExecuteAsync_MixedSuccessAndFailureItems_ReportsCorrectCounts` - Verifies that a batch with mixed success and failure items reports correct counts.
+- `ExecuteAsync_ExceptionInSingleItem_ContinuesProcessingAndReportsError` - Verifies that when an exception occurs in a single item, processing continues and the error is reported.
+- `ExecuteAsync_AllItemsFail_ReportsAllFailures` - Verifies that when all items fail, all failures are reported.
+- `ExecuteAsync_ResultPropertiesAreCorrectlySet` - Verifies that the result properties (like OperationId, CompletedAt) are correctly set.
+- `ExecuteAsync_ItemResultsContainCorrectApiKeyIds` - Verifies that the item results contain the correct API key IDs.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests.Integration;
+using ApiKeyGateway.Domain.Models;
+using FluentAssertions;
+using System.Threading.Tasks;
+
+// Create a test instance
+var testInstance = new BatchOperationHandlerTests();
+
+// Test executing an empty batch operation (expects validation exception)
+await Assert.ThrowsAsync<ValidationException>(
+    async () => await testInstance.ExecuteAsync_EmptyBatch_ThrowsValidationException());
+
+// Test executing a null operation (expects argument null exception)
+await Assert.ThrowsAsync<ArgumentNullException>(
+    async () => await testInstance.ExecuteAsync_NullOperation_ThrowsArgumentNullException());
+
+// Test single item batch processes successfully
+await testInstance.ExecuteAsync_SingleItemBatch_ProcessesSuccessfully();
+
+// Test multiple items batch processes all successfully
+await testInstance.ExecuteAsync_MultipleItemsBatch_ProcessesAllSuccessfully();
+
+// Test batch larger than chunk size processes all items
+await testInstance.ExecuteAsync_BatchLargerThanChunkSize_ProcessesAllItems();
+
+// Test set-quota operation with parameters processes successfully
+await testInstance.ExecuteAsync_SetQuotaOperation_ProcessesWithParameters();
+
+// Test set-quota operation without parameters returns failure for all items
+await testInstance.ExecuteAsync_SetQuotaWithoutParameters_ReturnsFailureForAllItems();
+
+// Test set-quota operation with invalid quota parameter returns failure for all items
+await testInstance.ExecuteAsync_InvalidQuotaParameter_ReturnsFailureForAllItems();
+
+// Test unknown operation type returns failure for all items
+await testInstance.ExecuteAsync_UnknownOperationType_ReturnsFailureForAllItems();
+
+// Test mixed success and failure items reports correct counts
+await testInstance.ExecuteAsync_MixedSuccessAndFailureItems_ReportsCorrectCounts();
+
+// Test exception in single item continues processing and reports error
+await testInstance.ExecuteAsync_ExceptionInSingleItem_ContinuesProcessingAndReportsError();
+
+// Test all items fail reports all failures
+await testInstance.ExecuteAsync_AllItemsFail_ReportsAllFailures();
+
+// Test result properties are correctly set
+await testInstance.ExecuteAsync_ResultPropertiesAreCorrectlySet();
+
+// Test item results contain correct API key IDs
+await testInstance.ExecuteAsync_ItemResultsContainCorrectApiKeyIds();
+```
