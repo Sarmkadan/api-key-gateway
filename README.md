@@ -1122,3 +1122,54 @@ test.FromJson_WithValidJson_ReturnsDeserializedCollection();
 // Test trying to deserialize valid JSON
 test.TryFromJson_WithValidJson_ReturnsTrueAndDeserializesCollection();
 ```
+
+## RetryPolicyBuilderUnitTests
+
+The `RetryPolicyBuilderUnitTests` class contains unit tests for the `RetryPolicyBuilder` class, verifying retry policy construction and behavior. These tests cover builder configuration, retry behavior on various exception types, and edge cases like zero initial delay and maximum retry limits.
+
+### Public Members
+
+- `DefaultValues_WhenNotConfigured_ReturnsExpectedDefaults` - Tests that the default RetryPolicyBuilder has expected initial values.
+- `WithMaxRetries_SetsCorrectValue` - Tests that WithMaxRetries sets the correct value.
+- `WithInitialDelay_SetsCorrectValue` - Tests that WithInitialDelay sets the correct value.
+- `WithBackoffMultiplier_SetsCorrectValue` - Tests that WithBackoffMultiplier sets the correct value.
+- `WithMaxDelay_SetsCorrectValue` - Tests that WithMaxDelay sets the correct value.
+- `RetryOn_AddsExceptionTypeToRetryList` - Tests that RetryOn adds exception types to the retry list.
+- `Build_ReturnsNonNullRetryPolicyFunction` - Tests that Build returns a non-null retry policy function.
+- `Build_Policy_SucceedsOnFirstAttemptWithoutRetry` - Tests that the retry policy succeeds on first attempt without retry.
+- `Build_Policy_RetriesOnHttpRequestException` - Tests that the retry policy retries on transient exceptions (HttpRequestException).
+- `Build_Policy_RetriesOnTimeoutException` - Tests that the retry policy retries on transient exceptions (TimeoutException).
+- `Build_Policy_RetriesOnInvalidOperationException` - Tests that the retry policy retries on InvalidOperationException.
+- `Build_Policy_RespectsMaxRetriesLimit` - Tests that the retry policy respects MaxRetries limit.
+- `Build_Policy_RespectsMaxDelay` - Tests that the retry policy respects MaxDelay when backoff would exceed it.
+- `Build_Policy_UsesCustomRetryExceptionTypes` - Tests that custom retry exception types are used when configured.
+- `Build_Policy_DoesNotRetryNonRetryableExceptions` - Tests that non-retryable exceptions are not retried.
+- `Build_Policy_WithMultipleRetryExceptionTypes` - Tests that RetryOn with multiple exception types works correctly.
+- `Build_Policy_WorksWithDifferentReturnTypes` - Tests that the retry policy works with different return types.
+- `Build_Policy_WithZeroInitialDelay_WorksCorrectly` - Tests that WithInitialDelay of 0 works correctly.
+- `CustomRetryException(string message) : base(message)` - Custom exception type for testing retry behavior.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new RetryPolicyBuilderUnitTests();
+
+// Test default values
+testInstance.DefaultValues_WhenNotConfigured_ReturnsExpectedDefaults();
+
+// Test configuring max retries
+testInstance.WithMaxRetries_SetsCorrectValue(5);
+
+// Test building a policy that succeeds on first attempt
+await testInstance.Build_Policy_SucceedsOnFirstAttemptWithoutRetry();
+
+// Test building a policy that retries on HTTP request exceptions
+await testInstance.Build_Policy_RetriesOnHttpRequestException();
+
+// Test building a policy that respects max retries limit
+await testInstance.Build_Policy_RespectsMaxRetriesLimit();
+```
