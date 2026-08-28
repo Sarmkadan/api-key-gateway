@@ -1272,3 +1272,24 @@ testInstance.GetSecondsUntilAllowed_OverLimit_ReturnsPositiveValue();
 testInstance.ShouldWarnAboutLimit_Below80_ReturnsFalse();
 testInstance.ShouldWarnAboutLimit_At80_ReturnsTrue();
 ```
+
+## AuditLogEventHandlerTests
+
+The `AuditLogEventHandlerTests` class contains unit tests for the `AuditLogEventHandler`, `UsageTrackingEventHandler`, and `RateLimitEventHandler` classes. It verifies that events such as API key creation, rotation, disabling, usage, quota exhaustion, and rate limit violations are properly logged and persisted.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using System.Threading.Tasks;
+
+// Create a test instance
+var testInstance = new AuditLogEventHandlerTests();
+
+// Test handling an API key creation event
+await testInstance.HandleApiKeyCreatedAsync_HappyPath_LogsAndPersists();
+
+// Test handling a null event for API key creation (expects exception)
+await Assert.ThrowsAsync<ArgumentNullException>(
+    () => testInstance.HandleApiKeyCreatedAsync_NullEvent_ThrowsArgumentNullException());
+```
