@@ -1197,3 +1197,78 @@ await testInstance.Build_Policy_RetriesOnHttpRequestException();
 // Test building a policy that respects max retries limit
 await testInstance.Build_Policy_RespectsMaxRetriesLimit();
 ```
+
+## RateLimitCalculationHelperUnitTests
+
+The `RateLimitCalculationHelperUnitTests` class contains unit tests for the `RateLimitCalculationHelper` utility class, which provides core rate limit calculation logic for the API key gateway. These tests verify correct behavior for time window calculations, quota percentage computations, and limit warning thresholds across different time units.
+
+### Public Members
+
+- `GetWindowEnd_SecondUnit_AddsOneSecond` - Tests that getting window end for second unit adds exactly one second
+- `GetWindowEnd_MinuteUnit_RoundsUpToNextMinute` - Tests that getting window end for minute unit rounds up to the next minute boundary
+- `GetWindowEnd_HourUnit_RoundsUpToNextHour` - Tests that getting window end for hour unit rounds up to the next hour boundary
+- `GetWindowEnd_DayUnit_RoundsUpToNextDay` - Tests that getting window end for day unit rounds up to the next day boundary
+- `GetWindowEnd_MonthUnit_RoundsUpToNextMonth` - Tests that getting window end for month unit rounds up to the next month boundary
+- `GetWindowStart_SecondUnit_SubtractsOneSecond` - Tests that getting window start for second unit subtracts exactly one second
+- `GetWindowStart_MinuteUnit_RoundsDownToStartOfMinute` - Tests that getting window start for minute unit rounds down to the start of the minute
+- `GetWindowStart_HourUnit_RoundsDownToStartOfHour` - Tests that getting window start for hour unit rounds down to the start of the hour
+- `GetWindowStart_DayUnit_RoundsDownToStartOfDay` - Tests that getting window start for day unit rounds down to the start of the day
+- `GetWindowStart_MonthUnit_RoundsDownToStartOfMonth` - Tests that getting window start for month unit rounds down to the start of the month
+- `GetSecondsUntilAllowed_UnderLimit_ReturnsZero` - Tests that getting seconds until allowed returns zero when under the rate limit
+- `GetSecondsUntilAllowed_AtLimit_ReturnsPositiveValue` - Tests that getting seconds until allowed returns a positive value when at the rate limit
+- `GetSecondsUntilAllowed_OverLimit_ReturnsPositiveValue` - Tests that getting seconds until allowed returns a positive value when over the rate limit
+- `CalculateQuotagePercentage_NormalValues_ReturnsCorrectPercentage` - Tests that calculating quota percentage returns the correct value for normal inputs
+- `CalculateQuotagePercentage_UsageEqualsLimit_Returns100` - Tests that calculating quota percentage returns 100 when usage equals the limit
+- `CalculateQuotagePercentage_UsageExceedsLimit_CapsAt100` - Tests that calculating quota percentage caps at 100 when usage exceeds the limit
+- `CalculateQuotagePercentage_ZeroLimit_ReturnsZero` - Tests that calculating quota percentage returns zero when the limit is zero
+- `CalculateQuotagePercentage_NegativeLimit_ReturnsZero` - Tests that calculating quota percentage returns zero when the limit is negative
+- `ShouldWarnAboutLimit_Below80_ReturnsFalse` - Tests that the limit warning check returns false when usage is below 80% of the limit
+- `ShouldWarnAboutLimit_At80_ReturnsTrue` - Tests that the limit warning check returns true when usage is exactly at 80% of the limit
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Domain.Enums;
+using System;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new RateLimitCalculationHelperUnitTests();
+
+// Test second unit window calculations
+testInstance.GetWindowEnd_SecondUnit_AddsOneSecond();
+testInstance.GetWindowStart_SecondUnit_SubtractsOneSecond();
+
+// Test minute unit window calculations
+testInstance.GetWindowEnd_MinuteUnit_RoundsUpToNextMinute();
+testInstance.GetWindowStart_MinuteUnit_RoundsDownToStartOfMinute();
+
+// Test hour unit window calculations
+testInstance.GetWindowEnd_HourUnit_RoundsUpToNextHour();
+testInstance.GetWindowStart_HourUnit_RoundsDownToStartOfHour();
+
+// Test day unit window calculations
+testInstance.GetWindowEnd_DayUnit_RoundsUpToNextDay();
+testInstance.GetWindowStart_DayUnit_RoundsDownToStartOfDay();
+
+// Test month unit window calculations
+testInstance.GetWindowEnd_MonthUnit_RoundsUpToNextMonth();
+testInstance.GetWindowStart_MonthUnit_RoundsDownToStartOfMonth();
+
+// Test quota percentage calculations
+testInstance.CalculateQuotagePercentage_NormalValues_ReturnsCorrectPercentage();
+testInstance.CalculateQuotagePercentage_UsageEqualsLimit_Returns100();
+testInstance.CalculateQuotagePercentage_UsageExceedsLimit_CapsAt100();
+testInstance.CalculateQuotagePercentage_ZeroLimit_ReturnsZero();
+testInstance.CalculateQuotagePercentage_NegativeLimit_ReturnsZero();
+
+// Test seconds until allowed calculations
+testInstance.GetSecondsUntilAllowed_UnderLimit_ReturnsZero();
+testInstance.GetSecondsUntilAllowed_AtLimit_ReturnsPositiveValue();
+testInstance.GetSecondsUntilAllowed_OverLimit_ReturnsPositiveValue();
+
+// Test limit warning calculations
+testInstance.ShouldWarnAboutLimit_Below80_ReturnsFalse();
+testInstance.ShouldWarnAboutLimit_At80_ReturnsTrue();
+```
