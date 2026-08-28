@@ -839,6 +839,80 @@ edgeCases.Should().NotBeNullOrEmpty();
 edgeCases.Should().Contain("!@#$%^&*()");
 edgeCases.Should().Contain("\t\n");
 ```
+## AuditLogEventHandlerExtensionsTests
+
+The `AuditLogEventHandlerExtensionsTests` class contains unit tests for the `AuditLogEventHandlerExtensions` extension methods, verifying proper handling of API key lifecycle events (creation, rotation, and disabling) through bulk operations and event delegation. These tests ensure that events are correctly processed, null arguments are properly validated, and unsupported event types are safely ignored.
+
+### Public Members
+
+- `AuditLogEventHandlerExtensionsTests()` - Constructor for the test class.
+- `HandleApiKeyCreatedAsync_SingleEvent_DelegatesToHandler()` - Tests that HandleApiKeyCreatedAsync properly handles a single event.
+- `HandleApiKeyCreatedAsync_MultipleEvents_ProcessesAll()` - Tests that HandleApiKeyCreatedAsync handles multiple events in sequence.
+- `HandleApiKeyCreatedAsync_NullHandler_ThrowsArgumentNullException()` - Tests that HandleApiKeyCreatedAsync throws ArgumentNullException when handler is null.
+- `HandleApiKeyCreatedAsync_NullEvents_ThrowsArgumentNullException()` - Tests that HandleApiKeyCreatedAsync throws ArgumentNullException when events collection is null.
+- `HandleApiKeyCreatedAsync_EmptyEventsCollection_NoException()` - Tests that HandleApiKeyCreatedAsync does not throw when events collection is empty.
+- `HandleApiKeyRotatedAsync_SingleEvent_DelegatesToHandler()` - Tests that HandleApiKeyRotatedAsync properly handles a single event.
+- `HandleApiKeyRotatedAsync_MultipleEvents_ProcessesAll()` - Tests that HandleApiKeyRotatedAsync handles multiple events in sequence.
+- `HandleApiKeyRotatedAsync_NullHandler_ThrowsArgumentNullException()` - Tests that HandleApiKeyRotatedAsync throws ArgumentNullException when handler is null.
+- `HandleApiKeyRotatedAsync_NullEvents_ThrowsArgumentNullException()` - Tests that HandleApiKeyRotatedAsync throws ArgumentNullException when events collection is null.
+- `HandleApiKeyDisabledAsync_SingleEvent_DelegatesToHandler()` - Tests that HandleApiKeyDisabledAsync properly handles a single event.
+- `HandleApiKeyDisabledAsync_MultipleEvents_ProcessesAll()` - Tests that HandleApiKeyDisabledAsync handles multiple events in sequence.
+- `HandleApiKeyDisabledAsync_NullHandler_ThrowsArgumentNullException()` - Tests that HandleApiKeyDisabledAsync throws ArgumentNullException when handler is null.
+- `HandleApiKeyDisabledAsync_NullEvents_ThrowsArgumentNullException()` - Tests that HandleApiKeyDisabledAsync throws ArgumentNullException when events collection is null.
+- `CreateEventDelegate_ReturnsNonNullDelegate()` - Tests that CreateEventDelegate returns a non-null delegate.
+- `CreateEventDelegate_NullHandler_ThrowsArgumentNullException()` - Tests that CreateEventDelegate throws ArgumentNullException when handler is null.
+- `CreateEventDelegate_HandlesApiKeyCreatedEvent()` - Tests that CreateEventDelegate properly handles ApiKeyCreatedEvent.
+- `CreateEventDelegate_HandlesApiKeyRotatedEvent()` - Tests that CreateEventDelegate properly handles ApiKeyRotatedEvent.
+- `CreateEventDelegate_HandlesApiKeyDisabledEvent()` - Tests that CreateEventDelegate properly handles ApiKeyDisabledEvent.
+- `CreateEventDelegate_IgnoresUnsupportedEventType()` - Tests that CreateEventDelegate ignores unsupported event types.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using ApiKeyGateway.Events;
+using ApiKeyGateway.Repositories;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+// Setup mocks (typically done in test setup)
+var scopeFactoryMock = new Mock<IServiceScopeFactory>();
+var loggerMock = new Mock<ILogger<AuditLogEventHandler>>();
+var handler = new AuditLogEventHandler(scopeFactoryMock.Object, loggerMock.Object);
+
+// Setup scope and repository mocks
+var scopeMock = new Mock<IServiceScope>();
+var repositoryMock = new Mock<IAuditLogRepository>();
+scopeFactoryMock.Setup(x => x.CreateScope()).Returns(scopeMock.Object);
+scopeMock.Setup(x => x.ServiceProvider).Returns(() => new ServiceCollection()
+    .AddSingleton(repositoryMock.Object)
+    .BuildServiceProvider());
+
+// Test handling a single API key created event
+var @event = new ApiKeyCreatedEvent
+{
+    ApiKeyId = Guid.NewGuid().ToString(),
+    Name = "Test Key",
+    CreatedBy = "test-user"
+};
+
+repositoryMock.Setup(x => x.CreateAsync(It.IsAny<AuditLog>()))
+    .Returns(Task.CompletedTask);
+
+// Call the extension method being tested
+await handler.HandleApiKeyCreatedAsync(new[] { @event });
+
+// Verify the repository was called correctly
+repositoryMock.Verify(
+    x => x.CreateAsync(It.Is<AuditLog>(log =>
+        log.ResourceId == @event.ApiKeyId &&
+        log.Action == AuditAction.KeyCreated &&
+        log.PerformedBy == @event.CreatedBy &&
+        log.Reason == $"API key '{@event.Name}' created")),
+    Times.Once);
+```
 ## AuditLogServiceTestsValidation
 
 The `AuditLogServiceTestsValidation` class provides validation helpers for `AuditLogServiceTests` instances. It includes methods for validating test setup, audit log creation, and audit log properties to ensure test instances are properly configured and audit logging operations produce expected outcomes.
