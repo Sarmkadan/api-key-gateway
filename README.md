@@ -1573,3 +1573,24 @@ await tests.ExecuteAsync_WithCustomFailureThreshold_RespectsThreshold();
 await tests.ExecuteAsync_WhenTimeoutElapsed_AllowsOperationAfterRecovery();
 await tests.ExecuteAsync_AfterHalfOpenSuccess_TransitionsToClosed();
 ```
+
+## CacheProviderUnitTests
+
+The `CacheProviderUnitTests` fixture verifies `InMemoryCacheProvider` behavior for cache reads, writes, overwrites, removals, existence checks, counter increments, expiration settings, and wildcard removal. It also covers invalid or missing keys and patterns, non-existent entries, custom increment values, and very short expiration periods.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new CacheProviderUnitTests();
+
+await tests.GetAsync_NonExistentKey_ReturnsNull();
+await tests.GetAsync_ExistingKey_ReturnsCachedValue();
+await tests.SetAsync_WithExpiration_StoresValueWithSpecifiedExpiration();
+await tests.SetAsync_OverwritesExistingValue();
+await tests.RemoveAsync_ExistingKey_RemovesValue();
+await tests.ExistsAsync_ExistingKey_ReturnsTrue();
+await tests.IncrementAsync_ExistingCounter_IncrementsValue();
+await tests.RemoveByPatternAsync_SimpleWildcardPattern_RemovesMatchingEntries();
+```
