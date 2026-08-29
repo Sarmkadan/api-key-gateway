@@ -1510,3 +1510,23 @@ await tests.PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked()
 await tests.PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes();
 await tests.Subscribe_RegistersHandlerForEventType();
 ```
+
+## DateTimeExtensionsTests
+
+The `DateTimeExtensionsTests` fixture verifies the date-boundary helpers for the start and end of a day, week, and month, including leap-year and calendar-edge cases. It also checks whether past, future, and current dates are classified correctly by `IsInPast`.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new DateTimeExtensionsTests();
+
+tests.StartOfDay_ShouldReturnMidnightOfSameDay();
+tests.EndOfDay_ShouldReturnEndOfDay();
+tests.StartOfWeek_ShouldReturnSundayForFriday();
+tests.StartOfMonth_ShouldReturnFirstDayOfMonth();
+tests.EndOfMonth_ShouldReturnLastMomentForFebruaryLeapYear();
+tests.IsInPast_ShouldReturnTrueForPastDate();
+tests.IsInPast_ShouldReturnFalseForFutureDate();
+```
