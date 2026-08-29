@@ -1707,6 +1707,42 @@ batches.Should().HaveCount(1);
 batches[0].Should().BeEquivalentTo(new[] { 42 });
 ```
 
+## QueryStringHelperUnitTests
+
+The `QueryStringHelperUnitTests` class contains unit tests for the `QueryStringHelper` utility class, which provides methods for building and parsing query strings in URL manipulation scenarios. These tests verify correct behavior for building query strings from dictionaries, parsing query strings into dictionaries, appending parameters to URLs, and removing parameters from URLs, including handling of edge cases like null/empty inputs and special character encoding.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Utilities;
+using System.Collections.Generic;
+
+// Build a query string from a dictionary
+var parameters = new Dictionary<string, string>
+{
+    { "api_key", "test123" },
+    { "limit", "50" }
+};
+string queryString = QueryStringHelper.BuildQueryString(parameters);
+// Result: "api_key=test123&limit=50"
+
+// Parse a query string back into a dictionary
+var parsed = QueryStringHelper.ParseQueryString("api_key=test123&limit=50");
+// parsed["api_key"] = "test123"
+// parsed["limit"] = "50"
+
+// Append parameters to a base URL
+string baseUrl = "https://api.example.com/endpoint";
+string urlWithParams = QueryStringHelper.AppendParameters(baseUrl, parameters);
+// Result: "https://api.example.com/endpoint?api_key=test123&limit=50"
+
+// Remove a parameter from a URL
+string urlWithoutKey = QueryStringHelper.RemoveParameter(
+    "https://api.example.com/endpoint?api_key=test123&limit=50", 
+    new[] { "api_key" }
+// Result: "https://api.example.com/endpoint?limit=50"
+```
+
 ## CollectionExtensionsValidationTests
 
 The `CollectionExtensionsValidationTests` class contains unit tests for the `CollectionExtensionsValidation` class, which provides validation methods for collections and related parameters. These tests verify that the validation methods correctly handle valid inputs and throw appropriate exceptions for invalid inputs.
