@@ -1842,3 +1842,24 @@ testInstance.ApiResponseBuilderFactory_Success_CreatesSuccessfulResponseWithData
 // Test ApiResponseBuilderFactory.Success with null data
 testInstance.ApiResponseBuilderFactory_Success_WithNullData_HandlesNullData();
 ```
+
+## CryptoHelpersTests
+
+The `CryptoHelpersTests` fixture verifies SHA-256 hashing, hash verification, HMAC-SHA256 signatures, and secure random-string generation provided by `CryptoHelpers`. It covers deterministic results, distinct outputs for different inputs, invalid input handling, and the expected behavior of generated values.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new CryptoHelpersTests();
+
+tests.ComputeSha256Hash_Deterministic_ReturnsSameHashForSameInput();
+tests.ComputeSha256Hash_DifferentInputs_DifferentOutputs();
+tests.ComputeSha256Hash_EmptyInput_ThrowsArgumentException();
+tests.VerifyHash_MatchingInputs_ReturnsTrue();
+tests.VerifyHash_DifferentInputs_ReturnsFalse();
+tests.ComputeHmacSha256_Deterministic_ReturnsSameSignature();
+tests.ComputeHmacSha256_DifferentMessages_DifferentSignatures();
+tests.GenerateSecureRandomString_DifferentCalls_ProducesDifferentResults();
+```
