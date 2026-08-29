@@ -1442,3 +1442,30 @@ tests.ToCsv_VariousDataTypes_UsesInvariantCulture();
 await tests.ExportToCsvAsync_SimpleData_WritesCorrectCsvToStream();
 await tests.ExportToCsvAsync_IncludeHeadersFalse_WritesNoHeaders();
 ```
+
+## RequestCoalescingServiceUnitTests
+
+The `RequestCoalescingServiceUnitTests` fixture verifies request-key and operation validation, result sharing for identical requests, independent handling of different keys, and exception and cancellation behavior. It also covers request metrics while work is idle, active, or completed, as well as cancellation of pending requests when the service is disposed.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new RequestCoalescingServiceUnitTests();
+
+tests.ExecuteAsync_NullRequestKey_ThrowsArgumentException();
+tests.ExecuteAsync_EmptyRequestKey_ThrowsArgumentException();
+tests.ExecuteAsync_WhitespaceRequestKey_ThrowsArgumentException();
+tests.ExecuteAsync_NullOperation_ThrowsArgumentNullException();
+tests.GetMetrics_NoRequests_ReturnsZeroValues();
+
+await tests.ExecuteAsync_NoCoalescing_ReturnsOperationResult();
+await tests.ExecuteAsync_IdenticalRequests_CoalescesAndReturnsSameResult();
+await tests.ExecuteAsync_OperationThrowsException_PropagatesToAllCallers();
+await tests.ExecuteAsync_FollowerCancelled_DoesNotAffectLeader();
+await tests.GetMetrics_AfterRequests_ReturnsCorrectValues();
+await tests.GetMetrics_DuringRequests_ReturnsCorrectActiveCount();
+await tests.Dispose_CancelsPendingRequests();
+await tests.ExecuteAsync_MultipleDifferentKeys_HandlesIndependently();
+```
