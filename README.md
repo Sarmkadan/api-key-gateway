@@ -1738,3 +1738,71 @@ bool isValid = CollectionExtensionsValidation.IsValid(numbers);
 CollectionExtensionsValidation.EnsureValid(numbers);
 // Does not throw for valid non-null source
 ```
+
+## ApiResponseBuilderUnitTests
+
+The `ApiResponseBuilderUnitTests` class contains unit tests for the `ApiResponseBuilder<T>` class and `ApiResponseBuilderFactory`, verifying the fluent builder pattern for creating API responses with success/error states, data, metadata, and error collections. It tests all public methods including happy paths, edge cases, and error scenarios.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using FluentAssertions;
+
+// Create a test instance
+var testInstance = new ApiResponseBuilderUnitTests();
+
+// Test that WithData sets the data correctly
+testInstance.WithData_SetsDataCorrectly();
+
+// Test that WithData handles null data correctly
+testInstance.WithData_NullData_SetsNullData();
+
+// Test that WithData handles empty object correctly
+testInstance.WithData_EmptyObject_SetsEmptyObject();
+
+// Test that Success marks response as successful with default message
+testInstance.Success_MarksResponseAsSuccessful_WithDefaultMessage();
+
+// Test that Success with custom message sets correct message
+testInstance.Success_WithCustomMessage_SetsCustomMessage();
+
+// Test that Success with null message uses default message
+testInstance.Success_WithNullMessage_UsesDefaultMessage();
+
+// Test that Error marks response as failed with correct status code and message
+testInstance.Error_MarksResponseAsFailed_WithCorrectStatusCodeAndMessage();
+
+// Test that Error with null error code handles it correctly
+testInstance.Error_WithNullErrorCode_HandlesNullErrorCode();
+
+// Test that Error with empty message sets empty message
+testInstance.Error_WithEmptyMessage_SetsEmptyMessage();
+
+// Test that WithMetadata adds metadata to response
+testInstance.WithMetadata_AddsMetadataToResponse();
+
+// Test that WithMetadata called multiple times accumulates metadata
+testInstance.WithMetadata_MultipleCalls_AccumulatesMetadata();
+
+// Test that AddError adds error to errors collection
+testInstance.AddError_AddsErrorToErrorsCollection();
+
+// Test that AddError called on builder without errors initializes collection
+testInstance.AddError_InitializesErrorsCollection();
+
+// Test that fluent interface allows chaining multiple operations
+testInstance.FluentInterface_AllowsChainingMultipleOperations();
+
+// Test that Build sets timestamp to recent date
+testInstance.Build_SetsTimestamp_ToRecentDate();
+
+// Test that Build returns anonymous object with all expected properties
+testInstance.Build_ReturnsAnonymousObject_WithAllExpectedProperties();
+
+// Test ApiResponseBuilderFactory.Success creates successful response with data
+testInstance.ApiResponseBuilderFactory_Success_CreatesSuccessfulResponseWithData();
+
+// Test ApiResponseBuilderFactory.Success with null data
+testInstance.ApiResponseBuilderFactory_Success_WithNullData_HandlesNullData();
+```
