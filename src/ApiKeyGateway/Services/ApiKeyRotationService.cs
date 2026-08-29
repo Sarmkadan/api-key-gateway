@@ -66,8 +66,48 @@ public interface IApiKeyRotationService
 /// <summary>
 /// Default implementation of <see cref="IApiKeyRotationService"/>.
 /// </summary>
-public class ApiKeyRotationService : IApiKeyRotationService
+public partial class ApiKeyRotationService : IApiKeyRotationService
 {
+    private static partial class Log
+    {
+        [LoggerMessage(
+            EventId = 4100,
+            Level = LogLevel.Information,
+            Message = "Rotated API key {OldKeyId} → {NewKeyId} for consumer {ConsumerId}")]
+        public static partial void KeyRotated(
+            ILogger logger,
+            string oldKeyId,
+            string newKeyId,
+            string consumerId);
+
+        [LoggerMessage(
+            EventId = 4101,
+            Level = LogLevel.Error,
+            Message = "Failed to rotate API key {ApiKeyId}")]
+        public static partial void KeyRotationFailed(
+            ILogger logger,
+            Exception exception,
+            string apiKeyId);
+
+        [LoggerMessage(
+            EventId = 4102,
+            Level = LogLevel.Information,
+            Message = "Found {Count} API keys expiring within {Days} days")]
+        public static partial void ExpiringKeysFound(
+            ILogger logger,
+            int count,
+            int days);
+
+        [LoggerMessage(
+            EventId = 4103,
+            Level = LogLevel.Information,
+            Message = "Key rotation complete: {Succeeded}/{Total} keys rotated successfully")]
+        public static partial void RotationCompleted(
+            ILogger logger,
+            int succeeded,
+            int total);
+    }
+
     private readonly IApiKeyService _apiKeyService;
     private readonly IApiKeyRepository _repository;
     private readonly ILogger<ApiKeyRotationService> _logger;
@@ -148,9 +188,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
             // Revoke the old key
             await _apiKeyService.RevokeKeyAsync(keyId);
 
-            _logger.LogInformation(
-                "Rotated API key {OldKeyId} → {NewKeyId} for consumer {ConsumerId}",
-                keyId, newKey.Id, oldKey.ConsumerId);
+            Log.KeyRotated(_logger, keyId, newKey.Id, oldKey.ConsumerId);
 
             return new RotationResult
             {
@@ -163,7 +201,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to rotate API key {KeyId}", keyId);
+            Log.KeyRotationFailed(_logger, ex, keyId);
             return new RotationResult
             {
                 OldKeyId = keyId,
@@ -197,9 +235,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
         var threshold = DateTime.UtcNow.AddDays(warningDays);
         var expiringKeys = await _repository.GetKeysExpiringBeforeAsync(threshold);
 
-        _logger.LogInformation(
-            "Found {Count} API keys expiring within {Days} days",
-            expiringKeys.Count, warningDays);
+        Log.ExpiringKeysFound(_logger, expiringKeys.Count, warningDays);
 
         var results = new List<RotationResult>(expiringKeys.Count);
         foreach (var key in expiringKeys)
@@ -209,9 +245,7 @@ public class ApiKeyRotationService : IApiKeyRotationService
         }
 
         var succeeded = results.Count(r => r.Success);
-        _logger.LogInformation(
-            "Key rotation complete: {Succeeded}/{Total} keys rotated successfully",
-            succeeded, results.Count);
+        Log.RotationCompleted(_logger, succeeded, results.Count);
 
         return results;
     }
