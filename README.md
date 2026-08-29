@@ -1408,3 +1408,37 @@ await testInstance.ExecuteAsync_ResultPropertiesAreCorrectlySet();
 // Test item results contain correct API key IDs
 await testInstance.ExecuteAsync_ItemResultsContainCorrectApiKeyIds();
 ```
+
+## CsvExportHelperUnitTests
+
+The `CsvExportHelperUnitTests` fixture verifies that `CsvExportHelper` handles null and empty inputs, optional headers, CSV quoting and escaping, invariant formatting, and asynchronous stream exports. Its scenarios exercise rows with `Id`, `Name`, nullable `Description`, `IsActive`, and `CreatedAt` fields, including commas, quotes, and newlines in text values.
+
+### Public Members
+
+- `ToCsv_NullInput_ReturnsEmptyString()` - Verifies that a null input produces an empty string.
+- `ToCsv_EmptyCollection_ReturnsEmptyString()` - Verifies that an empty collection produces an empty string.
+- `ToCsv_SimpleData_IncludesHeadersAndValues()` - Verifies that headers and values are included for ordinary rows.
+- `ToCsv_IncludeHeadersFalse_ExcludesHeaders()` - Verifies that headers can be omitted.
+- `ToCsv_ValuesWithCommas_AreProperlyQuoted()` - Verifies that values containing commas are quoted.
+- `ToCsv_ValuesWithQuotes_AreProperlyEscaped()` - Verifies that embedded quotes are escaped.
+- `ToCsv_ValuesWithNewlines_AreProperlyQuoted()` - Verifies that values containing newlines are quoted.
+- `ToCsv_VariousDataTypes_UsesInvariantCulture()` - Verifies invariant formatting for integers, booleans, nullable strings, and dates.
+- `ExportToCsvAsync_SimpleData_WritesCorrectCsvToStream()` - Verifies that asynchronous export writes headers and rows to a stream.
+- `ExportToCsvAsync_EmptyCollection_WritesOnlyHeaders()` - Verifies that asynchronous export of an empty collection writes only headers.
+- `ExportToCsvAsync_IncludeHeadersFalse_WritesNoHeaders()` - Verifies that asynchronous export can omit headers.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new CsvExportHelperUnitTests();
+
+tests.ToCsv_SimpleData_IncludesHeadersAndValues();
+tests.ToCsv_ValuesWithCommas_AreProperlyQuoted();
+tests.ToCsv_ValuesWithQuotes_AreProperlyEscaped();
+tests.ToCsv_VariousDataTypes_UsesInvariantCulture();
+
+await tests.ExportToCsvAsync_SimpleData_WritesCorrectCsvToStream();
+await tests.ExportToCsvAsync_IncludeHeadersFalse_WritesNoHeaders();
+```
