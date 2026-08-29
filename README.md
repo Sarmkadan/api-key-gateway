@@ -1469,3 +1469,23 @@ await tests.GetMetrics_DuringRequests_ReturnsCorrectActiveCount();
 await tests.Dispose_CancelsPendingRequests();
 await tests.ExecuteAsync_MultipleDifferentKeys_HandlesIndependently();
 ```
+
+## EventPublisherTests
+
+The `EventPublisherTests` fixture verifies that `InMemoryEventPublisher` dispatches events to the correct subscribers, including multiple registrations and subscribers for different event types. It also checks that publishing without subscribers is safe and that one failing subscriber does not prevent later subscribers from running.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new EventPublisherTests();
+
+await tests.PublishAsync_WithZeroSubscribers_DoesNotThrowAndLogsDebug();
+await tests.PublishAsync_WithOneSubscriber_InvokesSubscriberOnce();
+await tests.PublishAsync_WithMultipleSubscribers_AllSubscribersInvoked();
+await tests.PublishAsync_SubscriberThrows_ContinuesToNextSubscriber();
+await tests.PublishAsync_DifferentEventTypes_OnlySubscribersForThatTypeInvoked();
+await tests.PublishAsync_SameSubscriberRegisteredMultipleTimes_InvokedMultipleTimes();
+await tests.Subscribe_RegistersHandlerForEventType();
+```
