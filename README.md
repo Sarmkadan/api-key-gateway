@@ -1530,3 +1530,28 @@ tests.EndOfMonth_ShouldReturnLastMomentForFebruaryLeapYear();
 tests.IsInPast_ShouldReturnTrueForPastDate();
 tests.IsInPast_ShouldReturnFalseForFutureDate();
 ```
+
+## CircuitBreakerPatternUnitTests
+
+The `CircuitBreakerPatternUnitTests` fixture verifies that a circuit breaker starts closed, tracks successes and failures, opens at its configured failure threshold, and blocks operations while open. It also exercises asynchronous results, custom thresholds and timeouts, and recovery through the half-open state back to closed.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new CircuitBreakerPatternUnitTests();
+
+tests.Constructor_DefaultSettings_InitializesInClosedState();
+tests.Constructor_CustomParameters_InitializesInClosedState();
+tests.RecordFailure_WhenCalled_IncrementsFailureCount();
+tests.RecordFailure_WhenThresholdReached_TransitionsToOpenState();
+tests.RecordSuccess_WhenCalled_ResetsFailureCountAndKeepsClosedState();
+
+await tests.ExecuteAsync_WhenClosedAndOperationSucceeds_ReturnsOperationResult();
+await tests.ExecuteAsync_WhenOpen_ThrowsInvalidOperationException();
+await tests.ExecuteAsync_WithAsyncOperation_ExecutesSuccessfully();
+await tests.ExecuteAsync_WithCustomFailureThreshold_RespectsThreshold();
+await tests.ExecuteAsync_WhenTimeoutElapsed_AllowsOperationAfterRecovery();
+await tests.ExecuteAsync_AfterHalfOpenSuccess_TransitionsToClosed();
+```
