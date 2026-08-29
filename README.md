@@ -1443,6 +1443,27 @@ await tests.ExportToCsvAsync_SimpleData_WritesCorrectCsvToStream();
 await tests.ExportToCsvAsync_IncludeHeadersFalse_WritesNoHeaders();
 ```
 
+## XmlExportHelperUnitTests
+
+The `XmlExportHelperUnitTests` fixture verifies that XML export handles single objects, null inputs, empty and populated collections, custom element names, escaped values, and valid XML property names. Its scenarios cover values represented by `Id`, `Name`, nullable `Description`, `IsActive`, `CreatedAt`, `UpdatedAt`, and `Price`, along with property names containing underscores, dots, dashes, and symbols.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new XmlExportHelperUnitTests();
+
+tests.ToXml_SingleObject_ReturnsWellFormedXml();
+tests.ToXml_SingleObjectWithCustomRootName_UsesCustomName();
+tests.ToXml_NullInput_ReturnsEmptyString();
+tests.ToXml_EmptyCollection_ReturnsWellFormedXmlWithEmptyRoot();
+tests.ToXml_CollectionWithItems_ReturnsWellFormedXmlWithItems();
+tests.ToXml_CollectionWithCustomNames_UsesCustomNames();
+tests.ToXml_SpecialCharacters_AreProperlyEscaped();
+tests.ToXml_PropertyNamesWithSpecialChars_AreConvertedToValidXmlNames();
+```
+
 ## RequestCoalescingServiceUnitTests
 
 The `RequestCoalescingServiceUnitTests` fixture verifies request-key and operation validation, result sharing for identical requests, independent handling of different keys, and exception and cancellation behavior. It also covers request metrics while work is idle, active, or completed, as well as cancellation of pending requests when the service is disposed.
