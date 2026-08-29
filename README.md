@@ -1863,3 +1863,23 @@ tests.ComputeHmacSha256_Deterministic_ReturnsSameSignature();
 tests.ComputeHmacSha256_DifferentMessages_DifferentSignatures();
 tests.GenerateSecureRandomString_DifferentCalls_ProducesDifferentResults();
 ```
+
+## AuditLogEventHandlerValidationTests
+
+The `AuditLogEventHandlerValidationTests` fixture verifies that audit-log event handlers report a consistent validation state and that the validation APIs reject null handlers. Its public test methods cover successful validation, repeated calls, consistency between `Validate` and `IsValid`, and exception behavior from `EnsureValid`.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new AuditLogEventHandlerValidationTests();
+
+tests.Validate_NullHandler_ThrowsArgumentNullException();
+tests.IsValid_HappyPath_ReturnsTrue();
+tests.IsValid_NullHandler_ThrowsArgumentNullException();
+tests.IsValid_ConsistentWithValidate();
+tests.EnsureValid_HappyPath_NoExceptionThrown();
+tests.EnsureValid_NullHandler_ThrowsArgumentNullException();
+tests.EnsureValid_MultipleCalls_NoExceptionThrown();
+```
