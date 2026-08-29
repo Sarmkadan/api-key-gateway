@@ -1594,3 +1594,29 @@ await tests.ExistsAsync_ExistingKey_ReturnsTrue();
 await tests.IncrementAsync_ExistingCounter_IncrementsValue();
 await tests.RemoveByPatternAsync_SimpleWildcardPattern_RemovesMatchingEntries();
 ```
+
+## UsageQuotaServiceTestsComprehensive
+
+The `UsageQuotaServiceTestsComprehensive` fixture verifies `UsageQuotaService` behavior when usage reaches or exceeds a configured limit, as well as the unlimited behavior of disabled quotas. It also exercises hourly, daily, weekly, and monthly quota periods, including period rollover, counter resets, repeated requests after rollover, and zero-limit quotas.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new UsageQuotaServiceTestsComprehensive();
+
+await tests.CheckAndRecordAsync_UsageExactlyAtLimit_ReturnsExceededWithZeroRemaining();
+await tests.CheckAndRecordAsync_UsageExceedsLimit_ReturnsExceededWithZeroRemaining();
+await tests.CheckAndRecordAsync_DisabledQuotaWithHighUsage_ReturnsUnlimited();
+await tests.CheckAndRecordAsync_ExactlyAtLimitDaily_ReturnsCorrectState();
+await tests.CheckAndRecordAsync_ExactlyAtLimitMonthly_ReturnsCorrectState();
+await tests.CheckAndRecordAsync_ExactlyAtLimitHourly_ReturnsCorrectState();
+await tests.CheckAndRecordAsync_PeriodRollover_ResetsCounterAndAllowsNewRequests();
+await tests.CheckAndRecordAsync_MultipleRequestsAfterRollover_WorksCorrectly();
+await tests.CheckAndRecordAsync_PeriodRolloverWithZeroLimit_ResetsAndAllowsNoRequests();
+await tests.CheckAndRecordAsync_WeeklyPeriodRollover_ResetsCounter();
+await tests.CheckAndRecordAsync_MonthlyPeriodRollover_ResetsCounter();
+await tests.CheckAndRecordAsync_ExactlyAtLimit_RequestRejectedWithCorrectState();
+await tests.CheckAndRecordAsync_QuotaExceeded_BehaviorConsistentAcrossPeriods();
+```
