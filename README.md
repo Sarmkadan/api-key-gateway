@@ -1656,3 +1656,35 @@ var batches = single.Batch(1).Select(b => b.ToList()).ToList();
 batches.Should().HaveCount(1);
 batches[0].Should().BeEquivalentTo(new[] { 42 });
 ```
+
+## CollectionExtensionsValidationTests
+
+The `CollectionExtensionsValidationTests` class contains unit tests for the `CollectionExtensionsValidation` class, which provides validation methods for collections and related parameters. These tests verify that the validation methods correctly handle valid inputs and throw appropriate exceptions for invalid inputs.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Extensions;
+using System.Collections.Generic;
+
+// Validate pagination parameters
+var paginationErrors = CollectionExtensionsValidation.ValidatePaginationParameters(1, 10);
+// paginationErrors will be empty for valid parameters
+
+// Validate batch parameters
+var batchErrors = CollectionExtensionsValidation.ValidateBatchParameters(5);
+// batchErrors will be empty for valid batch size
+
+// Validate a collection
+var numbers = new List<int> { 1, 2, 3 };
+var validationErrors = CollectionExtensionsValidation.Validate(numbers);
+// validationErrors will be empty for valid non-null source
+
+// Check if a source is valid
+bool isValid = CollectionExtensionsValidation.IsValid(numbers);
+// isValid will be true for non-null source
+
+// Ensure a source is valid (throws if null)
+CollectionExtensionsValidation.EnsureValid(numbers);
+// Does not throw for valid non-null source
+```
