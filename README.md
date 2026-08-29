@@ -1033,6 +1033,56 @@ var invalidLogProblems = testInstance.ValidateAuditLog(
 );
 invalidLogProblems.Should().HaveCount(6); // Multiple validation failures
 ```
+## KeyRotationSchedulerTests
+
+The `KeyRotationSchedulerTests` class contains unit tests for the `KeyRotationScheduler` background worker, verifying constructor validation, configuration handling, and rotation cycle execution scenarios including success, failure, and cancellation.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests.BackgroundWorkers;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using System.Threading;
+using System.Threading.Tasks;
+
+// Create a test instance
+var testInstance = new KeyRotationSchedulerTests();
+
+// Test constructor validation for null service provider
+testInstance.Constructor_WithNullServiceProvider_ThrowsArgumentNullException();
+
+// Test constructor validation for null logger
+testInstance.Constructor_WithNullLogger_ThrowsArgumentNullException();
+
+// Test constructor validation for null configuration
+testInstance.Constructor_WithNullConfiguration_ThrowsArgumentNullException();
+
+// Test constructor with valid configuration creates instance
+testInstance.Constructor_WithValidConfiguration_CreatesInstance();
+
+// Test execution cycle calls rotation service and delays
+await testInstance.ExecuteCycleAsync_WhenCalled_CallsRotationServiceAndDelays();
+
+// Test execution cycle when no keys need rotation logs debug message
+await testInstance.ExecuteCycleAsync_WhenNoKeysNeedRotation_LogsDebugMessage();
+
+// Test execution cycle when rotation fails logs warning messages
+await testInstance.ExecuteCycleAsync_WhenRotationFails_LogsWarningMessages();
+
+// Test execution cycle with cancellation token cancels operation
+await testInstance.ExecuteCycleAsync_WithCancellationToken_CancelsOperation();
+
+// Test execution cycle with new expiration days uses correct parameters
+await testInstance.ExecuteCycleAsync_WithNewExpirationDays_UsesCorrectParameters();
+
+// Test execution cycle handles exception from rotation service
+await testInstance.ExecuteCycleAsync_HandlesExceptionFromRotationService();
+```
 
 ## WebhookManagerTests
 
