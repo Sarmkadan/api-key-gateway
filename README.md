@@ -1620,3 +1620,39 @@ await tests.CheckAndRecordAsync_MonthlyPeriodRollover_ResetsCounter();
 await tests.CheckAndRecordAsync_ExactlyAtLimit_RequestRejectedWithCorrectState();
 await tests.CheckAndRecordAsync_QuotaExceeded_BehaviorConsistentAcrossPeriods();
 ```
+
+## CollectionExtensionsTests_EdgeCases
+
+The `CollectionExtensionsTests_EdgeCases` class contains unit tests for edge cases of collection extension methods, covering pagination, empty/whitespace/null handling, counting, and batching scenarios.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+using System.Linq;
+
+// Create test instance
+var tests = new CollectionExtensionsTests_EdgeCases();
+
+// Example: Paginate with zero page size throws
+var items = Enumerable.Range(1, 10);
+Action act = () => items.Paginate(1, 0);
+act.Should().Throw<ArgumentOutOfRangeException>();
+
+// Example: IsEmpty with whitespace strings returns false
+new[] { " ", "\t" }.IsEmpty().Should().BeFalse();
+
+// Example: HasItems with null elements returns true
+new string?[] { null, null }.HasItems().Should().BeTrue();
+
+// Example: CountBy with all same key
+var sameKeyItems = new[] { 1, 1, 1, 1 };
+var counts = sameKeyItems.CountBy(x => x);
+counts.Should().ContainKey(1).WhoseValue.Should().Be(4);
+
+// Example: Batch single item
+var single = new[] { 42 };
+var batches = single.Batch(1).Select(b => b.ToList()).ToList();
+batches.Should().HaveCount(1);
+batches[0].Should().BeEquivalentTo(new[] { 42 });
+```
