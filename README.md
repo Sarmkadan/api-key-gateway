@@ -1294,6 +1294,24 @@ await Assert.ThrowsAsync<ArgumentNullException>(
     () => testInstance.HandleApiKeyCreatedAsync_NullEvent_ThrowsArgumentNullException());
 ```
 
+## AuditLogEventHandlerJsonExtensionsTests
+
+The `AuditLogEventHandlerJsonExtensionsTests` class verifies that an `AuditLogEventHandler` can be serialized to compact or indented JSON and that the corresponding deserialization helpers are available. It also checks that `FromJson` and `TryFromJson` reject null input with an `ArgumentNullException`; these public test methods are normally discovered by the test runner but can also be invoked directly.
+
+### Example Usage
+
+```csharp
+using ApiKeyGateway.Tests;
+
+var tests = new AuditLogEventHandlerJsonExtensionsTests();
+
+tests.ToJson_ProducesOutput();
+tests.ToJson_WithIndentedParameter_ProducesOutput();
+tests.FromJson_NullInput_ThrowsArgumentNullException();
+tests.TryFromJson_NullInput_ThrowsArgumentNullException();
+tests.TryFromJson_MethodExists();
+```
+
 ## StringExtensionsJsonExtensionsTests
 
 The `StringExtensionsJsonExtensionsTests` class contains unit tests for the JSON serialization and deserialization extensions of the `StringExtensions` class. These tests verify the behavior of the `ToJson`, `FromJson`, and `TryFromJson` methods under various conditions, including handling of null, empty, whitespace, and invalid JSON inputs, as well as checking the serialized metadata properties.
