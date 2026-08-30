@@ -87,8 +87,7 @@ public class ApiKeyHasher : IApiKeyHasher
         // Generate a random salt
         var salt = RandomNumberGenerator.GetBytes(SaltLength);
 
-        // Hash the key with PBKDF2-like approach (SHA256 iterations)
-        using var sha256 = SHA256.Create();
+        // Hash the key with the existing repeated SHA-256 scheme.
         var keyBytes = Encoding.UTF8.GetBytes(apiKey);
 
         // Combine salt + key and hash multiple times
@@ -96,12 +95,12 @@ public class ApiKeyHasher : IApiKeyHasher
         Buffer.BlockCopy(salt, 0, combined, 0, salt.Length);
         Buffer.BlockCopy(keyBytes, 0, combined, salt.Length, keyBytes.Length);
 
-        byte[] hashBytes = sha256.ComputeHash(combined);
+        byte[] hashBytes = SHA256.HashData(combined);
 
         // Additional iterations for better security
         for (int i = 1; i < IterationCount; i++)
         {
-            hashBytes = sha256.ComputeHash(hashBytes);
+            hashBytes = SHA256.HashData(hashBytes);
         }
 
         // Create versioned hash: v1$salt$hash
@@ -140,18 +139,17 @@ public class ApiKeyHasher : IApiKeyHasher
             var expectedHash = Convert.FromBase64String(parts[2]);
 
             // Hash the input with the same salt
-            using var sha256 = SHA256.Create();
             var keyBytes = Encoding.UTF8.GetBytes(apiKey);
             var combined = new byte[salt.Length + keyBytes.Length];
             Buffer.BlockCopy(salt, 0, combined, 0, salt.Length);
             Buffer.BlockCopy(keyBytes, 0, combined, salt.Length, keyBytes.Length);
 
-            byte[] hashBytes = sha256.ComputeHash(combined);
+            byte[] hashBytes = SHA256.HashData(combined);
 
             // Additional iterations for consistency
             for (int i = 1; i < IterationCount; i++)
             {
-                hashBytes = sha256.ComputeHash(hashBytes);
+                hashBytes = SHA256.HashData(hashBytes);
             }
 
             // Use constant-time comparison to prevent timing attacks
@@ -176,8 +174,10 @@ public class ApiKeyHasher : IApiKeyHasher
     {
         ArgumentException.ThrowIfNullOrEmpty(storedHash, nameof(storedHash));
 
-        var parts = storedHash.Split('$');
-        return parts.Length >= 1 ? parts[0] : DefaultVersion;
+        ReadOnlySpan<char> hashSpan = storedHash.AsSpan();
+        int delimiterIndex = hashSpan.IndexOf('$');
+
+        return delimiterIndex < 0 ? string.Empty : new string(hashSpan[..delimiterIndex]);
     }
 }
 
