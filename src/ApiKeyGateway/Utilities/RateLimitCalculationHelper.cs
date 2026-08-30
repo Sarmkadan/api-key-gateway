@@ -66,8 +66,14 @@ public static class RateLimitCalculationHelper
     /// <see cref="int.MaxValue"/> if the request exceeds the limit (currentUsage >= limit),
     /// or the number of seconds until the window resets (0 < result < int.MaxValue).
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="currentUsage"/> is negative or <paramref name="limit"/> is not positive.
+    /// </exception>
     public static int GetSecondsUntilAllowed(int currentUsage, int limit, DateTime windowStart, RateLimitUnit unit)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(currentUsage);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+
         // If at or over the limit, reject immediately (consistent with RateLimit.CanProcessRequest())
         if (currentUsage >= limit)
             return int.MaxValue;
@@ -84,10 +90,13 @@ public static class RateLimitCalculationHelper
     /// Calculates the percentage of quota used in the current window.
     /// Useful for warning users when approaching limits.
     /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="currentUsage"/> is negative or <paramref name="limit"/> is not positive.
+    /// </exception>
     public static int CalculateQuotagePercentage(int currentUsage, int limit)
     {
-        if (limit <= 0)
-            return 0;
+        ArgumentOutOfRangeException.ThrowIfNegative(currentUsage);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
 
         var percentage = (currentUsage * 100) / limit;
         return Math.Min(100, percentage);
@@ -97,8 +106,15 @@ public static class RateLimitCalculationHelper
     /// Determines if we should warn the user about approaching their limit.
     /// Warning triggers at 80%, 90%, and 100%.
     /// </summary>
-    public static bool ShouldWarnAboutLimit(int percentage) =>
-        percentage >= 80;
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="percentage"/> is negative.
+    /// </exception>
+    public static bool ShouldWarnAboutLimit(int percentage)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(percentage);
+
+        return percentage >= 80;
+    }
 
     /// <summary>
     /// Gets human-readable time until reset for logging/response purposes.
