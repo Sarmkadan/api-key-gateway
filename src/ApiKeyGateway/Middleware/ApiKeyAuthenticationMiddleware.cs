@@ -53,12 +53,14 @@ public class ApiKeyAuthenticationMiddleware
         IQuotaAlertEvaluator quotaAlertEvaluator)
     {
         var startTime = DateTime.UtcNow;
-        var apiKey = ExtractApiKey(context.Request);
+        var hasApiKey = TryExtractApiKey(context, out var apiKey, out var apiKeySource);
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(apiKey))
+            if (hasApiKey)
             {
+                _logger.LogDebug("API key supplied via {ApiKeySource}", apiKeySource);
+
                 var clientIp = ExtractClientIp(context);
                 var authResult = await authenticationService.AuthenticateAsync(apiKey, clientIp);
 
@@ -167,17 +169,46 @@ public class ApiKeyAuthenticationMiddleware
     }
 
     /// <summary>
-    /// Extracts the API key from the request
+    /// Extracts the API key and identifies the request source that supplied it.
     /// </summary>
-    private static string? ExtractApiKey(HttpRequest request)
+    private static bool TryExtractApiKey(HttpContext context, out string key, out string source)
     {
-        if (request.Headers.TryGetValue(ApiKeyHeaderName, out var headerValue))
-            return headerValue.ToString();
+        if (context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var headerValue) &&
+            !string.IsNullOrWhiteSpace(headerValue))
+        {
+            key = headerValue.ToString();
+            source = ApiKeyHeaderName;
+            return true;
+        }
 
-        if (request.Query.TryGetValue(ApiKeyQueryName, out var queryValue))
-            return queryValue.ToString();
+        if (context.Request.Headers.TryGetValue("Authorization", out var authorizationValue))
+        {
+            var authorization = authorizationValue.ToString();
+            const string bearerPrefix = "Bearer ";
 
-        return null;
+            if (authorization.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var bearerToken = authorization[bearerPrefix.Length..].Trim();
+                if (!string.IsNullOrWhiteSpace(bearerToken))
+                {
+                    key = bearerToken;
+                    source = "Authorization Bearer";
+                    return true;
+                }
+            }
+        }
+
+        if (context.Request.Query.TryGetValue(ApiKeyQueryName, out var queryValue) &&
+            !string.IsNullOrWhiteSpace(queryValue))
+        {
+            key = queryValue.ToString();
+            source = ApiKeyQueryName;
+            return true;
+        }
+
+        key = string.Empty;
+        source = string.Empty;
+        return false;
     }
 
     /// <summary>
