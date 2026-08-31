@@ -62,6 +62,11 @@ public class RateLimitingService : IRateLimitingService
     /// </summary>
     public const double DefaultClockSkewToleranceSeconds = 1.0;
 
+    /// <summary>
+    /// Maximum number of reset timestamps retained before expired cache entries are pruned.
+    /// </summary>
+    private const int WindowResetCacheMaxEntries = 10_000;
+
     private readonly IRateLimitRepository _repository;
     private readonly ILogger<RateLimitingService> _logger;
     private readonly ConcurrentDictionary<string, DateTime> _windowResetCache = new();
@@ -235,15 +240,30 @@ public class RateLimitingService : IRateLimitingService
     /// </summary>
     public async Task ResetWindowAsync(string apiKeyId)
     {
+        _windowResetCache.TryRemove(apiKeyId, out _);
+        PruneExpiredWindowResetCacheEntries();
+
         var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
         if (rateLimit == null)
             return;
 
         rateLimit.ResetWindow();
         await _repository.UpdateAsync(rateLimit);
-        _windowResetCache.AddOrUpdate(apiKeyId, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
 
         _logger.LogInformation("Rate limit window reset for API key {ApiKeyId}", apiKeyId);
+    }
+
+    private void PruneExpiredWindowResetCacheEntries()
+    {
+        if (_windowResetCache.Count <= WindowResetCacheMaxEntries)
+            return;
+
+        var now = DateTime.UtcNow;
+        foreach (var entry in _windowResetCache.ToArray())
+        {
+            if (entry.Value <= now)
+                _windowResetCache.TryRemove(entry.Key, out _);
+        }
     }
 
     /// <summary>
