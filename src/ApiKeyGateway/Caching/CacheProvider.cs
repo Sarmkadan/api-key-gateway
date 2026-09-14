@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiKeyGateway.Caching;
 
