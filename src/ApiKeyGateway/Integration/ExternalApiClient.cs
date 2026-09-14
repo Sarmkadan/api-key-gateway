@@ -5,8 +5,8 @@
 // Wraps HttpClient with common patterns: timeouts, retries, caching, circuit breaking.
 // =============================================================================
 
-using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Caching;
+using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Utilities;
 using Microsoft.Extensions.Logging; // Ensure logging namespace is available
 
