@@ -5,135 +5,136 @@
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace ApiKeyGateway.Utilities;
-
-/// <summary>
-/// Simple circuit breaker implementation for fault tolerance.
-/// Prevents cascading failures by stopping requests to failing services.
-/// Automatically recovers when service becomes healthy again.
-/// </summary>
-/// <summary>
-/// Interface for circuit breaker pattern implementation.
-/// </summary>
-public interface ICircuitBreaker
+namespace ApiKeyGateway.Utilities
 {
-    Task<T> ExecuteAsync<T>(Func<Task<T>> operation);
-    void RecordSuccess();
-    void RecordFailure();
-    CircuitBreakerState GetState();
-}
-
-/// <summary>
-/// Circuit breaker state enumeration.
-/// </summary>
-/// <summary>
-/// Represents the state of a circuit breaker.
-/// </summary>
-public enum CircuitBreakerState
-{
-    Closed,      // Operating normally, requests pass through
-    Open,        // Failing, requests are blocked
-    HalfOpen     // Testing if service recovered
-}
-
-/// <summary>
-/// Production circuit breaker with configurable thresholds.
-/// </summary>
-/// <summary>
-/// Production circuit breaker with configurable thresholds.
-/// </summary>
-public sealed class CircuitBreaker : ICircuitBreaker
-{
-    private CircuitBreakerState _state = CircuitBreakerState.Closed;
-    private int _failureCount = 0;
-    private DateTime _lastFailureTime = DateTime.MinValue;
-    private readonly int _failureThreshold;
-    private readonly TimeSpan _timeout;
-    private readonly ILogger<CircuitBreaker> _logger;
-    private readonly object _lockObj = new();
-
-    public CircuitBreaker(
-        int failureThreshold = 5,
-        TimeSpan? timeout = null,
-        ILogger<CircuitBreaker>? logger = null)
+    /// <summary>
+    /// Simple circuit breaker implementation for fault tolerance.
+    /// Prevents cascading failures by stopping requests to failing services.
+    /// Automatically recovers when service becomes healthy again.
+    /// </summary>
+    /// <summary>
+    /// Interface for circuit breaker pattern implementation.
+    /// </summary>
+    public interface ICircuitBreaker
     {
-        _failureThreshold = failureThreshold;
-        _timeout = timeout ?? TimeSpan.FromSeconds(30);
-        _logger = logger ?? NullLogger<CircuitBreaker>.Instance;
+        Task<T> ExecuteAsync<T>(Func<Task<T>> operation);
+        void RecordSuccess();
+        void RecordFailure();
+        CircuitBreakerState GetState();
     }
 
-    public async Task<T> ExecuteAsync<T>(Func<Task<T>> operation)
+    /// <summary>
+    /// Circuit breaker state enumeration.
+    /// </summary>
+    /// <summary>
+    /// Represents the state of a circuit breaker.
+    /// </summary>
+    public enum CircuitBreakerState
     {
-        lock (_lockObj)
-        {
-            switch (_state)
-            {
-                case CircuitBreakerState.Open:
-                    // Check if timeout has elapsed, move to half-open
-                    if (DateTime.UtcNow - _lastFailureTime > _timeout)
-                    {
-                        _logger.LogInformation("Circuit breaker transitioning to Half-Open");
-                        _state = CircuitBreakerState.HalfOpen;
-                        _failureCount = 0;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Circuit breaker is open");
-                    }
-                    break;
+        Closed,      // Operating normally, requests pass through
+        Open,        // Failing, requests are blocked
+        HalfOpen     // Testing if service recovered
+    }
 
-                case CircuitBreakerState.HalfOpen:
-                    // Only allow single request through
-                    break;
+    /// <summary>
+    /// Production circuit breaker with configurable thresholds.
+    /// </summary>
+    /// <summary>
+    /// Production circuit breaker with configurable thresholds.
+    /// </summary>
+    public sealed class CircuitBreaker : ICircuitBreaker
+    {
+        private CircuitBreakerState _state = CircuitBreakerState.Closed;
+        private int _failureCount = 0;
+        private DateTime _lastFailureTime = DateTime.MinValue;
+        private readonly int _failureThreshold;
+        private readonly TimeSpan _timeout;
+        private readonly ILogger<CircuitBreaker> _logger;
+        private readonly object _lockObj = new();
+
+        public CircuitBreaker(
+            int failureThreshold = 5,
+            TimeSpan? timeout = null,
+            ILogger<CircuitBreaker>? logger = null)
+        {
+            _failureThreshold = failureThreshold;
+            _timeout = timeout ?? TimeSpan.FromSeconds(30);
+            _logger = logger ?? NullLogger<CircuitBreaker>.Instance;
+        }
+
+        public async Task<T> ExecuteAsync<T>(Func<Task<T>> operation)
+        {
+            lock (_lockObj)
+            {
+                switch (_state)
+                {
+                    case CircuitBreakerState.Open:
+                        // Check if timeout has elapsed, move to half-open
+                        if (DateTime.UtcNow - _lastFailureTime > _timeout)
+                        {
+                            _logger.LogInformation("Circuit breaker transitioning to Half-Open");
+                            _state = CircuitBreakerState.HalfOpen;
+                            _failureCount = 0;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Circuit breaker is open");
+                        }
+                        break;
+
+                    case CircuitBreakerState.HalfOpen:
+                        // Only allow single request through
+                        break;
+                }
+            }
+
+            try
+            {
+                var result = await operation();
+                RecordSuccess();
+                return result;
+            }
+            catch
+            {
+                RecordFailure();
+                throw;
             }
         }
 
-        try
+        public void RecordSuccess()
         {
-            var result = await operation();
-            RecordSuccess();
-            return result;
-        }
-        catch
-        {
-            RecordFailure();
-            throw;
-        }
-    }
-
-    public void RecordSuccess()
-    {
-        lock (_lockObj)
-        {
-            _failureCount = 0;
-
-            if (_state == CircuitBreakerState.HalfOpen)
+            lock (_lockObj)
             {
-                _logger.LogInformation("Circuit breaker transitioning to Closed");
-                _state = CircuitBreakerState.Closed;
+                _failureCount = 0;
+
+                if (_state == CircuitBreakerState.HalfOpen)
+                {
+                    _logger.LogInformation("Circuit breaker transitioning to Closed");
+                    _state = CircuitBreakerState.Closed;
+                }
             }
         }
-    }
 
-    public void RecordFailure()
-    {
-        lock (_lockObj)
+        public void RecordFailure()
         {
-            _failureCount++;
-            _lastFailureTime = DateTime.UtcNow;
-
-            _logger.LogWarning(
-                "Circuit breaker failure recorded: {FailureCount}/{Threshold}",
-                _failureCount,
-                _failureThreshold);
-
-            if (_failureCount >= _failureThreshold)
+            lock (_lockObj)
             {
-                _logger.LogError("Circuit breaker opening after {FailureCount} failures", _failureCount);
-                _state = CircuitBreakerState.Open;
+                _failureCount++;
+                _lastFailureTime = DateTime.UtcNow;
+
+                _logger.LogWarning(
+                    "Circuit breaker failure recorded: {FailureCount}/{Threshold}",
+                    _failureCount,
+                    _failureThreshold);
+
+                if (_failureCount >= _failureThreshold)
+                {
+                    _logger.LogError("Circuit breaker opening after {FailureCount} failures", _failureCount);
+                    _state = CircuitBreakerState.Open;
+                }
             }
         }
-    }
 
-    public CircuitBreakerState GetState() => _state;
+        public CircuitBreakerState GetState() => _state;
+    }
 }
