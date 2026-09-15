@@ -1,13 +1,13 @@
+using ApiKeyGateway.Configuration;
+using ApiKeyGateway.Events;
+using MoonSharp.Interpreter.Diagnostics;
+using MoonSharp.Interpreter.Loaders;
+using MoonSharp.Interpreter;
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // =============================================================================
-
-using ApiKeyGateway.Configuration;
-using ApiKeyGateway.Events;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Diagnostics;
-using MoonSharp.Interpreter.Loaders;
 
 namespace ApiKeyGateway.Transformation;
 
