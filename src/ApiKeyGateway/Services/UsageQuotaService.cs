@@ -156,6 +156,7 @@ public class UsageQuotaService : IUsageQuotaService
 
         return true;
     }
+
 }
 
 /// <summary>Repository interface for usage quota persistence</summary>
