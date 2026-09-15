@@ -3,11 +3,11 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Collections.Concurrent;
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Events;
 using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
