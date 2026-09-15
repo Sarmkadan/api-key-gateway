@@ -3,6 +3,10 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Net.Http;
+using System.Net;
+using System;
+
 namespace ApiKeyGateway.Utilities;
 
 /// <summary>
