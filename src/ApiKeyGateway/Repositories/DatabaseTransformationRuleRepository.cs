@@ -3,13 +3,13 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Data.Common;
-using System.Text.Json;
 using ApiKeyGateway.Data;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Transformation;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Text.Json;
 
 namespace ApiKeyGateway.Repositories;
 
