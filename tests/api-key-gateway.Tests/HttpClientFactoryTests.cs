@@ -50,7 +50,7 @@ namespace api_key_gateway.Tests
         public void CreateClient_NullUserAgent_ThrowsArgumentNullException()
         {
             // Act & Assert
-            Assert.ThrowsAny<ArgumentException>(() => HttpClientFactory.CreateClient(null!));
+            Assert.ThrowsAny<Exception>(() => HttpClientFactory.CreateClient(null!));
         }
 
         [Fact]

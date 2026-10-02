@@ -71,8 +71,11 @@ namespace ApiKeyGateway.Domain.Exceptions
         /// <returns>A string describing the retry-after period.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="ex"/> is <c>null</c>.</exception>
         public static string GetRetryAfterMessage(this RateLimitExceededException ex)
-            => ex.RetryAfter.HasValue
+        {
+            ArgumentNullException.ThrowIfNull(ex);
+            return ex.RetryAfter.HasValue
                 ? $"Please retry after {ex.RetryAfter.Value.ToString("O", CultureInfo.InvariantCulture)}."
                 : "Please retry after the rate limit window has passed.";
+        }
     }
 }

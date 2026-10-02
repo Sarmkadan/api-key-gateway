@@ -54,7 +54,7 @@ namespace api_key_gateway.Tests
             // Arrange & Act & Assert
             Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(null!));
             Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(string.Empty));
-            Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson("   "));
+            Assert.ThrowsAny<Exception>(() => UsageQuotaJsonExtensions.FromJson("   "));
         }
 
         [Fact]

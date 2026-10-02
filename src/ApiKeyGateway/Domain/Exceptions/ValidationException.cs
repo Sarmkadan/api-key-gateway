@@ -45,6 +45,7 @@ public class ValidationException : ApiKeyGatewayException
     /// <param name="attemptedValue">Value that was attempted to be used.</param>
     public ValidationException(string message, string parameterName, object? attemptedValue) : base(message)
     {
+        ArgumentNullException.ThrowIfNull(message);
         ErrorCode = "VALIDATION_ERROR";
         ParameterName = parameterName;
         AttemptedValue = attemptedValue;
@@ -57,6 +58,9 @@ public class ValidationException : ApiKeyGatewayException
     /// <param name="validationErrors">Collection of validation error messages.</param>
     public ValidationException(string message, IEnumerable<string> validationErrors) : base(message)
     {
+        ArgumentNullException.ThrowIfNull(validationErrors);
+        if (!validationErrors.Any())
+            throw new ArgumentException("Validation errors cannot be empty.", nameof(validationErrors));
         ErrorCode = "VALIDATION_ERROR";
         ValidationErrors = validationErrors;
     }

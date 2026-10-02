@@ -19,9 +19,9 @@ public class KeyStoreUnavailableExceptionJsonExtensionsTests
 
         // Assert
         json.Should().NotBeNullOrEmpty();
-        var deserialized = JsonSerializer.Deserialize<KeyStoreUnavailableException>(json);
+        var deserialized = KeyStoreUnavailableExceptionJsonExtensions.FromJson(json);
         deserialized.Should().NotBeNull();
-        deserialized.Message.Should().Be("Test message");
+        deserialized!.Message.Should().Be("Test message");
     }
 
     [Fact]

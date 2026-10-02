@@ -44,7 +44,7 @@ public static class ConfigurationExceptionValidation
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static bool IsValid(this ConfigurationException value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        if (value is null) return false;
         return value.Validate().Count == 0;
     }
 
@@ -56,7 +56,8 @@ public static class ConfigurationExceptionValidation
     /// <exception cref="ArgumentException">Thrown when the exception is invalid, containing the validation problems.</exception>
     public static void EnsureValid(this ConfigurationException value)
     {
-        ArgumentNullException.ThrowIfNull(value);
+        if (value is null)
+            throw new ArgumentNullException(nameof(value));
 
         var problems = value.Validate();
 

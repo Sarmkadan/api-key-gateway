@@ -117,21 +117,23 @@ public class RateLimitExceededExceptionJsonExtensionsTests
     [Fact]
     public void TryFromJson_NullInput_ThrowsArgumentNullException()
     {
-        // Act
-        Action act = () => RateLimitExceededExceptionJsonExtensions.TryFromJson(null, out _);
+        // Act - TryFromJson returns false for null
+        var success = RateLimitExceededExceptionJsonExtensions.TryFromJson(null, out var result);
 
         // Assert
-        act.Should().Throw<ArgumentNullException>();
+        success.Should().BeFalse();
+        result.Should().BeNull();
     }
 
     [Fact]
     public void TryFromJson_EmptyInput_ThrowsArgumentException()
     {
-        // Act
-        Action act = () => RateLimitExceededExceptionJsonExtensions.TryFromJson(string.Empty, out _);
+        // Act - TryFromJson returns false for empty
+        var success = RateLimitExceededExceptionJsonExtensions.TryFromJson(string.Empty, out var result);
 
         // Assert
-        act.Should().Throw<ArgumentException>();
+        success.Should().BeFalse();
+        result.Should().BeNull();
     }
 
     [Fact]

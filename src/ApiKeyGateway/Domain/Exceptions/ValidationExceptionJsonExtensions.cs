@@ -16,8 +16,8 @@ public static class ValidationExceptionJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
+        WriteIndented = false,
+        PropertyNameCaseInsensitive = true
     };
 
     /// <summary>

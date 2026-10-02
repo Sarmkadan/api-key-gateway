@@ -95,7 +95,7 @@ public static class ApiEndpointValidationTests
         Assert.Equal(10, problems.Count);
         Assert.Contains("Id cannot be null or whitespace", problems);
         Assert.Contains("Path must start with '/'", problems);
-        Assert.Contains("Method 'FETCH' is not a valid HTTP method", problems);
+        Assert.Contains("Method 'FETCH' is not a valid HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS)", problems);
         Assert.Contains("TargetUrl 'not-a-url' is not a valid absolute URI", problems);
         Assert.Contains("CreatedAt cannot be default(DateTime)", problems);
         Assert.Contains("TimeoutMs must be a positive number", problems);

@@ -28,7 +28,7 @@ public static class KeyStoreUnavailableExceptionExtensions
         string operation)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        ArgumentException.ThrowIfNullOrEmpty(operation);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation);
 
         return new KeyStoreUnavailableException(
             $"Key store is unavailable during operation: {operation}",
@@ -50,7 +50,7 @@ public static class KeyStoreUnavailableExceptionExtensions
         string key)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        ArgumentException.ThrowIfNullOrEmpty(key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         return new KeyStoreUnavailableException(
             $"API key '{key}' not found in key store (cache miss)",
@@ -72,7 +72,7 @@ public static class KeyStoreUnavailableExceptionExtensions
         string context)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        ArgumentException.ThrowIfNullOrEmpty(context);
+        ArgumentException.ThrowIfNullOrWhiteSpace(context);
 
         return new KeyStoreUnavailableException(
             $"Key store unavailable: {context}",

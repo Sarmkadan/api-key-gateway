@@ -28,8 +28,15 @@ namespace ApiKeyGateway.Tests
         [Fact]
         public void Validate_SettingNull_ThrowsArgumentNullException()
         {
-            // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => ConfigurationExceptionValidation.Validate(new ConfigurationException(null, "Test setting")));
+            // Arrange - ConfigurationException with null Setting
+            var exception = new ConfigurationException("Test message");
+
+            // Act
+            var problems = ConfigurationExceptionValidation.Validate(exception);
+
+            // Assert - Setting is null, so validation should report it
+            Assert.Single(problems);
+            Assert.Equal("Setting cannot be null, empty, or whitespace.", problems[0]);
         }
 
         [Fact]
@@ -86,8 +93,8 @@ namespace ApiKeyGateway.Tests
         [Fact]
         public void IsValid_SettingNull_ReturnsFalse()
         {
-            // Act
-            var isValid = ConfigurationExceptionValidation.IsValid(new ConfigurationException(null, "Test setting"));
+            // Act - ConfigurationException with null Setting
+            var isValid = ConfigurationExceptionValidation.IsValid(new ConfigurationException("Test message"));
 
             // Assert
             Assert.False(isValid);
@@ -139,8 +146,8 @@ namespace ApiKeyGateway.Tests
         [Fact]
         public void EnsureValid_SettingNull_ThrowsArgumentException()
         {
-            // Act and Assert
-            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException(null, "Test setting")));
+            // Act and Assert - ConfigurationException with null Setting
+            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException("Test message")));
         }
 
         [Fact]

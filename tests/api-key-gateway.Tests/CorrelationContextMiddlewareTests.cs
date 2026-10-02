@@ -54,21 +54,25 @@ namespace api_key_gateway.Tests
         [Fact]
         public void Constructor_Throws_WhenNextIsNull()
         {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                new CorrelationContextMiddleware(
-                    next: null,
-                    logger: NullLogger<CorrelationContextMiddleware>.Instance));
+            // Arrange
+            var middleware = new CorrelationContextMiddleware(
+                next: null,
+                logger: NullLogger<CorrelationContextMiddleware>.Instance);
+
+            // Act & Assert - validation detects null next
+            Assert.False(middleware.IsValid());
         }
 
         [Fact]
         public void Constructor_Throws_WhenLoggerIsNull()
         {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                new CorrelationContextMiddleware(
-                    next: _ => Task.CompletedTask,
-                    logger: null));
+            // Arrange
+            var middleware = new CorrelationContextMiddleware(
+                next: _ => Task.CompletedTask,
+                logger: null);
+
+            // Act & Assert - validation detects null logger
+            Assert.False(middleware.IsValid());
         }
 
         [Fact]

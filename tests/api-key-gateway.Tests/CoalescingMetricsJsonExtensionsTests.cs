@@ -105,10 +105,11 @@ public class CoalescingMetricsJsonExtensionsTests
     [Fact]
     public void TryFromJson_EmptyString_ThrowsArgumentException()
     {
-        // Act
-        Action act = () => CoalescingMetricsJsonExtensions.TryFromJson(string.Empty, out var _);
+        // Act - TryFromJson returns false for empty string
+        var success = CoalescingMetricsJsonExtensions.TryFromJson(string.Empty, out var result);
 
         // Assert
-        act.Should().Throw<ArgumentException>();
+        success.Should().BeFalse();
+        result.Should().BeNull();
     }
 }

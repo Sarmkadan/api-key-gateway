@@ -26,10 +26,7 @@ public static class QueryStringHelper
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
     public static string BuildQueryString(IDictionary<string, string> parameters)
     {
-        if (parameters == null)
-            throw new ArgumentNullException(nameof(parameters), "Parameters cannot be null");
-
-        if (parameters.Count == 0)
+        if (parameters == null || parameters.Count == 0)
             return string.Empty;
 
         var sb = new StringBuilder();

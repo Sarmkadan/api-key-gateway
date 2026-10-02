@@ -50,7 +50,7 @@ public static class UsageControllerJsonExtensions
 	/// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
 	public static UsageController? FromJson(string json)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
 		return JsonSerializer.Deserialize<UsageController>(json, _jsonOptions);
 	}
@@ -75,7 +75,7 @@ public static class UsageControllerJsonExtensions
 			value = JsonSerializer.Deserialize<UsageController>(json, _jsonOptions);
 			return value is not null;
 		}
-		catch (JsonException)
+		catch (Exception) when (true)
 		{
 			return false;
 		}

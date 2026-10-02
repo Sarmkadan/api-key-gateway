@@ -19,9 +19,9 @@ public class InvalidApiKeyExceptionJsonExtensionsTests
 
         // Assert
         json.Should().NotBeNullOrEmpty();
-        var deserialized = JsonSerializer.Deserialize<InvalidApiKeyException>(json);
+        var deserialized = InvalidApiKeyExceptionJsonExtensions.FromJson(json);
         deserialized.Should().NotBeNull();
-        deserialized.Message.Should().Be("Test message");
+        deserialized!.Message.Should().Be("Test message");
     }
 
     [Fact]

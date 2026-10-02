@@ -66,7 +66,7 @@ namespace ApiKeyGateway.Tests
         public void EnsureValid_InvalidInput_ThrowsArgumentException()
         {
             // Arrange
-            var exception = new DataAccessException(null);
+            var exception = new DataAccessException("");
 
             // Act and Assert
             Assert.ThrowsAny<ArgumentException>(() => DataAccessExceptionValidation.EnsureValid(exception));

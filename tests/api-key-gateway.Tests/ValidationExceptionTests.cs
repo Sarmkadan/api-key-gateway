@@ -71,8 +71,13 @@ namespace ApiKeyGateway.Tests
         [Fact]
         public void AttemptedValue_Null_ThrowsArgumentNullException()
         {
-            // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => new ValidationException("Test message", "Test parameter", null));
+            // Act - null attemptedValue is allowed
+            var ex = new ValidationException("Test message", "Test parameter", null);
+
+            // Assert
+            Assert.Null(ex.AttemptedValue);
+            Assert.Equal("Test message", ex.Message);
+            Assert.Equal("Test parameter", ex.ParameterName);
         }
 
         [Fact]

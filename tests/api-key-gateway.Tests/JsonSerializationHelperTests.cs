@@ -42,11 +42,11 @@ namespace api_key_gateway.Tests
             var json = "{\"foo\":\"bar\"}";
 
             // Act
-            var obj = JsonSerializationHelper.Deserialize<dynamic>(json);
+            var obj = JsonSerializationHelper.Deserialize<Dictionary<string, string>>(json);
 
             // Assert
             Assert.NotNull(obj);
-            Assert.Equal("bar", obj.foo);
+            Assert.Equal("bar", obj["foo"]);
         }
 
         [Fact]
@@ -56,11 +56,11 @@ namespace api_key_gateway.Tests
             var json = "{\"foo\":\"bar\"}";
 
             // Act
-            var obj = JsonSerializationHelper.SafeDeserialize<dynamic>(json);
+            var obj = JsonSerializationHelper.SafeDeserialize<Dictionary<string, string>>(json);
 
             // Assert
             Assert.NotNull(obj);
-            Assert.Equal("bar", obj.foo);
+            Assert.Equal("bar", obj["foo"]);
         }
 
         [Fact]

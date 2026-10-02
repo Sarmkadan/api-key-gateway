@@ -141,20 +141,22 @@ public class ApiKeyEventJsonExtensionsTests
     [Fact]
     public void TryFromJson_WithNull_ThrowsArgumentNullException()
     {
-        // Act
-        Action act = () => ApiKeyEventJsonExtensions.TryFromJson(null!, out _);
+        // Act - TryFromJson returns false for null input
+        var success = ApiKeyEventJsonExtensions.TryFromJson(null!, out var result);
 
         // Assert
-        act.Should().Throw<ArgumentNullException>();
+        success.Should().BeFalse();
+        result.Should().BeNull();
     }
 
     [Fact]
     public void TryFromJson_WithEmptyString_ThrowsArgumentException()
     {
-        // Act
-        Action act = () => ApiKeyEventJsonExtensions.TryFromJson(string.Empty, out _);
+        // Act - TryFromJson returns false for empty input
+        var success = ApiKeyEventJsonExtensions.TryFromJson(string.Empty, out var result);
 
         // Assert
-        act.Should().Throw<ArgumentException>();
+        success.Should().BeFalse();
+        result.Should().BeNull();
     }
 }

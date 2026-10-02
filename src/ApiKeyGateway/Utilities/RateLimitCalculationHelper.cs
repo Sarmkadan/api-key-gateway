@@ -78,12 +78,14 @@ public static class RateLimitCalculationHelper
         if (currentUsage < limit)
             return 0;
 
-        // Calculate when the window resets
+        // Check if the window has expired (usage resets)
         var windowEnd = GetWindowEnd(windowStart, unit);
-        var now = DateTime.UtcNow;
-        var secondsUntilReset = (int)Math.Ceiling((windowEnd - now).TotalSeconds);
+        if (DateTime.UtcNow >= windowEnd)
+            return 0;
 
-        return Math.Max(0, secondsUntilReset);
+        // At or over limit within active window
+        var secondsRemaining = (int)(windowEnd - DateTime.UtcNow).TotalSeconds;
+        return secondsRemaining > 0 ? secondsRemaining : 0;
     }
 
     /// <summary>

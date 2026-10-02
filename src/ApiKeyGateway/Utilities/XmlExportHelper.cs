@@ -23,6 +23,25 @@ public static class XmlExportHelper
     public static string ToXml<T>(T item, string rootElementName = null) where T : class
     {
         if (item == null) return string.Empty;
+
+        // If item is a collection, redirect to the collection overload
+        if (item is System.Collections.IEnumerable && item is not string)
+        {
+            var enumerableInterface = typeof(T).GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            if (enumerableInterface == null && typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                enumerableInterface = typeof(T);
+            if (enumerableInterface != null)
+            {
+                var elementType = enumerableInterface.GetGenericArguments()[0];
+                var method = typeof(XmlExportHelper).GetMethods()
+                    .First(m => m.Name == nameof(ToXml) && m.GetParameters().Length == 3
+                        && m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                var generic = method.MakeGenericMethod(elementType);
+                return (string)generic.Invoke(null, new object[] { item, rootElementName ?? "root", null })!;
+            }
+        }
+
         using var stream = new MemoryStream();
         using (var writer = XmlWriter.Create(stream, new XmlWriterSettings
         {
@@ -94,11 +113,23 @@ public static class XmlExportHelper
 
     private static void WriteElement<T>(XmlWriter writer, string elementName, T obj) where T : class
     {
+        // For strings and other simple types, write the value directly
+        if (obj is string strValue)
+        {
+            writer.WriteElementString(elementName, strValue);
+            return;
+        }
+
         writer.WriteStartElement(elementName);
 
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var type = obj.GetType();
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         foreach (var prop in properties)
         {
+            // Skip indexer properties
+            if (prop.GetIndexParameters().Length > 0)
+                continue;
+
             var value = prop.GetValue(obj);
             if (value == null)
                 continue;
