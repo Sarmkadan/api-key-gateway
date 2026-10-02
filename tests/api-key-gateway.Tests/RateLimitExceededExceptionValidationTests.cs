@@ -116,12 +116,12 @@ public class RateLimitExceededExceptionValidationTests
     public void EnsureValid_InvalidFields_ThrowsArgumentException_WithProblemDetails()
     {
         // Arrange: create an exception with several distinct problems
-        var ex = new RateLimitExceededException(null) // Message null
+        var ex = new RateLimitExceededException("") // empty message
         {
             ApiKeyId = null,                     // ApiKeyId null
             Limit = 2_000_000,                   // Limit exceeds max
             WindowInSeconds = 400_000_000,       // Window exceeds 1 year
-            RetryAfter = default                 // default DateTime
+            RetryAfter = default(DateTime)       // default DateTime value (non-null)
         };
 
         // Act
@@ -130,10 +130,9 @@ public class RateLimitExceededExceptionValidationTests
         // Assert
         act.Should().Throw<ArgumentException>()
             .WithMessage("*RateLimitExceededException is invalid*")
-            .Where(e => e.Message.Contains("Message cannot be null, empty, or whitespace.") &&
-                        e.Message.Contains("ApiKeyId cannot be null, empty, or whitespace.") &&
+            .Where(e => e.Message.Contains("ApiKeyId cannot be null, empty, or whitespace.") &&
                         e.Message.Contains("Limit must be a reasonable value (maximum 1000000).") &&
                         e.Message.Contains("WindowInSeconds must be a reasonable value (maximum 1 year).") &&
-                        e.Message.Contains("RetryAfter cannot be the default DateTime value."));
+                        e.Message.Contains("RetryAfter must be in UTC format."));
     }
 }

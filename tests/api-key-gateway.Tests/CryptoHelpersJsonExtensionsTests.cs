@@ -58,9 +58,9 @@ namespace api_key_gateway.Tests
 
             // Indented JSON contains line breaks
             Assert.Contains(Environment.NewLine, json);
-            // Still contains the expected values
-            Assert.Contains("\"secureRandomStringLength\":10", json);
-            Assert.Contains("\"secureRandomChars\":\"XYZ\"", json);
+            // Still contains the expected values (indented format has spaces after colon)
+            Assert.Contains("\"secureRandomStringLength\": 10", json);
+            Assert.Contains("\"secureRandomChars\": \"XYZ\"", json);
         }
 
         [Fact]

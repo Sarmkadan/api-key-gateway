@@ -94,7 +94,7 @@ public static class AnalyticsSummaryValidation
             errors.Add("ErrorRatePercent must be between 0 and 100 inclusive.");
         }
 
-        if (Math.Abs(value.SuccessRatePercent + value.ErrorRatePercent - 100) > PercentageTolerance)
+        if (value.TotalRequests > 0 && Math.Abs(value.SuccessRatePercent + value.ErrorRatePercent - 100) > PercentageTolerance)
         {
             errors.Add("SuccessRatePercent + ErrorRatePercent must equal 100 within tolerance.");
         }

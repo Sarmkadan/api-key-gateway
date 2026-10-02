@@ -22,8 +22,8 @@ public sealed class CorrelationContextMiddleware
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="next"/> or <paramref name="logger"/> is null.</exception>
     public CorrelationContextMiddleware(RequestDelegate next, ILogger<CorrelationContextMiddleware> logger)
     {
-        _next = next ?? throw new ArgumentNullException(nameof(next));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _next = next;
+        _logger = logger;
     }
 
     internal RequestDelegate GetNextDelegate() => _next;

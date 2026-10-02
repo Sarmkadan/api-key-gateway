@@ -48,7 +48,7 @@ public static class UsageRecordJsonExtensions
     public static UsageRecord? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
-        return string.IsNullOrEmpty(json)
+        return string.IsNullOrWhiteSpace(json)
             ? null
             : JsonSerializer.Deserialize<UsageRecord>(json, _jsonOptions);
     }

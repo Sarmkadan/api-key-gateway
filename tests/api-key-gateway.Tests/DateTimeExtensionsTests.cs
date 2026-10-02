@@ -559,7 +559,8 @@ public class DateTimeExtensionsTests
 
         // Assert - Should return a valid date
         result.Should().BeOnOrBefore(minDate);
-        result.DayOfWeek.Should().Be(DayOfWeek.Sunday);
+        // DateTime.MinValue (Jan 1, 0001) is a Monday; StartOfWeek returns MinValue as a boundary
+        result.DayOfWeek.Should().Be(DayOfWeek.Monday);
     }
 
     [Fact]

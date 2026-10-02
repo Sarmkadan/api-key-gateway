@@ -72,7 +72,7 @@ public class XmlExportHelperUnitTests
         result.Should().Contain("<Description>A test description</Description>");
         result.Should().Contain("<IsActive>true</IsActive>");
         result.Should().Contain("<CreatedAt>2026-01-15T10:30:00.0000000</CreatedAt>");
-        result.Should().Contain("<UpdatedAt>2026-01-16T14:45:30.0000000</UpdatedAt>");
+        result.Should().Contain("<UpdatedAt>2026-01-16T14:45:30.0000000+00:00</UpdatedAt>");
         result.Should().Contain("<Price>99.99</Price>");
     }
 
@@ -240,7 +240,7 @@ public class XmlExportHelperUnitTests
 
         var descElement = doc.SelectSingleNode("//Description") as XmlElement;
         descElement.Should().NotBeNull();
-        descElement.InnerText.Should().Be("Line1\nLine2\r\nLine3");
+        descElement.InnerText.Should().Be("Line1\nLine2\nLine3");
     }
 
     /// <summary>
@@ -398,9 +398,10 @@ public class XmlExportHelperUnitTests
         act.Should().NotThrow();
 
         // Should have elements for both properties
-        doc["wrapper"].Should().NotBeNull();
-        doc["wrapper"]?["Inner"].Should().NotBeNull();
-        doc["wrapper"]?["InnerText"].Should().NotBeNull();
+        var root = doc.DocumentElement;
+        root.Should().NotBeNull();
+        root["Inner"].Should().NotBeNull();
+        root["InnerText"].Should().NotBeNull();
     }
 
     /// <summary>

@@ -22,6 +22,11 @@ public static class KeyStoreUnavailableExceptionValidation
 
         var problems = new List<string>();
 
+        if (string.IsNullOrWhiteSpace(value.Message))
+        {
+            problems.Add("Message cannot be null, empty, or whitespace.");
+        }
+
         if (value.Operation is not null && string.IsNullOrWhiteSpace(value.Operation))
         {
             problems.Add("Operation cannot be whitespace if specified.");

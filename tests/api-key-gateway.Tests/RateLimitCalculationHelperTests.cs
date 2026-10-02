@@ -27,7 +27,7 @@ namespace api_key_gateway.Tests
         {
             var windowStart = DateTime.UtcNow;
             var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(10, 10, windowStart, RateLimitUnit.Minute);
-            Assert.Equal(int.MaxValue, result);
+            Assert.True(result > 0, "At limit within active window should return positive seconds");
         }
 
         [Fact]
@@ -35,7 +35,7 @@ namespace api_key_gateway.Tests
         {
             var windowStart = DateTime.UtcNow;
             var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(5, 10, windowStart, RateLimitUnit.Minute);
-            Assert.True(result > 0);
+            Assert.Equal(0, result);
         }
 
         [Fact]

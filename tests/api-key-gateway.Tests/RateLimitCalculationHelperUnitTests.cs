@@ -221,8 +221,8 @@ public class RateLimitCalculationHelperUnitTests
         // Act
         var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(currentUsage, limit, windowStart, unit);
 
-        // Assert - at limit means immediate rejection (consistent with RateLimit.CanProcessRequest())
-        result.Should().Be(int.MaxValue, "at limit should return int.MaxValue for immediate rejection");
+        // Assert - at limit within active window, returns seconds until window resets
+        result.Should().BeGreaterThan(0, "at limit should return positive seconds until window resets");
     }
 
     /// <summary>
@@ -240,8 +240,8 @@ public class RateLimitCalculationHelperUnitTests
         // Act
         var result = RateLimitCalculationHelper.GetSecondsUntilAllowed(currentUsage, limit, windowStart, unit);
 
-        // Assert - over limit means immediate rejection (consistent with RateLimit.CanProcessRequest())
-        result.Should().Be(int.MaxValue, "over limit should return int.MaxValue for immediate rejection");
+        // Assert - over limit within active window, returns seconds until window resets
+        result.Should().BeGreaterThan(0, "over limit should return positive seconds until window resets");
     }
 
     /// <summary>

@@ -83,8 +83,8 @@ public class AdminControllerValidationTests
     {
         // Arrange
         string format = "xml";
-        DateTime start = Now.AddDays(2); // future start
-        DateTime end = Now.AddDays(1);   // end before start
+        DateTime start = Now.AddDays(3); // future start
+        DateTime end = Now.AddDays(2);   // end before start, but still in future
 
         // Act
         var problems = format.Validate(start, end);

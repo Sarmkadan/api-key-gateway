@@ -81,8 +81,8 @@ public sealed class QueryStringHelperJsonExtensionsTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(2, result!.Parameters.Count);
-        Assert.Equal("valueA", result.Parameters["keyA"]);
-        Assert.Equal("valueB", result.Parameters["keyB"]);
+        Assert.Equal("valueA", result.Parameters["keyA"]?.ToString());
+        Assert.Equal("valueB", result.Parameters["keyB"]?.ToString());
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class QueryStringHelperJsonExtensionsTests
         Assert.True(success);
         Assert.NotNull(result);
         Assert.Single(result!.Parameters);
-        Assert.Equal("y", result.Parameters["x"]);
+        Assert.Equal("y", result.Parameters["x"]?.ToString());
     }
 
     [Fact]

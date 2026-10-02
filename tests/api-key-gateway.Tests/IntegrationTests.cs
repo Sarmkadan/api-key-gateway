@@ -102,6 +102,7 @@ public class IntegrationTests
         };
 
         await auditService.LogAsync(auditLog);
+        await auditService.FlushAsync();
 
         _auditLogRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<AuditLog>()), Times.Once);
     }
@@ -306,6 +307,7 @@ public class IntegrationTests
         }
 
         await Task.WhenAll(tasks);
+        await auditService.FlushAsync();
 
         capturedLogs.Should().HaveCount(10);
     }

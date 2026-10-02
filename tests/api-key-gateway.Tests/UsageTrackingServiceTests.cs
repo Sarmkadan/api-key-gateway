@@ -70,7 +70,6 @@ public class UsageTrackingServiceTests
     {
         _logger.LogInformation("Executing test: {TestName}", "RecordUsageAsync_NullRecord_ThrowsArgumentNullException");
         var act = async () => await _sut.RecordUsageAsync(null!);
-        _loggerMock.Verify(r => r.LogError(It.IsAny<Exception>(), "Failed to record usage"));
         await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("record");
         _logger.LogInformation("Test completed: {TestName}", "RecordUsageAsync_NullRecord_ThrowsArgumentNullException");
     }

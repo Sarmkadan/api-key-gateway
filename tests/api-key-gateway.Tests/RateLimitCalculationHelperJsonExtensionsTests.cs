@@ -16,7 +16,7 @@ namespace api_key_gateway.Tests
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(json));
 
-            var metadata = JsonSerializer.Deserialize<RateLimitCalculationHelperJsonExtensions.RateLimitCalculationHelperMetadata>(json);
+            var metadata = JsonSerializer.Deserialize<RateLimitCalculationHelperJsonExtensions.RateLimitCalculationHelperMetadata>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.NotNull(metadata);
             Assert.Equal("RateLimitCalculationHelper", metadata!.TypeName);
             Assert.NotNull(metadata.Methods);

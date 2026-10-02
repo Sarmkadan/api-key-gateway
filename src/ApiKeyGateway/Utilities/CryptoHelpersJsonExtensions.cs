@@ -46,10 +46,13 @@ public static class CryptoHelpersJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the cryptographic configuration.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this CryptoConfiguration value, bool indented = false) =>
-    JsonSerializer.Serialize(value, indented
-        ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-        : _jsonOptions);
+    public static string ToJson(this CryptoConfiguration value, bool indented = false)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return JsonSerializer.Serialize(value, indented
+            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+            : _jsonOptions);
+    }
 
     /// <summary>
     /// Deserializes a JSON string to a <see cref="CryptoConfiguration"/> instance.

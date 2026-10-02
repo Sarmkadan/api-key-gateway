@@ -13,7 +13,13 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// </summary>
 public class ApiKeyGatewayException : Exception
 {
+    [JsonPropertyOrder(-10)]
+    public new string Message => base.Message;
+
+    [JsonPropertyOrder(10)]
     public string? ErrorCode { get; init; }
+
+    [JsonPropertyOrder(20)]
     public DateTime OccurredAt { get; init; }
 
     /// <summary>Parameterless constructor for JSON deserialization</summary>
