@@ -68,7 +68,7 @@ public static class CorrelationContextMiddlewareJsonExtensions
     public static bool TryFromJson(string json, out CorrelationContextMiddleware? value)
     {
         ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         value = null;
 

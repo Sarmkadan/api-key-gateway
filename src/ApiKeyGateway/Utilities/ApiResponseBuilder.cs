@@ -45,7 +45,6 @@ public sealed class ApiResponseBuilder<T>
     /// </summary>
     public ApiResponseBuilder<T> Error(int statusCode, string message, string? errorCode = null)
     {
-        ArgumentException.ThrowIfNullOrEmpty(message);
         _success = false;
         _statusCode = statusCode;
         _message = message;
@@ -81,19 +80,17 @@ public sealed class ApiResponseBuilder<T>
     /// </summary>
     public object Build()
     {
-        var response = new
-        {
-            success = _success,
-            statusCode = _statusCode,
-            message = _message,
-            errorCode = _errorCode,
-            data = _data,
-            errors = _errors,
-            metadata = _metadata,
-            timestamp = DateTime.UtcNow
-        };
-
-        return response;
+        var expando = new System.Dynamic.ExpandoObject();
+        var dict = (IDictionary<string, object?>)expando;
+        dict["success"] = _success;
+        dict["statusCode"] = _statusCode;
+        dict["message"] = _message;
+        dict["errorCode"] = _errorCode;
+        dict["data"] = _data;
+        dict["errors"] = _errors;
+        dict["metadata"] = _metadata;
+        dict["timestamp"] = DateTime.UtcNow;
+        return expando;
     }
 }
 

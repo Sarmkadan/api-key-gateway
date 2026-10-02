@@ -84,7 +84,11 @@ public static class CollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentOutOfRangeException.ThrowIfLessThan(batchSize, 1);
+        return BatchCore(source, batchSize);
+    }
 
+    private static IEnumerable<IEnumerable<T>> BatchCore<T>(IEnumerable<T> source, int batchSize)
+    {
         using var enumerator = source.GetEnumerator();
         while (enumerator.MoveNext())
         {

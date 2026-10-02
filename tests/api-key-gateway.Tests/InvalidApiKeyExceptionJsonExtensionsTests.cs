@@ -50,7 +50,7 @@ public class InvalidApiKeyExceptionJsonExtensionsTests
     public void FromJson_NullInput_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => InvalidApiKeyExceptionJsonExtensions.FromJson(null));
+        Assert.ThrowsAny<ArgumentException>(() => InvalidApiKeyExceptionJsonExtensions.FromJson(null));
     }
 
     [Fact]

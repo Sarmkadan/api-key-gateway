@@ -69,7 +69,7 @@ public static class StatsControllerJsonExtensions
     /// <exception cref="ArgumentNullException"><paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out StatsController? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

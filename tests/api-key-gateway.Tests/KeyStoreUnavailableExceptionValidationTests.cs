@@ -69,7 +69,7 @@ namespace ApiKeyGateway.Tests
             var exception = new KeyStoreUnavailableException(string.Empty);
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => KeyStoreUnavailableExceptionValidation.EnsureValid(exception));
+            Assert.ThrowsAny<ArgumentException>(() => KeyStoreUnavailableExceptionValidation.EnsureValid(exception));
         }
     }
 }

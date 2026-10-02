@@ -4,6 +4,8 @@
 // Thrown when validation of input parameters fails
 // =============================================================================
 
+using System.Text.Json.Serialization;
+
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
@@ -11,6 +13,11 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// </summary>
 public class ValidationException : ApiKeyGatewayException
 {
+    /// <summary>Parameterless constructor for deserialization</summary>
+    public ValidationException() : base("Validation error")
+    {
+        ErrorCode = "VALIDATION_ERROR";
+    }
     /// <summary>Name of the parameter that failed validation</summary>
     public string? ParameterName { get; init; }
 
@@ -24,6 +31,7 @@ public class ValidationException : ApiKeyGatewayException
     /// Initializes a new instance of <see cref="ValidationException"/>
     /// </summary>
     /// <param name="message">The error message.</param>
+    [JsonConstructor]
     public ValidationException(string message) : base(message)
     {
         ErrorCode = "VALIDATION_ERROR";

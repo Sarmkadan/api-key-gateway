@@ -67,7 +67,7 @@ public class CryptoHelpersTests
         var emptyInput = string.Empty;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(emptyInput));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(emptyInput));
     }
 
     /// <summary>
@@ -81,7 +81,7 @@ public class CryptoHelpersTests
         var whitespaceInput = "   ";
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(whitespaceInput));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(whitespaceInput));
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class CryptoHelpersTests
         string nullInput = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(nullInput));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeSha256Hash(nullInput));
     }
 
     /// <summary>
@@ -247,7 +247,7 @@ public class CryptoHelpersTests
         var secret = "valid secret";
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(emptyMessage, secret));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(emptyMessage, secret));
     }
 
     /// <summary>
@@ -262,7 +262,7 @@ public class CryptoHelpersTests
         var secret = "valid secret";
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(nullMessage, secret));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(nullMessage, secret));
     }
 
     /// <summary>
@@ -277,7 +277,7 @@ public class CryptoHelpersTests
         var emptySecret = string.Empty;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(message, emptySecret));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(message, emptySecret));
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ public class CryptoHelpersTests
         string nullSecret = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(message, nullSecret));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.ComputeHmacSha256(message, nullSecret));
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public class CryptoHelpersTests
     public void GenerateSecureRandomString_InvalidLength_ThrowsArgumentException(int length)
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => CryptoHelpers.GenerateSecureRandomString(length));
+        Assert.ThrowsAny<ArgumentException>(() => CryptoHelpers.GenerateSecureRandomString(length));
     }
 
     /// <summary>

@@ -65,7 +65,7 @@ public static class RateLimitJsonExtensions
         try
         {
             ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
+            if (string.IsNullOrEmpty(json)) { value = null; return false; }
             value = JsonSerializer.Deserialize<RateLimit>(json, JsonSerializerOptions);
             return true;
         }

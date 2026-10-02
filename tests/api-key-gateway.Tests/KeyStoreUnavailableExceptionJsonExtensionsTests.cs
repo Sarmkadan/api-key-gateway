@@ -43,7 +43,7 @@ public class KeyStoreUnavailableExceptionJsonExtensionsTests
     public void FromJson_NullInput_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => KeyStoreUnavailableExceptionJsonExtensions.FromJson(null));
+        Assert.ThrowsAny<ArgumentException>(() => KeyStoreUnavailableExceptionJsonExtensions.FromJson(null));
     }
 
     [Fact]

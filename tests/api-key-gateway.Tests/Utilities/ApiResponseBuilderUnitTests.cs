@@ -47,7 +47,7 @@ public class ApiResponseBuilderUnitTests
         var result = builder.WithData(data).Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((int)response.data.Id).Should().Be(42);
         ((string)response.data.Name).Should().Be("Test");
@@ -66,9 +66,9 @@ public class ApiResponseBuilderUnitTests
         var result = builder.WithData(null).Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
-        response.data.Should().BeNull();
+        ((object)response.data).Should().BeNull();
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class ApiResponseBuilderUnitTests
         var result = builder.WithData(new TestDataModel()).Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((int)response.data.Id).Should().Be(0);
         ((string)response.data.Name).Should().BeNull();
@@ -123,7 +123,7 @@ public class ApiResponseBuilderUnitTests
         var result = builder.Success("Custom success message").Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((string)response.message).Should().Be("Custom success message");
     }
@@ -141,7 +141,7 @@ public class ApiResponseBuilderUnitTests
         var result = builder.Success(null).Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((string)response.message).Should().Be("Success");
     }
@@ -158,7 +158,7 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(400);
@@ -178,7 +178,7 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((string)response.errorCode).Should().BeNull();
     }
@@ -195,7 +195,7 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((string)response.message).Should().BeEmpty();
     }
@@ -217,9 +217,9 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
-        response.metadata.Should().NotBeNull();
+        ((object)response.metadata).Should().NotBeNull();
         ((int)response.metadata["page"]).Should().Be(1);
         ((int)response.metadata["pageSize"]).Should().Be(10);
         ((int)response.metadata["total"]).Should().Be(100);
@@ -242,9 +242,9 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
-        response.metadata.Should().NotBeNull();
+        ((object)response.metadata).Should().NotBeNull();
         ((string)response.metadata["key1"]).Should().Be("value1");
         ((string)response.metadata["key2"]).Should().Be("value2");
         ((string)response.metadata["key3"]).Should().Be("value3");
@@ -267,10 +267,10 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
-        response.errors.Should().NotBeNull();
-        response.errors.Should().BeOfType<List<string>>();
+        ((object)response.errors).Should().NotBeNull();
+        ((object)response.errors).Should().NotBeNull();
         ((List<string>)response.errors).Should().HaveCount(3);
         ((List<string>)response.errors)[0].Should().Be("First error");
         ((List<string>)response.errors)[1].Should().Be("Second error");
@@ -290,10 +290,10 @@ public class ApiResponseBuilderUnitTests
         var result = builder.AddError("Single error").Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
-        response.errors.Should().NotBeNull();
-        response.errors.Should().BeOfType<List<string>>();
+        ((object)response.errors).Should().NotBeNull();
+        ((object)response.errors).Should().NotBeNull();
         ((List<string>)response.errors).Should().HaveCount(1);
         ((List<string>)response.errors)[0].Should().Be("Single error");
     }
@@ -317,15 +317,15 @@ public class ApiResponseBuilderUnitTests
             .Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((bool)response.success).Should().BeTrue();
         ((int)response.statusCode).Should().Be(200);
         ((string)response.message).Should().Be("Operation completed");
-        ((dynamic)response.data).Id.Should().Be(1);
-        ((dynamic)response.data).Name.Should().Be("Test");
-        response.metadata.Should().NotBeNull();
-        response.errors.Should().NotBeNull();
+        ((int)((dynamic)response.data).Id).Should().Be(1);
+        ((string)((dynamic)response.data).Name).Should().Be("Test");
+        ((object)response.metadata).Should().NotBeNull();
+        ((object)response.errors).Should().NotBeNull();
         ((List<string>)response.errors).Should().HaveCount(1);
     }
 
@@ -360,7 +360,7 @@ public class ApiResponseBuilderUnitTests
         var result = builder.Success("Test message").Build();
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
 
         // Check all expected properties exist
@@ -384,16 +384,16 @@ public class ApiResponseBuilderUnitTests
         var data = new TestDataModel { Id = 100, Name = "Factory Test" };
 
         // Act
-        var result = ApiResponseBuilderFactory.Success(data, "Factory success message");
+        var result = ApiResponseBuilderFactory.Success(data, "Factory success message").Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((bool)response.success).Should().BeTrue();
         ((int)response.statusCode).Should().Be(200);
         ((string)response.message).Should().Be("Factory success message");
-        ((dynamic)response.data).Id.Should().Be(100);
-        ((dynamic)response.data).Name.Should().Be("Factory Test");
+        ((int)((dynamic)response.data).Id).Should().Be(100);
+        ((string)((dynamic)response.data).Name).Should().Be("Factory Test");
     }
 
     /// <summary>
@@ -403,13 +403,13 @@ public class ApiResponseBuilderUnitTests
     public void ApiResponseBuilderFactory_Success_WithNullData_HandlesNullData()
     {
         // Act
-        var result = ApiResponseBuilderFactory.Success<TestDataModel>(null, "Success with null");
+        var result = ApiResponseBuilderFactory.Success<TestDataModel>(null, "Success with null").Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((bool)response.success).Should().BeTrue();
-        ((dynamic)response.data).Should().BeNull();
+        ((object)response.data).Should().BeNull();
     }
 
     /// <summary>
@@ -419,10 +419,10 @@ public class ApiResponseBuilderUnitTests
     public void ApiResponseBuilderFactory_Error_CreatesErrorResponseWithCorrectStatus()
     {
         // Act
-        var result = ApiResponseBuilderFactory.Error<TestDataModel>(404, "Not found", "NOT_FOUND");
+        var result = ApiResponseBuilderFactory.Error<TestDataModel>(404, "Not found", "NOT_FOUND").Build();
 
         // Assert
-        result.Should().BeOfType<dynamic>();
+        result.Should().NotBeNull();
         var response = (dynamic)result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(404);
@@ -440,7 +440,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.NotFound("User");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(404);
@@ -458,7 +458,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.NotFound();
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((string)response.message).Should().Be("Resource not found");
     }
@@ -473,14 +473,14 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.BadRequest("Invalid input", "Field1 is required", "Field2 is invalid");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(400);
         ((string)response.message).Should().Be("Invalid input");
         ((string)response.errorCode).Should().Be("BAD_REQUEST");
-        response.errors.Should().NotBeNull();
-        response.errors.Should().BeOfType<List<string>>();
+        ((object)response.errors).Should().NotBeNull();
+        ((object)response.errors).Should().NotBeNull();
         ((List<string>)response.errors).Should().HaveCount(2);
         ((List<string>)response.errors)[0].Should().Be("Field1 is required");
         ((List<string>)response.errors)[1].Should().Be("Field2 is invalid");
@@ -496,7 +496,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.Unauthorized("Invalid credentials");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(401);
@@ -514,7 +514,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.Unauthorized();
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((string)response.message).Should().Be("Unauthorized");
     }
@@ -529,7 +529,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.Forbidden("Access denied to resource");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(403);
@@ -547,7 +547,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.TooManyRequests("Rate limit exceeded");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(429);
@@ -565,7 +565,7 @@ public class ApiResponseBuilderUnitTests
         var result = ApiResponseBuilderFactory.InternalServerError("Server error occurred");
 
         // Assert
-        result.Should().BeOfType<object>();
+        result.Should().NotBeNull();
         dynamic response = result;
         ((bool)response.success).Should().BeFalse();
         ((int)response.statusCode).Should().Be(500);

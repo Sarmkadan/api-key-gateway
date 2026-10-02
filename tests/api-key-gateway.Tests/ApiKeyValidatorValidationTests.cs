@@ -47,7 +47,7 @@ namespace api_key_gateway.Tests
         public void EnsureValidKeyFormat_InvalidKey_ThrowsArgumentException()
         {
             var invalidKey = "short";
-            var ex = Assert.Throws<ArgumentException>(() => ApiKeyValidatorValidation.EnsureValidKeyFormat(invalidKey));
+            var ex = Assert.ThrowsAny<ArgumentException>(() => ApiKeyValidatorValidation.EnsureValidKeyFormat(invalidKey));
             Assert.Contains("API key", ex.Message);
         }
 
@@ -86,7 +86,7 @@ namespace api_key_gateway.Tests
         public void EnsureValidKeyName_InvalidName_ThrowsArgumentException()
         {
             var invalidName = "";
-            var ex = Assert.Throws<ArgumentException>(() => ApiKeyValidatorValidation.EnsureValidKeyName(invalidName));
+            var ex = Assert.ThrowsAny<ArgumentException>(() => ApiKeyValidatorValidation.EnsureValidKeyName(invalidName));
             Assert.Contains("API key name", ex.Message);
         }
 

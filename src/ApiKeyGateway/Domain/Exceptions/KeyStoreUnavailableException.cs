@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Text.Json.Serialization;
+
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
@@ -11,6 +13,8 @@ namespace ApiKeyGateway.Domain.Exceptions;
 /// </summary>
 public class KeyStoreUnavailableException : ApiKeyGatewayException
 {
+    /// <summary>Parameterless constructor for deserialization</summary>
+    public KeyStoreUnavailableException() : base("Key store unavailable") { }
     /// <summary>Name of the operation that failed</summary>
     public string? Operation { get; init; }
 
@@ -18,6 +22,7 @@ public class KeyStoreUnavailableException : ApiKeyGatewayException
     /// Initializes a new instance of <see cref="KeyStoreUnavailableException"/>
     /// </summary>
     /// <param name="message">The error message.</param>
+    [JsonConstructor]
     public KeyStoreUnavailableException(string message) : base(message) { }
 
     /// <summary>

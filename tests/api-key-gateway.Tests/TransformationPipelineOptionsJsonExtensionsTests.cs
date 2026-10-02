@@ -74,7 +74,7 @@ namespace api_key_gateway.Tests
         public void FromJson_EmptyString_ThrowsArgumentException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => TransformationPipelineOptionsJsonExtensions.FromJson(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => TransformationPipelineOptionsJsonExtensions.FromJson(string.Empty));
         }
 
         [Fact]

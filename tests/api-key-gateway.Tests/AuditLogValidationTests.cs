@@ -183,7 +183,8 @@ public class AuditLogValidationTests
             ResourceType = "ApiKey",
             Action = AuditAction.KeyCreated,
             PerformedBy = "test-user",
-            PerformedAt = DateTime.UtcNow
+            PerformedAt = DateTime.UtcNow,
+            Changes = null!
         };
 
         // Act

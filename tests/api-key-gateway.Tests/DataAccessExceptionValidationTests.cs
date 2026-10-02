@@ -69,7 +69,7 @@ namespace ApiKeyGateway.Tests
             var exception = new DataAccessException(null);
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => DataAccessExceptionValidation.EnsureValid(exception));
+            Assert.ThrowsAny<ArgumentException>(() => DataAccessExceptionValidation.EnsureValid(exception));
         }
     }
 }

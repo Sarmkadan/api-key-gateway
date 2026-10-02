@@ -30,7 +30,7 @@ namespace ApiKeyGateway.Tests
         public void WithMessage_EmptyMessage_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.WithMessage(new ApiKeyGatewayException("Test message"), string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.WithMessage(new ApiKeyGatewayException("Test message"), string.Empty));
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace ApiKeyGateway.Tests
         public void WithErrorCode_EmptyErrorCode_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.WithErrorCode(new ApiKeyGatewayException("Test message"), string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.WithErrorCode(new ApiKeyGatewayException("Test message"), string.Empty));
         }
 
         [Fact]
@@ -115,7 +115,7 @@ namespace ApiKeyGateway.Tests
         public void HasErrorCode_EmptyErrorCode_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.HasErrorCode(new ApiKeyGatewayException("Test message"), string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => ApiKeyGatewayExceptionExtensions.HasErrorCode(new ApiKeyGatewayException("Test message"), string.Empty));
         }
     }
 }

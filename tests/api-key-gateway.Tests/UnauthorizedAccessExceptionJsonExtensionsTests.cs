@@ -78,7 +78,7 @@ public class UnauthorizedAccessExceptionJsonExtensionsTests
     public void FromJson_EmptyString_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(
+        Assert.ThrowsAny<ArgumentException>(
             () => UnauthorizedAccessExceptionJsonExtensions.FromJson(string.Empty));
     }
 

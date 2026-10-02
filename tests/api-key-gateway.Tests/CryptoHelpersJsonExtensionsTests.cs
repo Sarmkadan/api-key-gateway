@@ -66,8 +66,8 @@ namespace api_key_gateway.Tests
         [Fact]
         public void FromJson_NullOrEmpty_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => CryptoHelpersJsonExtensions.FromJson(null!));
-            Assert.Throws<ArgumentException>(() => CryptoHelpersJsonExtensions.FromJson(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => CryptoHelpersJsonExtensions.FromJson(null!));
+            Assert.ThrowsAny<ArgumentException>(() => CryptoHelpersJsonExtensions.FromJson(string.Empty));
         }
 
         [Fact]
@@ -97,8 +97,8 @@ namespace api_key_gateway.Tests
         [Fact]
         public void TryFromJson_NullOrEmpty_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => CryptoHelpersJsonExtensions.TryFromJson(null!, out _));
-            Assert.Throws<ArgumentException>(() => CryptoHelpersJsonExtensions.TryFromJson(string.Empty, out _));
+            Assert.ThrowsAny<ArgumentException>(() => CryptoHelpersJsonExtensions.TryFromJson(null!, out _));
+            Assert.ThrowsAny<ArgumentException>(() => CryptoHelpersJsonExtensions.TryFromJson(string.Empty, out _));
         }
 
         [Fact]

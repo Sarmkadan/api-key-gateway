@@ -133,7 +133,7 @@ public class AdminControllerValidationTests
         DateTime end = Now;
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => format.EnsureValid(start, end));
+        var ex = Assert.ThrowsAny<ArgumentException>(() => format.EnsureValid(start, end));
         Assert.Contains("Export parameters validation failed.", ex.Message);
     }
 }

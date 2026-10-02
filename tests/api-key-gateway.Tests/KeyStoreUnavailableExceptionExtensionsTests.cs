@@ -57,7 +57,7 @@ namespace api_key_gateway.Tests
         public void WithOperation_InvalidOperation_ThrowsArgumentException(string operation)
         {
             var original = CreateException();
-            Assert.Throws<ArgumentException>(() => original.WithOperation(operation!));
+            Assert.ThrowsAny<ArgumentException>(() => original.WithOperation(operation!));
         }
 
         #endregion
@@ -90,7 +90,7 @@ namespace api_key_gateway.Tests
         public void WithCacheMiss_InvalidKey_ThrowsArgumentException(string key)
         {
             var original = CreateException();
-            Assert.Throws<ArgumentException>(() => original.WithCacheMiss(key!));
+            Assert.ThrowsAny<ArgumentException>(() => original.WithCacheMiss(key!));
         }
 
         #endregion
@@ -124,7 +124,7 @@ namespace api_key_gateway.Tests
         public void WithContext_InvalidContext_ThrowsArgumentException(string context)
         {
             var original = CreateException();
-            Assert.Throws<ArgumentException>(() => original.WithContext(context!));
+            Assert.ThrowsAny<ArgumentException>(() => original.WithContext(context!));
         }
 
         #endregion

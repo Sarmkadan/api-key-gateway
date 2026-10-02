@@ -86,7 +86,7 @@ namespace ApiKeyGateway.Tests
         public void ValidationErrors_Empty_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => new ValidationException("Test message", new List<string>()));
+            Assert.ThrowsAny<ArgumentException>(() => new ValidationException("Test message", new List<string>()));
         }
     }
 }

@@ -68,7 +68,7 @@ public static class ApiKeyRepositoryJsonExtensions
         try
         {
             ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
+            if (string.IsNullOrEmpty(json)) { value = null; return false; }
             value = JsonSerializer.Deserialize<ApiKeyRepository>(json, JsonSerializerOptions);
             return value is not null;
         }

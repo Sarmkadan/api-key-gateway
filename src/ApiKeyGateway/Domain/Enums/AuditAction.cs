@@ -48,5 +48,45 @@ public enum AuditAction
     /// <summary>
     /// Unauthorized access attempt
     /// </summary>
-    UnauthorizedAttempt = 8
+    UnauthorizedAttempt = 8,
+
+    /// <summary>
+    /// Admin viewed system statistics
+    /// </summary>
+    StatsViewed = 9,
+
+    /// <summary>
+    /// Admin exported usage data
+    /// </summary>
+    UsageDataExported = 10,
+
+    /// <summary>
+    /// Admin viewed gateway configuration
+    /// </summary>
+    ConfigurationViewed = 11,
+
+    /// <summary>
+    /// Admin ran system diagnostics
+    /// </summary>
+    DiagnosticsRun = 12,
+
+    /// <summary>
+    /// Admin reset rate limits
+    /// </summary>
+    RateLimitsReset = 13,
+
+    /// <summary>
+    /// Admin searched audit logs
+    /// </summary>
+    AuditLogsSearched = 14,
+
+    /// <summary>
+    /// Admin exported audit logs by resource
+    /// </summary>
+    AuditLogsExportedByResource = 15,
+
+    /// <summary>
+    /// Admin exported audit logs by period
+    /// </summary>
+    AuditLogsExportedByPeriod = 16
 }

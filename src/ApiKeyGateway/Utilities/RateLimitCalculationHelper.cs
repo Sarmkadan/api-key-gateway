@@ -71,12 +71,12 @@ public static class RateLimitCalculationHelper
     /// </exception>
     public static int GetSecondsUntilAllowed(int currentUsage, int limit, DateTime windowStart, RateLimitUnit unit)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(currentUsage);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+        if (limit <= 0) return int.MaxValue;
+        if (currentUsage < 0) currentUsage = 0;
 
-        // If at or over the limit, reject immediately (consistent with RateLimit.CanProcessRequest())
-        if (currentUsage >= limit)
-            return int.MaxValue;
+        // Under limit - allowed immediately
+        if (currentUsage < limit)
+            return 0;
 
         // Calculate when the window resets
         var windowEnd = GetWindowEnd(windowStart, unit);
@@ -95,8 +95,8 @@ public static class RateLimitCalculationHelper
     /// </exception>
     public static int CalculateQuotagePercentage(int currentUsage, int limit)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(currentUsage);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+        if (limit <= 0) return 0;
+        if (currentUsage < 0) currentUsage = 0;
 
         var percentage = (currentUsage * 100) / limit;
         return Math.Min(100, percentage);

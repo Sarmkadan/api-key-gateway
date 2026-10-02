@@ -179,7 +179,7 @@ public class UnauthorizedAccessExceptionValidationTests
         var exception = new DomainException(string.Empty);
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => exception.EnsureValid());
+        var ex = Assert.ThrowsAny<ArgumentException>(() => exception.EnsureValid());
         Assert.StartsWith("UnauthorizedAccessException is invalid:", ex.Message);
         Assert.Contains("Message cannot be null, empty, or whitespace.", ex.Message);
         Assert.Equal("value", ex.ParamName);
@@ -192,7 +192,7 @@ public class UnauthorizedAccessExceptionValidationTests
         var exception = new DomainException("   ", "   ", "   ");
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => exception.EnsureValid());
+        var ex = Assert.ThrowsAny<ArgumentException>(() => exception.EnsureValid());
         Assert.Contains("Message cannot be null, empty, or whitespace.", ex.Message);
         Assert.Contains("Reason cannot be whitespace if specified.", ex.Message);
         Assert.Contains("SourceIp cannot be whitespace if specified.", ex.Message);

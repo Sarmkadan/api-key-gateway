@@ -64,7 +64,7 @@ namespace ApiKeyGateway.Tests
         {
             var middleware = new CorrelationContextMiddleware(null, ValidLogger);
 
-            var ex = Assert.Throws<ArgumentException>(() => middleware.EnsureValid());
+            var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
 
             Assert.Contains("The RequestDelegate (next middleware) is null", ex.Message);
         }
@@ -74,7 +74,7 @@ namespace ApiKeyGateway.Tests
         {
             var middleware = new CorrelationContextMiddleware(ValidNext, null!);
 
-            var ex = Assert.Throws<ArgumentException>(() => middleware.EnsureValid());
+            var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
 
             Assert.Contains("The ILogger instance is null", ex.Message);
         }

@@ -4,6 +4,8 @@
 // Base exception class for all api-key-gateway specific exceptions
 // =============================================================================
 
+using System.Text.Json.Serialization;
+
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
@@ -14,6 +16,13 @@ public class ApiKeyGatewayException : Exception
     public string? ErrorCode { get; init; }
     public DateTime OccurredAt { get; init; }
 
+    /// <summary>Parameterless constructor for JSON deserialization</summary>
+    public ApiKeyGatewayException() : base("An error occurred")
+    {
+        OccurredAt = DateTime.UtcNow;
+    }
+
+    [JsonConstructor]
     public ApiKeyGatewayException(string message) : base(message)
     {
         OccurredAt = DateTime.UtcNow;

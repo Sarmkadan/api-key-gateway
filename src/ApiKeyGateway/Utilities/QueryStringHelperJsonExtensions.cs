@@ -24,7 +24,7 @@ public static class QueryStringHelperJsonExtensions
         /// Gets the collection of query string parameters.
         /// </summary>
         [JsonExtensionData]
-        public Dictionary<string, string> Parameters { get; init; } = new(StringComparer.Ordinal);
+        public Dictionary<string, object> Parameters { get; init; } = new(StringComparer.Ordinal);
     }
 
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)

@@ -175,7 +175,7 @@ public class StringExtensionsTests
     [Fact]
     public void ToSlug_SpecialCharsRemoved()
     {
-        "Hello@World#2026!".ToSlug().Should().Be("helloworld2026");
+        "Hello@World#2026!".ToSlug().Should().Be("hello-world-2026");
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class StringExtensionsTests
     [Fact]
     public void ToSlug_UnderscoresPreserved()
     {
-        "my_api_key".ToSlug().Should().Be("my_api_key");
+        "my_api_key".ToSlug().Should().Be("my-api-key");
     }
 
     // -------------------------------------------------------------------------

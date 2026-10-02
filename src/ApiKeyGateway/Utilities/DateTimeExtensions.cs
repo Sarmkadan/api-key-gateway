@@ -37,7 +37,10 @@ public static class DateTimeExtensions
     public static DateTime StartOfWeek(this DateTime date)
     {
         var culture = System.Globalization.CultureInfo.CurrentCulture;
-        var diff = date.DayOfWeek - culture.DateTimeFormat.FirstDayOfWeek;
+        var diff = (int)date.DayOfWeek - (int)culture.DateTimeFormat.FirstDayOfWeek;
+        if (diff < 0) diff += 7;
+        if (diff > date.Date.Subtract(DateTime.MinValue).TotalDays)
+            return DateTime.MinValue;
         return date.AddDays(-diff).Date;
     }
 
@@ -102,9 +105,9 @@ public static class DateTimeExtensions
         return totalSeconds switch
         {
             < 60 => "just now",
-            < TimeSpan.TicksPerMinute * 60 => $"{(int)timeSpan.TotalMinutes}m ago",
-            < TimeSpan.TicksPerHour * 24 => $"{(int)timeSpan.TotalHours}h ago",
-            < TimeSpan.TicksPerDay * 30 => $"{(int)timeSpan.TotalDays}d ago",
+            < 3600 => $"{(int)timeSpan.TotalMinutes}m ago",
+            < 86400 => $"{(int)timeSpan.TotalHours}h ago",
+            < 86400 * 30 => $"{(int)timeSpan.TotalDays}d ago",
             _ => $"{(int)(timeSpan.TotalDays / 30)}mo ago"
         };
     }

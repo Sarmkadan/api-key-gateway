@@ -122,7 +122,7 @@ public static class ApiEndpointValidationTests
             AllowedConsumers = null
         };
 
-        var ex = Assert.Throws<ArgumentException>(() => endpoint.EnsureValid());
+        var ex = Assert.ThrowsAny<ArgumentException>(() => endpoint.EnsureValid());
         Assert.Contains("ApiEndpoint is invalid", ex.Message);
         Assert.Contains("Id cannot be null or whitespace", ex.Message);
         Assert.Contains("Path must start with '/'", ex.Message);

@@ -57,7 +57,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 6, 15, 14, 30, 45);
-        var expected = new DateTime(2024, 6, 15, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 6, 16).AddTicks(-1);
 
         // Act
         var result = date.EndOfDay();
@@ -71,7 +71,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 12, 31);
-        var expected = new DateTime(2024, 12, 31, 23, 59, 59, 999);
+        var expected = new DateTime(2025, 1, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfDay();
@@ -85,7 +85,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 2, 29);
-        var expected = new DateTime(2024, 2, 29, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 3, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfDay();
@@ -197,7 +197,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 6, 15);
-        var expected = new DateTime(2024, 6, 30, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 7, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfMonth();
@@ -211,7 +211,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2023, 2, 15);
-        var expected = new DateTime(2023, 2, 28, 23, 59, 59, 999);
+        var expected = new DateTime(2023, 3, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfMonth();
@@ -225,7 +225,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 2, 15);
-        var expected = new DateTime(2024, 2, 29, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 3, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfMonth();
@@ -239,7 +239,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 12, 15);
-        var expected = new DateTime(2024, 12, 31, 23, 59, 59, 999);
+        var expected = new DateTime(2025, 1, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfMonth();
@@ -539,7 +539,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange
         var date = new DateTime(2024, 6, 15, 14, 30, 45);
-        var expected = new DateTime(2024, 6, 15, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 6, 16).AddTicks(-1);
 
         // Act
         var result = date.EndOfDay();
@@ -608,7 +608,7 @@ public class DateTimeExtensionsTests
     {
         // Arrange - test with a regular date
         var date = new DateTime(2024, 6, 15);
-        var expected = new DateTime(2024, 6, 30, 23, 59, 59, 999);
+        var expected = new DateTime(2024, 7, 1).AddTicks(-1);
 
         // Act
         var result = date.EndOfMonth();

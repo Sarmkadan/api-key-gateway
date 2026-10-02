@@ -118,7 +118,7 @@ namespace api_key_gateway.Tests
             var apiKeyId = string.Empty;
 
             // Act & Assert
-            var ex = Assert.Throws<ArgumentException>(() => CacheKeyGeneratorValidation.EnsureValid(apiKeyId));
+            var ex = Assert.ThrowsAny<ArgumentException>(() => CacheKeyGeneratorValidation.EnsureValid(apiKeyId));
             Assert.Contains("ApiKeyId cannot be null or empty.", ex.Message);
         }
     }

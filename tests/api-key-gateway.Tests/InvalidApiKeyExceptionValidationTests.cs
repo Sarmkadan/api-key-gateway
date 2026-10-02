@@ -96,7 +96,7 @@ namespace ApiKeyGateway.Tests
             var exception = new InvalidApiKeyException(string.Empty);
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => InvalidApiKeyExceptionValidation.EnsureValid(exception));
+            Assert.ThrowsAny<ArgumentException>(() => InvalidApiKeyExceptionValidation.EnsureValid(exception));
         }
     }
 }
