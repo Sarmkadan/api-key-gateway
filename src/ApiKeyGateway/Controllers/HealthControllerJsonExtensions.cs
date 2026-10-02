@@ -63,7 +63,7 @@ public static class HealthControllerJsonExtensions
     /// <exception cref="ArgumentException"><paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out HealthController? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

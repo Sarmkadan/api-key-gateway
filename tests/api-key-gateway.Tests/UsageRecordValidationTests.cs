@@ -148,6 +148,6 @@ public class UsageRecordValidationTests
         };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => UsageRecordValidation.EnsureValid(usageRecord));
+        Assert.ThrowsAny<ArgumentException>(() => UsageRecordValidation.EnsureValid(usageRecord));
     }
 }

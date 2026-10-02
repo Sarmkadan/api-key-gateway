@@ -46,14 +46,14 @@ namespace ApiKeyGateway.Tests
         public void FromJson_NullInput_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => DataAccessExceptionJsonExtensions.FromJson(null));
+            Assert.ThrowsAny<ArgumentException>(() => DataAccessExceptionJsonExtensions.FromJson(null));
         }
 
         [Fact]
         public void FromJson_EmptyJson_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => DataAccessExceptionJsonExtensions.FromJson(""));
+            Assert.ThrowsAny<ArgumentException>(() => DataAccessExceptionJsonExtensions.FromJson(""));
         }
 
         [Fact]

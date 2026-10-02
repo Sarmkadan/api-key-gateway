@@ -22,8 +22,6 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateEmail(string email)
     {
-        ArgumentException.ThrowIfNullOrEmpty(email);
-
         if (string.IsNullOrWhiteSpace(email))
             return new ValidationResult { IsValid = false, Message = "Email is required" };
 
@@ -38,8 +36,6 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateUrl(string url, bool requireHttps = true)
     {
-        ArgumentException.ThrowIfNullOrEmpty(url);
-
         if (string.IsNullOrWhiteSpace(url))
             return new ValidationResult { IsValid = false, Message = "URL is required" };
 
@@ -57,8 +53,6 @@ public static class RequestValidator
     /// </summary>
     public static ValidationResult ValidateIpAddress(string ip)
     {
-        ArgumentException.ThrowIfNullOrEmpty(ip);
-
         if (string.IsNullOrWhiteSpace(ip))
             return new ValidationResult { IsValid = false, Message = "IP address is required" };
 

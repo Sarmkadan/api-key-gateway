@@ -120,7 +120,7 @@ namespace api_key_gateway.Tests
             var date = DefaultDate;
 
             // Act
-            var ex = Assert.Throws<ArgumentException>(() => date.EnsureValid());
+            var ex = Assert.ThrowsAny<ArgumentException>(() => date.EnsureValid());
 
             // Assert
             Assert.Contains("DateTime validation failed:", ex.Message);

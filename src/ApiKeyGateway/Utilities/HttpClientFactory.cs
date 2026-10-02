@@ -61,7 +61,8 @@ public static class HttpClientFactory
     /// </summary>
     public static HttpClient CreateExternalApiClient(string apiName)
     {
-        var client = CreateClient($"ApiKeyGateway/{apiName}/1.0");
+        var ua = string.IsNullOrEmpty(apiName) ? "ApiKeyGateway/1.0" : $"ApiKeyGateway-{apiName}/1.0";
+        var client = CreateClient(ua);
         // External APIs may have rate limiting, so we use slightly higher timeout
         client.Timeout = TimeSpan.FromSeconds(45);
         return client;

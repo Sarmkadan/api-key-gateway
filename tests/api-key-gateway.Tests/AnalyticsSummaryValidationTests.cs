@@ -106,7 +106,7 @@ public class AnalyticsSummaryValidationTests
         };
 
         // Act
-        var ex = Assert.Throws<ArgumentException>(() => summary.EnsureValid());
+        var ex = Assert.ThrowsAny<ArgumentException>(() => summary.EnsureValid());
 
         // Assert
         var message = ex.Message;

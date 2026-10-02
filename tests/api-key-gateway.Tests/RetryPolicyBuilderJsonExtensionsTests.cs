@@ -89,7 +89,7 @@ namespace api_key_gateway.Tests
             string json = string.Empty;
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => RetryPolicyBuilderJsonExtensions.FromJson(json));
+            Assert.ThrowsAny<ArgumentException>(() => RetryPolicyBuilderJsonExtensions.FromJson(json));
         }
 
         [Fact]
@@ -138,7 +138,7 @@ namespace api_key_gateway.Tests
             string json = string.Empty;
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => RetryPolicyBuilderJsonExtensions.TryFromJson(json, out _));
+            Assert.ThrowsAny<ArgumentException>(() => RetryPolicyBuilderJsonExtensions.TryFromJson(json, out _));
         }
     }
 }

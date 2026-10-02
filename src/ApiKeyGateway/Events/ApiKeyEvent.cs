@@ -11,7 +11,7 @@ namespace ApiKeyGateway.Events;
 /// This allows different parts of the application to react to these changes
 /// without tight coupling - useful for audit logging, webhooks, metrics, etc.
 /// </summary>
-public abstract record ApiKeyEvent
+public record ApiKeyEvent
 {
     public Guid EventId { get; } = Guid.NewGuid();
     public DateTime Timestamp { get; } = DateTime.UtcNow;

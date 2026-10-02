@@ -68,8 +68,8 @@ public static class AnalyticsSummaryJsonExtensions
 	{
 		try
 		{
-			ArgumentNullException.ThrowIfNull(json);
-			ArgumentException.ThrowIfNullOrEmpty(json);
+			
+			if (string.IsNullOrEmpty(json)) { value = null; return false; }
 			value = JsonSerializer.Deserialize<AnalyticsSummary>(json, JsonSerializerOptions);
 			return value is not null;
 		}

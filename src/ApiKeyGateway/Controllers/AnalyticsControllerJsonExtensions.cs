@@ -166,7 +166,7 @@ public static class AnalyticsControllerJsonExtensions
 	public static bool TryFromJson(string json, out ApiKeyGateway.Services.AnalyticsSummary? value)
 	{
 		ArgumentNullException.ThrowIfNull(json);
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
 		try
 		{
@@ -191,7 +191,7 @@ public static class AnalyticsControllerJsonExtensions
 	public static bool TryFromJson(string json, out System.Collections.Generic.List<ApiKeyGateway.Services.EndpointStat>? value)
 	{
 		ArgumentNullException.ThrowIfNull(json);
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
 		try
 		{
@@ -216,7 +216,7 @@ public static class AnalyticsControllerJsonExtensions
 	public static bool TryFromJson(string json, out System.Collections.Generic.List<ApiKeyGateway.Services.HourlyBucket>? value)
 	{
 		ArgumentNullException.ThrowIfNull(json);
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
 		try
 		{
@@ -241,7 +241,7 @@ public static class AnalyticsControllerJsonExtensions
 	public static bool TryFromJson(string json, out System.Collections.Generic.List<ApiKeyGateway.Services.DailyBucket>? value)
 	{
 		ArgumentNullException.ThrowIfNull(json);
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
 		try
 		{

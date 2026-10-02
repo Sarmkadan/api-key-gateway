@@ -29,8 +29,6 @@ public static class ValidationHelpers
     /// </summary>
     public static bool IsValidEmail(string email)
     {
-        ArgumentException.ThrowIfNullOrEmpty(email);
-
         if (string.IsNullOrWhiteSpace(email))
             return false;
 
@@ -42,8 +40,6 @@ public static class ValidationHelpers
     /// </summary>
     public static bool IsValidApiKeyFormat(string keyValue)
     {
-        ArgumentException.ThrowIfNullOrEmpty(keyValue);
-
         if (string.IsNullOrWhiteSpace(keyValue))
             return false;
 

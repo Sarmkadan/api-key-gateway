@@ -66,17 +66,8 @@ public static class CacheKeyGenerator
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         ArgumentException.ThrowIfNullOrEmpty(endpoint);
-        int idLength = apiKeyId.Length;
-        int endpointLength = endpoint.Length;
-        int totalLength = 17 + idLength + 1 + endpointLength; // "apigw:ratelimit:" + id + ":" + endpoint
-        return string.Create(totalLength, (apiKeyId, endpoint), (span, state) =>
-        {
-            var (id, ep) = state;
-            "apigw:ratelimit:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(17));
-            span[17 + idLength] = ':';
-            ep.AsSpan().CopyTo(span.Slice(18 + idLength));
-        });
+        const string prefix = "apigw:ratelimit:";
+        return $"{prefix}{apiKeyId}:{endpoint}";
     }
 
     /// <summary>
@@ -89,18 +80,7 @@ public static class CacheKeyGenerator
     public static string GetUsageStatsKey(string apiKeyId, DateTime date)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        int idLength = apiKeyId.Length;
-        string dateStr = date.ToString("yyyy-MM-dd");
-        int dateLength = dateStr.Length;
-        int totalLength = 14 + idLength + 1 + dateLength; // "apigw:usage:" + id + ":" + date
-        return string.Create(totalLength, (apiKeyId, dateStr), (span, state) =>
-        {
-            var (id, dt) = state;
-            "apigw:usage:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(14));
-            span[14 + idLength] = ':';
-            dt.AsSpan().CopyTo(span.Slice(15 + idLength));
-        });
+        return $"apigw:usage:{apiKeyId}:{date:yyyy-MM-dd}";
     }
 
     /// <summary>
@@ -112,12 +92,7 @@ public static class CacheKeyGenerator
     public static string GetQuotaKey(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        int idLength = apiKeyId.Length;
-        return string.Create(13 + idLength, apiKeyId, (span, id) =>
-        {
-            "apigw:quota:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(13));
-        });
+        return $"apigw:quota:{apiKeyId}";
     }
 
     /// <summary>
@@ -128,13 +103,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the webhook delivery status.</returns>
     public static string GetWebhookDeliveryKey(Guid eventId)
     {
-        string guidStr = eventId.ToString();
-        int guidLength = guidStr.Length;
-        return string.Create(27 + guidLength, guidStr, (span, id) =>
-        {
-            "apigw:webhook:delivery:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(27));
-        });
+        return $"apigw:webhook:delivery:{eventId}";
     }
 
     /// <summary>
@@ -153,34 +122,11 @@ public static class CacheKeyGenerator
         if (parameters?.Count > 0)
         {
             var paramHash = ComputeParameterHash(parameters);
-            int apiLength = apiName.Length;
-            int endpointLength = endpoint.Length;
-            int hashLength = paramHash.Length;
-            int totalLength = 18 + apiLength + 1 + endpointLength + 1 + hashLength; // "apigw:external:" + apiName + ":" + endpoint + ":" + paramHash
-            return string.Create(totalLength, (apiName, endpoint, paramHash), (span, state) =>
-            {
-                var (api, ep, hash) = state;
-                "apigw:external:".AsSpan().CopyTo(span);
-                api.AsSpan().CopyTo(span.Slice(18));
-                span[18 + apiLength] = ':';
-                ep.AsSpan().CopyTo(span.Slice(19 + apiLength));
-                span[19 + apiLength + endpointLength] = ':';
-                hash.AsSpan().CopyTo(span.Slice(20 + apiLength + endpointLength));
-            });
+            return $"apigw:external:{apiName}:{endpoint}:{paramHash}";
         }
         else
         {
-            int apiLength = apiName.Length;
-            int endpointLength = endpoint.Length;
-            int totalLength = 18 + apiLength + 1 + endpointLength; // "apigw:external:" + apiName + ":" + endpoint
-            return string.Create(totalLength, (apiName, endpoint), (span, state) =>
-            {
-                var (api, ep) = state;
-                "apigw:external:".AsSpan().CopyTo(span);
-                api.AsSpan().CopyTo(span.Slice(18));
-                span[18 + apiLength] = ':';
-                ep.AsSpan().CopyTo(span.Slice(19 + apiLength));
-            });
+            return $"apigw:external:{apiName}:{endpoint}";
         }
     }
 
@@ -193,14 +139,7 @@ public static class CacheKeyGenerator
     public static string GetApiKeyInvalidationPattern(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        int idLength = apiKeyId.Length;
-        return string.Create(12 + idLength + 2, apiKeyId, (span, id) =>
-        {
-            "apigw:*:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(12));
-            span[12 + idLength] = ':';
-            "*".AsSpan().CopyTo(span.Slice(13 + idLength));
-        });
+        return $"apigw:*:{apiKeyId}:*";
     }
 
     /// <summary>

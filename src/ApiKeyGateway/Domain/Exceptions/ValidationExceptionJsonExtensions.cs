@@ -47,7 +47,7 @@ public static class ValidationExceptionJsonExtensions
     /// <exception cref="JsonException">The JSON is invalid or cannot be deserialized into a <see cref="ValidationException"/>.</exception>
     public static ValidationException? FromJson(string json)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) return null;
 
         return JsonSerializer.Deserialize<ValidationException>(json, _jsonOptions);
     }
@@ -61,7 +61,7 @@ public static class ValidationExceptionJsonExtensions
     /// <exception cref="ArgumentException"><paramref name="json"/> is <see langword="null"/> or <see cref="string.Empty"/>.</exception>
     public static bool TryFromJson(string json, out ValidationException? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

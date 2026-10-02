@@ -22,6 +22,7 @@ public static class XmlExportHelper
     /// </summary>
     public static string ToXml<T>(T item, string rootElementName = null) where T : class
     {
+        if (item == null) return string.Empty;
         using var stream = new MemoryStream();
         using (var writer = XmlWriter.Create(stream, new XmlWriterSettings
         {
@@ -31,7 +32,7 @@ public static class XmlExportHelper
         }))
         {
             writer.WriteStartDocument();
-            var elementName = rootElementName ?? typeof(T).Name;
+            var elementName = rootElementName ?? SanitizeXmlName(typeof(T).Name);
             WriteElement(writer, elementName, item);
             writer.WriteEndDocument();
         }
@@ -44,6 +45,7 @@ public static class XmlExportHelper
     /// </summary>
     public static string ToXml<T>(IEnumerable<T> items, string rootName = "root", string itemName = null) where T : class
     {
+        if (items == null) return string.Empty;
         using var stream = new MemoryStream();
         using (var writer = XmlWriter.Create(stream, new XmlWriterSettings
         {
@@ -55,7 +57,7 @@ public static class XmlExportHelper
             writer.WriteStartDocument();
             writer.WriteStartElement(rootName);
 
-            var itemElementName = itemName ?? typeof(T).Name;
+            var itemElementName = itemName ?? SanitizeXmlName(typeof(T).Name);
             foreach (var item in items)
             {
                 WriteElement(writer, itemElementName, item);
@@ -72,6 +74,24 @@ public static class XmlExportHelper
     /// Writes a single object as XML element with its properties as child elements.
     /// Handles nested objects and basic types only - complex types are stringified.
     /// </summary>
+    private static string SanitizeXmlName(string name)
+    {
+        // Remove generic arity suffix (e.g., List`1 -> List)
+        var idx = name.IndexOf('`');
+        if (idx >= 0) name = name[..idx];
+        // Remove invalid chars for XML names
+        var sb = new StringBuilder();
+        foreach (var c in name)
+        {
+            if (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == '.')
+                sb.Append(c);
+        }
+        var result = sb.ToString();
+        if (result.Length == 0 || !char.IsLetter(result[0]))
+            return "Item";
+        return result;
+    }
+
     private static void WriteElement<T>(XmlWriter writer, string elementName, T obj) where T : class
     {
         writer.WriteStartElement(elementName);

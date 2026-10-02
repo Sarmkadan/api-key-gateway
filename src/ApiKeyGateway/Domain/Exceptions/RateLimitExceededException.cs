@@ -59,6 +59,8 @@ public class RateLimitExceededException : ApiKeyGatewayException
         : base(string.Format(Domain.Constants.ErrorMessages.RateLimitExceeded, limit, GetTimeUnit(windowInSeconds)))
     {
         ApiKeyId = apiKeyId ?? throw new ArgumentNullException(nameof(apiKeyId));
+        if (limit < 0) throw new ArgumentException("Limit must be non-negative", nameof(limit));
+        if (windowInSeconds < 0) throw new ArgumentException("Window must be non-negative", nameof(windowInSeconds));
         Limit = limit;
         WindowInSeconds = windowInSeconds;
         RetryAfter = DateTime.UtcNow.AddSeconds(windowInSeconds);

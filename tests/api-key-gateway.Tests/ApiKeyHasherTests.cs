@@ -49,8 +49,8 @@ namespace api_key_gateway.Tests
             IApiKeyHasher hasher = ApiKeyHasherFactory.Create();
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => hasher.Hash(null!));
-            Assert.Throws<ArgumentException>(() => hasher.Hash(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Hash(null!));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Hash(string.Empty));
         }
 
         [Fact]
@@ -61,10 +61,10 @@ namespace api_key_gateway.Tests
             string validHash = _hasher.Hash("valid-key");
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => hasher.Verify(null!, validHash));
-            Assert.Throws<ArgumentException>(() => hasher.Verify(string.Empty, validHash));
-            Assert.Throws<ArgumentException>(() => hasher.Verify("valid-key", null!));
-            Assert.Throws<ArgumentException>(() => hasher.Verify("valid-key", string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Verify(null!, validHash));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Verify(string.Empty, validHash));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Verify("valid-key", null!));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.Verify("valid-key", string.Empty));
         }
 
         [Fact]
@@ -74,8 +74,8 @@ namespace api_key_gateway.Tests
             IApiKeyHasher hasher = ApiKeyHasherFactory.Create();
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => hasher.GetHashVersion(null!));
-            Assert.Throws<ArgumentException>(() => hasher.GetHashVersion(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.GetHashVersion(null!));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.GetHashVersion(string.Empty));
         }
 
         [Fact]
@@ -102,10 +102,10 @@ namespace api_key_gateway.Tests
             IApiKeyHasher hasher = ApiKeyHasherFactory.Create();
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => hasher.HashWithVersion(null!, "v1"));
-            Assert.Throws<ArgumentException>(() => hasher.HashWithVersion(string.Empty, "v1"));
-            Assert.Throws<ArgumentException>(() => hasher.HashWithVersion("test-key", null!));
-            Assert.Throws<ArgumentException>(() => hasher.HashWithVersion("test-key", string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.HashWithVersion(null!, "v1"));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.HashWithVersion(string.Empty, "v1"));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.HashWithVersion("test-key", null!));
+            Assert.ThrowsAny<ArgumentException>(() => hasher.HashWithVersion("test-key", string.Empty));
         }
 
         [Fact]

@@ -18,7 +18,7 @@ namespace ApiKeyGateway.Tests
         /// <param name="log">The audit log entry to validate.</param>
         /// <returns>A list of human-readable validation problems; empty if valid.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="log"/> is null.</exception>
-        public static IReadOnlyList<string> Validate(this AuditLog log)
+        public static IReadOnlyList<string> ValidateForTest(this AuditLog log)
         {
             ArgumentNullException.ThrowIfNull(log);
 

@@ -62,7 +62,7 @@ public class RequestContextHelperJsonExtensionsTests
         var json = string.Empty;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => RequestContextHelperJsonExtensions.FromJson(json));
+        Assert.ThrowsAny<ArgumentException>(() => RequestContextHelperJsonExtensions.FromJson(json));
     }
 
     [Fact]

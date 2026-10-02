@@ -3,16 +3,17 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Text.Json.Serialization;
+
 namespace ApiKeyGateway.Domain.Exceptions;
 
 /// <summary>
 /// Thrown when an API key is invalid, expired, or disabled
 /// </summary>
-/// <summary>
-/// Thrown when an API key is invalid, expired, or disabled
-/// </summary>
 public class InvalidApiKeyException : ApiKeyGatewayException
 {
+    /// <summary>Parameterless constructor for deserialization</summary>
+    public InvalidApiKeyException() : base("Invalid API key") { }
     /// <summary>Hash of the invalid API key</summary>
     public string? ApiKeyHash { get; init; }
 
@@ -26,6 +27,7 @@ public class InvalidApiKeyException : ApiKeyGatewayException
     /// Initializes a new instance of <see cref="InvalidApiKeyException"/>
     /// </summary>
     /// <param name="message">The error message.</param>
+    [JsonConstructor]
     public InvalidApiKeyException(string message) : base(message)
     {
         OccurredAt = DateTime.UtcNow;

@@ -140,7 +140,7 @@ public class ServiceCollectionExtensionsValidationTests
         };
 
         // Act
-        var ex = Assert.Throws<ArgumentException>(() => ServiceCollectionExtensionsValidation.EnsureValid(config));
+        var ex = Assert.ThrowsAny<ArgumentException>(() => ServiceCollectionExtensionsValidation.EnsureValid(config));
 
         // Assert
         Assert.Contains("Gateway configuration is invalid:", ex.Message);

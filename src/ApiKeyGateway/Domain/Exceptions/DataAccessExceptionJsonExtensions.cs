@@ -57,7 +57,7 @@ public static class DataAccessExceptionJsonExtensions
     /// <exception cref="ArgumentException"><paramref name="json"/> is <see langword="null"/> or empty.</exception>
     public static bool TryFromJson(string json, out DataAccessException? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

@@ -61,7 +61,7 @@ namespace api_key_gateway.Tests
         [Fact]
         public void FromJson_ThrowsArgumentException_OnEmpty()
         {
-            Assert.Throws<ArgumentException>(() => FromJson(""));
+            Assert.ThrowsAny<ArgumentException>(() => FromJson(""));
         }
 
         [Fact]

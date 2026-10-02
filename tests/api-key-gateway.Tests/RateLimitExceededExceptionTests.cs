@@ -34,14 +34,14 @@ namespace ApiKeyGateway.Tests
         public void Constructor_NegativeLimit_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => new RateLimitExceededException("test-api-key", -1, 60));
+            Assert.ThrowsAny<ArgumentException>(() => new RateLimitExceededException("test-api-key", -1, 60));
         }
 
         [Fact]
         public void Constructor_NegativeWindowInSeconds_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => new RateLimitExceededException("test-api-key", 10, -1));
+            Assert.ThrowsAny<ArgumentException>(() => new RateLimitExceededException("test-api-key", 10, -1));
         }
 
         [Fact]

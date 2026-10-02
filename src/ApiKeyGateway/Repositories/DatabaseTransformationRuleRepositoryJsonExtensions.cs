@@ -59,7 +59,7 @@ public static class DatabaseTransformationRuleRepositoryJsonExtensions
     public static bool TryFromJson(string json, out TransformationRule? value)
     {
         ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

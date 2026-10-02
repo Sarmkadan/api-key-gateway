@@ -133,14 +133,14 @@ namespace ApiKeyGateway.Tests
         public void EnsureValid_MessageNull_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(null));
+            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(null));
         }
 
         [Fact]
         public void EnsureValid_SettingNull_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException(null, "Test setting")));
+            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException(null, "Test setting")));
         }
 
         [Fact]
@@ -150,7 +150,7 @@ namespace ApiKeyGateway.Tests
             var exception = new ConfigurationException("", "Test setting");
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
+            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
         }
 
         [Fact]
@@ -160,7 +160,7 @@ namespace ApiKeyGateway.Tests
             var exception = new ConfigurationException("Test message", "");
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
+            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
         }
     }
 }

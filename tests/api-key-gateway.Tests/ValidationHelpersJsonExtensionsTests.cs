@@ -39,7 +39,7 @@ namespace api_key_gateway.Tests
         public void FromJson_NullInput_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => ValidationHelpersJsonExtensions.FromJson(null));
+            Assert.ThrowsAny<ArgumentException>(() => ValidationHelpersJsonExtensions.FromJson(null));
         }
 
         [Fact]

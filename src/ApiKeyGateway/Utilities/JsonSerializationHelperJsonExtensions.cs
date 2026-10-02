@@ -99,7 +99,7 @@ public static class JsonSerializationHelperJsonExtensions
     public static bool TryFromJson(string json, [NotNullWhen(true)] out JsonSerializationSettings? value)
     {
         ArgumentNullException.ThrowIfNull(json);
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

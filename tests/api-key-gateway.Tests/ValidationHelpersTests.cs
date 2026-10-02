@@ -31,8 +31,6 @@ public class ValidationHelpersTests
     [InlineData("", false)]
     public void IsValidEmail_VariousFormats_ReturnsExpectedResult(string email, bool expected)
     {
-        ArgumentException.ThrowIfNullOrEmpty(email);
-
         // Act
         var result = ValidationHelpers.IsValidEmail(email);
 
@@ -70,8 +68,6 @@ public class ValidationHelpersTests
     [InlineData("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef")]
     public void IsValidApiKeyFormat_InvalidFormats_ReturnsFalse(string key)
     {
-        ArgumentException.ThrowIfNullOrEmpty(key);
-
         // Act
         var result = ValidationHelpers.IsValidApiKeyFormat(key);
 

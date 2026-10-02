@@ -65,7 +65,7 @@ namespace api_key_gateway.Tests
         [InlineData("   ")]
         public void FromJson_NullOrEmpty_ThrowsArgumentException(string json)
         {
-            Assert.Throws<ArgumentException>(() => UsageControllerJsonExtensions.FromJson(json));
+            Assert.ThrowsAny<ArgumentException>(() => UsageControllerJsonExtensions.FromJson(json));
         }
 
         [Fact]

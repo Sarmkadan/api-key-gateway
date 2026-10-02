@@ -8,7 +8,9 @@ using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiKeyGateway.Domain.Enums;          // Added for AuditAction
+using ApiKeyGateway.Domain.Models;         // Added for AuditLog
 using ApiKeyGateway.Repositories;          // Added for IAuditLogRepository
+using System.Security.Claims;
 
 namespace ApiKeyGateway.Controllers;
 
@@ -123,6 +125,34 @@ public sealed class AdminController : ControllerBase
         };
 
         _logger.LogInformation(Constants.StatsRequestedLogMessage);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "system",
+                ResourceType = "AdminController",
+                Action = AuditAction.StatsViewed,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for stats view");
+        }
+
         return Ok(stats);
     }
 
@@ -153,6 +183,38 @@ public sealed class AdminController : ControllerBase
         var fileName = $"{Constants.UsageReportFilePrefix}{now.ToString(Constants.DateFormat)}.{format.ToLowerInvariant()}";
         var contentType = format.ToLowerInvariant() == Constants.CsvFormat ? Constants.CsvContentType : Constants.XmlContentType;
 
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "usage-export",
+                ResourceType = "AdminController",
+                Action = AuditAction.UsageDataExported,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            // Add export details to audit log changes
+            auditLog.RecordChange("format", null, format);
+            auditLog.RecordChange("startDate", null, startDate?.ToString());
+            auditLog.RecordChange("endDate", null, endDate?.ToString());
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for usage export");
+        }
+
         return File(System.Text.Encoding.UTF8.GetBytes(csv), contentType, fileName);
     }
 
@@ -174,6 +236,34 @@ public sealed class AdminController : ControllerBase
         };
 
         _logger.LogInformation(Constants.ConfigurationRequestedLogMessage);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "gateway-config",
+                ResourceType = "AdminController",
+                Action = AuditAction.ConfigurationViewed,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for configuration view");
+        }
+
         return Ok(config);
     }
 
@@ -184,6 +274,33 @@ public sealed class AdminController : ControllerBase
     public async Task<IActionResult> RunDiagnostics()
     {
         _logger.LogInformation(Constants.DiagnosticsInitiatedLogMessage);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "system-diagnostics",
+                ResourceType = "AdminController",
+                Action = AuditAction.DiagnosticsRun,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for diagnostics run");
+        }
 
         var diagnostics = new
         {
@@ -210,6 +327,33 @@ public sealed class AdminController : ControllerBase
     public async Task<IActionResult> ResetRateLimits()
     {
         _logger.LogWarning(Constants.ResetLimitsInitiatedLogMessage);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "rate-limits",
+                ResourceType = "AdminController",
+                Action = AuditAction.RateLimitsReset,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for rate limits reset");
+        }
 
         return Ok(new { message = Constants.ResetLimitsMessage });
     }
@@ -241,6 +385,40 @@ public sealed class AdminController : ControllerBase
         }
 
         var logs = await _auditLogRepository.SearchAsync(parsedAction, fromUtc.Value, toUtc.Value, limit);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = "audit-search",
+                ResourceType = "AdminController",
+                Action = AuditAction.AuditLogsSearched,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            // Add search details to audit log changes
+            auditLog.RecordChange("action", null, action);
+            auditLog.RecordChange("fromUtc", null, fromUtc?.ToString());
+            auditLog.RecordChange("toUtc", null, toUtc?.ToString());
+            auditLog.RecordChange("limit", null, limit.ToString());
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for audit search");
+        }
+
         return Ok(logs);
     }
 
@@ -253,6 +431,38 @@ public sealed class AdminController : ControllerBase
         [FromQuery] int limit = Constants.DefaultAuditLogLimit)
     {
         _logger.LogInformation(Constants.ExportResourceAuditLogsLogMessage, resourceId);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = resourceId,
+                ResourceType = "AdminController",
+                Action = AuditAction.AuditLogsExportedByResource,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            // Add export details to audit log changes
+            auditLog.RecordChange("resourceId", null, resourceId);
+            auditLog.RecordChange("limit", null, limit.ToString());
+            auditLog.RecordChange("format", null, "XML");
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for audit logs export by resource");
+        }
 
         var xml = await _auditLogRepository.ExportByResourceIdToXmlAsync(resourceId, limit);
         var fileName = $"{Constants.AuditLogsFilePrefix}{resourceId}-{DateTime.UtcNow.ToString(Constants.DateFormat)}{Constants.XmlFileExtension}";
@@ -270,6 +480,39 @@ public sealed class AdminController : ControllerBase
         [FromQuery] int limit = Constants.DefaultAuditLogLimit)
     {
         _logger.LogInformation(Constants.ExportPeriodAuditLogsLogMessage, startDate, endDate);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = $"audit-export-{startDate:yyyyMMdd}-{endDate:yyyyMMdd}",
+                ResourceType = "AdminController",
+                Action = AuditAction.AuditLogsExportedByPeriod,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            // Add export details to audit log changes
+            auditLog.RecordChange("startDate", null, startDate.ToString());
+            auditLog.RecordChange("endDate", null, endDate.ToString());
+            auditLog.RecordChange("limit", null, limit.ToString());
+            auditLog.RecordChange("format", null, "XML");
+
+            _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for audit logs export by period");
+        }
 
         if (endDate < startDate)
         {

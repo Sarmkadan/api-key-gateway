@@ -71,7 +71,7 @@ public static class RequestTransformationMiddlewareJsonExtensions
         try
         {
             ArgumentNullException.ThrowIfNull(json);
-            ArgumentException.ThrowIfNullOrEmpty(json);
+            if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
             value = JsonSerializer.Deserialize<RequestTransformationMiddleware>(json, JsonSerializerOptions);
             return value is not null;

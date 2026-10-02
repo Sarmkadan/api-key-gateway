@@ -64,7 +64,7 @@ public static class InvalidApiKeyExceptionJsonExtensions
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, [NotNullWhen(true)] out InvalidApiKeyException? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

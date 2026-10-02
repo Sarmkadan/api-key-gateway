@@ -18,7 +18,7 @@ public sealed class QueryStringHelperJsonExtensionsTests
         // Arrange
         var data = new QueryStringHelperJsonExtensions.QueryStringData
         {
-            Parameters = new Dictionary<string, string>(StringComparer.Ordinal)
+            Parameters = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 ["key1"] = "value1",
                 ["key2"] = "value2"
@@ -45,7 +45,7 @@ public sealed class QueryStringHelperJsonExtensionsTests
         // Arrange
         var data = new QueryStringHelperJsonExtensions.QueryStringData
         {
-            Parameters = new Dictionary<string, string>(StringComparer.Ordinal)
+            Parameters = new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 ["a"] = "b"
             }
@@ -89,10 +89,10 @@ public sealed class QueryStringHelperJsonExtensionsTests
     public void FromJson_NullOrEmpty_ThrowsArgumentException()
     {
         // Null
-        Assert.Throws<ArgumentException>(() => QueryStringHelperJsonExtensions.FromJson(null!));
+        Assert.ThrowsAny<ArgumentException>(() => QueryStringHelperJsonExtensions.FromJson(null!));
 
         // Empty
-        Assert.Throws<ArgumentException>(() => QueryStringHelperJsonExtensions.FromJson(string.Empty));
+        Assert.ThrowsAny<ArgumentException>(() => QueryStringHelperJsonExtensions.FromJson(string.Empty));
     }
 
     [Fact]

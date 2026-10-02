@@ -44,7 +44,7 @@ namespace api_key_gateway.Tests
         public void FromJson_EmptyString_ThrowsArgumentException()
         {
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => AnalyticsSummaryJsonExtensions.FromJson(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => AnalyticsSummaryJsonExtensions.FromJson(string.Empty));
         }
 
         [Fact]

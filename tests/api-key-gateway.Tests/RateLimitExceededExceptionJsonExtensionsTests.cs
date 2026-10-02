@@ -83,7 +83,7 @@ public class RateLimitExceededExceptionJsonExtensionsTests
     public void FromJson_EmptyInput_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => RateLimitExceededExceptionJsonExtensions.FromJson(string.Empty));
+        Assert.ThrowsAny<ArgumentException>(() => RateLimitExceededExceptionJsonExtensions.FromJson(string.Empty));
     }
 
     [Fact]

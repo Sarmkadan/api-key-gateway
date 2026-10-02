@@ -54,7 +54,7 @@ public static class RequestValidatorJsonExtensions
 	/// <exception cref="JsonException">Thrown when deserialization fails.</exception>
 	public static ValidationResult? FromJson(string json)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) return null;
 
 		try
 		{
@@ -76,7 +76,7 @@ public static class RequestValidatorJsonExtensions
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
 	public static bool TryFromJson(string json, out ValidationResult? value)
 	{
-		ArgumentException.ThrowIfNullOrEmpty(json);
+		if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
 		try
 		{

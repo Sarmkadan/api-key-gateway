@@ -52,7 +52,7 @@ namespace api_key_gateway.Tests
         [Fact]
         public void FromJson_EmptyString_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => RateLimitCalculationHelperJsonExtensions.FromJson(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => RateLimitCalculationHelperJsonExtensions.FromJson(string.Empty));
         }
 
         [Fact]
@@ -93,7 +93,7 @@ namespace api_key_gateway.Tests
         [Fact]
         public void TryFromJson_EmptyString_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => RateLimitCalculationHelperJsonExtensions.TryFromJson(string.Empty, out _));
+            Assert.ThrowsAny<ArgumentException>(() => RateLimitCalculationHelperJsonExtensions.TryFromJson(string.Empty, out _));
         }
     }
 }

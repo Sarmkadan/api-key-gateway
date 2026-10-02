@@ -69,7 +69,7 @@ public static class TransformationPipelineOptionsJsonExtensions
 
         try
         {
-            ArgumentException.ThrowIfNullOrEmpty(json);
+            if (string.IsNullOrEmpty(json)) { value = null; return false; }
             value = JsonSerializer.Deserialize<TransformationPipelineOptions>(json, JsonSerializerOptions);
             return value is not null;
         }

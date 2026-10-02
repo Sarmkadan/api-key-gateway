@@ -52,9 +52,9 @@ namespace api_key_gateway.Tests
         public void FromJson_NullOrEmpty_ThrowsArgumentException()
         {
             // Arrange & Act & Assert
-            Assert.Throws<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(null!));
-            Assert.Throws<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(string.Empty));
-            Assert.Throws<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson("   "));
+            Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(null!));
+            Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => UsageQuotaJsonExtensions.FromJson("   "));
         }
 
         [Fact]

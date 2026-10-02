@@ -68,7 +68,7 @@ public static class UsageEventJsonExtensions
     /// <exception cref="ArgumentException">Thrown if <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out UsageEvent? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        if (string.IsNullOrEmpty(json)) { value = null; return false; }
 
         try
         {

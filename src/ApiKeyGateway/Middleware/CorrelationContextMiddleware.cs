@@ -37,6 +37,7 @@ public sealed class CorrelationContextMiddleware
     /// <returns>A task that represents the completion of request processing.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         var correlationId = RequestContextHelper.GetOrCreateCorrelationId(context.Request);
         var apiKey = RequestContextHelper.ExtractApiKey(context.Request);
 

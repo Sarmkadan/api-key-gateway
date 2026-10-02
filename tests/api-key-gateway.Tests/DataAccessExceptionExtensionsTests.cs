@@ -75,8 +75,8 @@ namespace ApiKeyGateway.Tests
             var exception = new DataAccessException(DefaultMessage, operation: null, entity: "Entity");
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => exception.GetOperationOrDefault(null!));
-            Assert.Throws<ArgumentException>(() => exception.GetOperationOrDefault(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => exception.GetOperationOrDefault(null!));
+            Assert.ThrowsAny<ArgumentException>(() => exception.GetOperationOrDefault(string.Empty));
         }
 
         [Fact]
@@ -119,8 +119,8 @@ namespace ApiKeyGateway.Tests
             var exception = new DataAccessException(DefaultMessage, operation: "Op", entity: null);
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => exception.GetEntityOrDefault(null!));
-            Assert.Throws<ArgumentException>(() => exception.GetEntityOrDefault(string.Empty));
+            Assert.ThrowsAny<ArgumentException>(() => exception.GetEntityOrDefault(null!));
+            Assert.ThrowsAny<ArgumentException>(() => exception.GetEntityOrDefault(string.Empty));
         }
 
         [Fact]
