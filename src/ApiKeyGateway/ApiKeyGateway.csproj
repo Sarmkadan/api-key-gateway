@@ -7,17 +7,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ApiKeyGateway</AssemblyName>
     <RootNamespace>ApiKeyGateway</RootNamespace>
-    <PackageId>Zaiets.api.key.gateway</PackageId>
+    <PackageId>Zaiets.ApiKeyGateway</PackageId>
     <Version>1.0.0</Version>
     <Authors>Vladyslav Zaiets</Authors>
-    <Description>A lightweight API key authentication gateway that provides rate limiting and usage tracking for self-hosted services.</Description>
-    <PackageTags>api-key gateway rate-limiting usage-tracking authentication self-hosted middleware security</PackageTags>
-    <PackageProjectUrl>https://github.com/sarmkadan/api-key-gateway</PackageProjectUrl>
+    <Description>A self-hosted ASP.NET Core API key authentication gateway with rate limiting, usage quotas, audit logging, and request transformation.</Description>
+    <PackageTags>aspnetcore;api-key;rate-limiting;middleware</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/sarmkadan/api-key-gateway</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/sarmkadan/api-key-gateway</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
 
   <ItemGroup>
