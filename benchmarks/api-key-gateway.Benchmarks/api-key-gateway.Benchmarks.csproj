@@ -10,6 +10,7 @@
     <Optimize>true</Optimize>
     <AssemblyName>api-key-gateway.Benchmarks</AssemblyName>
     <RootNamespace>ApiKeyGateway.Benchmarks</RootNamespace>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
