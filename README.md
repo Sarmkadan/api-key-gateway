@@ -113,6 +113,537 @@ curl -X GET "https://api.example.com/endpoint" \
 # Retry-After: 60
 ```
 
+## Managing Keys
+
+The AdminController provides endpoints for managing API keys, monitoring usage, and configuring the gateway. All administrative endpoints require authentication.
+
+### Authentication
+
+Administrative endpoints use standard ASP.NET Core authentication. Include the Authorization header with a valid token:
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/stats" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Or using basic credentials (if configured):
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/stats" \
+  -u "admin:securepassword"
+```
+
+### Key Management Examples
+
+#### Create a New API Key
+
+```bash
+curl -X POST "https://gateway.example.com/api/apikeys" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "consumerId": "customer123",
+    "name": "Production API Key",
+    "expirationDays": 365
+  }'
+```
+
+Response:
+```json
+{
+  "keyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+  "consumerId": "customer123",
+  "name": "Production API Key",
+  "expiresAt": "2027-10-03T14:30:00Z",
+  "createdAt": "2026-10-03T14:30:00Z"
+}
+```
+
+#### List API Keys for a Consumer
+
+```bash
+curl -X GET "https://gateway.example.com/api/apikeys/consumer/customer123" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+[
+  {
+    "keyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+    "consumerId": "customer123",
+    "name": "Production API Key",
+    "status": "Active",
+    "createdAt": "2026-10-03T14:30:00Z",
+    "expiresAt": "2027-10-03T14:30:00Z",
+    "lastUsedAt": "2026-10-03T10:15:00Z",
+    "requestCount": 12450,
+    "isActive": true
+  }
+]
+```
+
+#### Get API Key Details
+
+```bash
+curl -X GET "https://gateway.example.com/api/apikeys/ak_live_1a2b3c4d5e6f7g8h9i0j" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "keyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+  "consumerId": "customer123",
+  "name": "Production API Key",
+  "status": "Active",
+  "createdAt": "2026-10-03T14:30:00Z",
+  "expiresAt": "2027-10-03T14:30:00Z",
+  "lastUsedAt": "2026-10-03T10:15:00Z",
+  "requestCount": 12450,
+  "isActive": true
+}
+```
+
+#### Disable an API Key
+
+```bash
+curl -X PUT "https://gateway.example.com/api/apikeys/ak_live_1a2b3c4d5e6f7g8h9i0j/disable" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "message": "API key disabled successfully"
+}
+```
+
+#### Enable an API Key
+
+```bash
+curl -X PUT "https://gateway.example.com/api/apikeys/ak_live_1a2b3c4d5e6f7g8h9i0j/enable" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "message": "API key enabled successfully"
+}
+```
+
+#### Revoke an API Key (Permanent)
+
+```bash
+curl -X PUT "https://gateway.example.com/api/apikeys/ak_live_1a2b3c4d5e6f7g8h9i0j/revoke" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "message": "API key revoked successfully"
+}
+```
+
+#### Rotate an API Key
+
+```bash
+curl -X POST "https://gateway.example.com/api/apikeys/ak_live_1a2b3c4d5e6f7g8h9i0j/rotate" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "newExpirationDays": 365
+  }'
+```
+
+Response:
+```json
+{
+  "oldKeyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+  "newKeyId": "ak_live_2b3c4d5e6f7g8h9i0j1k",
+  "consumerId": "customer123",
+  "newKeyExpiresAt": "2027-10-03T14:30:00Z"
+}
+```
+
+### Administrative Endpoints
+
+#### Get System Statistics
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/stats" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "totalApiKeys": 150,
+  "activeApiKeys": 135,
+  "disabledApiKeys": 10,
+  "totalRequests": 1250000,
+  "requestsToday": 8450,
+  "rateLimitEvents": 25,
+  "rateLimitEventsToday": 3,
+  "averageResponseTimeMs": 45.2,
+  "errorRate": 0.02,
+  "uptime": "45.00:00:00"
+}
+```
+
+#### Export Usage Data
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/export/usage?format=csv&startDate=2026-09-01&endDate=2026-09-30" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -o usage_september_2026.csv
+```
+
+For XML format:
+```bash
+curl -X GET "https://gateway.example.com/api/admin/export/usage?format=xml" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -o usage.xml
+```
+
+#### Get Gateway Configuration
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/config" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "maxApiKeys": 1000,
+  "maxRequestsPerHour": 10000,
+  "auditLogRetentionDays": 90,
+  "webhookDeliveryTimeout": 30,
+  "webhookMaxRetries": 3,
+  "cacheEnabled": true,
+  "cacheTtlSeconds": 3600
+}
+```
+
+#### Run System Diagnostics
+
+```bash
+curl -X POST "https://gateway.example.com/api/admin/diagnose" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "timestamp": "2026-10-03T14:30:00Z",
+  "tests": {
+    "database": { "status": "ok", "latencyMs": 12 },
+    "cache": { "status": "ok", "latencyMs": 3 },
+    "externalApi": { "status": "ok", "latencyMs": 156 },
+    "diskSpace": { "status": "ok", "availableMb": 4560 },
+    "memory": { "status": "ok", "usagePercent": 67.5 }
+  },
+  "overallStatus": "healthy"
+}
+```
+
+#### Reset Rate Limits (Emergency Operation)
+
+```bash
+curl -X POST "https://gateway.example.com/api/admin/reset-limits" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "message": "Rate limits have been reset for all API keys"
+}
+```
+
+#### Search Audit Logs
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/audit/search?action=KeyCreated&fromUtc=2026-10-01T00:00:00Z&toUtc=2026-10-03T23:59:59Z&limit=50" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+[
+  {
+    "id": "audit_1a2b3c4d5e6f7g8h9i0j",
+    "resourceId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+    "resourceType": "ApiKeysController",
+    "action": "KeyCreated",
+    "performedBy": "admin",
+    "performedAt": "2026-10-03T14:30:00Z",
+    "isSuccess": true,
+    "changes": [
+      {
+        "fieldName": "consumerId",
+        "oldValue": null,
+        "newValue": "customer123"
+      },
+      {
+        "fieldName": "name",
+        "oldValue": null,
+        "newValue": "Production API Key"
+      }
+    ]
+  }
+]
+```
+
+#### Export Audit Logs by Resource
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/audit/export/resource/ak_live_1a2b3c4d5e6f7g8h9i0j?limit=100" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -o audit_logs_key.xml
+```
+
+#### Export Audit Logs by Period
+
+```bash
+curl -X GET "https://gateway.example.com/api/admin/audit/export/period?startDate=2026-10-01&endDate=2026-10-03&limit=1000" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -o audit_logs_october_2026.xml
+```
+
+### Key Rotation Explained
+
+Key rotation is a security practice that involves replacing an API key with a new one while maintaining a grace period where both keys are valid. This allows for smooth transitions without disrupting services.
+
+In ApiKeyGateway, key rotation works as follows:
+
+1. **Rotation Request**: When you call the rotate endpoint (`POST /api/apikeys/{id}/rotate`), the system:
+   - Creates a new API key with the same consumer ID and properties
+   - Optionally sets a new expiration period (if specified in the request)
+   - Marks the original key as rotated (but not immediately revoked)
+
+2. **Grace Period**: Both the old and new keys remain valid during the grace period configured in `appsettings.json`:
+   ```json
+   "KeyRotation": {
+     "GracePeriodDays": 7, // Days to allow old keys to work after rotation
+     "AutoRotate": true
+   }
+   ```
+
+3. **Usage During Transition**: 
+   - Applications can start using the new key immediately
+   - Existing applications continue to work with the old key during the grace period
+   - Monitor usage of both keys to ensure a smooth transition
+
+4. **After Grace Period**: 
+   - After the grace period ends, the old key is automatically revoked (if auto-rotation is enabled)
+   - Or manually revoked by calling the revoke endpoint
+   - Only the new key remains valid
+
+**Example Rotation Timeline**:
+- Day 1: Original key created (expires in 365 days)
+- Day 100: Key rotated - new key issued, both keys valid
+- Day 100-107: Grace period - both keys work
+- Day 108: Old key automatically revoked (if auto-rotate enabled), only new key valid
+- Day 465: New key expires (365 days from rotation date)
+
+### Usage Tracking
+
+ApiKeyGateway provides comprehensive usage tracking capabilities to monitor API consumption and identify trends.
+
+#### Reading Usage Statistics
+
+Get detailed statistics for a specific API key:
+
+```bash
+curl -X GET "https://gateway.example.com/api/usage/keys/ak_live_1a2b3c4d5e6f7g8h9i0j/statistics?startDate=2026-09-01&endDate=2026-09-30" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "apiKeyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+  "startDate": "2026-09-01T00:00:00Z",
+  "endDate": "2026-09-30T23:59:59Z",
+  "totalRequests": 12450,
+  "successfulRequests": 12200,
+  "failedRequests": 250,
+  "successRate": 97.99,
+  "totalBytesTransferred": 452301000,
+  "averageResponseTimeMs": 45.2,
+  "uniqueEndpoints": 15
+}
+```
+
+#### Getting Usage Records
+
+Retrieve detailed usage records (individual requests):
+
+```bash
+curl -X GET "https://gateway.example.com/api/usage/keys/ak_live_1a2b3c4d5e6f7g8h9i0j/records?startDate=2026-10-01&endDate=2026-10-03&limit=100" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+[
+  {
+    "id": "record_1a2b3c4d5e6f7g8h9i0j",
+    "recordedAt": "2026-10-03T10:15:00Z",
+    "endpoint": "/api/users",
+    "method": "GET",
+    "statusCode": 200,
+    "requestBytes": 1200,
+    "responseBytes": 3400,
+    "responseTimeMs": 32,
+    "sourceIp": "203.0.113.45"
+  }
+]
+```
+
+#### Consumer-Level Usage
+
+Get aggregated usage for all keys belonging to a consumer:
+
+```bash
+curl -X GET "https://gateway.example.com/api/usage/consumers/customer123/total?startDate=2026-09-01&endDate=2026-09-30" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "consumerId": "customer123",
+  "startDate": "2026-09-01T00:00:00Z",
+  "endDate": "2026-09-30T23:59:59Z",
+  "totalBytesTransferred": 452301000,
+  "totalGBTransferred": 0.42
+}
+```
+
+#### Quota Consumption
+
+Check current quota usage for an API key:
+
+```bash
+curl -X GET "https://gateway.example.com/api/usage/quota/ak_live_1a2b3c4d5e6f7g8h9i0j" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+Response:
+```json
+{
+  "keyId": "ak_live_1a2b3c4d5e6f7g8h9i0j",
+  "used": 12450,
+  "limit": 100000,
+  "percentUsed": 12.45,
+  "isExceeded": false,
+  "period": "Monthly",
+  "periodStart": "2026-10-01T00:00:00Z",
+  "periodEnd": "2026-10-31T23:59:59Z",
+  "remaining": 87550
+}
+```
+
+### C# HttpClient Examples
+
+All examples assume you have configured an `HttpClient` instance with the base address and authentication.
+
+#### Creating an HttpClient Instance
+
+```csharp
+var client = new HttpClient
+{
+    BaseAddress = new Uri("https://gateway.example.com/")
+};
+
+// Add authentication (Bearer token)
+client.DefaultRequestHeaders.Authorization = 
+    new AuthenticationHeaderValue("Bearer", "YOUR_ADMIN_TOKEN");
+
+// Or basic authentication
+var byteArray = Encoding.ASCII.GetBytes("admin:securepassword");
+client.DefaultRequestHeaders.Authorization = 
+    new AuthenticationHeaderValue("Basic", 
+        Convert.ToBase64String(byteArray));
+```
+
+#### Create a New API Key
+
+```csharp
+var request = new CreateKeyRequest
+{
+    ConsumerId = "customer123",
+    Name = "Production API Key",
+    ExpirationDays = 365
+};
+
+var response = await client.PostAsJsonAsync("/api/apikeys", request);
+response.EnsureSuccessStatusCode();
+
+var result = await response.Content.ReadFromJsonAsync<CreateKeyResponse>();
+Console.WriteLine($"Created key: {result.KeyId}");
+```
+
+#### Get API Key Statistics
+
+```csharp
+var response = await client.GetFromJsonAsync<UsageStatisticsResponse>(
+    $"/api/usage/keys/{keyId}/statistics?startDate={startDate:O}&endDate={endDate:O}");
+
+if (response != null)
+{
+    Console.WriteLine($"Total requests: {response.TotalRequests}");
+    Console.WriteLine($"Success rate: {response.SuccessRate}%");
+    Console.WriteLine($"Average response time: {response.AverageResponseTimeMs}ms");
+}
+```
+
+#### Export Usage Data
+
+```csharp
+var response = await client.GetAsync(
+    $"/api/admin/export/usage?format=csv&startDate={startDate:O}&endDate={endDate:O}");
+
+response.EnsureSuccessStatusCode();
+
+var csvData = await response.Content.ReadAsStringAsync();
+await File.WriteAllTextAsync("usage_report.csv", csvData);
+```
+
+#### Rotate an API Key
+
+```csharp
+var request = new RotateKeyRequest { NewExpirationDays = 365 };
+
+var response = await client.PostAsJsonAsync(
+    $"/api/apikeys/{keyId}/rotate", request);
+
+response.EnsureSuccessStatusCode();
+
+var result = await response.Content.ReadFromJsonAsync<RotateKeyResponse>();
+Console.WriteLine($"Rotated key {result.OldKeyId} to {result.NewKeyId}");
+```
+
+#### Search Audit Logs
+
+```csharp
+var response = await client.GetFromJsonAsync<AuditLogEntry[]>(
+    $"/api/admin/audit/search?action={action}&fromUtc={fromUtc:O}&toUtc={toUtc:O}&limit={limit}");
+
+if (response != null)
+{
+    foreach (var log in response)
+    {
+        Console.WriteLine($"{log.PerformedAt}: {log.Action} by {log.PerformedBy}");
+    }
+}
+```
+
 ## Project overview
 
 ApiKeyGateway - a self-hosted ASP.NET Core (.NET 10) API key authentication gateway with rate limiting, usage quotas, audit logging and request transformation, backed by SQL Server via raw ADO.NET. Also packaged as NuGet `Zaiets.api.key.gateway`.
