@@ -88,5 +88,10 @@ public enum AuditAction
     /// <summary>
     /// Admin exported audit logs by period
     /// </summary>
-    AuditLogsExportedByPeriod = 16
+    AuditLogsExportedByPeriod = 16,
+
+    /// <summary>
+    /// Admin updated a per-key rate limit override
+    /// </summary>
+    RateLimitOverrideUpdated = 17
 }
