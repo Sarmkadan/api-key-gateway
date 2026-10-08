@@ -74,14 +74,17 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<RateLimitingOptions>>().Value,
                 sp.GetService<Events.IEventPublisher>()));
 
+        services.AddUsageTrackingStorage(configuration, connectionString);
+
         services.AddScoped<IUsageRepository, UsageRepository>();
         services.AddScoped<IUsageTrackingService, UsageTrackingService>();
         services.AddScoped<IUsageTrackingService>(sp =>
         {
+            var usageOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<UsageTrackingOptions>>().Value;
             var options = new ApiKeyGateway.Services.BufferedUsageTrackingService.BufferedUsageTrackingOptions
             {
                 MaxBatchSize = 100,
-                MaxFlushInterval = TimeSpan.FromSeconds(2),
+                MaxFlushInterval = usageOptions.FlushInterval,
                 ChannelFullMode = System.Threading.Channels.BoundedChannelFullMode.Wait,
                 ChannelCapacity = 10000
             };
@@ -113,6 +116,40 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IConfiguration>().GetSection("Gateway")
             .Get<GatewayConfiguration>()
             ?? throw new InvalidOperationException("Gateway configuration section 'Gateway' is missing or invalid."));
+
+        return services;
+    }
+
+    /// <summary>
+    /// Binds and validates <see cref="UsageTrackingOptions"/>, registers the usage store probe,
+    /// and adds the startup check that pings the store before the host accepts traffic.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="configuration">The <see cref="IConfiguration"/> containing the <c>UsageTracking</c> section.</param>
+    /// <param name="connectionString">The connection string the usage store is opened with.</param>
+    /// <returns>The <see cref="IServiceCollection"/> for fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.
+    /// </exception>
+    public static IServiceCollection AddUsageTrackingStorage(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddOptions<UsageTrackingOptions>()
+            .Bind(configuration.GetSection(UsageTrackingOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<UsageTrackingOptions>>(
+            new UsageTrackingOptionsValidator(connectionString));
+
+        services.AddSingleton<IUsageStorageProbe>(
+            new SqlServerUsageStorageProbe(connectionString ?? string.Empty));
+
+        // Registered before the background workers so the store is verified first.
+        services.AddHostedService<UsageStorageStartupCheck>();
 
         return services;
     }
