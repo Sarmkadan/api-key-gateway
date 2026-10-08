@@ -18,6 +18,29 @@ namespace ApiKeyGateway.Configuration;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
+    /// Binds <see cref="RateLimitingOptions"/> from configuration and validates it when the host starts,
+    /// so an unknown policy reference or invalid limit fails fast.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+    /// <param name="configuration">The <see cref="IConfiguration"/> containing the <c>RateLimiting</c> section.</param>
+    /// <returns>The <see cref="IServiceCollection"/> for fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.
+    /// </exception>
+    public static IServiceCollection AddRateLimitingOptions(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddOptions<RateLimitingOptions>()
+            .Bind(configuration.GetSection(RateLimitingOptions.SectionName))
+            .ValidateOnStart();
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<RateLimitingOptions>, RateLimitingOptionsValidator>();
+
+        return services;
+    }
+
+    /// <summary>
     /// Registers all gateway services and repositories
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
@@ -42,7 +65,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
 
         services.AddScoped<IRateLimitRepository, RateLimitRepository>();
-        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+        services.AddRateLimitingOptions(configuration);
         services.AddScoped<IRateLimitingService>(sp =>
             new RateLimitingService(
                 sp.GetRequiredService<IRateLimitRepository>(),

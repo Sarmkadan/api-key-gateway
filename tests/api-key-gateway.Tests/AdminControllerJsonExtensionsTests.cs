@@ -14,6 +14,7 @@ namespace api_key_gateway.Tests
         private readonly Mock<IMetricsCollectionService> _metricsServiceMock = new();
         private readonly Mock<IDataExportService> _dataExportServiceMock = new();
         private readonly Mock<IAuditLogRepository> _auditLogRepositoryMock = new();
+        private readonly Mock<IRateLimitingService> _rateLimitingServiceMock = new();
 
         private AdminController CreateController()
         {
@@ -21,7 +22,9 @@ namespace api_key_gateway.Tests
                 _loggerMock.Object,
                 _metricsServiceMock.Object,
                 _dataExportServiceMock.Object,
-                _auditLogRepositoryMock.Object);
+                _auditLogRepositoryMock.Object,
+                _rateLimitingServiceMock.Object,
+                Microsoft.Extensions.Options.Options.Create(new ApiKeyGateway.Configuration.RateLimitingOptions()));
         }
 
         [Fact]

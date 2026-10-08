@@ -63,6 +63,18 @@ public class RateLimitingOptions
     public TimeSpan CircuitBreakerCooldown { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
+    /// Named rate limit policies (for example "free" or "pro") keyed by policy name.
+    /// Validated at startup; see <see cref="RateLimitingOptionsValidation"/>.
+    /// </summary>
+    public Dictionary<string, RateLimitPolicyOptions> Policies { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Per-key rate limit overrides keyed by API key id. Every entry must reference a policy
+    /// that exists in <see cref="Policies"/>; checked at startup.
+    /// </summary>
+    public Dictionary<string, RateLimitKeyOverrideOptions> KeyOverrides { get; set; } = new();
+
+    /// <summary>
     /// Validates the option values.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">

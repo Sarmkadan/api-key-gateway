@@ -3,10 +3,12 @@
 // CTO & Software Architect
 // =====================================================================
 
+using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ApiKeyGateway.Domain.Enums;          // Added for AuditAction
 using ApiKeyGateway.Domain.Models;         // Added for AuditLog
 using ApiKeyGateway.Repositories;          // Added for IAuditLogRepository
@@ -35,6 +37,7 @@ public sealed class AdminController : ControllerBase
         public const string ConfigurationRoute = "config";
         public const string DiagnosticsRoute = "diagnose";
         public const string ResetLimitsRoute = "reset-limits";
+        public const string RateLimitOverrideRoute = "rate-limits/{apiKeyId}/override";
         public const string AuditSearchRoute = "audit/search";
         public const string AuditExportResourceRoute = "audit/export/resource/{resourceId}";
         public const string AuditExportPeriodRoute = "audit/export/period";
@@ -58,6 +61,11 @@ public sealed class AdminController : ControllerBase
         public const string ConfigurationRequestedLogMessage = "Gateway configuration requested";
         public const string DiagnosticsInitiatedLogMessage = "System diagnostics initiated";
         public const string ResetLimitsInitiatedLogMessage = "Rate limit reset initiated by admin";
+        public const string RateLimitOverrideUpdatedLogMessage = "Rate limit override for key {ApiKeyId} set to policy {Policy}";
+        public const string RateLimitOverrideInvalidTitle = "Invalid rate limit override";
+        public const string RateLimitOverrideNotFoundTitle = "Rate limit not found";
+        public const string RateLimitOverrideNotFoundDetail = "No rate limit exists for the specified API key.";
+        public const string RateLimitErrorsExtension = "errors";
         public const string ExportResourceAuditLogsLogMessage = "Export audit logs for resource {ResourceId} requested";
         public const string ExportPeriodAuditLogsLogMessage = "Export audit logs for period {StartDate} to {EndDate} requested";
         public const int EmptyCount = 0;
@@ -83,22 +91,30 @@ public sealed class AdminController : ControllerBase
     private readonly IMetricsCollectionService _metricsService;
     private readonly IDataExportService _dataExportService;
     private readonly IAuditLogRepository _auditLogRepository; // New dependency
+    private readonly IRateLimitingService _rateLimitingService;
+    private readonly IOptions<RateLimitingOptions> _rateLimitingOptions;
 
     public AdminController(
         ILogger<AdminController> logger,
         IMetricsCollectionService metricsService,
         IDataExportService dataExportService,
-        IAuditLogRepository auditLogRepository) // Updated constructor
+        IAuditLogRepository auditLogRepository,
+        IRateLimitingService rateLimitingService,
+        IOptions<RateLimitingOptions> rateLimitingOptions) // Updated constructor
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(metricsService);
         ArgumentNullException.ThrowIfNull(dataExportService);
         ArgumentNullException.ThrowIfNull(auditLogRepository);
+        ArgumentNullException.ThrowIfNull(rateLimitingService);
+        ArgumentNullException.ThrowIfNull(rateLimitingOptions);
 
         _logger = logger;
         _metricsService = metricsService;
         _dataExportService = dataExportService;
         _auditLogRepository = auditLogRepository;
+        _rateLimitingService = rateLimitingService;
+        _rateLimitingOptions = rateLimitingOptions;
     }
 
     /// <summary>
@@ -317,6 +333,92 @@ public sealed class AdminController : ControllerBase
         };
 
         return Ok(diagnostics);
+    }
+
+    /// <summary>
+    /// Assigns a per-key rate limit override that references a configured policy.
+    /// Validates the policy name and values; on success the resulting limit is stored for the key.
+    /// </summary>
+    /// <param name="apiKeyId">The API key the override applies to.</param>
+    /// <param name="request">The policy name and optional request count / window overrides.</param>
+    [HttpPut(Constants.RateLimitOverrideRoute)]
+    public async Task<IActionResult> SetRateLimitOverride(
+        string apiKeyId,
+        [FromBody] RateLimitKeyOverrideOptions request)
+    {
+        var policies = _rateLimitingOptions.Value.Policies;
+        var errors = RateLimitingOptionsValidation.ValidateKeyOverride(apiKeyId, request, policies);
+        if (errors.Count > 0)
+        {
+            return BadRequest(CreateRateLimitProblem(Constants.RateLimitOverrideInvalidTitle, string.Join(" ", errors), errors));
+        }
+
+        // Validation above guarantees the policy exists and the effective window maps to a unit.
+        var policy = policies[request.Policy!];
+        var requestsPerUnit = request.RequestsPerUnit ?? policy.RequestsPerUnit;
+        var windowSeconds = request.WindowSeconds ?? policy.WindowSeconds;
+        RateLimitingOptionsValidation.TryGetUnit(windowSeconds, out var unit);
+
+        var updated = await _rateLimitingService.UpdateLimitAsync(apiKeyId, requestsPerUnit, unit);
+        if (!updated)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = Constants.RateLimitOverrideNotFoundTitle,
+                Detail = Constants.RateLimitOverrideNotFoundDetail
+            });
+        }
+
+        _logger.LogInformation(Constants.RateLimitOverrideUpdatedLogMessage, apiKeyId, request.Policy);
+
+        // Log admin action for audit
+        try
+        {
+            var actorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                         User.FindFirst("api_key_id")?.Value ??
+                         User.Identity?.Name ??
+                         "unknown";
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid().ToString(),
+                ResourceId = apiKeyId,
+                ResourceType = "AdminController",
+                Action = AuditAction.RateLimitOverrideUpdated,
+                PerformedBy = actorId,
+                PerformedAt = DateTime.UtcNow,
+                IsSuccess = true
+            };
+
+            await _auditLogRepository.CreateAsync(auditLog);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the request if audit logging fails
+            _logger.LogWarning(ex, "Failed to create audit log for rate limit override");
+        }
+
+        return Ok(new
+        {
+            apiKeyId,
+            policy = request.Policy,
+            requestsPerUnit,
+            windowSeconds,
+            unit = unit.ToString()
+        });
+    }
+
+    private static ProblemDetails CreateRateLimitProblem(string title, string detail, IReadOnlyList<string> errors)
+    {
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = title,
+            Detail = detail
+        };
+        problem.Extensions[Constants.RateLimitErrorsExtension] = errors;
+        return problem;
     }
 
     /// <summary>
