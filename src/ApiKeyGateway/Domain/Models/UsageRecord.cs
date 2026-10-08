@@ -3,11 +3,14 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Diagnostics;
+
 namespace ApiKeyGateway.Domain.Models;
 
 /// <summary>
 /// Tracks API usage metrics for billing and analytics
 /// </summary>
+[DebuggerDisplay("UsageRecord {Id,nq} {Method,nq} {Endpoint,nq} -> {ResponseStatusCode}")]
 public class UsageRecord
 {
     /// <summary>Unique identifier for the usage record</summary>
@@ -116,6 +119,9 @@ public class UsageRecord
         return records.Count(r => r.IsError);
     }
 
+    /// <summary>
+    /// Returns a concise representation of the record. Omits client IP, user agent and tags.
+    /// </summary>
     public override string ToString() =>
-        $"UsageRecord {{ ErrorCode = {ErrorCode}, SourceIp = {SourceIp}, UserAgent = {UserAgent}, Tags = {Tags} }}";
+        $"UsageRecord {{ Id = {Id}, ApiKeyId = {ApiKeyId}, Method = {Method}, Endpoint = {Endpoint}, ResponseStatusCode = {ResponseStatusCode}, ResponseTimeMs = {ResponseTimeMs}, ErrorCode = {ErrorCode} }}";
 }

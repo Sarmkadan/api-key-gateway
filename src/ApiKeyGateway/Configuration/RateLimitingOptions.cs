@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Diagnostics;
+
 namespace ApiKeyGateway.Configuration;
 
 /// <summary>
@@ -28,10 +30,18 @@ public enum RateLimitFailurePolicy
 /// Options controlling rate limiter behaviour when the limit store fails,
 /// including a simple circuit breaker that stops hammering a down backend.
 /// </summary>
+[DebuggerDisplay("RateLimitingOptions FailurePolicy={FailurePolicy,nq} Policies={Policies.Count,nq} KeyOverrides={KeyOverrides.Count,nq}")]
 public class RateLimitingOptions
 {
     /// <summary>Configuration section name the options are bound from.</summary>
     public const string SectionName = "RateLimiting";
+
+    /// <summary>
+    /// Returns the failure policy, circuit breaker thresholds and policy/override counts.
+    /// Policy and override bodies are omitted.
+    /// </summary>
+    public override string ToString() =>
+        $"RateLimitingOptions {{ FailurePolicy = {FailurePolicy}, CircuitBreakerFailureThreshold = {CircuitBreakerFailureThreshold}, CircuitBreakerFailureWindow = {CircuitBreakerFailureWindow}, CircuitBreakerCooldown = {CircuitBreakerCooldown}, Policies = {Policies.Count}, KeyOverrides = {KeyOverrides.Count} }}";
 
     /// <summary>
     /// What the gateway does when the limit store throws a data-access error.

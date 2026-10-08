@@ -549,7 +549,64 @@ Response:
 }
 ```
 
-### C# HttpClient Examples
+### Diagnostics and Observability
+
+### Diagnostic output
+
+Models print safe summaries in the debugger and in logs. `ApiKey` shows the public prefix and a mask (for example `sk_live****`). The stored hash is never printed. `RateLimitDecision`, `UsageRecord`, `UsageSnapshot` and the rate limit policy options also override `ToString()` and expose a `DebuggerDisplay`. `UsageRecord` omits client IP and user agent.
+
+```csharp
+var key = await apiKeyService.GetByIdAsync(id);
+logger.LogInformation("Loaded {Key}", key);   // ApiKey { Id = ..., Key = sk_live****, Status = Active, ... }
+```
+
+### Health checks
+
+Register the gateway check on the health checks builder:
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddApiKeyGatewayHealthCheck(options =>
+    {
+        options.UsageFlushQueueDegradedThreshold = 10_000; // default
+    });
+```
+
+The check is named `api-key-gateway` and tagged `ready`. It reports:
+
+| Data key | Values | Meaning |
+|---|---|---|
+| `store` | `reachable`, `unreachable` | Opens and closes a connection to the API key store. Failure makes the check **Unhealthy**. |
+| `usageTracker` | `ok`, `backlogged`, `not_registered` | State of the usage flush queue. `backlogged` makes the check **Degraded**. |
+| `usageFlushPendingRequests` | number | Requests counted in memory and not yet flushed. |
+| `usageFlushQueueThreshold` | number | The configured threshold. |
+| `rateLimiterBackend` | `in_memory`, `not_registered` | Backend of the in-memory `IRateLimiter`. |
+
+Endpoints:
+
+- `GET /health` runs every registered check. **Behaviour change:** it now returns `503` when the key store is unreachable. Before this change it always returned `200` because no checks were registered. Load balancers that poll `/health` will see the instance as down during a database outage.
+- `GET /health/checks` runs only checks tagged `ready`. `/health/ready` is already used by `HealthController`, so this endpoint uses a different path.
+
+Error messages from the store are written to the log, not to the response, because health endpoints are anonymous.
+
+### Metrics
+
+Counters are published on the meter `ApiKeyGateway` (`GatewayMetrics.MeterName`), using `System.Diagnostics.Metrics`:
+
+| Instrument | Incremented when |
+|---|---|
+| `requests_allowed` | A request passes authentication, rate limiting, route scope and quota checks. |
+| `requests_rate_limited` | A request is rejected with `429` because the key exceeded its limit. |
+| `requests_unauthorized` | A supplied key is rejected. Tagged `reason` with the `AuthenticationFailureReason` name, for example `ApiKeyExpired`. Store outages (`503`) are not counted. |
+
+The counters carry no API key identifiers, so their cardinality stays bounded. The host does not export them by default. Register the meter with an exporter, for example OpenTelemetry:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics.AddMeter("ApiKeyGateway"));
+```
+
+## C# HttpClient Examples
 
 All examples assume you have configured an `HttpClient` instance with the base address and authentication.
 

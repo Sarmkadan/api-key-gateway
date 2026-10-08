@@ -5,6 +5,7 @@
 
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Middleware;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddControllers();
 builder.Services.AddGatewayServices(builder.Configuration);
 builder.Services.AddGatewayDocumentation();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddApiKeyGatewayHealthCheck();
 
 builder.Services.AddCors(options =>
 {
@@ -54,6 +55,12 @@ app.UseRequestTransformation();
 app.MapControllers();
 
 app.MapHealthChecks("/health");
+
+// Only checks tagged "ready" (see AddApiKeyGatewayHealthCheck). "/health/ready" is taken by HealthController.
+app.MapHealthChecks("/health/checks", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains(HealthCheckRegistrationExtensions.ReadyTag)
+});
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("API Key Gateway starting up");

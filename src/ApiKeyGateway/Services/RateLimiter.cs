@@ -5,6 +5,7 @@
 
 using System.Collections.Concurrent;
 using ApiKeyGateway.Domain.Exceptions;
+using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
 
@@ -19,6 +20,12 @@ public interface IRateLimiter
     /// Attempts to acquire a permit for the given key. Returns true if allowed.
     /// </summary>
     bool TryAcquire(string apiKeyId);
+
+    /// <summary>
+    /// Attempts to acquire a permit and returns the full outcome: whether it was allowed,
+    /// the limit, the permits left and when the window resets.
+    /// </summary>
+    RateLimitDecision Evaluate(string apiKeyId);
 
     /// <summary>
     /// Returns the number of remaining permits in the current window.
@@ -57,7 +64,10 @@ public class RateLimiter : IRateLimiter
     }
 
     /// <inheritdoc/>
-    public bool TryAcquire(string apiKeyId)
+    public bool TryAcquire(string apiKeyId) => Evaluate(apiKeyId).Allowed;
+
+    /// <inheritdoc/>
+    public RateLimitDecision Evaluate(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(apiKeyId);
 
@@ -67,15 +77,27 @@ public class RateLimiter : IRateLimiter
         {
             window.EvictExpired();
 
-            if (window.Timestamps.Count >= window.MaxRequests)
+            var allowed = window.Timestamps.Count < window.MaxRequests;
+            if (allowed)
+            {
+                window.Timestamps.Enqueue(DateTime.UtcNow);
+            }
+            else
             {
                 _logger.LogWarning("Rate limit exceeded for key {ApiKeyId}: {Count}/{Max}",
                     apiKeyId, window.Timestamps.Count, window.MaxRequests);
-                return false;
             }
 
-            window.Timestamps.Enqueue(DateTime.UtcNow);
-            return true;
+            return new RateLimitDecision
+            {
+                ApiKeyId = apiKeyId,
+                Allowed = allowed,
+                Limit = window.MaxRequests,
+                Remaining = Math.Max(0, window.MaxRequests - window.Timestamps.Count),
+                ResetAtUtc = window.Timestamps.Count > 0
+                    ? window.Timestamps.Peek().Add(window.WindowSize)
+                    : DateTime.UtcNow
+            };
         }
     }
 
