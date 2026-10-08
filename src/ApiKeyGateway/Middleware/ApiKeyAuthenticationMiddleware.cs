@@ -4,6 +4,7 @@
 // =====================================================================
 
 using ApiKeyGateway.Configuration;
+using ApiKeyGateway.Diagnostics;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Middleware;
 using ApiKeyGateway.Services;
@@ -109,11 +110,19 @@ public class ApiKeyAuthenticationMiddleware
                         return;
                     }
 
+                    GatewayMetrics.RequestsAllowed.Add(1);
                     context.Items["ApiKey"] = authResult.ApiKey;
                     context.Items["ConsumerId"] = authResult.ApiKey.ConsumerId;
                 }
                 else
                 {
+                    // A store outage is a 503, not an authentication failure, so it is not counted as unauthorized.
+                    if (authResult.FailureReason is { } failureReason
+                        && failureReason != Domain.Models.AuthenticationFailureReason.ServiceUnavailable)
+                    {
+                        GatewayMetrics.RecordUnauthorized(failureReason.ToString());
+                    }
+
                     // Handle authentication failure based on failure reason
                     switch (authResult.FailureReason)
                     {
@@ -152,6 +161,7 @@ public class ApiKeyAuthenticationMiddleware
         }
         catch (RateLimitExceededException ex)
         {
+            GatewayMetrics.RequestsRateLimited.Add(1);
             _logger.LogWarning("Rate limit exceeded for key {ApiKeyId}", ex.ApiKeyId);
             var problemDetails = GatewayProblemDetailsFactory.CreateRateLimitExceededProblem(
                 context,

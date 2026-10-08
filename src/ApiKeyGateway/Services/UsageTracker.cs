@@ -4,6 +4,7 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
@@ -38,6 +39,7 @@ public interface IUsageTracker
 /// <summary>
 /// Snapshot of in-memory usage counters for a single API key.
 /// </summary>
+[DebuggerDisplay("UsageSnapshot {ApiKeyId,nq} Requests={RequestCount}")]
 public class UsageSnapshot
 {
     /// <summary>API key identifier</summary>
@@ -54,6 +56,12 @@ public class UsageSnapshot
 
     /// <summary>Timestamp of the most recent tracked request</summary>
     public DateTime LastRequestAt { get; init; }
+
+    /// <summary>
+    /// Returns a concise representation of the snapshot counters.
+    /// </summary>
+    public override string ToString() =>
+        $"UsageSnapshot {{ ApiKeyId = {ApiKeyId}, RequestCount = {RequestCount}, BytesTransferred = {BytesTransferred}, WindowStart = {WindowStart:O}, LastRequestAt = {LastRequestAt:O} }}";
 }
 
 /// <inheritdoc cref="IUsageTracker"/>

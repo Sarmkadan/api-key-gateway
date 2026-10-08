@@ -3,11 +3,14 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Diagnostics;
+
 namespace ApiKeyGateway.Domain.Models;
 
 /// <summary>
 /// Represents an API key entity with authentication and metadata
 /// </summary>
+[DebuggerDisplay("ApiKey {Id,nq} {MaskedKey,nq} Status={Status,nq}")]
 public class ApiKey
 {
     public string Id { get; init; } = string.Empty;
@@ -28,6 +31,12 @@ public class ApiKey
     public string? RateLimitId { get; set; }
     public bool IsActive => Status == Enums.ApiKeyStatus.Active && !IsExpired;
     public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
+
+    /// <summary>
+    /// Log-safe representation of the key: the public prefix followed by a mask.
+    /// The stored hash is never exposed through this property or <see cref="ToString"/>.
+    /// </summary>
+    public string MaskedKey => string.IsNullOrEmpty(Prefix) ? "****" : $"{Prefix}****";
 
     /// <summary>
     /// Comma-separated list of scope strings that restrict which upstream routes
@@ -117,7 +126,8 @@ public class ApiKey
     }
 
     /// <summary>
-    /// Returns a concise, informative representation of the API key
+    /// Returns a concise representation of the API key. Shows the masked key only; the hash is omitted.
     /// </summary>
-    public override string ToString() => $"ApiKey {{ ExpiresAt = {ExpiresAt}, LastUsedAt = {LastUsedAt}, DisabledAt = {DisabledAt}, Description = {Description}, Metadata = {Metadata}, RequestCount = {RequestCount} }}";
+    public override string ToString() =>
+        $"ApiKey {{ Id = {Id}, Key = {MaskedKey}, ConsumerId = {ConsumerId}, Status = {Status}, ExpiresAt = {ExpiresAt}, LastUsedAt = {LastUsedAt}, DisabledAt = {DisabledAt}, RequestCount = {RequestCount} }}";
 }

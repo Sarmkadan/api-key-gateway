@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Diagnostics;
+using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 
 namespace ApiKeyGateway.Middleware;
@@ -48,6 +50,7 @@ public class ApiKeyMiddleware
         {
             _logger.LogWarning("Request missing API key from {RemoteIp}",
                 context.Connection.RemoteIpAddress);
+            GatewayMetrics.RecordUnauthorized(AuthenticationFailureReason.MissingApiKey.ToString());
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(new { error = "API key is required" });
             return;
@@ -56,20 +59,22 @@ public class ApiKeyMiddleware
         // Rate limit check
         if (_rateLimiter != null)
         {
-            if (!_rateLimiter.TryAcquire(apiKey))
+            var decision = _rateLimiter.Evaluate(apiKey);
+            if (!decision.Allowed)
             {
-                var resetTime = _rateLimiter.GetWindowResetTime(apiKey);
+                GatewayMetrics.RequestsRateLimited.Add(1);
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 context.Response.Headers[RateLimitResetHeader] =
-                    new DateTimeOffset(resetTime).ToUnixTimeSeconds().ToString();
+                    new DateTimeOffset(decision.ResetAtUtc).ToUnixTimeSeconds().ToString();
                 await context.Response.WriteAsJsonAsync(new { error = "Rate limit exceeded" });
                 return;
             }
 
             // Add rate limit headers
-            var remaining = _rateLimiter.GetRemainingPermits(apiKey);
-            context.Response.Headers[RateLimitRemainingHeader] = remaining.ToString();
+            context.Response.Headers[RateLimitRemainingHeader] = decision.Remaining.ToString();
         }
+
+        GatewayMetrics.RequestsAllowed.Add(1);
 
         // Track usage
         _usageTracker?.TrackRequest(apiKey);
