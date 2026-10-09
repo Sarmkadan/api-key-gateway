@@ -582,6 +582,8 @@ The check is named `api-key-gateway` and tagged `ready`. It reports:
 | `usageFlushQueueThreshold` | number | The configured threshold. |
 | `rateLimiterBackend` | `in_memory`, `not_registered` | Backend of the in-memory `IRateLimiter`. |
 
+`usageTracker` and `rateLimiterBackend` only report live state when the host registers `IUsageTracker` and `IRateLimiter`. The default `AddGatewayServices` registration does not register either, so both report `not_registered` and the flush-queue threshold never applies. The store probe is always active.
+
 Endpoints:
 
 - `GET /health` runs every registered check. **Behaviour change:** it now returns `503` when the key store is unreachable. Before this change it always returned `200` because no checks were registered. Load balancers that poll `/health` will see the instance as down during a database outage.
