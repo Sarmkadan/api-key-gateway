@@ -14,6 +14,10 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public static class CryptoHelpers
 {
+    /// <summary>Alphanumeric character set used for secure random string generation.</summary>
+    private const string AlphanumericAlphabet =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
     /// <summary>
     /// Generates a cryptographically secure random string.
     /// Delegates to <see cref="RandomNumberGenerator.GetString"/>, which performs
@@ -26,8 +30,7 @@ public static class CryptoHelpers
         if (length <= 0)
             throw new ArgumentException("Length must be positive", nameof(length));
 
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        return RandomNumberGenerator.GetString(chars, length);
+        return RandomNumberGenerator.GetString(AlphanumericAlphabet, length);
     }
 
     /// <summary>
