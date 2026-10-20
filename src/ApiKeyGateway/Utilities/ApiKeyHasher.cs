@@ -57,6 +57,7 @@ public class ApiKeyHasher : IApiKeyHasher
     private const string DefaultVersion = "v1";
     private const int SaltLength = 16;
     private const int IterationCount = 100000;
+    private const int VersionedHashPartCount = 3;
 
     /// <summary>
     /// Hashes an API key using SHA-256 with salt
@@ -125,7 +126,7 @@ public class ApiKeyHasher : IApiKeyHasher
         {
             // Extract salt and hash from stored value
             var parts = storedHash.Split('$');
-            if (parts.Length != 3)
+            if (parts.Length != VersionedHashPartCount)
             {
                 // Legacy format without version - hash directly and compare
                 var hashedInput = Hash(apiKey);
