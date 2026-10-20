@@ -44,6 +44,9 @@ namespace ApiKeyGateway.Utilities
     /// </summary>
     public sealed class CircuitBreaker : ICircuitBreaker
     {
+        private const int DefaultFailureThreshold = 5;
+        private const int DefaultTimeoutSeconds = 30;
+
         private CircuitBreakerState _state = CircuitBreakerState.Closed;
         private int _failureCount = 0;
         private DateTime _lastFailureTime = DateTime.MinValue;
@@ -53,12 +56,12 @@ namespace ApiKeyGateway.Utilities
         private readonly object _lockObj = new();
 
         public CircuitBreaker(
-            int failureThreshold = 5,
+            int failureThreshold = DefaultFailureThreshold,
             TimeSpan? timeout = null,
             ILogger<CircuitBreaker>? logger = null)
         {
             _failureThreshold = failureThreshold;
-            _timeout = timeout ?? TimeSpan.FromSeconds(30);
+            _timeout = timeout ?? TimeSpan.FromSeconds(DefaultTimeoutSeconds);
             _logger = logger ?? NullLogger<CircuitBreaker>.Instance;
         }
 
