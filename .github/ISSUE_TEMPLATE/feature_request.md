@@ -1,19 +1,19 @@
 ---
-name: Feature Request
-about: Suggest a feature for api-key-gateway
-title: '[FEATURE] '
+name: Feature request
+about: Suggest an enhancement for ApiKeyGateway
+title: '[Feature] '
 labels: enhancement
 assignees: ''
 ---
 
-## Problem Statement
-A clear description of the problem or limitation.
+## Problem
+A clear description of the problem or limitation you are running into. Who is affected and why?
 
-## Proposed Solution
-Describe the solution you'd like to see.
+## Proposed solution
+Describe the behavior or API you would like to see.
 
-## Alternatives Considered
-List any alternative solutions or workarounds you've considered.
+## Alternatives considered
+Other approaches or workarounds you have considered, and why they fall short.
 
-## Additional Context
-Any other context, mockups, or examples.
+## Additional context
+Any other context, examples, configuration snippets or mockups.
