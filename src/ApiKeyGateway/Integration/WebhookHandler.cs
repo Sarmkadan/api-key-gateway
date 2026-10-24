@@ -7,13 +7,12 @@
 // =============================================================================
 
 using System.Net;
-using System.Threading;
-using System.Threading;
 using System.Text.Json;
-using ApiKeyGateway.Events;
-using ApiKeyGateway.Utilities;
+using System.Threading;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Events;
+using ApiKeyGateway.Utilities;
 
 namespace ApiKeyGateway.Integration;
 
@@ -27,19 +26,35 @@ public sealed class WebhookHandler : IWebhookHandler
     private readonly List<WebhookSubscription> _subscriptions = new();
     private readonly GatewayConfiguration _gatewayConfig;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebhookHandler"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="gatewayConfig">The gateway configuration providing retry settings.</param>
     public WebhookHandler(ILogger<WebhookHandler> logger, GatewayConfiguration gatewayConfig)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _gatewayConfig = gatewayConfig ?? throw new ArgumentNullException(nameof(gatewayConfig));
     }
 
+    /// <summary>
+    /// Registers a webhook subscription for the given event types.
+    /// </summary>
+    /// <param name="url">The endpoint to deliver webhooks to.</param>
+    /// <param name="eventTypes">Names of the event types to subscribe to.</param>
+    /// <param name="secret">Optional secret used to sign payloads with HMAC-SHA256.</param>
+    /// <returns>The ID of the new subscription.</returns>
     public Task<string> RegisterWebhookAsync(string url, string[] eventTypes, string? secret = null)
     {
         if (string.IsNullOrWhiteSpace(url))
+        {
             throw new ArgumentException("URL cannot be empty", nameof(url));
+        }
 
         if (eventTypes == null || eventTypes.Length == 0)
+        {
             throw new ArgumentException("At least one event type must be specified", nameof(eventTypes));
+        }
 
         var subscription = new WebhookSubscription
         {
@@ -61,10 +76,17 @@ public sealed class WebhookHandler : IWebhookHandler
         return Task.FromResult(subscription.Id);
     }
 
+    /// <summary>
+    /// Delivers an event to all active subscriptions interested in its event type.
+    /// </summary>
+    /// <typeparam name="T">The type of event being delivered.</typeparam>
+    /// <param name="event">The event to deliver.</param>
     public async Task DeliverWebhookAsync<T>(T @event) where T : ApiKeyEvent
     {
         if (@event == null)
+        {
             throw new ArgumentNullException(nameof(@event));
+        }
 
         var eventTypeName = typeof(T).Name;
 
@@ -90,10 +112,14 @@ public sealed class WebhookHandler : IWebhookHandler
     private async Task DeliverToEndpointAsync(WebhookSubscription subscription, string payload, Guid eventId)
     {
         if (subscription == null)
+        {
             throw new ArgumentNullException(nameof(subscription));
+        }
 
         if (string.IsNullOrWhiteSpace(subscription.Url))
+        {
             throw new InvalidOperationException("Webhook subscription has no URL");
+        }
 
         using var client = HttpClientFactory.CreateWebhookClient();
 

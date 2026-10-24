@@ -5,16 +5,16 @@
 // covering audit logging, usage tracking, and rate limit event handling.
 // =====================================================================
 
-using Xunit;
-using ApiKeyGateway.Events;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Events;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -109,7 +109,7 @@ public class AuditLogEventHandlerTests
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Recording audit: API key created")),
                     It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
 
             _auditRepositoryMock.Verify(
@@ -198,7 +198,7 @@ public class AuditLogEventHandlerTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Recording audit: API key rotated")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         _auditRepositoryMock.Verify(
@@ -254,7 +254,7 @@ public class AuditLogEventHandlerTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Recording audit: API key disabled")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         _auditRepositoryMock.Verify(
@@ -344,7 +344,7 @@ public class AuditLogEventHandlerTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Usage recorded:")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         _metricsMock.Verify(
@@ -441,7 +441,7 @@ public class AuditLogEventHandlerTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("CRITICAL: Quota exhausted")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         _metricsMock.Verify(
@@ -454,7 +454,7 @@ public class AuditLogEventHandlerTests
                 log.ResourceType == "ApiKey" &&
                 log.Action == AuditAction.RateLimitExceeded &&
                 log.IsSuccess == false &&
-                log.Reason.Contains("Usage quota of 1000 requests exhausted") &&
+                log.Reason!.Contains("Usage quota of 1000 requests exhausted") &&
                 log.Reason.Contains(resetTime.ToString("O")))),
             Times.Once);
     }

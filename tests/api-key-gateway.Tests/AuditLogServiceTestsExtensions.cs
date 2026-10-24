@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =====================================================================
 
-using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using FluentAssertions;

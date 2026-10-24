@@ -15,7 +15,6 @@ public static class DateTimeExtensions
     /// </summary>
     /// <param name="date">The date to get the start of day for</param>
     /// <returns>The start of the day (midnight)</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="date"/> is null (though DateTime is a value type)</exception>
     public static DateTime StartOfDay(this DateTime date)
         => date.Date;
 
@@ -38,9 +37,16 @@ public static class DateTimeExtensions
     {
         var culture = System.Globalization.CultureInfo.CurrentCulture;
         var diff = (int)date.DayOfWeek - (int)culture.DateTimeFormat.FirstDayOfWeek;
-        if (diff < 0) diff += 7;
+        if (diff < 0)
+        {
+            diff += 7;
+        }
+
         if (diff > date.Date.Subtract(DateTime.MinValue).TotalDays)
+        {
             return DateTime.MinValue;
+        }
+
         return date.AddDays(-diff).Date;
     }
 
@@ -97,8 +103,6 @@ public static class DateTimeExtensions
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="date"/> is null (though DateTime is a value type)</exception>
     public static string ToHumanReadableTime(this DateTime date)
     {
-        ArgumentNullException.ThrowIfNull(date);
-
         var timeSpan = DateTime.UtcNow - date;
         var totalSeconds = timeSpan.TotalSeconds;
 

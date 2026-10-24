@@ -28,6 +28,13 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
     private readonly double _jitterPercentage; // 0.0 = no jitter, 0.1 = 10% default
     private static readonly Random _random = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="KeyRotationScheduler"/> class and reads its settings from the <c>KeyRotation</c> section.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider used to create scopes.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="configuration">The application configuration.</param>
+    /// <exception cref="ConfigurationException">Thrown when a KeyRotation setting is invalid.</exception>
     public KeyRotationScheduler(
         IServiceProvider serviceProvider,
         ILogger<KeyRotationScheduler> logger,
@@ -35,7 +42,9 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
         : base(serviceProvider, logger)
     {
         if (configuration == null)
+        {
             throw new ArgumentNullException(nameof(configuration));
+        }
 
         var section = configuration.GetSection("KeyRotation");
         _checkInterval = TimeSpan.FromHours(section.GetValue("CheckIntervalHours", 24));
@@ -47,13 +56,19 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
         // Jitter percentage is optional; default to 10% (0.1)
         _jitterPercentage = section.GetValue<double?>("JitterPercentage", 0.1) ?? 0.1;
         if (_jitterPercentage < 0 || _jitterPercentage > 1)
+        {
             throw new ConfigurationException("Jitter percentage must be between 0 and 1", "KeyRotation:JitterPercentage");
+        }
 
         if (_checkInterval <= TimeSpan.Zero)
+        {
             throw new ConfigurationException("Check interval must be positive", "KeyRotation:CheckIntervalHours");
+        }
 
         if (_warningDays <= 0)
+        {
             throw new ConfigurationException("Warning days must be positive", "KeyRotation:WarningDays");
+        }
     }
 
     /// <inheritdoc/>
@@ -106,7 +121,9 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
     private TimeSpan ApplyJitter(TimeSpan interval)
     {
         if (_jitterPercentage <= 0)
+        {
             return interval;
+        }
 
         // Compute a factor between (1 - jitter) and (1 + jitter)
         double factor;
@@ -118,7 +135,9 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
         var jitteredTicks = (long)(interval.Ticks * factor);
         // Ensure we never produce a non‑positive delay
         if (jitteredTicks < 1)
+        {
             jitteredTicks = 1;
+        }
 
         return TimeSpan.FromTicks(jitteredTicks);
     }

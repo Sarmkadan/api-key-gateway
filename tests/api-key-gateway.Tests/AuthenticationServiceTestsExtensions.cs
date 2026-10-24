@@ -6,13 +6,13 @@
 // Extension methods for AuthenticationServiceTests to provide additional test
 // scenarios and helper methods for testing AuthenticationService behavior
 
-using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

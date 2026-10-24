@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Validation;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using ApiKeyGateway.Validation;
 
 namespace ApiKeyGateway.Benchmarks;
 

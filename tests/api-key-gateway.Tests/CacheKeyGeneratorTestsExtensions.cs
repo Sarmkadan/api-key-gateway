@@ -5,8 +5,8 @@
 
 using System;
 using System.Collections.Generic;
-using FluentAssertions;
 using ApiKeyGateway.Caching;
+using FluentAssertions;
 
 namespace ApiKeyGateway.Tests;
 

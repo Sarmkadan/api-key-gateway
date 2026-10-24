@@ -12,19 +12,70 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public class AnalyticsSummary
 {
+    /// <summary>
+    /// Identifier of the API key the summary covers.
+    /// </summary>
     public string ApiKeyId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Start of the analyzed date range.
+    /// </summary>
     public DateTime From { get; set; }
+
+    /// <summary>
+    /// End of the analyzed date range.
+    /// </summary>
     public DateTime To { get; set; }
+
+    /// <summary>
+    /// Total number of requests in the range.
+    /// </summary>
     public int TotalRequests { get; set; }
+
+    /// <summary>
+    /// Number of successful requests in the range.
+    /// </summary>
     public int SuccessfulRequests { get; set; }
+
+    /// <summary>
+    /// Number of failed requests in the range.
+    /// </summary>
     public int FailedRequests { get; set; }
+
+    /// <summary>
+    /// Percentage of successful requests.
+    /// </summary>
     public double SuccessRatePercent { get; set; }
+
+    /// <summary>
+    /// Percentage of failed requests.
+    /// </summary>
     public double ErrorRatePercent { get; set; }
+
+    /// <summary>
+    /// Average response time in milliseconds.
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Total bytes transferred in the range.
+    /// </summary>
     public long TotalBytesTransferred { get; set; }
+
+    /// <summary>
+    /// Number of distinct endpoints called.
+    /// </summary>
     public int UniqueEndpoints { get; set; }
+
+    /// <summary>
+    /// Number of distinct source IP addresses.
+    /// </summary>
     public int UniqueSourceIps { get; set; }
 
+    /// <summary>
+    /// Returns a short diagnostic string with the key identifier, date range and request counts.
+    /// </summary>
+    /// <returns>A formatted summary string.</returns>
     public override string ToString() => $"AnalyticsSummary {{ ApiKeyId = {ApiKeyId}, From = {From}, To = {To}, TotalRequests = {TotalRequests}, SuccessfulRequests = {SuccessfulRequests}, FailedRequests = {FailedRequests} }}";
 }
 
@@ -33,11 +84,34 @@ public class AnalyticsSummary
 /// </summary>
 public class EndpointStat
 {
+    /// <summary>
+    /// Request path of the endpoint.
+    /// </summary>
     public string Endpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// HTTP method of the endpoint.
+    /// </summary>
     public string Method { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number of requests to the endpoint.
+    /// </summary>
     public int RequestCount { get; set; }
+
+    /// <summary>
+    /// Average response time in milliseconds.
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Number of failed requests to the endpoint.
+    /// </summary>
     public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// Percentage of failed requests to the endpoint.
+    /// </summary>
     public double ErrorRatePercent { get; set; }
 }
 
@@ -46,9 +120,24 @@ public class EndpointStat
 /// </summary>
 public class HourlyBucket
 {
+    /// <summary>
+    /// Start of the hour this bucket covers.
+    /// </summary>
     public DateTime Hour { get; set; }
+
+    /// <summary>
+    /// Number of requests in the hour.
+    /// </summary>
     public int RequestCount { get; set; }
+
+    /// <summary>
+    /// Number of failed requests in the hour.
+    /// </summary>
     public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// Average response time in milliseconds.
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
 }
 
@@ -57,10 +146,29 @@ public class HourlyBucket
 /// </summary>
 public class DailyBucket
 {
+    /// <summary>
+    /// Calendar day this bucket covers.
+    /// </summary>
     public DateTime Date { get; set; }
+
+    /// <summary>
+    /// Number of requests on the day.
+    /// </summary>
     public int RequestCount { get; set; }
+
+    /// <summary>
+    /// Number of failed requests on the day.
+    /// </summary>
     public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// Average response time in milliseconds.
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Total bytes transferred on the day.
+    /// </summary>
     public long TotalBytes { get; set; }
 }
 
@@ -69,12 +177,39 @@ public class DailyBucket
 /// </summary>
 public class ApiKeyConsumerStat
 {
+    /// <summary>
+    /// Identifier of the API key.
+    /// </summary>
     public string ApiKeyId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Identifier of the consumer that owns the key.
+    /// </summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number of requests made with the key.
+    /// </summary>
     public int RequestCount { get; set; }
+
+    /// <summary>
+    /// Total bytes transferred with the key.
+    /// </summary>
     public long TotalBytesTransferred { get; set; }
+
+    /// <summary>
+    /// Average response time in milliseconds.
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Number of failed requests made with the key.
+    /// </summary>
     public int ErrorCount { get; set; }
+
+    /// <summary>
+    /// Percentage of failed requests made with the key.
+    /// </summary>
     public double ErrorRatePercent { get; set; }
 }
 
@@ -119,6 +254,11 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     private readonly IUsageTrackingService _usageTracking;
     private readonly ILogger<UsageAnalyticsService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageAnalyticsService"/> class.
+    /// </summary>
+    /// <param name="usageTracking">Source of raw usage records.</param>
+    /// <param name="logger">Logger for analytics operations.</param>
     public UsageAnalyticsService(
         IUsageTrackingService usageTracking,
         ILogger<UsageAnalyticsService> logger)
@@ -131,10 +271,14 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     public async Task<AnalyticsSummary> GetSummaryAsync(string apiKeyId, DateTime from, DateTime to)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
         _logger.LogInformation("Getting summary for {ApiKeyId} from {From} to {To}", apiKeyId, from, to);
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
@@ -171,12 +315,19 @@ public class UsageAnalyticsService : IUsageAnalyticsService
         string apiKeyId, DateTime from, DateTime to, int limit = 10)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
-        if (limit <= 0) limit = 10;
+        if (limit <= 0)
+        {
+            limit = 10;
+        }
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -206,10 +357,14 @@ public class UsageAnalyticsService : IUsageAnalyticsService
         string apiKeyId, DateTime from, DateTime to)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -237,10 +392,14 @@ public class UsageAnalyticsService : IUsageAnalyticsService
         string apiKeyId, DateTime from, DateTime to)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
         var records = await _usageTracking.GetUsageRecordsAsync(apiKeyId, from, to);
 
@@ -265,22 +424,32 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     private static void ValidateArguments(string apiKeyId, DateTime from, DateTime to)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
     }
 
     private static void ValidateArguments(string apiKeyId, DateTime from, DateTime to, int limit)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
     }
 
     /// <summary>
@@ -289,10 +458,14 @@ public class UsageAnalyticsService : IUsageAnalyticsService
     public async Task<List<ApiKeyConsumerStat>> GetTopConsumersAsync(DateTime from, DateTime to, int topN = 10)
     {
         if (to < from)
+        {
             throw new ArgumentException("End date must be after start date", nameof(to));
+        }
 
         if (topN <= 0)
+        {
             topN = 10;
+        }
 
         // Get all usage records across all API keys in the date range
         var allRecords = await _usageTracking.GetUsageAsync(from, to);

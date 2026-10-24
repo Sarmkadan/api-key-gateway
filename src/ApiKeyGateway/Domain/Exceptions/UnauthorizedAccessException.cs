@@ -34,7 +34,7 @@ public class UnauthorizedAccessException : Exception
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="reason">Reason for the unauthorized access.</param>
-    public UnauthorizedAccessException(string message, string reason) : base(message)
+    public UnauthorizedAccessException(string message, string? reason) : base(message)
     {
         Reason = reason;
     }
@@ -45,7 +45,7 @@ public class UnauthorizedAccessException : Exception
     /// <param name="message">The error message.</param>
     /// <param name="reason">Reason for the unauthorized access.</param>
     /// <param name="sourceIp">Source IP address where the unauthorized request originated.</param>
-    public UnauthorizedAccessException(string message, string reason, string sourceIp)
+    public UnauthorizedAccessException(string message, string? reason, string? sourceIp)
         : base(message)
     {
         Reason = reason;

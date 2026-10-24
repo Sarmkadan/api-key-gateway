@@ -1,119 +1,118 @@
 using System;
 using System.Collections.Generic;
 
-namespace ApiKeyGateway.Utilities
+namespace ApiKeyGateway.Utilities;
+
+/// <summary>
+/// Provides validation helpers for <see cref="RateLimitCalculationHelper"/> operations.
+/// Validates the results of rate limit calculation methods.
+/// </summary>
+public static class RateLimitCalculationHelperValidation
 {
     /// <summary>
-    /// Provides validation helpers for <see cref="RateLimitCalculationHelper"/> operations.
-    /// Validates the results of rate limit calculation methods.
+    /// Validates the results of calling <see cref="RateLimitCalculationHelper"/> methods with typical values.
+    /// Returns any validation problems found in the calculated values.
     /// </summary>
-    public static class RateLimitCalculationHelperValidation
+    /// <returns>A list of validation errors; empty if valid.</returns>
+    public static IReadOnlyList<string> Validate()
     {
-        /// <summary>
-        /// Validates the results of calling <see cref="RateLimitCalculationHelper"/> methods with typical values.
-        /// Returns any validation problems found in the calculated values.
-        /// </summary>
-        /// <returns>A list of validation errors; empty if valid.</returns>
-        public static IReadOnlyList<string> Validate()
+        ArgumentNullException.ThrowIfNull(typeof(RateLimitCalculationHelper));
+
+        var errors = new List<string>();
+
+        // Validate GetWindowStart with a typical DateTime
+        var now = DateTime.UtcNow;
+        var windowStart = RateLimitCalculationHelper.GetWindowStart(now, Domain.Enums.RateLimitUnit.Second);
+        if (windowStart == default)
         {
-            ArgumentNullException.ThrowIfNull(typeof(RateLimitCalculationHelper));
-
-            var errors = new List<string>();
-
-            // Validate GetWindowStart with a typical DateTime
-            var now = DateTime.UtcNow;
-            var windowStart = RateLimitCalculationHelper.GetWindowStart(now, Domain.Enums.RateLimitUnit.Second);
-            if (windowStart == default)
-            {
-                errors.Add("GetWindowStart returned default DateTime value.");
-            }
-            else if (windowStart > now)
-            {
-                errors.Add("GetWindowStart returned a value that is after the current time.");
-            }
-
-            // Validate GetWindowEnd with a typical DateTime
-            var windowEnd = RateLimitCalculationHelper.GetWindowEnd(now, Domain.Enums.RateLimitUnit.Second);
-            if (windowEnd == default)
-            {
-                errors.Add("GetWindowEnd returned default DateTime value.");
-            }
-            else if (windowEnd <= now)
-            {
-                errors.Add("GetWindowEnd returned a value that is not after the current time.");
-            }
-            else if (windowEnd <= windowStart)
-            {
-                errors.Add("GetWindowEnd returned a value that is not after GetWindowStart.");
-            }
-
-            // Validate GetSecondsUntilAllowed with typical parameters
-            var secondsUntilAllowed = RateLimitCalculationHelper.GetSecondsUntilAllowed(0, 100, now, Domain.Enums.RateLimitUnit.Second);
-            if (secondsUntilAllowed < 0)
-            {
-                errors.Add("GetSecondsUntilAllowed returned a negative value.");
-            }
-
-            // Validate CalculateQuotagePercentage with typical parameters
-            var quotaPercentage = RateLimitCalculationHelper.CalculateQuotagePercentage(50, 100);
-            if (quotaPercentage < 0 || quotaPercentage > 100)
-            {
-                errors.Add("CalculateQuotagePercentage returned a value outside the range [0, 100].");
-            }
-
-            // Validate ShouldWarnAboutLimit with typical and edge case parameters
-            var shouldWarnBelowThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(79);
-            var shouldWarnAtThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(80);
-            var shouldWarnAboveThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(95);
-
-            if (shouldWarnBelowThreshold)
-            {
-                errors.Add("ShouldWarnAboutLimit returned true for value below 80% threshold.");
-            }
-
-            if (!shouldWarnAtThreshold)
-            {
-                errors.Add("ShouldWarnAboutLimit returned false for value at 80% threshold.");
-            }
-
-            if (!shouldWarnAboveThreshold)
-            {
-                errors.Add("ShouldWarnAboutLimit returned false for value above 80% threshold.");
-            }
-
-            // Validate GetReadableResetTime with typical parameters
-            var readableResetTime = RateLimitCalculationHelper.GetReadableResetTime(windowEnd);
-            if (string.IsNullOrWhiteSpace(readableResetTime))
-            {
-                errors.Add("GetReadableResetTime returned null or whitespace.");
-            }
-            else if (readableResetTime == "0 seconds" && windowEnd > now)
-            {
-                errors.Add("GetReadableResetTime returned '0 seconds' when windowEnd is in the future.");
-            }
-
-            return errors.AsReadOnly();
+            errors.Add("GetWindowStart returned default DateTime value.");
+        }
+        else if (windowStart > now)
+        {
+            errors.Add("GetWindowStart returned a value that is after the current time.");
         }
 
-        /// <summary>
-        /// Determines whether the <see cref="RateLimitCalculationHelper"/> methods return valid results.
-        /// </summary>
-        /// <returns>True if valid; otherwise, false.</returns>
-        public static bool IsValid() => Validate().Count == 0;
-
-        /// <summary>
-        /// Ensures that the <see cref="RateLimitCalculationHelper"/> methods return valid results.
-        /// Throws an exception if validation fails.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown if validation fails with a list of validation errors.</exception>
-        public static void EnsureValid()
+        // Validate GetWindowEnd with a typical DateTime
+        var windowEnd = RateLimitCalculationHelper.GetWindowEnd(now, Domain.Enums.RateLimitUnit.Second);
+        if (windowEnd == default)
         {
-            var errors = Validate();
-            if (errors.Count > 0)
-            {
-                throw new InvalidOperationException(
-                    $"RateLimitCalculationHelper validation failed. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
-            }
+            errors.Add("GetWindowEnd returned default DateTime value.");
+        }
+        else if (windowEnd <= now)
+        {
+            errors.Add("GetWindowEnd returned a value that is not after the current time.");
+        }
+        else if (windowEnd <= windowStart)
+        {
+            errors.Add("GetWindowEnd returned a value that is not after GetWindowStart.");
+        }
+
+        // Validate GetSecondsUntilAllowed with typical parameters
+        var secondsUntilAllowed = RateLimitCalculationHelper.GetSecondsUntilAllowed(0, 100, now, Domain.Enums.RateLimitUnit.Second);
+        if (secondsUntilAllowed < 0)
+        {
+            errors.Add("GetSecondsUntilAllowed returned a negative value.");
+        }
+
+        // Validate CalculateQuotagePercentage with typical parameters
+        var quotaPercentage = RateLimitCalculationHelper.CalculateQuotagePercentage(50, 100);
+        if (quotaPercentage < 0 || quotaPercentage > 100)
+        {
+            errors.Add("CalculateQuotagePercentage returned a value outside the range [0, 100].");
+        }
+
+        // Validate ShouldWarnAboutLimit with typical and edge case parameters
+        var shouldWarnBelowThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(79);
+        var shouldWarnAtThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(80);
+        var shouldWarnAboveThreshold = RateLimitCalculationHelper.ShouldWarnAboutLimit(95);
+
+        if (shouldWarnBelowThreshold)
+        {
+            errors.Add("ShouldWarnAboutLimit returned true for value below 80% threshold.");
+        }
+
+        if (!shouldWarnAtThreshold)
+        {
+            errors.Add("ShouldWarnAboutLimit returned false for value at 80% threshold.");
+        }
+
+        if (!shouldWarnAboveThreshold)
+        {
+            errors.Add("ShouldWarnAboutLimit returned false for value above 80% threshold.");
+        }
+
+        // Validate GetReadableResetTime with typical parameters
+        var readableResetTime = RateLimitCalculationHelper.GetReadableResetTime(windowEnd);
+        if (string.IsNullOrWhiteSpace(readableResetTime))
+        {
+            errors.Add("GetReadableResetTime returned null or whitespace.");
+        }
+        else if (readableResetTime == "0 seconds" && windowEnd > now)
+        {
+            errors.Add("GetReadableResetTime returned '0 seconds' when windowEnd is in the future.");
+        }
+
+        return errors.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Determines whether the <see cref="RateLimitCalculationHelper"/> methods return valid results.
+    /// </summary>
+    /// <returns>True if valid; otherwise, false.</returns>
+    public static bool IsValid() => Validate().Count == 0;
+
+    /// <summary>
+    /// Ensures that the <see cref="RateLimitCalculationHelper"/> methods return valid results.
+    /// Throws an exception if validation fails.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown if validation fails with a list of validation errors.</exception>
+    public static void EnsureValid()
+    {
+        var errors = Validate();
+        if (errors.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"RateLimitCalculationHelper validation failed. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
     }
 }

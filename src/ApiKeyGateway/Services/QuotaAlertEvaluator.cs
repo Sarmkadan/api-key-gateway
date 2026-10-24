@@ -3,11 +3,11 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Events;
 using Microsoft.Extensions.Options;
-using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
@@ -59,18 +59,25 @@ public sealed class QuotaAlertStateCache
             if (!_lastAlerted.TryGetValue(consumerId, out var existing))
             {
                 if (_lastAlerted.TryAdd(consumerId, (periodStart, threshold)))
+                {
                     return true;
+                }
+
                 continue;
             }
 
             // New period: any threshold may fire again.
             var stale = existing.PeriodStart != periodStart;
             if (!stale && existing.Threshold >= threshold)
+            {
                 return false;
+            }
 
             var updated = (periodStart, stale ? threshold : Math.Max(existing.Threshold, threshold));
             if (_lastAlerted.TryUpdate(consumerId, updated, existing))
+            {
                 return true;
+            }
         }
     }
 
@@ -147,17 +154,23 @@ public class QuotaAlertEvaluator : IQuotaAlertEvaluator
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
 
         if (!_options.Enabled)
+        {
             return;
+        }
 
         var thresholds = _options.GetEffectiveThresholds();
         if (thresholds.Count == 0)
+        {
             return;
+        }
 
         try
         {
             var quota = await _quotaRepository.GetByApiKeyIdAsync(apiKeyId);
             if (quota is not { IsEnabled: true, QuotaLimit: > 0 })
+            {
                 return;
+            }
 
             var now = DateTime.UtcNow;
             var periodStart = UsageQuota.GetPeriodStart(now, quota.Period);
@@ -168,10 +181,14 @@ public class QuotaAlertEvaluator : IQuotaAlertEvaluator
             foreach (var threshold in thresholds)
             {
                 if (percentUsed < threshold)
+                {
                     break;
+                }
 
                 if (!_stateCache.TryMarkAlerted(consumerId, periodStart, threshold))
+                {
                     continue;
+                }
 
                 var @event = new QuotaThresholdReachedEvent
                 {

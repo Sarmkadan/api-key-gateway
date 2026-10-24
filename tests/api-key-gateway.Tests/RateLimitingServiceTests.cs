@@ -3,7 +3,6 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
@@ -11,6 +10,7 @@ using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

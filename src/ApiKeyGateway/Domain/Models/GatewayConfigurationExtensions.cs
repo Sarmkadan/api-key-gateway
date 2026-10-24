@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace ApiKeyGateway.Domain.Models
-{
+namespace ApiKeyGateway.Domain.Models;
+
 	/// <summary>
 	/// Extension methods that add useful behaviour to <see cref="GatewayConfiguration"/>.
 	/// </summary>
@@ -74,4 +74,3 @@ namespace ApiKeyGateway.Domain.Models
 			return config.EnableRateLimiting ? config.DefaultRateLimitPerHour : int.MaxValue;
 		}
 	}
-}

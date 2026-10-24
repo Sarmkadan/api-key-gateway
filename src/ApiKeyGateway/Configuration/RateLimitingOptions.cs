@@ -95,10 +95,18 @@ public class RateLimitingOptions
     public void Validate()
     {
         if (CircuitBreakerFailureThreshold < 1)
+        {
             throw new ArgumentOutOfRangeException(nameof(CircuitBreakerFailureThreshold), CircuitBreakerFailureThreshold, "Threshold must be at least 1.");
+        }
+
         if (CircuitBreakerFailureWindow <= TimeSpan.Zero)
+        {
             throw new ArgumentOutOfRangeException(nameof(CircuitBreakerFailureWindow), CircuitBreakerFailureWindow, "Window must be positive.");
+        }
+
         if (CircuitBreakerCooldown <= TimeSpan.Zero)
+        {
             throw new ArgumentOutOfRangeException(nameof(CircuitBreakerCooldown), CircuitBreakerCooldown, "Cooldown must be positive.");
+        }
     }
 }

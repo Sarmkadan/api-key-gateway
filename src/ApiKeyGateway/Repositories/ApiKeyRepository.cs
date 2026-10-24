@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Data;
 using System.Data.Common;
+using ApiKeyGateway.Data;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -24,6 +24,11 @@ public class ApiKeyRepository : IApiKeyRepository
     private readonly ILogger<ApiKeyRepository> _logger;
     private readonly Dictionary<string, ApiKey> _memoryStore;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyRepository"/> class
+    /// </summary>
+    /// <param name="connection">The database connection used for queries</param>
+    /// <param name="logger">Logger for repository diagnostics</param>
     public ApiKeyRepository(IDbConnection connection, ILogger<ApiKeyRepository> logger)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -41,7 +46,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task<ApiKey> CreateAsync(ApiKey apiKey)
     {
         if (apiKey == null)
+        {
             throw new ArgumentNullException(nameof(apiKey));
+        }
 
         try
         {
@@ -78,10 +85,14 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task<ApiKey?> GetByIdAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return null;
+        }
 
         if (_memoryStore.TryGetValue(id, out var cached))
+        {
             return cached;
+        }
 
         try
         {
@@ -117,7 +128,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task<ApiKey?> GetByHashAsync(string keyHash)
     {
         if (string.IsNullOrWhiteSpace(keyHash))
+        {
             return null;
+        }
 
         try
         {
@@ -151,7 +164,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task<List<ApiKey>> GetByConsumerIdAsync(string consumerId)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             return [];
+        }
 
         try
         {
@@ -186,7 +201,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task UpdateAsync(ApiKey apiKey)
     {
         if (apiKey == null)
+        {
             throw new ArgumentNullException(nameof(apiKey));
+        }
 
         try
         {
@@ -227,7 +244,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task DeleteAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return;
+        }
 
         try
         {
@@ -324,7 +343,9 @@ public class ApiKeyRepository : IApiKeyRepository
     public async Task<List<ApiKey>> GetByPrefixAsync(string prefix)
     {
         if (string.IsNullOrWhiteSpace(prefix))
+        {
             return [];
+        }
 
         try
         {

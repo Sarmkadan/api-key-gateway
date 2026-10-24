@@ -2,11 +2,6 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // =====================================================================
-/// <summary>
-/// Integration tests for the API Key Gateway system, covering end-to-end workflows
-/// across authentication, rate limiting, usage tracking, quota management, and audit logging.
-/// </summary>
-using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
@@ -14,6 +9,11 @@ using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+/// <summary>
+/// Integration tests for the API Key Gateway system, covering end-to-end workflows
+/// across authentication, rate limiting, usage tracking, quota management, and audit logging.
+/// </summary>
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

@@ -52,6 +52,9 @@ public interface IRateLimitingService
     Task ResetWindowAsync(string apiKeyId);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IRateLimitingService"/> backed by <see cref="IRateLimitRepository"/>.
+/// </summary>
 public class RateLimitingService : IRateLimitingService
 {
     /// <summary>
@@ -80,9 +83,20 @@ public class RateLimitingService : IRateLimitingService
     private DateTime _firstFailureAtUtc;
     private DateTime _circuitOpenUntilUtc;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitingService"/> class using the default clock skew tolerance.
+    /// </summary>
+    /// <param name="repository">The rate limit store.</param>
+    /// <param name="logger">The logger.</param>
     public RateLimitingService(IRateLimitRepository repository, ILogger<RateLimitingService> logger)
         : this(repository, logger, DefaultClockSkewToleranceSeconds) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitingService"/> class with a custom clock skew tolerance.
+    /// </summary>
+    /// <param name="repository">The rate limit store.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="clockSkewToleranceSeconds">Clock skew tolerance for window resets; negative values fall back to the default.</param>
     public RateLimitingService(IRateLimitRepository repository, ILogger<RateLimitingService> logger, double clockSkewToleranceSeconds)
         : this(repository, logger, clockSkewToleranceSeconds, new RateLimitingOptions(), null) { }
 
@@ -127,10 +141,14 @@ public class RateLimitingService : IRateLimitingService
     public async Task<bool> CheckLimitAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ArgumentException("API Key ID cannot be empty", nameof(apiKeyId));
+        }
 
         if (IsCircuitOpen())
+        {
             return await ApplyFailurePolicyAsync(apiKeyId, nameof(CheckLimitAsync), circuitOpen: true, error: null);
+        }
 
         RateLimit? rateLimit;
         try
@@ -146,7 +164,9 @@ public class RateLimitingService : IRateLimitingService
         ResetStoreFailures();
 
         if (rateLimit == null)
+        {
             return true;
+        }
 
         await CheckAndResetWindowAsync(rateLimit);
 
@@ -166,7 +186,9 @@ public class RateLimitingService : IRateLimitingService
     public async Task RecordRequestAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return;
+        }
 
         if (IsCircuitOpen())
         {
@@ -216,7 +238,9 @@ public class RateLimitingService : IRateLimitingService
     {
         var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
         if (rateLimit == null)
+        {
             return false;
+        }
 
         rateLimit = new RateLimit
         {
@@ -245,7 +269,9 @@ public class RateLimitingService : IRateLimitingService
 
         var rateLimit = await _repository.GetByApiKeyIdAsync(apiKeyId);
         if (rateLimit == null)
+        {
             return;
+        }
 
         rateLimit.ResetWindow();
         await _repository.UpdateAsync(rateLimit);
@@ -256,13 +282,17 @@ public class RateLimitingService : IRateLimitingService
     private void PruneExpiredWindowResetCacheEntries()
     {
         if (_windowResetCache.Count <= WindowResetCacheMaxEntries)
+        {
             return;
+        }
 
         var now = DateTime.UtcNow;
         foreach (var entry in _windowResetCache.ToArray())
         {
             if (entry.Value <= now)
+            {
                 _windowResetCache.TryRemove(entry.Key, out _);
+            }
         }
     }
 
@@ -274,9 +304,13 @@ public class RateLimitingService : IRateLimitingService
     private async Task<bool> ApplyFailurePolicyAsync(string apiKeyId, string operation, bool circuitOpen, DataAccessException? error)
     {
         if (circuitOpen)
+        {
             _logger.LogWarning("Rate limit store circuit open; skipping store for API key {ApiKeyId} ({Operation})", apiKeyId, operation);
+        }
         else
+        {
             _logger.LogError(error, "Rate limit store failure for API key {ApiKeyId} ({Operation})", apiKeyId, operation);
+        }
 
         if (_options.FailurePolicy == RateLimitFailurePolicy.FailClosed)
         {
@@ -293,7 +327,9 @@ public class RateLimitingService : IRateLimitingService
     private async Task PublishFailureEventAsync(string apiKeyId, string operation, bool circuitOpen, DataAccessException? error)
     {
         if (_eventPublisher == null)
+        {
             return;
+        }
 
         try
         {
@@ -364,7 +400,9 @@ public class RateLimitingService : IRateLimitingService
     private async Task CheckAndResetWindowAsync(RateLimit rateLimit)
     {
         if (rateLimit.Unit == Domain.Enums.RateLimitUnit.Unlimited)
+        {
             return;
+        }
 
         var windowSeconds = rateLimit.GetWindowInSeconds();
         var lastReset = rateLimit.LastResetAt ?? rateLimit.CreatedAt;
@@ -390,8 +428,29 @@ public class RateLimitingService : IRateLimitingService
 /// </summary>
 public interface IRateLimitRepository
 {
+    /// <summary>
+    /// Retrieves the rate limit for an API key.
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <returns>The rate limit if found; otherwise, null.</returns>
     Task<RateLimit?> GetByApiKeyIdAsync(string apiKeyId);
+
+    /// <summary>
+    /// Persists a new rate limit.
+    /// </summary>
+    /// <param name="rateLimit">The rate limit to create.</param>
+    /// <returns>The created rate limit.</returns>
     Task<RateLimit> CreateAsync(RateLimit rateLimit);
+
+    /// <summary>
+    /// Persists changes to an existing rate limit.
+    /// </summary>
+    /// <param name="rateLimit">The rate limit to update.</param>
     Task UpdateAsync(RateLimit rateLimit);
+
+    /// <summary>
+    /// Deletes a rate limit by its ID.
+    /// </summary>
+    /// <param name="id">The ID of the rate limit to delete.</param>
     Task DeleteAsync(string id);
 }

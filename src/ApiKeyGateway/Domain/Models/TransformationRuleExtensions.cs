@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using ApiKeyGateway.Domain.Models;
 
+/// <summary>
+/// Extension methods for <see cref="TransformationRule"/> validation, cloning and formatting.
+/// </summary>
 public static class TransformationRuleExtensions
 {
     /// <summary>

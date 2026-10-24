@@ -51,7 +51,9 @@ public static class UsageQuotaRepositoryValidation
 
         var problems = value.Validate();
         if (problems.Count == 0)
+        {
             return;
+        }
 
         throw new ArgumentException(
             $"UsageQuotaRepository is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");

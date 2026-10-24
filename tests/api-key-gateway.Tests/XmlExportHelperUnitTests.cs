@@ -63,8 +63,8 @@ public class XmlExportHelperUnitTests
         act.Should().NotThrow("XML should be well-formed");
 
         // Verify root element name matches type name
-        doc.DocumentElement.Should().NotBeNull();
-        doc.DocumentElement.Name.Should().Be("TestModel");
+        doc.DocumentElement!.Should().NotBeNull();
+        doc.DocumentElement!.Name.Should().Be("TestModel");
 
         // Verify content
         result.Should().Contain("<Id>1</Id>");
@@ -95,8 +95,8 @@ public class XmlExportHelperUnitTests
         Action act = () => doc.LoadXml(result);
         act.Should().NotThrow();
 
-        doc.DocumentElement.Should().NotBeNull();
-        doc.DocumentElement.Name.Should().Be("CustomRoot");
+        doc.DocumentElement!.Should().NotBeNull();
+        doc.DocumentElement!.Name.Should().Be("CustomRoot");
     }
 
     /// <summary>
@@ -131,9 +131,9 @@ public class XmlExportHelperUnitTests
         Action act = () => doc.LoadXml(result);
         act.Should().NotThrow("XML should be well-formed even with empty collection");
 
-        doc.DocumentElement.Should().NotBeNull();
-        doc.DocumentElement.Name.Should().Be("root");
-        doc.DocumentElement.ChildNodes.Count.Should().Be(0, "Empty collection should have no child nodes");
+        doc.DocumentElement!.Should().NotBeNull();
+        doc.DocumentElement!.Name.Should().Be("root");
+        doc.DocumentElement!.ChildNodes.Count.Should().Be(0, "Empty collection should have no child nodes");
     }
 
     /// <summary>
@@ -161,22 +161,22 @@ public class XmlExportHelperUnitTests
 
         var root = doc.DocumentElement;
         root.Should().NotBeNull();
-        root.Name.Should().Be("root");
+        root!.Name.Should().Be("root");
         root.ChildNodes.Count.Should().Be(2, "Should have 2 child nodes (TestModel elements)");
 
         // Verify first item
         var firstItem = root.ChildNodes[0] as XmlElement;
         firstItem.Should().NotBeNull();
-        firstItem.Name.Should().Be("TestModel");
+        firstItem!.Name.Should().Be("TestModel");
         firstItem["Id"].Should().NotBeNull();
-        firstItem["Id"].InnerText.Should().Be("1");
+        firstItem!["Id"]!.InnerText.Should().Be("1");
 
         // Verify second item
         var secondItem = root.ChildNodes[1] as XmlElement;
         secondItem.Should().NotBeNull();
-        secondItem.Name.Should().Be("TestModel");
+        secondItem!.Name.Should().Be("TestModel");
         secondItem["Id"].Should().NotBeNull();
-        secondItem["Id"].InnerText.Should().Be("2");
+        secondItem!["Id"]!.InnerText.Should().Be("2");
     }
 
     /// <summary>
@@ -198,12 +198,12 @@ public class XmlExportHelperUnitTests
         Action act = () => doc.LoadXml(result);
         act.Should().NotThrow();
 
-        doc.DocumentElement.Should().NotBeNull();
-        doc.DocumentElement.Name.Should().Be("ItemsCollection");
+        doc.DocumentElement!.Should().NotBeNull();
+        doc.DocumentElement!.Name.Should().Be("ItemsCollection");
 
-        var item = doc.DocumentElement.FirstChild as XmlElement;
+        var item = doc.DocumentElement!.FirstChild as XmlElement;
         item.Should().NotBeNull();
-        item.Name.Should().Be("CustomItem");
+        item!.Name.Should().Be("CustomItem");
     }
 
     /// <summary>
@@ -236,11 +236,11 @@ public class XmlExportHelperUnitTests
         // Verify the content is preserved correctly
         var nameElement = doc.SelectSingleNode("//Name") as XmlElement;
         nameElement.Should().NotBeNull();
-        nameElement.InnerText.Should().Be("Test & Item <with> special \"chars\"");
+        nameElement!.InnerText.Should().Be("Test & Item <with> special \"chars\"");
 
         var descElement = doc.SelectSingleNode("//Description") as XmlElement;
         descElement.Should().NotBeNull();
-        descElement.InnerText.Should().Be("Line1\nLine2\nLine3");
+        descElement!.InnerText.Should().Be("Line1\nLine2\nLine3");
     }
 
     /// <summary>
@@ -274,7 +274,7 @@ public class XmlExportHelperUnitTests
         root.Should().NotBeNull();
 
         // Check that we have elements for all properties
-        root["NormalProperty"].Should().NotBeNull();
+        root!["NormalProperty"].Should().NotBeNull();
         root["Property_With_Underscores"].Should().NotBeNull();
         root["Property_With_Dots"].Should().NotBeNull();
         root["Property_With_Dashes"].Should().NotBeNull();
@@ -400,7 +400,7 @@ public class XmlExportHelperUnitTests
         // Should have elements for both properties
         var root = doc.DocumentElement;
         root.Should().NotBeNull();
-        root["Inner"].Should().NotBeNull();
+        root!["Inner"].Should().NotBeNull();
         root["InnerText"].Should().NotBeNull();
     }
 
@@ -425,22 +425,22 @@ public class XmlExportHelperUnitTests
 
         var root = doc.DocumentElement;
         root.Should().NotBeNull();
-        root.Name.Should().Be("Strings");
+        root!.Name.Should().Be("Strings");
         root.ChildNodes.Count.Should().Be(3);
 
         var firstElement = root.ChildNodes[0] as XmlElement;
         firstElement.Should().NotBeNull();
-        firstElement.Name.Should().Be("String");
+        firstElement!.Name.Should().Be("String");
         firstElement.InnerText.Should().Be("first");
 
         var secondElement = root.ChildNodes[1] as XmlElement;
         secondElement.Should().NotBeNull();
-        secondElement.Name.Should().Be("String");
+        secondElement!.Name.Should().Be("String");
         secondElement.InnerText.Should().Be("second");
 
         var thirdElement = root.ChildNodes[2] as XmlElement;
         thirdElement.Should().NotBeNull();
-        thirdElement.Name.Should().Be("String");
+        thirdElement!.Name.Should().Be("String");
         thirdElement.InnerText.Should().Be("third");
     }
 

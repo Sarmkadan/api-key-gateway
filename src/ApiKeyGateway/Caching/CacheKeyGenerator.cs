@@ -153,7 +153,7 @@ public static class CacheKeyGenerator
     /// Creates a hash of parameters for consistent cache key generation.
     /// Order-independent so different parameter orders hash to same value.
     /// Uses ArrayPool for the char and byte encoding buffers to avoid
-    /// creating an intermediate List<string>, a joined string, and a
+    /// creating an intermediate List&lt;string&gt;, a joined string, and a
     /// heap-allocated byte array on every external-API cache lookup.
     /// </summary>
     /// <param name="parameters">Dictionary of parameters to hash.</param>
@@ -165,7 +165,9 @@ public static class CacheKeyGenerator
 
         int bufLen = 0;
         foreach (var k in keys)
+        {
             bufLen += k.Length + parameters[k].Length + 2; // "k=v&" worst case
+        }
 
         char[] charBuf = ArrayPool<char>.Shared.Rent(bufLen);
         byte[]? byteBuf = null;
@@ -174,7 +176,11 @@ public static class CacheKeyGenerator
             int pos = 0;
             for (int i = 0; i < keys.Length; i++)
             {
-                if (i > 0) charBuf[pos++] = '&';
+                if (i > 0)
+                {
+                    charBuf[pos++] = '&';
+                }
+
                 string k = keys[i], v = parameters[k];
                 k.AsSpan().CopyTo(charBuf.AsSpan(pos));
                 pos += k.Length;
@@ -194,7 +200,10 @@ public static class CacheKeyGenerator
         finally
         {
             ArrayPool<char>.Shared.Return(charBuf);
-            if (byteBuf != null) ArrayPool<byte>.Shared.Return(byteBuf);
+            if (byteBuf != null)
+            {
+                ArrayPool<byte>.Shared.Return(byteBuf);
+            }
         }
     }
 }

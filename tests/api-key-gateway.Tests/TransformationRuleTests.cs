@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Xunit;
-using FluentAssertions;
 using ApiKeyGateway.Domain.Models;
+using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

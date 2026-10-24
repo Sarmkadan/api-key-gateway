@@ -3,13 +3,13 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Data.Common;
+using System.Text.Json;
 using ApiKeyGateway.Data;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Transformation;
 using Microsoft.Extensions.Logging;
-using System.Data.Common;
-using System.Text.Json;
 
 namespace ApiKeyGateway.Repositories;
 
@@ -22,6 +22,11 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
     private readonly IDbConnection _dbConnection;
     private readonly ILogger<DatabaseTransformationRuleRepository> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DatabaseTransformationRuleRepository"/> class.
+    /// </summary>
+    /// <param name="dbConnection">The database connection used for queries.</param>
+    /// <param name="logger">The logger.</param>
     public DatabaseTransformationRuleRepository(
         IDbConnection dbConnection,
         ILogger<DatabaseTransformationRuleRepository> logger)
@@ -302,16 +307,16 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
 
         return new TransformationRule
         {
-            Id = reader["Id"] as string,
-            Name = reader["Name"] as string,
+            Id = reader["Id"] as string ?? string.Empty,
+            Name = reader["Name"] as string ?? string.Empty,
             Description = reader["Description"] as string,
             Scope = (TransformationScope)(int)reader["Scope"],
             ApiKeyId = reader["ApiKeyId"] as string,
             ConsumerId = reader["ConsumerId"] as string,
             Type = (TransformationRuleType)(int)reader["Type"],
-            Action = (BuiltInAction)(int)reader["Action"],
+            Action = reader["Action"] is int action ? (BuiltInAction)action : null,
             LuaScript = reader["LuaScript"] as string,
-            Parameters = parameters,
+            Parameters = parameters ?? [],
             Priority = (int)reader["Priority"],
             IsEnabled = (bool)reader["IsEnabled"],
             CreatedAt = (DateTime)reader["CreatedAt"],
@@ -334,7 +339,7 @@ public sealed class DatabaseTransformationRuleRepository : ITransformationRuleRe
         command.Parameters.Add(CreateParam(command, "@ApiKeyId", rule.ApiKeyId));
         command.Parameters.Add(CreateParam(command, "@ConsumerId", rule.ConsumerId));
         command.Parameters.Add(CreateParam(command, "@Type", (int)rule.Type));
-        command.Parameters.Add(CreateParam(command, "@Action", (int)rule.Action));
+        command.Parameters.Add(CreateParam(command, "@Action", (int?)rule.Action));
         command.Parameters.Add(CreateParam(command, "@LuaScript", rule.LuaScript));
         command.Parameters.Add(CreateParam(command, "@Parameters", JsonSerializer.Serialize(rule.Parameters)));
         command.Parameters.Add(CreateParam(command, "@Priority", rule.Priority));

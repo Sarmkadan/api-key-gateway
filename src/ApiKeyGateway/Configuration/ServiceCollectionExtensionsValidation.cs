@@ -3,10 +3,10 @@
 // CTO & Software Architect
 // ===================================================================
 
-using ApiKeyGateway.Domain.Models;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using ApiKeyGateway.Domain.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiKeyGateway.Configuration;
 

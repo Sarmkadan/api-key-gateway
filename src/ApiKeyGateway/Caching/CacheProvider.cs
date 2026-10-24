@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiKeyGateway.Caching;
 
@@ -60,6 +60,11 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
     private readonly ConcurrentDictionary<string, long> _counters = new();
     private readonly ConcurrentDictionary<string, byte> _trackedKeys = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InMemoryCacheProvider"/> class
+    /// </summary>
+    /// <param name="cache">The memory cache used for storage</param>
+    /// <param name="logger">Logger for cache diagnostics</param>
     public InMemoryCacheProvider(IMemoryCache cache, ILogger<InMemoryCacheProvider> logger)
     {
         ArgumentNullException.ThrowIfNull(cache);
@@ -69,6 +74,7 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public ValueTask<T?> GetAsync<T>(string key) where T : class
     {
         if (_cache.TryGetValue(key, out T? value))
@@ -81,6 +87,7 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         return ValueTask.FromResult<T?>(null);
     }
 
+    /// <inheritdoc/>
     public ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
     {
         var cacheOptions = new MemoryCacheEntryOptions();
@@ -110,6 +117,7 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public ValueTask RemoveAsync(string key)
     {
         _cache.Remove(key);
@@ -118,9 +126,11 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public ValueTask<bool> ExistsAsync(string key) =>
         ValueTask.FromResult(_cache.TryGetValue(key, out _));
 
+    /// <inheritdoc/>
     public ValueTask<long> IncrementAsync(string key, long increment = 1)
     {
         var newValue = _counters.AddOrUpdate(key, increment, (_, current) => current + increment);
@@ -128,10 +138,13 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         return ValueTask.FromResult(newValue);
     }
 
+    /// <inheritdoc/>
     public ValueTask<int> RemoveByPatternAsync(string pattern)
     {
         if (string.IsNullOrWhiteSpace(pattern))
+        {
             return ValueTask.FromResult(0);
+        }
 
         var regex = BuildPatternRegex(pattern);
         var removed = 0;
@@ -148,7 +161,9 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         foreach (var key in _counters.Keys)
         {
             if (regex.IsMatch(key) && _counters.TryRemove(key, out _))
+            {
                 removed++;
+            }
         }
 
         _logger.LogDebug("Cache REMOVE by pattern {Pattern}: {Count} entries", pattern, removed);
@@ -165,6 +180,9 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
         return new Regex($"^{escaped}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
     }
 
+    /// <summary>
+    /// Releases the counters and tracked keys held by this provider
+    /// </summary>
     public void Dispose()
     {
         _counters.Clear();

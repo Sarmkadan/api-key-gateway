@@ -57,10 +57,25 @@ public static class ApiKeyValidatorValidation
         bool hasSpecial = key.Any(c => !char.IsLetterOrDigit(c));
 
         var characterTypesUsed = 0;
-        if (hasUppercase) characterTypesUsed++;
-        if (hasLowercase) characterTypesUsed++;
-        if (hasDigits) characterTypesUsed++;
-        if (hasSpecial) characterTypesUsed++;
+        if (hasUppercase)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasLowercase)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasDigits)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasSpecial)
+        {
+            characterTypesUsed++;
+        }
 
         if (characterTypesUsed < 3)
         {

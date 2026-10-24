@@ -48,7 +48,9 @@ public static class RateLimitRepositoryValidation
 
         var problems = value.Validate();
         if (problems.Count == 0)
+        {
             return;
+        }
 
         throw new ArgumentException(
             $"RateLimitRepository is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");

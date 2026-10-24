@@ -5,12 +5,12 @@
 // Tests for RetryingEventPublisher to verify retry and dead-letter handling
 // =============================================================================
 
+using System.ComponentModel.DataAnnotations;
 using ApiKeyGateway.Events;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.ComponentModel.DataAnnotations;
 using Xunit;
 
 namespace ApiKeyGateway.Tests;

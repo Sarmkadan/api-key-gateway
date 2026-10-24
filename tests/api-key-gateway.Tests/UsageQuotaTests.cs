@@ -1,6 +1,6 @@
 using System;
-using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
 using FluentAssertions;
 using Xunit;
 

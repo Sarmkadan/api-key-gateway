@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Threading.Channels;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
-using System.Threading.Channels;
 
 namespace ApiKeyGateway.Services;
 
@@ -253,7 +253,9 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
     private async Task FlushBatchAsync(List<UsageRecord> batch)
     {
         if (batch.Count == 0)
+        {
             return;
+        }
 
         try
         {

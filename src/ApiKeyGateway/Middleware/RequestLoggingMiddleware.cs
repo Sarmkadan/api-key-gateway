@@ -17,12 +17,22 @@ public sealed class RequestLoggingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestLoggingMiddleware> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RequestLoggingMiddleware"/> class
+    /// </summary>
+    /// <param name="next">The next middleware delegate in the pipeline</param>
+    /// <param name="logger">Logger for request and response diagnostics</param>
     public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Logs the request, measures its duration and logs the response before passing control onward
+    /// </summary>
+    /// <param name="context">The HTTP context of the current request</param>
+    /// <returns>A task that completes when the request has been processed</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         var stopwatch = Stopwatch.StartNew();

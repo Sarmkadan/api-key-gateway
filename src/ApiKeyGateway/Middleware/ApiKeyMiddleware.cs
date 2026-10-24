@@ -27,6 +27,13 @@ public class ApiKeyMiddleware
     private const string RateLimitRemainingHeader = "X-RateLimit-Remaining";
     private const string RateLimitResetHeader = "X-RateLimit-Reset";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
+    /// <param name="logger">The logger for middleware diagnostics.</param>
+    /// <param name="rateLimiter">Optional rate limiter. When null, rate limiting is skipped.</param>
+    /// <param name="usageTracker">Optional usage tracker. When null, usage tracking is skipped.</param>
     public ApiKeyMiddleware(
         RequestDelegate next,
         ILogger<ApiKeyMiddleware> logger,

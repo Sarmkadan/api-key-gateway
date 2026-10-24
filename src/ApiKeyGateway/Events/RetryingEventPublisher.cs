@@ -79,7 +79,7 @@ public sealed class RetryingEventPublisher : IEventPublisher
     /// </para>
     /// </summary>
     /// <typeparam name="T">The event type.</typeparam>
-    /// <param name="@event">The event to publish.</param>
+    /// <param name="event">The event to publish.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task PublishAsync<T>(T @event) where T : notnull
     {

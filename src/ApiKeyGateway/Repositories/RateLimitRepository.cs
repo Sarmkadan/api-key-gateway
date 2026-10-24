@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Data;
 using System.Data.Common;
+using ApiKeyGateway.Data;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -39,7 +39,9 @@ public class RateLimitRepository : IRateLimitRepository
     public async Task<RateLimit?> GetByApiKeyIdAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return null;
+        }
 
         try
         {
@@ -79,7 +81,9 @@ public class RateLimitRepository : IRateLimitRepository
     public async Task<RateLimit> CreateAsync(RateLimit rateLimit)
     {
         if (rateLimit == null)
+        {
             throw new ArgumentNullException(nameof(rateLimit));
+        }
 
         try
         {
@@ -115,7 +119,9 @@ public class RateLimitRepository : IRateLimitRepository
     public async Task UpdateAsync(RateLimit rateLimit)
     {
         if (rateLimit == null)
+        {
             throw new ArgumentNullException(nameof(rateLimit));
+        }
 
         try
         {
@@ -155,7 +161,9 @@ public class RateLimitRepository : IRateLimitRepository
     public async Task DeleteAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return;
+        }
 
         try
         {

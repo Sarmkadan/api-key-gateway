@@ -2,7 +2,6 @@
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
 // =============================================================================
-using Xunit;
 using System.Net;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
@@ -11,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

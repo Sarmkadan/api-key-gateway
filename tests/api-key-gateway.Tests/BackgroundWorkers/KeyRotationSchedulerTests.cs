@@ -39,7 +39,9 @@ public class KeyRotationSchedulerTests
             ["KeyRotation:JitterPercentage"] = jitterPercentage.ToString(System.Globalization.CultureInfo.InvariantCulture),
         };
         if (newExpirationDays.HasValue)
+        {
             data["KeyRotation:NewExpirationDays"] = newExpirationDays.Value.ToString();
+        }
 
         return new ConfigurationBuilder()
             .AddInMemoryCollection(data)

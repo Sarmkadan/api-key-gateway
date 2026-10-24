@@ -62,26 +62,37 @@ public static class RateLimitCalculationHelper
     /// <param name="windowStart">Start time of the current rate limit window.</param>
     /// <param name="unit">Time unit for the rate limit window.</param>
     /// <returns>
-    /// 0 if the request is allowed immediately (currentUsage < limit),
+    /// 0 if the request is allowed immediately (currentUsage &lt; limit),
     /// <see cref="int.MaxValue"/> if the request exceeds the limit (currentUsage >= limit),
-    /// or the number of seconds until the window resets (0 < result < int.MaxValue).
+    /// or the number of seconds until the window resets (0 &lt; result &lt; int.MaxValue).
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="currentUsage"/> is negative or <paramref name="limit"/> is not positive.
     /// </exception>
     public static int GetSecondsUntilAllowed(int currentUsage, int limit, DateTime windowStart, RateLimitUnit unit)
     {
-        if (limit <= 0) return int.MaxValue;
-        if (currentUsage < 0) currentUsage = 0;
+        if (limit <= 0)
+        {
+            return int.MaxValue;
+        }
+
+        if (currentUsage < 0)
+        {
+            currentUsage = 0;
+        }
 
         // Under limit - allowed immediately
         if (currentUsage < limit)
+        {
             return 0;
+        }
 
         // Check if the window has expired (usage resets)
         var windowEnd = GetWindowEnd(windowStart, unit);
         if (DateTime.UtcNow >= windowEnd)
+        {
             return 0;
+        }
 
         // At or over limit within active window
         var secondsRemaining = (int)(windowEnd - DateTime.UtcNow).TotalSeconds;
@@ -97,8 +108,15 @@ public static class RateLimitCalculationHelper
     /// </exception>
     public static int CalculateQuotagePercentage(int currentUsage, int limit)
     {
-        if (limit <= 0) return 0;
-        if (currentUsage < 0) currentUsage = 0;
+        if (limit <= 0)
+        {
+            return 0;
+        }
+
+        if (currentUsage < 0)
+        {
+            currentUsage = 0;
+        }
 
         var percentage = (currentUsage * 100) / limit;
         return Math.Min(100, percentage);

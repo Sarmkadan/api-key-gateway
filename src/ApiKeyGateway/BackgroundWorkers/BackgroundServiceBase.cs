@@ -1,7 +1,7 @@
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace ApiKeyGateway.BackgroundWorkers;
 
@@ -12,10 +12,26 @@ namespace ApiKeyGateway.BackgroundWorkers;
 /// <typeparam name="TWorker">The concrete worker type for logging purposes.</typeparam>
 public abstract class BackgroundServiceBase<TWorker> : BackgroundService where TWorker : BackgroundServiceBase<TWorker>
 {
+    /// <summary>
+    /// Service provider used to create scopes for dependency resolution.
+    /// </summary>
     protected readonly IServiceProvider _serviceProvider;
+
+    /// <summary>
+    /// Logger for the worker.
+    /// </summary>
     protected readonly ILogger<TWorker> _logger;
+
+    /// <summary>
+    /// Default delay between execution cycles.
+    /// </summary>
     protected readonly TimeSpan _defaultDelay = TimeSpan.FromMinutes(1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BackgroundServiceBase{TWorker}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider used to create scopes.</param>
+    /// <param name="logger">Logger for the worker.</param>
     protected BackgroundServiceBase(
         IServiceProvider serviceProvider,
         ILogger<TWorker> logger)

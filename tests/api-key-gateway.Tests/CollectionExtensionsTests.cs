@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Extensions;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -75,7 +75,7 @@ public class CollectionExtensionsTests
     public void Paginate_NullSource_ThrowsArgumentNullException()
     {
         IEnumerable<int>? nullCollection = null;
-        var act = () => nullCollection.Paginate(1, 10);
+        var act = () => nullCollection!.Paginate(1, 10);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -268,7 +268,7 @@ public class CollectionExtensionsTests
     public void CountBy_NullSource_ThrowsArgumentNullException()
     {
         IEnumerable<string>? nullCollection = null;
-        var act = () => nullCollection.CountBy(x => x);
+        var act = () => nullCollection!.CountBy(x => x);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -280,7 +280,7 @@ public class CollectionExtensionsTests
     {
         var items = new[] { "a", "b", "c" };
         Func<string, char>? nullSelector = null;
-        var act = () => items.CountBy(nullSelector);
+        var act = () => items.CountBy(nullSelector!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -347,7 +347,7 @@ public class CollectionExtensionsTests
     public void Batch_NullSource_ThrowsArgumentNullException()
     {
         IEnumerable<int>? nullCollection = null;
-        var act = () => nullCollection.Batch(5);
+        var act = () => nullCollection!.Batch(5);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -425,7 +425,7 @@ public class CollectionExtensionsTests
     public void DistinctBy_NullSource_ThrowsArgumentNullException()
     {
         IEnumerable<int>? nullCollection = null;
-        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(nullCollection, x => x);
+        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(nullCollection!, x => x);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -437,7 +437,7 @@ public class CollectionExtensionsTests
     {
         var items = new[] { 1, 2, 3 };
         Func<int, int>? nullSelector = null;
-        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, nullSelector);
+        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, nullSelector!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -469,7 +469,11 @@ public class CollectionExtensionsTests
 
         items.ForEachSafe(item =>
         {
-            if (item == 3) throw new InvalidOperationException("boom");
+            if (item == 3)
+            {
+                throw new InvalidOperationException("boom");
+            }
+
             processed.Add(item);
         });
 
@@ -504,7 +508,7 @@ public class CollectionExtensionsTests
     public void ForEachSafe_NullSource_ThrowsArgumentNullException()
     {
         IEnumerable<int>? nullCollection = null;
-        var act = () => nullCollection.ForEachSafe(item => { });
+        var act = () => nullCollection!.ForEachSafe(item => { });
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -516,7 +520,7 @@ public class CollectionExtensionsTests
     {
         var items = new[] { 1, 2, 3 };
         Action<int>? nullAction = null;
-        var act = () => items.ForEachSafe(nullAction);
+        var act = () => items.ForEachSafe(nullAction!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -543,7 +547,11 @@ public class CollectionExtensionsTests
 
         items.ForEachSafe(item =>
         {
-            if (item % 2 == 0) throw new InvalidOperationException($"boom {item}");
+            if (item % 2 == 0)
+            {
+                throw new InvalidOperationException($"boom {item}");
+            }
+
             processed.Add(item);
         });
 

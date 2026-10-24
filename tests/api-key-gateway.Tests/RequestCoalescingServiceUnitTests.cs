@@ -3,12 +3,12 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Threading;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Threading;
 using Xunit;
 
 namespace ApiKeyGateway.Tests;

@@ -1,8 +1,8 @@
 namespace ApiKeyGateway.Tests;
 
 using System;
-using Xunit;
 using ApiKeyGateway.Domain.Exceptions;
+using Xunit;
 using DomainException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 public class UnauthorizedAccessExceptionValidationTests

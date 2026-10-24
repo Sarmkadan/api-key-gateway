@@ -62,7 +62,9 @@ public static class ApiKeyRepositoryValidation
 
         var problems = value.Validate();
         if (problems.Count is 0)
+        {
             return;
+        }
 
         throw new ArgumentException(
             $"ApiKeyRepository is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");

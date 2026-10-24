@@ -3,8 +3,8 @@
 // =============================================================================
 
 using System;
-using Xunit;
 using ApiKeyGateway.Controllers;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

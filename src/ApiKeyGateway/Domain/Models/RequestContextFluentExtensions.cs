@@ -24,7 +24,10 @@ public static class RequestContextFluentExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="context"/> is <c>null</c>.</exception>
     public static bool IsFromLocalhost(this RequestContext context)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
 
         var ip = context.ClientIpAddress?.Trim().ToLowerInvariant();
 
@@ -44,13 +47,23 @@ public static class RequestContextFluentExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="context"/> or <paramref name="name"/> is <c>null</c>.</exception>
     public static bool HasHeader(this RequestContext context, string name)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
+
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
 
         // Attempt to retrieve a property named "Headers" via reflection.
         // The property, if it exists, should be of type IDictionary<string, string>.
         var headersProp = typeof(RequestContext).GetProperty("Headers", BindingFlags.Public | BindingFlags.Instance);
-        if (headersProp == null) return false;
+        if (headersProp == null)
+        {
+            return false;
+        }
 
         var value = headersProp.GetValue(context);
         if (value is IDictionary<string, string> headers)
@@ -73,11 +86,21 @@ public static class RequestContextFluentExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="context"/> or <paramref name="name"/> is <c>null</c>.</exception>
     public static string GetHeaderOrDefault(this RequestContext context, string name, string fallback)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
+
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
 
         var headersProp = typeof(RequestContext).GetProperty("Headers", BindingFlags.Public | BindingFlags.Instance);
-        if (headersProp == null) return fallback;
+        if (headersProp == null)
+        {
+            return fallback;
+        }
 
         var value = headersProp.GetValue(context);
         if (value is IDictionary<string, string> headers && headers.TryGetValue(name, out var headerValue))

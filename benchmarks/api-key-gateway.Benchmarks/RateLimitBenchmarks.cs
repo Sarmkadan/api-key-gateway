@@ -3,10 +3,10 @@
 // CTO & Software Architect
 // =============================================================================
 
+using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Utilities;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using ApiKeyGateway.Utilities;
-using ApiKeyGateway.Domain.Enums;
 
 namespace ApiKeyGateway.Benchmarks;
 

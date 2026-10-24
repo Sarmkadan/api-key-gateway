@@ -1,7 +1,7 @@
 using System;
-using Xunit;
-using FluentAssertions;
 using ApiKeyGateway.Utilities;
+using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

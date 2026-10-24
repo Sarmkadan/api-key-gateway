@@ -123,16 +123,15 @@ public class AnalyticsSummaryValidationTests
     }
 
     [Theory]
-    [InlineData(0, 0, 0, 0, 0, 0)] // all zero, valid
-    [InlineData(100, 100, 0, 100, 0, 0)] // 100% success
-    [InlineData(100, 0, 100, 0, 100, 0)] // 100% error
+    [InlineData(0, 0, 0, 0, 0)] // all zero, valid
+    [InlineData(100, 100, 0, 100, 0)] // 100% success
+    [InlineData(100, 0, 100, 0, 100)] // 100% error
     public void Validate_BoundaryValues_AreAccepted(
         int totalRequests,
         int successful,
         int failed,
         double successRate,
-        double errorRate,
-        double toleranceIgnored) // placeholder to keep signature consistent
+        double errorRate)
     {
         // Arrange
         var now = DateTime.UtcNow;

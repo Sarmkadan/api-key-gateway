@@ -31,6 +31,10 @@ public class InMemoryEventPublisher : IEventPublisher
     private readonly ReaderWriterLockSlim _subscribersLock = new();
     private readonly ILogger<InMemoryEventPublisher> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InMemoryEventPublisher"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
     public InMemoryEventPublisher(ILogger<InMemoryEventPublisher> logger)
     {
         _logger = logger;

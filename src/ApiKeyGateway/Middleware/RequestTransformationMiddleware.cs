@@ -79,13 +79,17 @@ public sealed class RequestTransformationMiddleware
 
             // Optionally buffer the request body so scripts can inspect it.
             if (_options.EnableBodyCapture && HasBody(context.Request))
+            {
                 context.Request.EnableBuffering(_options.MaxBodySizeBytes);
+            }
 
             var transformContext = new TransformationContext(context.Request, apiKey?.Id, consumerId);
 
             // Capture body when buffering is enabled and the request has one.
             if (_options.EnableBodyCapture && HasBody(context.Request))
+            {
                 transformContext.Body = await ReadBodyAsync(context.Request, context.RequestAborted);
+            }
 
             var result = await _pipeline.ApplyAsync(transformContext, context.RequestAborted);
 
@@ -118,7 +122,9 @@ public sealed class RequestTransformationMiddleware
 
             // If the body was modified, swap in the rewritten content.
             if (_options.EnableBodyCapture && transformContext.Body is not null)
+            {
                 await ReplaceBodyAsync(context.Request, transformContext.Body);
+            }
 
             if (!result.Success)
             {
@@ -146,12 +152,17 @@ public sealed class RequestTransformationMiddleware
     {
         // Add or overwrite headers present in the transformed context.
         foreach (var (key, value) in ctx.Headers)
+        {
             request.Headers[key] = value;
+        }
     }
 
     private static void ApplyQueryMutations(HttpRequest request, TransformationContext ctx)
     {
-        if (!ctx.QueryParameters.Any()) return;
+        if (!ctx.QueryParameters.Any())
+        {
+            return;
+        }
 
         var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
             string.Empty, ctx.QueryParameters!);

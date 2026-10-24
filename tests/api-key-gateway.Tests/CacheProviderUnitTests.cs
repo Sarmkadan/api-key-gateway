@@ -8,9 +8,9 @@ using ApiKeyGateway.Caching;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ApiKeyGateway.Tests;
 

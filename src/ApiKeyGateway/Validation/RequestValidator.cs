@@ -23,10 +23,14 @@ public static class RequestValidator
     public static ValidationResult ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
+        {
             return new ValidationResult { IsValid = false, Message = "Email is required" };
+        }
 
         if (!EmailRegex.IsMatch(email))
+        {
             return new ValidationResult { IsValid = false, Message = "Email format is invalid" };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -37,13 +41,19 @@ public static class RequestValidator
     public static ValidationResult ValidateUrl(string url, bool requireHttps = true)
     {
         if (string.IsNullOrWhiteSpace(url))
+        {
             return new ValidationResult { IsValid = false, Message = "URL is required" };
+        }
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
             return new ValidationResult { IsValid = false, Message = "URL format is invalid" };
+        }
 
         if (requireHttps && uri.Scheme != "https")
+        {
             return new ValidationResult { IsValid = false, Message = "URL must use HTTPS" };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -54,10 +64,14 @@ public static class RequestValidator
     public static ValidationResult ValidateIpAddress(string ip)
     {
         if (string.IsNullOrWhiteSpace(ip))
+        {
             return new ValidationResult { IsValid = false, Message = "IP address is required" };
+        }
 
         if (!IPAddress.TryParse(ip, out _))
+        {
             return new ValidationResult { IsValid = false, Message = "IP address format is invalid" };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -77,23 +91,30 @@ public static class RequestValidator
         if (string.IsNullOrEmpty(value))
         {
             if (minLength > 0)
+            {
                 return new ValidationResult { IsValid = false, Message = $"{fieldName} is required" };
+            }
+
             return new ValidationResult { IsValid = true };
         }
 
         if (value.Length < minLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"{fieldName} must be at least {minLength} characters"
             };
+        }
 
         if (value.Length > maxLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"{fieldName} cannot exceed {maxLength} characters"
             };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -110,11 +131,13 @@ public static class RequestValidator
         ArgumentException.ThrowIfNullOrEmpty(fieldName);
 
         if (value < minimum || value > maximum)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"{fieldName} must be between {minimum} and {maximum}"
             };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -127,7 +150,9 @@ public static class RequestValidator
         ArgumentException.ThrowIfNullOrEmpty(fieldName);
 
         if (value == Guid.Empty)
+        {
             return new ValidationResult { IsValid = false, Message = $"{fieldName} is required" };
+        }
 
         return new ValidationResult { IsValid = true };
     }

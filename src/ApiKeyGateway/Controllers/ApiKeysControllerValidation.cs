@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Domain.Models;
 using System;
 using System.Collections.Generic;
+using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Controllers;
 

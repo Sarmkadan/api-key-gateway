@@ -47,7 +47,7 @@ public sealed class CorrelationContextMiddleware
         context.Items["ClientIp"] = RequestContextHelper.GetClientIpAddress(context.Request);
 
         // Add correlation ID to response headers
-        context.Response.Headers.Add(CorrelationIdHeader, correlationId);
+        context.Response.Headers[CorrelationIdHeader] = correlationId;
 
         _logger.LogInformation("InvokeAsync called with {CorrelationId}", correlationId);
         _logger.LogInformation("Request initiated | Correlation: {CorrelationId} | API-Key: {ApiKey} | Client: {ClientIp}", correlationId, apiKey?.Substring(0, 4) + "..." ?? "NONE", context.Items["ClientIp"]);

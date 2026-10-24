@@ -1,173 +1,172 @@
-using Xunit;
 using ApiKeyGateway.Domain.Exceptions;
+using Xunit;
 
-namespace ApiKeyGateway.Tests
+namespace ApiKeyGateway.Tests;
+
+public class ConfigurationExceptionValidationTests
 {
-    public class ConfigurationExceptionValidationTests
+    [Fact]
+    public void Validate_HappyPath_ReturnsEmptyList()
     {
-        [Fact]
-        public void Validate_HappyPath_ReturnsEmptyList()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "Test setting");
+        // Arrange
+        var exception = new ConfigurationException("Test message", "Test setting");
 
-            // Act
-            var problems = ConfigurationExceptionValidation.Validate(exception);
+        // Act
+        var problems = ConfigurationExceptionValidation.Validate(exception);
 
-            // Assert
-            Assert.Empty(problems);
-        }
+        // Assert
+        Assert.Empty(problems);
+    }
 
-        [Fact]
-        public void Validate_MessageNull_ThrowsArgumentNullException()
-        {
-            // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => ConfigurationExceptionValidation.Validate(null));
-        }
+    [Fact]
+    public void Validate_MessageNull_ThrowsArgumentNullException()
+    {
+        // Act and Assert
+        Assert.Throws<ArgumentNullException>(() => ConfigurationExceptionValidation.Validate(null!));
+    }
 
-        [Fact]
-        public void Validate_SettingNull_ThrowsArgumentNullException()
-        {
-            // Arrange - ConfigurationException with null Setting
-            var exception = new ConfigurationException("Test message");
+    [Fact]
+    public void Validate_SettingNull_ThrowsArgumentNullException()
+    {
+        // Arrange - ConfigurationException with null Setting
+        var exception = new ConfigurationException("Test message");
 
-            // Act
-            var problems = ConfigurationExceptionValidation.Validate(exception);
+        // Act
+        var problems = ConfigurationExceptionValidation.Validate(exception);
 
-            // Assert - Setting is null, so validation should report it
-            Assert.Single(problems);
-            Assert.Equal("Setting cannot be null, empty, or whitespace.", problems[0]);
-        }
+        // Assert - Setting is null, so validation should report it
+        Assert.Single(problems);
+        Assert.Equal("Setting cannot be null, empty, or whitespace.", problems[0]);
+    }
 
-        [Fact]
-        public void Validate_MessageEmpty_ReturnsSingleProblem()
-        {
-            // Arrange
-            var exception = new ConfigurationException("", "Test setting");
+    [Fact]
+    public void Validate_MessageEmpty_ReturnsSingleProblem()
+    {
+        // Arrange
+        var exception = new ConfigurationException("", "Test setting");
 
-            // Act
-            var problems = ConfigurationExceptionValidation.Validate(exception);
+        // Act
+        var problems = ConfigurationExceptionValidation.Validate(exception);
 
-            // Assert
-            Assert.Single(problems);
-            Assert.Equal("Message cannot be null, empty, or whitespace.", problems[0]);
-        }
+        // Assert
+        Assert.Single(problems);
+        Assert.Equal("Message cannot be null, empty, or whitespace.", problems[0]);
+    }
 
-        [Fact]
-        public void Validate_SettingEmpty_ReturnsSingleProblem()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "");
+    [Fact]
+    public void Validate_SettingEmpty_ReturnsSingleProblem()
+    {
+        // Arrange
+        var exception = new ConfigurationException("Test message", "");
 
-            // Act
-            var problems = ConfigurationExceptionValidation.Validate(exception);
+        // Act
+        var problems = ConfigurationExceptionValidation.Validate(exception);
 
-            // Assert
-            Assert.Single(problems);
-            Assert.Equal("Setting cannot be null, empty, or whitespace.", problems[0]);
-        }
+        // Assert
+        Assert.Single(problems);
+        Assert.Equal("Setting cannot be null, empty, or whitespace.", problems[0]);
+    }
 
-        [Fact]
-        public void IsValid_HappyPath_ReturnsTrue()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "Test setting");
+    [Fact]
+    public void IsValid_HappyPath_ReturnsTrue()
+    {
+        // Arrange
+        var exception = new ConfigurationException("Test message", "Test setting");
 
-            // Act
-            var isValid = ConfigurationExceptionValidation.IsValid(exception);
+        // Act
+        var isValid = ConfigurationExceptionValidation.IsValid(exception);
 
-            // Assert
-            Assert.True(isValid);
-        }
+        // Assert
+        Assert.True(isValid);
+    }
 
-        [Fact]
-        public void IsValid_MessageNull_ReturnsFalse()
-        {
-            // Act
-            var isValid = ConfigurationExceptionValidation.IsValid(null);
+    [Fact]
+    public void IsValid_MessageNull_ReturnsFalse()
+    {
+        // Act
+        var isValid = ConfigurationExceptionValidation.IsValid(null!);
 
-            // Assert
-            Assert.False(isValid);
-        }
+        // Assert
+        Assert.False(isValid);
+    }
 
-        [Fact]
-        public void IsValid_SettingNull_ReturnsFalse()
-        {
-            // Act - ConfigurationException with null Setting
-            var isValid = ConfigurationExceptionValidation.IsValid(new ConfigurationException("Test message"));
+    [Fact]
+    public void IsValid_SettingNull_ReturnsFalse()
+    {
+        // Act - ConfigurationException with null Setting
+        var isValid = ConfigurationExceptionValidation.IsValid(new ConfigurationException("Test message"));
 
-            // Assert
-            Assert.False(isValid);
-        }
+        // Assert
+        Assert.False(isValid);
+    }
 
-        [Fact]
-        public void IsValid_MessageEmpty_ReturnsFalse()
-        {
-            // Arrange
-            var exception = new ConfigurationException("", "Test setting");
+    [Fact]
+    public void IsValid_MessageEmpty_ReturnsFalse()
+    {
+        // Arrange
+        var exception = new ConfigurationException("", "Test setting");
 
-            // Act
-            var isValid = ConfigurationExceptionValidation.IsValid(exception);
+        // Act
+        var isValid = ConfigurationExceptionValidation.IsValid(exception);
 
-            // Assert
-            Assert.False(isValid);
-        }
+        // Assert
+        Assert.False(isValid);
+    }
 
-        [Fact]
-        public void IsValid_SettingEmpty_ReturnsFalse()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "");
+    [Fact]
+    public void IsValid_SettingEmpty_ReturnsFalse()
+    {
+        // Arrange
+        var exception = new ConfigurationException("Test message", "");
 
-            // Act
-            var isValid = ConfigurationExceptionValidation.IsValid(exception);
+        // Act
+        var isValid = ConfigurationExceptionValidation.IsValid(exception);
 
-            // Assert
-            Assert.False(isValid);
-        }
+        // Assert
+        Assert.False(isValid);
+    }
 
-        [Fact]
-        public void EnsureValid_HappyPath_DoesNotThrow()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "Test setting");
+    [Fact]
+    public void EnsureValid_HappyPath_DoesNotThrow()
+    {
+        // Arrange
+        var exception = new ConfigurationException("Test message", "Test setting");
 
-            // Act and Assert
-            ConfigurationExceptionValidation.EnsureValid(exception);
-        }
+        // Act and Assert
+        ConfigurationExceptionValidation.EnsureValid(exception);
+    }
 
-        [Fact]
-        public void EnsureValid_MessageNull_ThrowsArgumentException()
-        {
-            // Act and Assert
-            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(null));
-        }
+    [Fact]
+    public void EnsureValid_MessageNull_ThrowsArgumentException()
+    {
+        // Act and Assert
+        Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(null!));
+    }
 
-        [Fact]
-        public void EnsureValid_SettingNull_ThrowsArgumentException()
-        {
-            // Act and Assert - ConfigurationException with null Setting
-            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException("Test message")));
-        }
+    [Fact]
+    public void EnsureValid_SettingNull_ThrowsArgumentException()
+    {
+        // Act and Assert - ConfigurationException with null Setting
+        Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(new ConfigurationException("Test message")));
+    }
 
-        [Fact]
-        public void EnsureValid_MessageEmpty_ThrowsArgumentException()
-        {
-            // Arrange
-            var exception = new ConfigurationException("", "Test setting");
+    [Fact]
+    public void EnsureValid_MessageEmpty_ThrowsArgumentException()
+    {
+        // Arrange
+        var exception = new ConfigurationException("", "Test setting");
 
-            // Act and Assert
-            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
-        }
+        // Act and Assert
+        Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
+    }
 
-        [Fact]
-        public void EnsureValid_SettingEmpty_ThrowsArgumentException()
-        {
-            // Arrange
-            var exception = new ConfigurationException("Test message", "");
+    [Fact]
+    public void EnsureValid_SettingEmpty_ThrowsArgumentException()
+    {
+        // Arrange
+        var exception = new ConfigurationException("Test message", "");
 
-            // Act and Assert
-            Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
-        }
+        // Act and Assert
+        Assert.ThrowsAny<ArgumentException>(() => ConfigurationExceptionValidation.EnsureValid(exception));
     }
 }

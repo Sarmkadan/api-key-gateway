@@ -102,7 +102,7 @@ public class UsageRecord
     /// Counts successful requests in a collection of usage records
     /// </summary>
     /// <param name="records">Collection of usage records</param>
-    /// <returns>Number of successful requests (status code < 400)</returns>
+    /// <returns>Number of successful requests (status code &lt; 400)</returns>
     public static int CountSuccessfulRequests(IEnumerable<UsageRecord> records)
     {
         ArgumentNullException.ThrowIfNull(records);

@@ -28,7 +28,9 @@ public static class CryptoHelpers
     public static string GenerateSecureRandomString(int length)
     {
         if (length <= 0)
+        {
             throw new ArgumentException("Length must be positive", nameof(length));
+        }
 
         return RandomNumberGenerator.GetString(AlphanumericAlphabet, length);
     }
@@ -41,7 +43,9 @@ public static class CryptoHelpers
     public static string ComputeSha256Hash(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
+        {
             throw new ArgumentException("Input cannot be empty", nameof(input));
+        }
 
         int maxBytes = Encoding.UTF8.GetMaxByteCount(input.Length);
         byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(maxBytes);
@@ -65,7 +69,9 @@ public static class CryptoHelpers
     public static bool VerifyHash(string input, string hash)
     {
         if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(hash))
+        {
             return false;
+        }
 
         var computedHash = ComputeSha256Hash(input);
         var computedBytes = Encoding.UTF8.GetBytes(computedHash);
@@ -81,10 +87,14 @@ public static class CryptoHelpers
     public static string ComputeHmacSha256(string message, string secret)
     {
         if (string.IsNullOrWhiteSpace(message))
+        {
             throw new ArgumentException("Message cannot be empty", nameof(message));
+        }
 
         if (string.IsNullOrWhiteSpace(secret))
+        {
             throw new ArgumentException("Secret cannot be empty", nameof(secret));
+        }
 
         int maxSecretBytes = Encoding.UTF8.GetMaxByteCount(secret.Length);
         int maxMsgBytes = Encoding.UTF8.GetMaxByteCount(message.Length);

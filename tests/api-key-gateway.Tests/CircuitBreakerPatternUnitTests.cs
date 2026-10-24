@@ -4,12 +4,12 @@
 // Unit tests for CircuitBreakerPattern implementation
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Utilities;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -520,7 +520,7 @@ public class CircuitBreakerPatternUnitTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
 
@@ -545,7 +545,7 @@ public class CircuitBreakerPatternUnitTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
 

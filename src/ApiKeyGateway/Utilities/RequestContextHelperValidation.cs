@@ -4,9 +4,9 @@
 // Validation helpers for RequestContextHelper to ensure data integrity
 // =============================================================================
 
-using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiKeyGateway.Utilities;
 
@@ -117,19 +117,25 @@ public static class RequestContextHelperValidation
     private static bool IsValidIpAddress(string ipAddress)
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
+        {
             return false;
+        }
 
         // Handle IPv4
         if (ipAddress.Contains('.') && !ipAddress.Contains(':'))
         {
             var parts = ipAddress.Split('.');
             if (parts.Length != 4)
+            {
                 return false;
+            }
 
             foreach (var part in parts)
             {
                 if (!byte.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+                {
                     return false;
+                }
             }
 
             return true;

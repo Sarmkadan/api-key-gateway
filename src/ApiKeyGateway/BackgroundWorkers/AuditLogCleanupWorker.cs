@@ -15,6 +15,11 @@ public sealed class AuditLogCleanupWorker : BackgroundServiceBase<AuditLogCleanu
     private readonly int _retentionDays = 90;
     private int _totalDeleted = 0;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuditLogCleanupWorker"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider used to create scopes.</param>
+    /// <param name="logger">Logger for cleanup operations.</param>
     public AuditLogCleanupWorker(IServiceProvider serviceProvider, ILogger<AuditLogCleanupWorker> logger)
         : base(serviceProvider, logger)
     {
@@ -59,6 +64,11 @@ public sealed class AuditLogCleanupWorker : BackgroundServiceBase<AuditLogCleanu
         await Task.Delay(_cleanupInterval, stoppingToken);
     }
 
+    /// <summary>
+    /// Returns the delay applied after a failed cleanup cycle before retrying.
+    /// </summary>
+    /// <param name="stoppingToken">Token that signals host shutdown.</param>
+    /// <returns>A fixed five-minute delay.</returns>
     protected override TimeSpan GetErrorDelay(CancellationToken stoppingToken)
     {
         return TimeSpan.FromMinutes(5);

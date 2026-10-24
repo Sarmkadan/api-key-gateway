@@ -4,13 +4,13 @@
 // Repository implementation for audit log data persistence
 // =============================================================================
 
-using ApiKeyGateway.Data;
 using System.Data.Common;
+using ApiKeyGateway.Data;
+using ApiKeyGateway.Domain.Enums; // Added for AuditAction enum
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
-using ApiKeyGateway.Domain.Enums; // Added for AuditAction enum
 
 namespace ApiKeyGateway.Repositories;
 
@@ -22,6 +22,11 @@ public class AuditLogRepository : IAuditLogRepository
     private readonly IDbConnection _connection;
     private readonly ILogger<AuditLogRepository> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuditLogRepository"/> class.
+    /// </summary>
+    /// <param name="connection">Database connection used for audit log queries.</param>
+    /// <param name="logger">Logger for repository operations.</param>
     public AuditLogRepository(IDbConnection connection, ILogger<AuditLogRepository> logger)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -34,7 +39,9 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task CreateAsync(AuditLog log)
     {
         if (log == null)
+        {
             throw new ArgumentNullException(nameof(log));
+        }
 
         try
         {
@@ -67,10 +74,14 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task<List<AuditLog>> GetByResourceIdAsync(string resourceId, int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(resourceId))
+        {
             throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
+        }
 
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
 
         try
         {
@@ -147,7 +158,9 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task<List<AuditLog>> SearchAsync(AuditAction action, DateTime fromUtc, DateTime toUtc, int limit = 100)
     {
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
 
         try
         {
@@ -216,10 +229,14 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task<string> ExportByResourceIdToXmlAsync(string resourceId, int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(resourceId))
+        {
             throw new ArgumentException("Resource ID cannot be empty", nameof(resourceId));
+        }
 
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
 
         try
         {
@@ -260,10 +277,14 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task<string> ExportByDateRangeToXmlAsync(DateTime startDate, DateTime endDate, int limit = 100)
     {
         if (endDate < startDate)
+        {
             throw new ArgumentException("End date must be after start date");
+        }
 
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
 
         try
         {

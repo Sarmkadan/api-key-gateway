@@ -23,7 +23,9 @@ public static class UsageRepositoryExtensions
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         if (startDate > endDate)
+        {
             throw new ArgumentException("Start date cannot be after end date", nameof(startDate));
+        }
 
         var records = await repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
         return records.Count;
@@ -42,7 +44,9 @@ public static class UsageRepositoryExtensions
     {
         ArgumentNullException.ThrowIfNull(repository);
         if (startDate > endDate)
+        {
             throw new ArgumentException("Start date cannot be after end date", nameof(startDate));
+        }
 
         var records = await repository.GetUsageAsync(startDate, endDate);
         return records.Count;
@@ -63,7 +67,9 @@ public static class UsageRepositoryExtensions
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         if (retentionDays <= 0)
+        {
             throw new ArgumentException("Retention days must be positive", nameof(retentionDays));
+        }
 
         await repository.DeleteOldRecordsAsync(retentionDays);
     }
@@ -84,11 +90,15 @@ public static class UsageRepositoryExtensions
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         if (startDate > endDate)
+        {
             throw new ArgumentException("Start date cannot be after end date", nameof(startDate));
+        }
 
         var records = await repository.GetByApiKeyAndDateRangeAsync(apiKeyId, startDate, endDate);
         if (records.Count == 0)
+        {
             return 0;
+        }
 
         var totalResponseTime = records.Sum(r => r.ResponseTimeMs);
         return totalResponseTime / records.Count;

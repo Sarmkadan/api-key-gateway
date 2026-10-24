@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiKeyGateway.Controllers;
 

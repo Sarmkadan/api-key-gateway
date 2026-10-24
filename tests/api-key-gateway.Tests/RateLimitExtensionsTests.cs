@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =====================================================================
 
-using Xunit;
-using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -253,7 +253,7 @@ public class RateLimitExtensionsTests
         RateLimit? nullRateLimit = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => nullRateLimit.IsViolated());
+        Assert.Throws<ArgumentNullException>(() => nullRateLimit!.IsViolated());
     }
 
     /// <summary>
@@ -266,7 +266,7 @@ public class RateLimitExtensionsTests
         RateLimit? nullRateLimit = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => nullRateLimit.GetRemainingRequests());
+        Assert.Throws<ArgumentNullException>(() => nullRateLimit!.GetRemainingRequests());
     }
 
     /// <summary>
@@ -279,7 +279,7 @@ public class RateLimitExtensionsTests
         RateLimit? nullRateLimit = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => nullRateLimit.ShouldAllowRequest());
+        Assert.Throws<ArgumentNullException>(() => nullRateLimit!.ShouldAllowRequest());
     }
 
 }

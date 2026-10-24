@@ -5,13 +5,13 @@
 // boundary conditions, and period rollover scenarios.
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

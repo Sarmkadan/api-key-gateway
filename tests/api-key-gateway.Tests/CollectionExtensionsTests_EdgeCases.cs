@@ -6,9 +6,9 @@
 // and boundary conditions as requested in the task.
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Extensions;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -226,7 +226,7 @@ public class CollectionExtensionsTests_EdgeCases
     {
         var items = new[] { "a", "b", "c" };
         Func<string, char>? nullSelector = null;
-        var act = () => items.CountBy(nullSelector);
+        var act = () => items.CountBy(nullSelector!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -321,7 +321,7 @@ public class CollectionExtensionsTests_EdgeCases
     {
         var items = new[] { 1, 2, 3 };
         Func<int, int>? nullSelector = null;
-        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, nullSelector);
+        var act = () => ApiKeyGateway.Extensions.CollectionExtensions.DistinctBy(items, nullSelector!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -359,7 +359,7 @@ public class CollectionExtensionsTests_EdgeCases
     {
         var items = new[] { 1, 2, 3 };
         Action<int>? nullAction = null;
-        var act = () => items.ForEachSafe(nullAction);
+        var act = () => items.ForEachSafe(nullAction!);
         act.Should().Throw<ArgumentNullException>();
     }
 

@@ -21,6 +21,12 @@ public class ApiKeysController : ControllerBase
     private readonly IApiKeyRotationService _rotationService;
     private readonly ILogger<ApiKeysController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeysController"/> class.
+    /// </summary>
+    /// <param name="apiKeyService">Service that manages API key lifecycle.</param>
+    /// <param name="rotationService">Service that rotates API keys.</param>
+    /// <param name="logger">Logger for controller operations.</param>
     public ApiKeysController(
         IApiKeyService apiKeyService,
         IApiKeyRotationService rotationService,
@@ -41,7 +47,9 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<CreateKeyResponse>> CreateKey([FromBody] CreateKeyRequest request)
     {
         if (string.IsNullOrWhiteSpace(request?.ConsumerId) || string.IsNullOrWhiteSpace(request?.Name))
+        {
             return BadRequest(new { error = "Consumer ID and Key name are required" });
+        }
 
         try
         {
@@ -78,11 +86,15 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<GetKeyResponse>> GetKeyById(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return BadRequest(new { error = "Key ID is required" });
+        }
 
         var apiKey = await _apiKeyService.GetByIdAsync(id);
         if (apiKey == null)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         return Ok(new GetKeyResponse
         {
@@ -106,7 +118,9 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<List<GetKeyResponse>>> GetConsumerKeys(string consumerId)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             return BadRequest(new { error = "Consumer ID is required" });
+        }
 
         var keys = await _apiKeyService.GetConsumerKeysAsync(consumerId);
 
@@ -136,7 +150,9 @@ public class ApiKeysController : ControllerBase
     {
         var result = await _apiKeyService.DisableKeyAsync(id);
         if (!result)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         return Ok(new { message = "API key disabled successfully" });
     }
@@ -151,7 +167,9 @@ public class ApiKeysController : ControllerBase
     {
         var result = await _apiKeyService.EnableKeyAsync(id);
         if (!result)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         return Ok(new { message = "API key enabled successfully" });
     }
@@ -166,7 +184,9 @@ public class ApiKeysController : ControllerBase
     {
         var result = await _apiKeyService.RevokeKeyAsync(id);
         if (!result)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         return Ok(new { message = "API key revoked successfully" });
     }
@@ -181,7 +201,9 @@ public class ApiKeysController : ControllerBase
     {
         var key = await _apiKeyService.GetByIdAsync(id);
         if (key == null)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         var ips = await _apiKeyService.GetIpWhitelistAsync(id);
         return Ok(new IpWhitelistResponse { KeyId = id, AllowedIps = ips, IsUnrestricted = ips.Count == 0 });
@@ -200,11 +222,15 @@ public class ApiKeysController : ControllerBase
         [FromBody] SetIpWhitelistRequest request)
     {
         if (request is null)
+        {
             return BadRequest(new { error = "Request body is required" });
+        }
 
         var success = await _apiKeyService.SetIpWhitelistAsync(id, request.AllowedIps ?? []);
         if (!success)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         var updated = await _apiKeyService.GetIpWhitelistAsync(id);
         _logger.LogInformation("IP whitelist set for key {KeyId}: {Count} entries", id, updated.Count);
@@ -225,15 +251,21 @@ public class ApiKeysController : ControllerBase
         [FromBody] IpAddressRequest request)
     {
         if (string.IsNullOrWhiteSpace(request?.IpAddress))
+        {
             return BadRequest(new { error = "IP address is required" });
+        }
 
         var key = await _apiKeyService.GetByIdAsync(id);
         if (key == null)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         var added = await _apiKeyService.AddIpToWhitelistAsync(id, request.IpAddress);
         if (!added)
+        {
             return Conflict(new { error = $"IP address '{request.IpAddress}' is already in the whitelist" });
+        }
 
         var updated = await _apiKeyService.GetIpWhitelistAsync(id);
         _logger.LogInformation("IP {Ip} added to whitelist for key {KeyId}", request.IpAddress, id);
@@ -251,11 +283,15 @@ public class ApiKeysController : ControllerBase
     {
         var key = await _apiKeyService.GetByIdAsync(id);
         if (key == null)
+        {
             return NotFound(new { error = "API key not found" });
+        }
 
         var removed = await _apiKeyService.RemoveIpFromWhitelistAsync(id, ip);
         if (!removed)
+        {
             return NotFound(new { error = $"IP address '{ip}' was not found in the whitelist" });
+        }
 
         var updated = await _apiKeyService.GetIpWhitelistAsync(id);
         _logger.LogInformation("IP {Ip} removed from whitelist for key {KeyId}", ip, id);
@@ -273,7 +309,9 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<RotateKeyResponse>> RotateKey(string id, [FromBody] RotateKeyRequest? request = null)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return BadRequest(new { error = "Key ID is required" });
+        }
 
         try
         {
@@ -282,7 +320,9 @@ public class ApiKeysController : ControllerBase
             if (!result.Success)
             {
                 if (result.FailureReason == "Key not found")
+                {
                     return NotFound(new { error = result.FailureReason });
+                }
 
                 return BadRequest(new { error = result.FailureReason });
             }
@@ -316,7 +356,9 @@ public class ApiKeysController : ControllerBase
     {
         var key = await _apiKeyService.GetByIdAsync(id);
         if (key == null)
+        {
             return NotFound();
+        }
 
         // Revoke instead of delete
         await _apiKeyService.RevokeKeyAsync(id);
@@ -331,7 +373,9 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<List<GetKeyResponse>>> GetExpiringKeys([FromQuery] int days = 7)
     {
         if (days <= 0)
+        {
             return BadRequest(new { error = "Days parameter must be positive" });
+        }
 
         var window = TimeSpan.FromDays(days);
         var expiringKeys = await _apiKeyService.GetExpiringKeysAsync(window);
@@ -362,7 +406,9 @@ public class ApiKeysController : ControllerBase
     public async Task<ActionResult<List<GetKeyByPrefixResponse>>> GetKeysByPrefix(string prefix)
     {
         if (string.IsNullOrWhiteSpace(prefix))
+        {
             return BadRequest(new { error = "Prefix is required" });
+        }
 
         try
         {
@@ -400,8 +446,13 @@ public class ApiKeysController : ControllerBase
 /// </summary>
 public class CreateKeyRequest
 {
+    /// <summary>Identifier of the consumer that owns the new key.</summary>
     public string? ConsumerId { get; set; }
+
+    /// <summary>Display name for the new key.</summary>
     public string? Name { get; set; }
+
+    /// <summary>Optional lifetime of the key in days.</summary>
     public int? ExpirationDays { get; set; }
 }
 
@@ -410,10 +461,19 @@ public class CreateKeyRequest
 /// </summary>
 public class CreateKeyResponse
 {
+    /// <summary>Identifier of the created key.</summary>
     public string KeyId { get; set; } = string.Empty;
+
+    /// <summary>Identifier of the consumer that owns the key.</summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>Display name of the key.</summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>UTC expiration time, or null when the key does not expire.</summary>
     public DateTime? ExpiresAt { get; set; }
+
+    /// <summary>UTC time when the key was created.</summary>
     public DateTime CreatedAt { get; set; }
 }
 
@@ -422,14 +482,31 @@ public class CreateKeyResponse
 /// </summary>
 public class GetKeyResponse
 {
+    /// <summary>Identifier of the key.</summary>
     public string KeyId { get; set; } = string.Empty;
+
+    /// <summary>Identifier of the consumer that owns the key.</summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>Display name of the key.</summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>Current status of the key.</summary>
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>UTC time when the key was created.</summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>UTC expiration time, or null when the key does not expire.</summary>
     public DateTime? ExpiresAt { get; set; }
+
+    /// <summary>UTC time of the most recent request made with the key, or null if unused.</summary>
     public DateTime? LastUsedAt { get; set; }
+
+    /// <summary>Total number of requests made with the key.</summary>
     public int RequestCount { get; set; }
+
+    /// <summary>True when the key is currently usable.</summary>
     public bool IsActive { get; set; }
 }
 
@@ -450,9 +527,16 @@ public class RotateKeyRequest
 /// </summary>
 public class RotateKeyResponse
 {
+    /// <summary>Identifier of the key that was replaced.</summary>
     public string OldKeyId { get; set; } = string.Empty;
+
+    /// <summary>Identifier of the replacement key.</summary>
     public string NewKeyId { get; set; } = string.Empty;
+
+    /// <summary>Identifier of the consumer that owns the keys.</summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>UTC expiration time of the replacement key, or null when it does not expire.</summary>
     public DateTime? NewKeyExpiresAt { get; set; }
 }
 
@@ -462,12 +546,25 @@ public class RotateKeyResponse
 /// </summary>
 public class GetKeyByPrefixResponse
 {
+    /// <summary>Identifier of the key.</summary>
     public string KeyId { get; set; } = string.Empty;
+
+    /// <summary>Identifier of the consumer that owns the key.</summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>Display name of the key.</summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>Current status of the key.</summary>
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>UTC time when the key was created.</summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>UTC expiration time, or null when the key does not expire.</summary>
     public DateTime? ExpiresAt { get; set; }
+
+    /// <summary>Non-sensitive metadata attached to the key.</summary>
     public Dictionary<string, string> Metadata { get; set; } = [];
 }
 
@@ -476,6 +573,7 @@ public class GetKeyByPrefixResponse
 /// </summary>
 public class IpWhitelistResponse
 {
+    /// <summary>Identifier of the key the whitelist applies to.</summary>
     public string KeyId { get; set; } = string.Empty;
 
     /// <summary>Addresses currently allowed. Empty means all IPs are permitted.</summary>
@@ -502,5 +600,6 @@ public class SetIpWhitelistRequest
 /// </summary>
 public class IpAddressRequest
 {
+    /// <summary>IP address to add or check.</summary>
     public string? IpAddress { get; set; }
 }

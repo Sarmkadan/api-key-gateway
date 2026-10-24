@@ -5,172 +5,173 @@ using System.Reflection;
 using ApiKeyGateway.Domain.Exceptions;
 using Xunit;
 
-namespace ApiKeyGateway.Tests
+namespace ApiKeyGateway.Tests;
+
+public class RateLimitExceededExceptionExtensionsTests
 {
-    public class RateLimitExceededExceptionExtensionsTests
+    private static RateLimitExceededException CreateException(
+        string apiKeyId = "test-key",
+        int limit = 10,
+        int windowInSeconds = 60)
     {
-        private static RateLimitExceededException CreateException(
-            string apiKeyId = "test-key",
-            int limit = 10,
-            int windowInSeconds = 60)
+        // The constructor used in the existing tests sets RetryAfter to a future time.
+        return new RateLimitExceededException(apiKeyId, limit, windowInSeconds);
+    }
+
+    private static void SetRetryAfter(RateLimitExceededException ex, DateTime? value)
+    {
+        // The RetryAfter property is likely read‑only; use reflection to force a value for edge‑case tests.
+        var prop = typeof(RateLimitExceededException).GetProperty(
+            "RetryAfter",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        if (prop == null)
         {
-            // The constructor used in the existing tests sets RetryAfter to a future time.
-            return new RateLimitExceededException(apiKeyId, limit, windowInSeconds);
+            throw new InvalidOperationException("RetryAfter property not found on RateLimitExceededException.");
         }
 
-        private static void SetRetryAfter(RateLimitExceededException ex, DateTime? value)
-        {
-            // The RetryAfter property is likely read‑only; use reflection to force a value for edge‑case tests.
-            var prop = typeof(RateLimitExceededException).GetProperty(
-                "RetryAfter",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        prop.SetValue(ex, value);
+    }
 
-            if (prop == null)
-                throw new InvalidOperationException("RetryAfter property not found on RateLimitExceededException.");
+    [Fact]
+    public void GetRateLimitExceededMessage_HappyPath_ReturnsFormattedMessage()
+    {
+        // Arrange
+        var ex = CreateException();
 
-            prop.SetValue(ex, value);
-        }
+        var expectedRetryAfter = ex.RetryAfter!.Value
+            .ToString("O", CultureInfo.InvariantCulture);
 
-        [Fact]
-        public void GetRateLimitExceededMessage_HappyPath_ReturnsFormattedMessage()
-        {
-            // Arrange
-            var ex = CreateException();
+        var expected = $"Rate limit exceeded for API key '{ex.ApiKeyId}'. " +
+                       $"Limit: {ex.Limit} per {ex.WindowInSeconds} seconds. " +
+                       $"Retry after: {expectedRetryAfter}.";
 
-            var expectedRetryAfter = ex.RetryAfter!.Value
-                .ToString("O", CultureInfo.InvariantCulture);
+        // Act
+        var message = ex.GetRateLimitExceededMessage();
 
-            var expected = $"Rate limit exceeded for API key '{ex.ApiKeyId}'. " +
-                           $"Limit: {ex.Limit} per {ex.WindowInSeconds} seconds. " +
-                           $"Retry after: {expectedRetryAfter}.";
+        // Assert
+        Assert.Equal(expected, message);
+    }
 
-            // Act
-            var message = ex.GetRateLimitExceededMessage();
+    [Fact]
+    public void GetRateLimitExceededMessage_NullException_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRateLimitExceededMessage());
+    }
 
-            // Assert
-            Assert.Equal(expected, message);
-        }
+    [Fact]
+    public void IsRetryAfterExpired_WhenRetryAfterInFuture_ReturnsFalse()
+    {
+        // Arrange
+        var ex = CreateException();
 
-        [Fact]
-        public void GetRateLimitExceededMessage_NullException_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRateLimitExceededMessage());
-        }
+        // Act
+        var result = ex.IsRetryAfterExpired();
 
-        [Fact]
-        public void IsRetryAfterExpired_WhenRetryAfterInFuture_ReturnsFalse()
-        {
-            // Arrange
-            var ex = CreateException();
+        // Assert
+        Assert.False(result);
+    }
 
-            // Act
-            var result = ex.IsRetryAfterExpired();
+    [Fact]
+    public void IsRetryAfterExpired_WhenRetryAfterIsNull_ReturnsFalse()
+    {
+        // Arrange
+        var ex = CreateException();
+        SetRetryAfter(ex, null);
 
-            // Assert
-            Assert.False(result);
-        }
+        // Act
+        var result = ex.IsRetryAfterExpired();
 
-        [Fact]
-        public void IsRetryAfterExpired_WhenRetryAfterIsNull_ReturnsFalse()
-        {
-            // Arrange
-            var ex = CreateException();
-            SetRetryAfter(ex, null);
+        // Assert
+        Assert.False(result);
+    }
 
-            // Act
-            var result = ex.IsRetryAfterExpired();
+    [Fact]
+    public void IsRetryAfterExpired_NullException_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).IsRetryAfterExpired());
+    }
 
-            // Assert
-            Assert.False(result);
-        }
+    [Fact]
+    public void GetRateLimitHeaderValues_HappyPath_IncludesAllHeaders()
+    {
+        // Arrange
+        var ex = CreateException();
 
-        [Fact]
-        public void IsRetryAfterExpired_NullException_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).IsRetryAfterExpired());
-        }
+        // Act
+        var headers = ex.GetRateLimitHeaderValues();
 
-        [Fact]
-        public void GetRateLimitHeaderValues_HappyPath_IncludesAllHeaders()
-        {
-            // Arrange
-            var ex = CreateException();
+        // Assert
+        Assert.NotNull(headers);
+        Assert.Equal(3, headers.Count); // Limit, Window, Retry-After
 
-            // Act
-            var headers = ex.GetRateLimitHeaderValues();
+        Assert.Equal(ex.Limit.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Limit"]);
+        Assert.Equal(ex.WindowInSeconds.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Window"]);
+        Assert.Equal(
+            ex.RetryAfter!.Value.ToString("O", CultureInfo.InvariantCulture),
+            headers["Retry-After"]);
+    }
 
-            // Assert
-            Assert.NotNull(headers);
-            Assert.Equal(3, headers.Count); // Limit, Window, Retry-After
+    [Fact]
+    public void GetRateLimitHeaderValues_WhenRetryAfterIsNull_OmitsRetryAfterHeader()
+    {
+        // Arrange
+        var ex = CreateException();
+        SetRetryAfter(ex, null);
 
-            Assert.Equal(ex.Limit.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Limit"]);
-            Assert.Equal(ex.WindowInSeconds.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Window"]);
-            Assert.Equal(
-                ex.RetryAfter!.Value.ToString("O", CultureInfo.InvariantCulture),
-                headers["Retry-After"]);
-        }
+        // Act
+        var headers = ex.GetRateLimitHeaderValues();
 
-        [Fact]
-        public void GetRateLimitHeaderValues_WhenRetryAfterIsNull_OmitsRetryAfterHeader()
-        {
-            // Arrange
-            var ex = CreateException();
-            SetRetryAfter(ex, null);
+        // Assert
+        Assert.NotNull(headers);
+        Assert.Equal(2, headers.Count); // Only Limit and Window
 
-            // Act
-            var headers = ex.GetRateLimitHeaderValues();
+        Assert.Equal(ex.Limit.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Limit"]);
+        Assert.Equal(ex.WindowInSeconds.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Window"]);
+        Assert.DoesNotContain("Retry-After", headers);
+    }
 
-            // Assert
-            Assert.NotNull(headers);
-            Assert.Equal(2, headers.Count); // Only Limit and Window
+    [Fact]
+    public void GetRateLimitHeaderValues_NullException_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRateLimitHeaderValues());
+    }
 
-            Assert.Equal(ex.Limit.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Limit"]);
-            Assert.Equal(ex.WindowInSeconds.ToString(CultureInfo.InvariantCulture), headers["X-RateLimit-Window"]);
-            Assert.DoesNotContain("Retry-After", headers);
-        }
+    [Fact]
+    public void GetRetryAfterMessage_WithRetryAfter_ReturnsFormattedMessage()
+    {
+        // Arrange
+        var ex = CreateException();
 
-        [Fact]
-        public void GetRateLimitHeaderValues_NullException_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRateLimitHeaderValues());
-        }
+        // Act
+        var message = ex.GetRetryAfterMessage();
 
-        [Fact]
-        public void GetRetryAfterMessage_WithRetryAfter_ReturnsFormattedMessage()
-        {
-            // Arrange
-            var ex = CreateException();
+        // Assert
+        var expected = $"Please retry after {ex.RetryAfter!.Value.ToString("O", CultureInfo.InvariantCulture)}.";
+        Assert.Equal(expected, message);
+    }
 
-            // Act
-            var message = ex.GetRetryAfterMessage();
+    [Fact]
+    public void GetRetryAfterMessage_WithoutRetryAfter_ReturnsDefaultMessage()
+    {
+        // Arrange
+        var ex = CreateException();
+        SetRetryAfter(ex, null);
 
-            // Assert
-            var expected = $"Please retry after {ex.RetryAfter!.Value.ToString("O", CultureInfo.InvariantCulture)}.";
-            Assert.Equal(expected, message);
-        }
+        // Act
+        var message = ex.GetRetryAfterMessage();
 
-        [Fact]
-        public void GetRetryAfterMessage_WithoutRetryAfter_ReturnsDefaultMessage()
-        {
-            // Arrange
-            var ex = CreateException();
-            SetRetryAfter(ex, null);
+        // Assert
+        Assert.Equal("Please retry after the rate limit window has passed.", message);
+    }
 
-            // Act
-            var message = ex.GetRetryAfterMessage();
-
-            // Assert
-            Assert.Equal("Please retry after the rate limit window has passed.", message);
-        }
-
-        [Fact]
-        public void GetRetryAfterMessage_NullException_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRetryAfterMessage());
-        }
+    [Fact]
+    public void GetRetryAfterMessage_NullException_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => ((RateLimitExceededException)null!).GetRetryAfterMessage());
     }
 }

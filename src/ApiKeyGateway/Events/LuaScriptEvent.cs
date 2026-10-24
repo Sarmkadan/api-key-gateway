@@ -11,13 +11,28 @@ namespace ApiKeyGateway.Events;
 /// </summary>
 public abstract record LuaScriptEvent
 {
+    /// <summary>Unique identifier of this event</summary>
     public Guid EventId { get; } = Guid.NewGuid();
+
+    /// <summary>When the event was created (UTC)</summary>
     public DateTime Timestamp { get; } = DateTime.UtcNow;
+
+    /// <summary>Identifier of the Lua script involved</summary>
     public string ScriptId { get; set; } = null!;
+
+    /// <summary>Display name of the Lua script involved</summary>
     public string ScriptName { get; set; } = null!;
-    public string ApiKeyId { get; set; } = null!;
-    public string ConsumerId { get; set; } = null!;
+
+    /// <summary>ID of the API key that triggered the execution, if any</summary>
+    public string? ApiKeyId { get; set; }
+
+    /// <summary>ID of the consumer that triggered the execution, if any</summary>
+    public string? ConsumerId { get; set; }
+
+    /// <summary>Category of the error</summary>
     public string ErrorType { get; set; } = null!;
+
+    /// <summary>Description of the error</summary>
     public string ErrorMessage { get; set; } = null!;
 }
 
@@ -26,8 +41,13 @@ public abstract record LuaScriptEvent
 /// </summary>
 public record LuaScriptFailedEvent : LuaScriptEvent
 {
+    /// <summary>Specific kind of failure (e.g. timeout, runtime error)</summary>
     public string FailureType { get; set; } = null!;
+
+    /// <summary>Time the script ran before failing, in milliseconds</summary>
     public int ExecutionTimeMs { get; set; }
+
+    /// <summary>Memory consumed by the script before failing, in bytes</summary>
     public long MemoryUsedBytes { get; set; }
 }
 
@@ -37,7 +57,10 @@ public record LuaScriptFailedEvent : LuaScriptEvent
 /// </summary>
 public record LuaScriptQuarantinedEvent : LuaScriptEvent
 {
+    /// <summary>Number of consecutive failures that led to quarantine</summary>
     public int ConsecutiveFailures { get; set; }
+
+    /// <summary>Failure count at which a script is quarantined</summary>
     public int QuarantineThreshold { get; set; }
 }
 
@@ -46,5 +69,6 @@ public record LuaScriptQuarantinedEvent : LuaScriptEvent
 /// </summary>
 public record LuaScriptReenabledEvent : LuaScriptEvent
 {
+    /// <summary>Reason the script was re-enabled</summary>
     public string Reason { get; set; } = "Operator re-enabled after quarantine";
 }

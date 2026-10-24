@@ -3,16 +3,16 @@
 // CTO & Software Architect
 // =====================================================================
 
+using System.Security.Claims;
 using ApiKeyGateway.Configuration;
+using ApiKeyGateway.Domain.Enums;          // Added for AuditAction
+using ApiKeyGateway.Domain.Models;         // Added for AuditLog
+using ApiKeyGateway.Repositories;          // Added for IAuditLogRepository
 using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using ApiKeyGateway.Domain.Enums;          // Added for AuditAction
-using ApiKeyGateway.Domain.Models;         // Added for AuditLog
-using ApiKeyGateway.Repositories;          // Added for IAuditLogRepository
-using System.Security.Claims;
 
 namespace ApiKeyGateway.Controllers;
 
@@ -94,6 +94,15 @@ public sealed class AdminController : ControllerBase
     private readonly IRateLimitingService _rateLimitingService;
     private readonly IOptions<RateLimitingOptions> _rateLimitingOptions;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AdminController"/> class.
+    /// </summary>
+    /// <param name="logger">The logger for admin operations.</param>
+    /// <param name="metricsService">Service that provides metrics snapshots.</param>
+    /// <param name="dataExportService">Service that exports gateway data.</param>
+    /// <param name="auditLogRepository">Repository for audit log entries.</param>
+    /// <param name="rateLimitingService">Service that manages rate limiting.</param>
+    /// <param name="rateLimitingOptions">Rate limiting configuration options.</param>
     public AdminController(
         ILogger<AdminController> logger,
         IMetricsCollectionService metricsService,
@@ -223,7 +232,7 @@ public sealed class AdminController : ControllerBase
             auditLog.RecordChange("startDate", null, startDate?.ToString());
             auditLog.RecordChange("endDate", null, endDate?.ToString());
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {
@@ -310,7 +319,7 @@ public sealed class AdminController : ControllerBase
                 IsSuccess = true
             };
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {
@@ -449,7 +458,7 @@ public sealed class AdminController : ControllerBase
                 IsSuccess = true
             };
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {
@@ -513,7 +522,7 @@ public sealed class AdminController : ControllerBase
             auditLog.RecordChange("toUtc", null, toUtc?.ToString());
             auditLog.RecordChange("limit", null, limit.ToString());
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {
@@ -558,7 +567,7 @@ public sealed class AdminController : ControllerBase
             auditLog.RecordChange("limit", null, limit.ToString());
             auditLog.RecordChange("format", null, "XML");
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {
@@ -608,7 +617,7 @@ public sealed class AdminController : ControllerBase
             auditLog.RecordChange("limit", null, limit.ToString());
             auditLog.RecordChange("format", null, "XML");
 
-            _auditLogRepository.CreateAsync(auditLog);
+            await _auditLogRepository.CreateAsync(auditLog);
         }
         catch (Exception ex)
         {

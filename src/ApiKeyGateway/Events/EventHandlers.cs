@@ -27,6 +27,11 @@ public sealed class AuditLogEventHandler
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AuditLogEventHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuditLogEventHandler"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory used to create a scope per event.</param>
+    /// <param name="logger">Logger for audit events.</param>
     public AuditLogEventHandler(IServiceScopeFactory scopeFactory, ILogger<AuditLogEventHandler> logger)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
@@ -121,6 +126,12 @@ public sealed class UsageTrackingEventHandler
     private readonly IMetricsCollectionService _metrics;
     private readonly ILogger<UsageTrackingEventHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageTrackingEventHandler"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory used to create a scope per event.</param>
+    /// <param name="metrics">Service used to record usage metrics.</param>
+    /// <param name="logger">Logger for usage events.</param>
     public UsageTrackingEventHandler(
         IServiceScopeFactory scopeFactory,
         IMetricsCollectionService metrics,
@@ -221,6 +232,11 @@ public sealed class RateLimitEventHandler
     private readonly IMetricsCollectionService _metrics;
     private readonly ILogger<RateLimitEventHandler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitEventHandler"/> class.
+    /// </summary>
+    /// <param name="metrics">Service used to record rate limit metrics.</param>
+    /// <param name="logger">Logger for rate limit events.</param>
     public RateLimitEventHandler(IMetricsCollectionService metrics, ILogger<RateLimitEventHandler> logger)
     {
         _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));

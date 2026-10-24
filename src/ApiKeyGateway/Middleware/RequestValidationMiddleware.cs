@@ -19,12 +19,22 @@ public sealed class RequestValidationMiddleware
     private readonly ILogger<RequestValidationMiddleware> _logger;
     private const long MaxBodySizeBytes = 10 * 1024 * 1024; // 10MB
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RequestValidationMiddleware"/> class
+    /// </summary>
+    /// <param name="next">The next middleware delegate in the pipeline</param>
+    /// <param name="logger">Logger for validation diagnostics</param>
     public RequestValidationMiddleware(RequestDelegate next, ILogger<RequestValidationMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Validates the request headers and body size, then passes control to the next middleware
+    /// </summary>
+    /// <param name="context">The HTTP context of the current request</param>
+    /// <returns>A task that completes when the request has been processed</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         // Skip validation for GET/HEAD requests that typically have no body
@@ -93,7 +103,9 @@ public sealed class RequestValidationMiddleware
     private static bool IsValidContentType(string? contentType)
     {
         if (string.IsNullOrEmpty(contentType))
+        {
             return false;
+        }
 
         // Accept application/json and multipart/form-data
         return contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) ||

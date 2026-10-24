@@ -47,6 +47,12 @@ public class AuthenticationService : IAuthenticationService
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<AuthenticationService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthenticationService"/> class.
+    /// </summary>
+    /// <param name="apiKeyService">Service used to validate API keys.</param>
+    /// <param name="auditLogService">Service used to record authentication attempts.</param>
+    /// <param name="logger">Logger for authentication events.</param>
     public AuthenticationService(
         IApiKeyService apiKeyService,
         IAuditLogService auditLogService,
@@ -140,10 +146,14 @@ public class AuthenticationService : IAuthenticationService
     public async Task<bool> ValidateIpAsync(ApiKey key, string ipAddress)
     {
         if (key == null)
+        {
             throw new ArgumentNullException(nameof(key));
+        }
 
         if (string.IsNullOrWhiteSpace(ipAddress))
+        {
             return true;
+        }
 
         var isAllowed = key.IsIpAllowed(ipAddress);
 

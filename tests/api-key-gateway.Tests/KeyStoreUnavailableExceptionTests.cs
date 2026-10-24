@@ -56,7 +56,7 @@ public class KeyStoreUnavailableExceptionTests
         var message = "Key store is unavailable";
 
         // Act
-        var exception = new KeyStoreUnavailableException(message, operation);
+        var exception = new KeyStoreUnavailableException(message, operation!);
 
         // Assert
         exception.Message.Should().Be(message);
@@ -104,7 +104,7 @@ public class KeyStoreUnavailableExceptionTests
     public void Constructor_WithNullParameters_HandlesGracefully(string? message, string? operation)
     {
         // Act
-        var exception = new KeyStoreUnavailableException(message, operation);
+        var exception = new KeyStoreUnavailableException(message!, operation!);
 
         // Assert
         exception.Message.Should().NotBeNull();
@@ -120,7 +120,7 @@ public class KeyStoreUnavailableExceptionTests
         var operation = "CheckKeyExistence";
 
         // Act
-        var exception = new KeyStoreUnavailableException(message, operation, null);
+        var exception = new KeyStoreUnavailableException(message, operation, null!);
 
         // Assert
         exception.Message.Should().Be(message);

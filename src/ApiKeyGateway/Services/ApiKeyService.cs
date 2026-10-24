@@ -3,25 +3,21 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Utilities;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Services;
 
 /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
 /// Manages API key lifecycle - creation, validation, revocation, and queries
 /// </summary>
 public interface IApiKeyService
 {
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Creates a new API key for a consumer with optional expiration
     /// </summary>
     /// <param name="consumerId">The ID of the consumer.</param>
@@ -31,8 +27,6 @@ public interface IApiKeyService
     Task<ApiKey> CreateKeyAsync(string consumerId, string name, int? expirationDays = null);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves an API key by its ID
     /// </summary>
     /// <param name="keyId">The ID of the API key.</param>
@@ -40,8 +34,6 @@ public interface IApiKeyService
     Task<ApiKey?> GetByIdAsync(string keyId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Validates an API key and returns it if valid
     /// </summary>
     /// <param name="keyValue">The raw API key value to validate.</param>
@@ -49,8 +41,6 @@ public interface IApiKeyService
     Task<ApiKey?> ValidateKeyAsync(string keyValue);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Disables an API key
     /// </summary>
     /// <param name="keyId">The ID of the API key to disable.</param>
@@ -58,8 +48,6 @@ public interface IApiKeyService
     Task<bool> DisableKeyAsync(string keyId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Enables a previously disabled API key
     /// </summary>
     /// <param name="keyId">The ID of the API key to enable.</param>
@@ -67,8 +55,6 @@ public interface IApiKeyService
     Task<bool> EnableKeyAsync(string keyId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Permanently revokes an API key
     /// </summary>
     /// <param name="keyId">The ID of the API key to revoke.</param>
@@ -76,8 +62,6 @@ public interface IApiKeyService
     Task<bool> RevokeKeyAsync(string keyId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves all API keys for a consumer
     /// </summary>
     /// <param name="consumerId">The ID of the consumer.</param>
@@ -85,8 +69,6 @@ public interface IApiKeyService
     Task<List<ApiKey>> GetConsumerKeysAsync(string consumerId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Updates metadata for an API key
     /// </summary>
     /// <param name="keyId">The ID of the API key.</param>
@@ -95,8 +77,6 @@ public interface IApiKeyService
     Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Returns the IP whitelist for a key as a list of individual addresses.
     /// An empty list means the key has no IP restriction.
     /// </summary>
@@ -105,8 +85,6 @@ public interface IApiKeyService
     Task<List<string>> GetIpWhitelistAsync(string keyId);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Replaces the IP whitelist for a key with the provided set of IPs.
     /// Pass an empty collection to remove all IP restrictions.
     /// </summary>
@@ -116,8 +94,6 @@ public interface IApiKeyService
     Task<bool> SetIpWhitelistAsync(string keyId, IEnumerable<string> ips);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Adds a single IP address to a key's whitelist.
     /// Returns <c>false</c> when the key does not exist or the IP is already present.
     /// </summary>
@@ -127,8 +103,6 @@ public interface IApiKeyService
     Task<bool> AddIpToWhitelistAsync(string keyId, string ip);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Removes a single IP address from a key's whitelist.
     /// Returns <c>false</c> when the key does not exist or the IP was not in the list.
     /// </summary>
@@ -138,8 +112,6 @@ public interface IApiKeyService
     Task<bool> RemoveIpFromWhitelistAsync(string keyId, string ip);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves API keys that are expiring within the specified time window
     /// </summary>
     /// <param name="window">The time window to check for expiring keys.</param>
@@ -147,8 +119,6 @@ public interface IApiKeyService
     Task<List<ApiKey>> GetExpiringKeysAsync(TimeSpan window);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves API keys that are expiring within the specified number of days
     /// </summary>
     /// <param name="days">The number of days to check for expiring keys.</param>
@@ -156,8 +126,6 @@ public interface IApiKeyService
     Task<List<ApiKey>> GetExpiringKeysAsync(int days);
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves API keys by their prefix (first 8 characters of the key value)
     /// </summary>
     /// <param name="prefix">The prefix to search for (first 8 characters).</param>
@@ -165,6 +133,9 @@ public interface IApiKeyService
     Task<List<ApiKey>> FindByPrefixAsync(string prefix);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IApiKeyService"/> that creates, looks up, and manages API keys through the repository.
+/// </summary>
 public class ApiKeyService : IApiKeyService
 {
     private const string KeyPrefix = "sk";
@@ -174,8 +145,6 @@ public class ApiKeyService : IApiKeyService
     private readonly IApiKeyHasher _hasher;
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Initializes a new instance of the <see cref="ApiKeyService"/> class.
     /// </summary>
     /// <param name="repository">The API key repository for data access.</param>
@@ -190,8 +159,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Creates a new API key for a consumer with optional expiration
     /// </summary>
     /// <param name="consumerId">The ID of the consumer.</param>
@@ -203,10 +170,14 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Creating API key for consumer {ConsumerId} with name {Name}", consumerId, name);
 
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             throw new ValidationException("Consumer ID cannot be empty", nameof(consumerId), consumerId);
+        }
 
         if (string.IsNullOrWhiteSpace(name))
+        {
             throw new ValidationException("Key name cannot be empty", nameof(name), name);
+        }
 
         try
         {
@@ -238,8 +209,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves an API key by its ID
     /// </summary>
     public async Task<ApiKey?> GetByIdAsync(string keyId)
@@ -247,14 +216,14 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Retrieving API key by ID {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         return await _repository.GetByIdAsync(keyId);
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Validates an API key and returns it if valid
     /// </summary>
     public async Task<ApiKey?> ValidateKeyAsync(string keyValue)
@@ -262,7 +231,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Validating API key value");
 
         if (string.IsNullOrWhiteSpace(keyValue))
+        {
             throw new UnauthorizedAccessException(Domain.Constants.ErrorMessages.UnauthorizedAccess);
+        }
 
         var keyHash = _hasher.Hash(keyValue);
         var apiKey = await _repository.GetByHashAsync(keyHash);
@@ -290,8 +261,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Disables an API key
     /// </summary>
     public async Task<bool> DisableKeyAsync(string keyId)
@@ -299,7 +268,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Disabling API key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         try
         {
@@ -324,8 +295,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Enables a previously disabled API key
     /// </summary>
     public async Task<bool> EnableKeyAsync(string keyId)
@@ -333,7 +302,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Enabling API key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         try
         {
@@ -358,8 +329,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Permanently revokes an API key
     /// </summary>
     public async Task<bool> RevokeKeyAsync(string keyId)
@@ -367,7 +336,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Revoking API key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         try
         {
@@ -392,8 +363,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves all API keys for a consumer
     /// </summary>
     public async Task<List<ApiKey>> GetConsumerKeysAsync(string consumerId)
@@ -401,7 +370,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Getting API keys for consumer {ConsumerId}", consumerId);
 
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             return [];
+        }
 
         try
         {
@@ -417,8 +388,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Updates metadata for an API key
     /// </summary>
     public async Task<bool> UpdateKeyMetadataAsync(string keyId, Dictionary<string, string> metadata)
@@ -426,10 +395,14 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Updating metadata for key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         if (metadata == null)
+        {
             throw new ValidationException("Metadata cannot be null", nameof(metadata), metadata);
+        }
 
         try
         {
@@ -457,8 +430,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Returns the IP whitelist for a key as a list of individual addresses.
     /// An empty list means the key has no IP restriction.
     /// </summary>
@@ -467,7 +438,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Getting IP whitelist for key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         try
         {
@@ -479,7 +452,9 @@ public class ApiKeyService : IApiKeyService
             }
 
             if (string.IsNullOrWhiteSpace(key.IpWhitelist))
+            {
                 return [];
+            }
 
             var list = key.IpWhitelist
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -499,8 +474,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Replaces the IP whitelist for a key with the provided set of IPs.
     /// Pass an empty collection to remove all IP restrictions.
     /// </summary>
@@ -509,7 +482,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Setting IP whitelist for key {KeyId}", keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         try
         {
@@ -538,8 +513,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Adds a single IP address to a key's whitelist.
     /// Returns <c>false</c> when the key does not exist or the IP is already present.
     /// </summary>
@@ -548,10 +521,14 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Adding IP {Ip} to whitelist for key {KeyId}", ip, keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         if (string.IsNullOrWhiteSpace(ip))
+        {
             throw new ValidationException("IP address cannot be empty", nameof(ip), ip);
+        }
 
         var current = await GetIpWhitelistAsync(keyId);
         var normalised = ip.Trim();
@@ -569,8 +546,6 @@ public class ApiKeyService : IApiKeyService
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Removes a single IP address from a key's whitelist.
     /// Returns <c>false</c> when the key does not exist or the IP was not in the list.
     /// </summary>
@@ -579,10 +554,14 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Removing IP {Ip} from whitelist for key {KeyId}", ip, keyId);
 
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         if (string.IsNullOrWhiteSpace(ip))
+        {
             throw new ValidationException("IP address cannot be empty", nameof(ip), ip);
+        }
 
         var current = await GetIpWhitelistAsync(keyId);
         var normalised = ip.Trim();
@@ -611,8 +590,6 @@ public class ApiKeyService : IApiKeyService
 
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Generates a cryptographically secure random string of the specified length.
     /// Key material must come from a CSPRNG; <see cref="Random"/> is seeded from
     /// the system clock and produces predictable, guessable key values.
@@ -625,8 +602,6 @@ public class ApiKeyService : IApiKeyService
     }
 
         /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
         /// Retrieves API keys that are expiring within the specified time window
         /// </summary>
         /// <param name="window">The time window to check for expiring keys.</param>
@@ -640,8 +615,6 @@ public class ApiKeyService : IApiKeyService
         }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves API keys that are expiring within the specified number of days
     /// </summary>
     /// <param name="days">The number of days to check for expiring keys.</param>
@@ -651,15 +624,15 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Retrieving API keys expiring within {Days} days", days);
 
         if (days <= 0)
+        {
             throw new ValidationException("Days parameter must be positive", nameof(days), days);
+        }
 
         var window = TimeSpan.FromDays(days);
         return await GetExpiringKeysAsync(window);
     }
 
     /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
     /// Retrieves API keys by their prefix (first 8 characters of the key value)
     /// </summary>
     /// <param name="prefix">The prefix to search for (first 8 characters).</param>
@@ -669,7 +642,9 @@ public class ApiKeyService : IApiKeyService
         _logger.LogDebug("Finding API keys by prefix {Prefix}", prefix);
 
         if (string.IsNullOrWhiteSpace(prefix))
+        {
             throw new ValidationException("Prefix cannot be empty", nameof(prefix), prefix);
+        }
 
         // The prefix should be the first 8 characters of the key value (e.g., "sk_abcdefg")
         // We need to search for keys where the Prefix field matches and the key value starts with this prefix
@@ -681,20 +656,73 @@ public class ApiKeyService : IApiKeyService
 }
 
 /// <summary>
-        /// Add XML doc comments (summary, params, returns, exceptions) to all public members of src/ApiKeyGateway/Services/ApiKeyService.cs. No behavior changes.
-        /// </summary>
 /// Repository interface for API key data access
 /// </summary>
 public interface IApiKeyRepository
 {
+    /// <summary>
+    /// Persists a new API key.
+    /// </summary>
+    /// <param name="apiKey">The API key to create.</param>
+    /// <returns>The created API key.</returns>
     Task<ApiKey> CreateAsync(ApiKey apiKey);
+
+    /// <summary>
+    /// Gets an API key by its identifier.
+    /// </summary>
+    /// <param name="id">The identifier of the API key.</param>
+    /// <returns>The matching API key, or null if none exists.</returns>
     Task<ApiKey?> GetByIdAsync(string id);
+
+    /// <summary>
+    /// Gets an API key by the hash of its value.
+    /// </summary>
+    /// <param name="keyHash">The hash of the API key value.</param>
+    /// <returns>The matching API key, or null if none exists.</returns>
     Task<ApiKey?> GetByHashAsync(string keyHash);
+
+    /// <summary>
+    /// Gets all API keys belonging to a consumer.
+    /// </summary>
+    /// <param name="consumerId">The identifier of the consumer.</param>
+    /// <returns>The consumer's API keys.</returns>
     Task<List<ApiKey>> GetByConsumerIdAsync(string consumerId);
+
+    /// <summary>
+    /// Updates an existing API key.
+    /// </summary>
+    /// <param name="apiKey">The API key with updated values.</param>
     Task UpdateAsync(ApiKey apiKey);
+
+    /// <summary>
+    /// Deletes an API key.
+    /// </summary>
+    /// <param name="id">The identifier of the API key to delete.</param>
     Task DeleteAsync(string id);
+
+    /// <summary>
+    /// Gets API keys that have already expired.
+    /// </summary>
+    /// <returns>The expired API keys.</returns>
     Task<List<ApiKey>> GetExpiredKeysAsync();
+
+    /// <summary>
+    /// Gets all API keys.
+    /// </summary>
+    /// <returns>All API keys.</returns>
     Task<List<ApiKey>> GetAllAsync();
+
+    /// <summary>
+    /// Gets API keys that expire before the given threshold.
+    /// </summary>
+    /// <param name="threshold">The UTC cutoff time.</param>
+    /// <returns>The API keys expiring before the threshold.</returns>
     Task<List<ApiKey>> GetKeysExpiringBeforeAsync(DateTime threshold);
+
+    /// <summary>
+    /// Gets API keys whose value starts with the given prefix.
+    /// </summary>
+    /// <param name="prefix">The key prefix to match.</param>
+    /// <returns>The API keys matching the prefix.</returns>
     Task<List<ApiKey>> GetByPrefixAsync(string prefix);
 }

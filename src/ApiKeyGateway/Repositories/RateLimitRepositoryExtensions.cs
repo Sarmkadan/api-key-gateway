@@ -29,7 +29,7 @@ public static class RateLimitRepositoryExtensions
     /// <returns>The existing or newly created <see cref="RateLimit"/>.</returns>
     /// <exception cref="ArgumentException"><paramref name="apiKeyId"/> is <see langword="null"/> or whitespace.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="factory"/> is <see langword="null"/>.</exception>
-    /// <exception cref="DataAccessException">Propagated from the underlying repository when creation fails.</exception>
+    /// <exception cref="ApiKeyGateway.Domain.Exceptions.DataAccessException">Propagated from the underlying repository when creation fails.</exception>
     public static async Task<RateLimit> GetOrCreateAsync(
         this RateLimitRepository repository,
         string apiKeyId,
@@ -40,7 +40,9 @@ public static class RateLimitRepositoryExtensions
 
         var existing = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (existing is not null)
+        {
             return existing;
+        }
 
         var newRateLimit = factory(apiKeyId);
         await repository.CreateAsync(newRateLimit).ConfigureAwait(false);
@@ -58,7 +60,7 @@ public static class RateLimitRepositoryExtensions
     /// <exception cref="InvalidOperationException">
     /// Thrown when no <see cref="RateLimit"/> exists for the supplied <paramref name="apiKeyId"/>.
     /// </exception>
-    /// <exception cref="DataAccessException">Propagated from the underlying repository when the update fails.</exception>
+    /// <exception cref="ApiKeyGateway.Domain.Exceptions.DataAccessException">Propagated from the underlying repository when the update fails.</exception>
     public static async Task IncrementRequestCountAsync(this RateLimitRepository repository, string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
@@ -87,7 +89,9 @@ public static class RateLimitRepositoryExtensions
 
         var rateLimit = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit is null || !rateLimit.IsEnabled)
+        {
             return false;
+        }
 
         return rateLimit.CurrentRequestCount >= rateLimit.RequestsPerUnit;
     }
@@ -100,14 +104,16 @@ public static class RateLimitRepositoryExtensions
     /// <param name="apiKeyId">The API key identifier.</param>
     /// <returns>A task that completes when the reset (if any) has been persisted.</returns>
     /// <exception cref="ArgumentException"><paramref name="apiKeyId"/> is <see langword="null"/> or whitespace.</exception>
-    /// <exception cref="DataAccessException">Propagated from the underlying repository when the update fails.</exception>
+    /// <exception cref="ApiKeyGateway.Domain.Exceptions.DataAccessException">Propagated from the underlying repository when the update fails.</exception>
     public static async Task ResetIfWindowExpiredAsync(this RateLimitRepository repository, string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
 
         var rateLimit = await repository.GetByApiKeyIdAsync(apiKeyId).ConfigureAwait(false);
         if (rateLimit is null)
+        {
             return;
+        }
 
         var now = DateTime.UtcNow;
         var window = rateLimit.Unit switch

@@ -3,12 +3,12 @@
 // CTO & Software Architect
 // ===================================================================
 
+using System;
 using ApiKeyGateway.Data;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Services;
 using ApiKeyGateway.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace ApiKeyGateway.Configuration;
 

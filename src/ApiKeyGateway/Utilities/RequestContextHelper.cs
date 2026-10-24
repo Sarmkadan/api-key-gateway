@@ -85,14 +85,18 @@ public static class RequestContextHelper
         {
             var ip = forwardedFor.ToString().Split(',').First().Trim();
             if (!string.IsNullOrEmpty(ip))
+            {
                 return ip;
+            }
         }
 
         // Check X-Real-IP header
         if (request.Headers.TryGetValue("X-Real-IP", out var realIp))
         {
             if (!string.IsNullOrEmpty(realIp.ToString()))
+            {
                 return realIp.ToString();
+            }
         }
 
         // Fall back to connection remote address
@@ -114,7 +118,7 @@ public static class RequestContextHelper
     public static bool AcceptsJson(HttpRequest request)
     {
         return request.Headers.Accept.Any(a =>
-            a.Contains("application/json", StringComparison.OrdinalIgnoreCase) ||
-            a.Contains("*/*", StringComparison.OrdinalIgnoreCase));
+            a?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true ||
+            a?.Contains("*/*", StringComparison.OrdinalIgnoreCase) == true);
     }
 }

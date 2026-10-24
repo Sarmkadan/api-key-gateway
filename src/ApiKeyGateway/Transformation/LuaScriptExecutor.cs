@@ -1,8 +1,8 @@
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Events;
+using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Diagnostics;
 using MoonSharp.Interpreter.Loaders;
-using MoonSharp.Interpreter;
 
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
@@ -72,7 +72,7 @@ public interface ILuaScriptExecutor
 /// and <c>Bit32</c> module sets. OS, IO, debug, and dynamic-load facilities are excluded.
 /// </para>
 /// <para>
-/// Script execution is delegated to a <see cref="Task.Run"/> worker thread so the calling
+/// Script execution is delegated to a <see cref="Task.Run(System.Action)"/> worker thread so the calling
 /// async context is not blocked. A linked <see cref="CancellationTokenSource"/> enforces the
 /// wall-clock timeout; if the script exceeds the limit the task is abandoned and a timeout
 /// error is recorded — note that a tight CPU-bound loop inside Lua cannot be pre-empted by
@@ -268,7 +268,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     public ScriptValidationResult Validate(string script)
     {
         if (string.IsNullOrWhiteSpace(script))
+        {
             return new ScriptValidationResult { IsValid = false, Errors = ["Script is empty."] };
+        }
 
         var errors = new List<string>();
 
@@ -283,7 +285,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         foreach (var blocked in _blockedGlobals)
         {
             if (script.Contains(blocked, StringComparison.Ordinal))
+            {
                 errors.Add($"Use of disallowed global '{blocked}' detected.");
+            }
         }
 
         // Attempt a parse to catch syntax errors.
@@ -310,7 +314,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    private bool IsScriptQuarantined(string apiKeyId, string consumerId, out (int failureCount, DateTime quarantineUntil) quarantineInfo)
+    private bool IsScriptQuarantined(string? apiKeyId, string? consumerId, out (int failureCount, DateTime quarantineUntil) quarantineInfo)
     {
         var key = GetQuarantineKey(apiKeyId, consumerId);
         lock (_quarantineRegistry)
@@ -330,7 +334,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         return false;
     }
 
-    private void HandleScriptFailure(string apiKeyId, string consumerId)
+    private void HandleScriptFailure(string? apiKeyId, string? consumerId)
     {
         if (_options.QuarantineThreshold <= 0)
         {
@@ -366,8 +370,8 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     }
 
     private async Task PublishFailedEvent(
-        string apiKeyId,
-        string consumerId,
+        string? apiKeyId,
+        string? consumerId,
         string scriptId,
         string scriptName,
         string failureType,
@@ -399,8 +403,8 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     }
 
     private async Task PublishQuarantinedEvent(
-        string apiKeyId,
-        string consumerId,
+        string? apiKeyId,
+        string? consumerId,
         string scriptId,
         string scriptName,
         int consecutiveFailures,
@@ -428,7 +432,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         }
     }
 
-    private string GetQuarantineKey(string apiKeyId, string consumerId)
+    private string GetQuarantineKey(string? apiKeyId, string? consumerId)
     {
         return $"{apiKeyId}:{consumerId}";
     }
@@ -481,14 +485,20 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
 
         // Path and method may also have been overwritten.
         if (requestTable.Get("path") is { Type: DataType.String } pathVal)
+        {
             context.Path = pathVal.String;
+        }
 
         if (requestTable.Get("method") is { Type: DataType.String } methodVal)
+        {
             context.Method = methodVal.String;
+        }
 
         // If the script wrote a block_reason string, capture it.
         if (requestTable.Get("block_reason") is { Type: DataType.String } reasonVal)
+        {
             context.BlockReason = reasonVal.String;
+        }
 
         memoryUsed = EstimateMemoryUsage(lua);
         return result;
@@ -518,7 +528,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     private long EstimateTableSize(DynValue tableValue)
     {
         if (tableValue.IsNil() || tableValue.Type != DataType.Table)
+        {
             return 0;
+        }
 
         var table = tableValue.Table!;
         long size = 0;
@@ -543,7 +555,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     private long EstimateDynValueSize(DynValue value)
     {
         if (value.IsNil())
+        {
             return 0;
+        }
 
         return value.Type switch
         {
@@ -589,14 +603,20 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
 
         // Path and method may also have been overwritten.
         if (requestTable.Get("path") is { Type: DataType.String } pathVal)
+        {
             context.Path = pathVal.String;
+        }
 
         if (requestTable.Get("method") is { Type: DataType.String } methodVal)
+        {
             context.Method = methodVal.String;
+        }
 
         // If the script wrote a block_reason string, capture it.
         if (requestTable.Get("block_reason") is { Type: DataType.String } reasonVal)
+        {
             context.BlockReason = reasonVal.String;
+        }
 
         return result;
     }
@@ -614,7 +634,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
 
         // Remove any remaining dangerous globals.
         foreach (var g in _blockedGlobals)
+        {
             lua.Globals[g] = DynValue.Nil;
+        }
 
         return lua;
     }
@@ -623,7 +645,10 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     {
         var t = new Table(lua);
         foreach (var (k, v) in source)
+        {
             t[k] = v;
+        }
+
         return t;
     }
 
@@ -635,7 +660,9 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
             .ToList();
 
         foreach (var k in toRemove)
+        {
             target.Remove(k);
+        }
 
         // Add or update entries from the Lua table.
         foreach (var pair in source.Pairs)

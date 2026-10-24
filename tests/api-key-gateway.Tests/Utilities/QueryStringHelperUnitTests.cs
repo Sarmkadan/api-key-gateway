@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =====================================================================
 
-using Xunit;
 using ApiKeyGateway.Utilities;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -130,10 +130,10 @@ public class QueryStringHelperUnitTests
     public void BuildQueryString_ParametersWithNullValues_ExcludesNullValues()
     {
         // Arrange
-        var parameters = new Dictionary<string, string?>
+        var parameters = new Dictionary<string, string>
         {
             { "key1", "value1" },
-            { "key2", null },
+            { "key2", null! },
             { "key3", "value3" }
         };
 

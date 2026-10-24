@@ -98,7 +98,6 @@ public sealed class RetryPolicyBuilder
     /// Builds and returns the retry policy function.
     /// </summary>
     /// <typeparam name="T">The type of the operation result.</typeparam>
-    /// <param name="operation">The asynchronous operation to retry.</param>
     /// <returns>A function that executes the operation with retry logic.</returns>
     public Func<Func<Task<T>>, Task<T>> Build<T>()
     {

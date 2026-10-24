@@ -3,12 +3,12 @@
 // CTO & Software Architect
 // Unit tests for AuditLogEventHandlerValidation extension methods.
 // =====================================================================
-using Xunit;
 using ApiKeyGateway.Events;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

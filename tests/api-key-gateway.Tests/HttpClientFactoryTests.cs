@@ -8,103 +8,102 @@ using System.Net.Http;
 using ApiKeyGateway.Utilities;
 using Xunit;
 
-namespace api_key_gateway.Tests
+namespace api_key_gateway.Tests;
+
+public class HttpClientFactoryTests
 {
-    public class HttpClientFactoryTests
+    [Fact]
+    public void CreateClient_DefaultSettings_ReturnsConfiguredClient()
     {
-        [Fact]
-        public void CreateClient_DefaultSettings_ReturnsConfiguredClient()
-        {
-            // Act
-            using var client = HttpClientFactory.CreateClient();
+        // Act
+        using var client = HttpClientFactory.CreateClient();
 
-            // Assert
-            Assert.Equal(TimeSpan.FromSeconds(30), client.Timeout);
+        // Assert
+        Assert.Equal(TimeSpan.FromSeconds(30), client.Timeout);
 
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
-            Assert.Single(uaValues);
-            Assert.Equal("ApiKeyGateway/1.0", uaValues.First());
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
+        Assert.Single(uaValues);
+        Assert.Equal("ApiKeyGateway/1.0", uaValues.First());
 
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("Accept-Encoding", out var encValues));
-            var encList = encValues.ToList();
-            Assert.True(encList.Count >= 1);
-            Assert.Contains("gzip", string.Join(", ", encList));
-        }
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("Accept-Encoding", out var encValues));
+        var encList = encValues.ToList();
+        Assert.True(encList.Count >= 1);
+        Assert.Contains("gzip", string.Join(", ", encList));
+    }
 
-        [Fact]
-        public void CreateClient_CustomUserAgent_SetsHeader()
-        {
-            // Arrange
-            const string customAgent = "MyApp/2.0";
+    [Fact]
+    public void CreateClient_CustomUserAgent_SetsHeader()
+    {
+        // Arrange
+        const string customAgent = "MyApp/2.0";
 
-            // Act
-            using var client = HttpClientFactory.CreateClient(customAgent);
+        // Act
+        using var client = HttpClientFactory.CreateClient(customAgent);
 
-            // Assert
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
-            Assert.Single(uaValues);
-            Assert.Equal(customAgent, uaValues.First());
-        }
+        // Assert
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
+        Assert.Single(uaValues);
+        Assert.Equal(customAgent, uaValues.First());
+    }
 
-        [Fact]
-        public void CreateClient_NullUserAgent_ThrowsArgumentNullException()
-        {
-            // Act & Assert
-            Assert.ThrowsAny<Exception>(() => HttpClientFactory.CreateClient(null!));
-        }
+    [Fact]
+    public void CreateClient_NullUserAgent_ThrowsArgumentNullException()
+    {
+        // Act & Assert
+        Assert.ThrowsAny<Exception>(() => HttpClientFactory.CreateClient(null!));
+    }
 
-        [Fact]
-        public void CreateWebhookClient_ReturnsClientWithWebhookSettings()
-        {
-            // Act
-            using var client = HttpClientFactory.CreateWebhookClient();
+    [Fact]
+    public void CreateWebhookClient_ReturnsClientWithWebhookSettings()
+    {
+        // Act
+        using var client = HttpClientFactory.CreateWebhookClient();
 
-            // Assert
-            Assert.Equal(TimeSpan.FromSeconds(60), client.Timeout);
+        // Assert
+        Assert.Equal(TimeSpan.FromSeconds(60), client.Timeout);
 
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
-            Assert.Single(uaValues);
-            Assert.Equal("ApiKeyGateway-WebhookDelivery/1.0", uaValues.First());
-        }
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
+        Assert.Single(uaValues);
+        Assert.Equal("ApiKeyGateway-WebhookDelivery/1.0", uaValues.First());
+    }
 
-        [Fact]
-        public void CreateExternalApiClient_WithApiName_SetsUserAgentAndTimeout()
-        {
-            // Arrange
-            const string apiName = "GitHub";
+    [Fact]
+    public void CreateExternalApiClient_WithApiName_SetsUserAgentAndTimeout()
+    {
+        // Arrange
+        const string apiName = "GitHub";
 
-            // Act
-            using var client = HttpClientFactory.CreateExternalApiClient(apiName);
+        // Act
+        using var client = HttpClientFactory.CreateExternalApiClient(apiName);
 
-            // Assert
-            Assert.Equal(TimeSpan.FromSeconds(45), client.Timeout);
+        // Assert
+        Assert.Equal(TimeSpan.FromSeconds(45), client.Timeout);
 
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
-            Assert.Single(uaValues);
-            Assert.Equal($"ApiKeyGateway-{apiName}/1.0", uaValues.First());
-        }
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
+        Assert.Single(uaValues);
+        Assert.Equal($"ApiKeyGateway-{apiName}/1.0", uaValues.First());
+    }
 
-        [Fact]
-        public void CreateExternalApiClient_NullApiName_ProducesUserAgentWithEmptyName()
-        {
-            // Act
-            using var client = HttpClientFactory.CreateExternalApiClient(null!);
+    [Fact]
+    public void CreateExternalApiClient_NullApiName_ProducesUserAgentWithEmptyName()
+    {
+        // Act
+        using var client = HttpClientFactory.CreateExternalApiClient(null!);
 
-            // Assert
-            Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
-            Assert.Single(uaValues);
-            Assert.Equal("ApiKeyGateway/1.0", uaValues.First());
-        }
+        // Assert
+        Assert.True(client.DefaultRequestHeaders.TryGetValues("User-Agent", out var uaValues));
+        Assert.Single(uaValues);
+        Assert.Equal("ApiKeyGateway/1.0", uaValues.First());
+    }
 
-        [Fact]
-        public void CreateClient_MultipleCalls_ReturnDistinctInstances()
-        {
-            // Act
-            using var client1 = HttpClientFactory.CreateClient();
-            using var client2 = HttpClientFactory.CreateClient();
+    [Fact]
+    public void CreateClient_MultipleCalls_ReturnDistinctInstances()
+    {
+        // Act
+        using var client1 = HttpClientFactory.CreateClient();
+        using var client2 = HttpClientFactory.CreateClient();
 
-            // Assert
-            Assert.NotSame(client1, client2);
-        }
+        // Assert
+        Assert.NotSame(client1, client2);
     }
 }

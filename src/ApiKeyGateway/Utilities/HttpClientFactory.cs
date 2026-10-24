@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Net.Http;
-using System.Net;
 using System;
+using System.Net;
+using System.Net.Http;
 
 namespace ApiKeyGateway.Utilities;
 

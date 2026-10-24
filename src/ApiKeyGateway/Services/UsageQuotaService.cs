@@ -39,24 +39,29 @@ public interface IUsageQuotaService
 }
 
 /// <summary>Result from a quota check</summary>
+/// <param name="IsExceeded">Indicates if the quota has been exceeded</param>
+/// <param name="Remaining">Number of remaining requests before quota is hit</param>
+/// <param name="Limit">Total quota limit</param>
+/// <param name="PeriodEnd">When the current quota period ends</param>
 public record UsageQuotaResult(
-    /// <summary>Indicates if the quota has been exceeded</summary>
     bool IsExceeded,
-
-    /// <summary>Number of remaining requests before quota is hit</summary>
     long Remaining,
-
-    /// <summary>Total quota limit</summary>
     long Limit,
-
-    /// <summary>When the current quota period ends</summary>
     DateTime PeriodEnd);
 
+/// <summary>
+/// Default implementation of <see cref="IUsageQuotaService"/> that enforces per-key usage quotas.
+/// </summary>
 public class UsageQuotaService : IUsageQuotaService
 {
     private readonly IUsageQuotaRepository _repository;
     private readonly ILogger<UsageQuotaService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageQuotaService"/> class.
+    /// </summary>
+    /// <param name="repository">Repository used to load and persist usage quotas.</param>
+    /// <param name="logger">Logger for quota operations.</param>
     public UsageQuotaService(IUsageQuotaRepository repository, ILogger<UsageQuotaService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -67,11 +72,15 @@ public class UsageQuotaService : IUsageQuotaService
     public async Task<UsageQuotaResult> CheckAndRecordAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return new UsageQuotaResult(false, long.MaxValue, long.MaxValue, DateTime.MaxValue);
+        }
 
         var quota = await _repository.GetByApiKeyIdAsync(apiKeyId);
         if (quota == null || !quota.IsEnabled)
+        {
             return new UsageQuotaResult(false, long.MaxValue, long.MaxValue, DateTime.MaxValue);
+        }
 
         var now = DateTime.UtcNow;
 
@@ -98,7 +107,9 @@ public class UsageQuotaService : IUsageQuotaService
             // Persist the rollover even when the request is rejected (possible
             // with a zero limit) so the stored period start does not go stale.
             if (rolledOver)
+            {
                 await _repository.UpdateAsync(quota);
+            }
 
             return new UsageQuotaResult(true, 0, quota.QuotaLimit, quota.GetPeriodEndUtc());
         }
@@ -117,7 +128,9 @@ public class UsageQuotaService : IUsageQuotaService
     public async Task<bool> SetQuotaAsync(string apiKeyId, long quotaLimit, Domain.Enums.QuotaPeriod period)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId) || quotaLimit <= 0)
+        {
             return false;
+        }
 
         var existing = await _repository.GetByApiKeyIdAsync(apiKeyId);
         var now = DateTime.UtcNow;
@@ -162,8 +175,29 @@ public class UsageQuotaService : IUsageQuotaService
 /// <summary>Repository interface for usage quota persistence</summary>
 public interface IUsageQuotaRepository
 {
+    /// <summary>
+    /// Gets the usage quota configured for an API key.
+    /// </summary>
+    /// <param name="apiKeyId">The API key identifier.</param>
+    /// <returns>The quota, or null if none exists.</returns>
     Task<UsageQuota?> GetByApiKeyIdAsync(string apiKeyId);
+
+    /// <summary>
+    /// Persists a new usage quota.
+    /// </summary>
+    /// <param name="quota">The quota to create.</param>
+    /// <returns>The created quota.</returns>
     Task<UsageQuota> CreateAsync(UsageQuota quota);
+
+    /// <summary>
+    /// Updates an existing usage quota.
+    /// </summary>
+    /// <param name="quota">The quota with updated values.</param>
     Task UpdateAsync(UsageQuota quota);
+
+    /// <summary>
+    /// Deletes a usage quota.
+    /// </summary>
+    /// <param name="id">The quota identifier.</param>
     Task DeleteAsync(string id);
 }

@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Domain.Models;
 using System.Collections.Concurrent;
+using ApiKeyGateway.Domain.Models;
 
 namespace ApiKeyGateway.Services;
 
@@ -105,7 +105,9 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(requestKey))
+        {
             throw new ArgumentException("Request key cannot be empty", nameof(requestKey));
+        }
 
         ArgumentNullException.ThrowIfNull(operation);
         cancellationToken.ThrowIfCancellationRequested();
@@ -183,12 +185,16 @@ public sealed class RequestCoalescingService : IRequestCoalescingService, IDispo
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         _disposed = true;
 
         foreach (var entry in _pending.Values)
+        {
             entry.TrySetCanceled();
+        }
 
         _pending.Clear();
     }

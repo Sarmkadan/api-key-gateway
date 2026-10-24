@@ -403,7 +403,7 @@ public class ApiResponseBuilderUnitTests
     public void ApiResponseBuilderFactory_Success_WithNullData_HandlesNullData()
     {
         // Act
-        var result = ApiResponseBuilderFactory.Success<TestDataModel>(null, "Success with null").Build();
+        var result = ApiResponseBuilderFactory.Success<TestDataModel>(null!, "Success with null").Build();
 
         // Assert
         result.Should().NotBeNull();

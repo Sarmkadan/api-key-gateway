@@ -1,6 +1,6 @@
-using Xunit;
 using ApiKeyGateway.Caching;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
