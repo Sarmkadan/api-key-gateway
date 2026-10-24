@@ -21,13 +21,12 @@ public static class QueryStringHelper
     /// <param name="parameters">The dictionary of parameter names and values. Cannot be null.</param>
     /// <returns>A query string including the encoded parameters, or an empty string if parameters is empty.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
-    /// <param name="parameters">The dictionary of parameter names and values. Cannot be null.</param>
-    /// <returns>A query string including the encoded parameters, or an empty string if parameters is empty.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="parameters"/> is null.</exception>
     public static string BuildQueryString(IDictionary<string, string> parameters)
     {
         if (parameters == null || parameters.Count == 0)
+        {
             return string.Empty;
+        }
 
         var sb = new StringBuilder();
         var first = true;
@@ -35,7 +34,9 @@ public static class QueryStringHelper
         foreach (var kvp in parameters.Where(p => !string.IsNullOrEmpty(p.Value)))
         {
             if (!first)
+            {
                 sb.Append('&');
+            }
 
             sb.Append(HttpUtility.UrlEncode(kvp.Key));
             sb.Append('=');
@@ -55,7 +56,9 @@ public static class QueryStringHelper
         var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         if (string.IsNullOrEmpty(queryString))
+        {
             return parameters;
+        }
 
         var cleanQuery = queryString.TrimStart('?');
         var pairs = cleanQuery.Split('&', StringSplitOptions.RemoveEmptyEntries);
@@ -80,11 +83,15 @@ public static class QueryStringHelper
         ArgumentException.ThrowIfNullOrEmpty(baseUrl);
         
         if (parameters == null || parameters.Count == 0)
+        {
             return baseUrl;
+        }
 
         var queryString = BuildQueryString(parameters);
         if (string.IsNullOrEmpty(queryString))
+        {
             return baseUrl;
+        }
 
         var separator = baseUrl.Contains('?') ? '&' : '?';
         return $"{baseUrl}{separator}{queryString}";

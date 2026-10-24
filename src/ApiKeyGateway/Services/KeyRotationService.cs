@@ -88,6 +88,13 @@ public class KeyRotationService : IKeyRotationService
     private readonly ConcurrentDictionary<string, KeyRotationPolicy> _policies = new();
     private readonly ConcurrentDictionary<string, DateTime> _scheduledRotations = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="KeyRotationService"/> class.
+    /// </summary>
+    /// <param name="rotationService">The low-level key rotation service.</param>
+    /// <param name="apiKeyService">The API key service used to look up keys.</param>
+    /// <param name="eventPublisher">The publisher for rotation events.</param>
+    /// <param name="logger">The logger.</param>
     public KeyRotationService(
         IApiKeyRotationService rotationService,
         IApiKeyService apiKeyService,
@@ -112,7 +119,9 @@ public class KeyRotationService : IKeyRotationService
         foreach (var key in expiringKeys)
         {
             if (cancellationToken.IsCancellationRequested)
+            {
                 break;
+            }
 
             keysEvaluated++;
             var policy = GetPolicy(key.ConsumerId);
@@ -123,7 +132,9 @@ public class KeyRotationService : IKeyRotationService
             var isExpiredByPolicy = key.CreatedAt.Add(policy.MaxKeyAge) <= DateTime.UtcNow;
 
             if (!isScheduled && !isExpiredByPolicy)
+            {
                 continue;
+            }
 
             try
             {

@@ -44,7 +44,7 @@ public class UsageRecordValidationTests
     public void Validate_NullInput_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.Validate(null));
+        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.Validate(null!));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class UsageRecordValidationTests
     public void IsValid_NullInput_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.IsValid(null));
+        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.IsValid(null!));
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class UsageRecordValidationTests
     public void EnsureValid_NullInput_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.EnsureValid(null));
+        Assert.Throws<ArgumentNullException>(() => UsageRecordValidation.EnsureValid(null!));
     }
 
     [Fact]

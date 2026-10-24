@@ -5,7 +5,6 @@
 
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
-using Xunit;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
@@ -13,6 +12,7 @@ using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Tests;
@@ -605,7 +605,7 @@ public class AuthenticationServiceTests
         _logger.LogInformation("Validating distinct failure reasons across multiple invalid key types");
 
         // Test 1: Missing API key
-        var result1 = await _sut.AuthenticateAsync(null, "192.168.1.1");
+        var result1 = await _sut.AuthenticateAsync(null!, "192.168.1.1");
 
         _logger.LogInformation("Missing api key returned {FailureReason}", result1.FailureReason);
 

@@ -1,86 +1,85 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using ApiKeyGateway.Controllers;
 using Xunit;
 
-namespace ApiKeyGateway.Tests
+namespace ApiKeyGateway.Tests;
+
+public class AnalyticsControllerValidationTests
 {
-    public class AnalyticsControllerValidationTests
+    private static AnalyticsController CreateUninitializedController()
     {
-        private static AnalyticsController CreateUninitializedController()
-        {
-            // Creates an instance without invoking any constructor.
-            return (AnalyticsController)FormatterServices.GetUninitializedObject(typeof(AnalyticsController));
-        }
+        // Creates an instance without invoking any constructor.
+        return (AnalyticsController)RuntimeHelpers.GetUninitializedObject(typeof(AnalyticsController));
+    }
 
-        [Fact]
-        public void Validate_Null_ThrowsArgumentNullException()
-        {
-            // Arrange
-            AnalyticsController? controller = null;
+    [Fact]
+    public void Validate_Null_ThrowsArgumentNullException()
+    {
+        // Arrange
+        AnalyticsController? controller = null;
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => controller!.Validate());
-        }
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => controller!.Validate());
+    }
 
-        [Fact]
-        public void Validate_NonNull_ReturnsEmptyList()
-        {
-            // Arrange
-            var controller = CreateUninitializedController();
+    [Fact]
+    public void Validate_NonNull_ReturnsEmptyList()
+    {
+        // Arrange
+        var controller = CreateUninitializedController();
 
-            // Act
-            IReadOnlyList<string> result = controller.Validate();
+        // Act
+        IReadOnlyList<string> result = controller.Validate();
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
 
-        [Fact]
-        public void IsValid_Null_ThrowsArgumentNullException()
-        {
-            // Arrange
-            AnalyticsController? controller = null;
+    [Fact]
+    public void IsValid_Null_ThrowsArgumentNullException()
+    {
+        // Arrange
+        AnalyticsController? controller = null;
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => controller!.IsValid());
-        }
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => controller!.IsValid());
+    }
 
-        [Fact]
-        public void IsValid_NonNull_ReturnsTrue()
-        {
-            // Arrange
-            var controller = CreateUninitializedController();
+    [Fact]
+    public void IsValid_NonNull_ReturnsTrue()
+    {
+        // Arrange
+        var controller = CreateUninitializedController();
 
-            // Act
-            bool isValid = controller.IsValid();
+        // Act
+        bool isValid = controller.IsValid();
 
-            // Assert
-            Assert.True(isValid);
-        }
+        // Assert
+        Assert.True(isValid);
+    }
 
-        [Fact]
-        public void EnsureValid_Null_ThrowsArgumentNullException()
-        {
-            // Arrange
-            AnalyticsController? controller = null;
+    [Fact]
+    public void EnsureValid_Null_ThrowsArgumentNullException()
+    {
+        // Arrange
+        AnalyticsController? controller = null;
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => controller!.EnsureValid());
-        }
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => controller!.EnsureValid());
+    }
 
-        [Fact]
-        public void EnsureValid_NonNull_DoesNotThrow()
-        {
-            // Arrange
-            var controller = CreateUninitializedController();
+    [Fact]
+    public void EnsureValid_NonNull_DoesNotThrow()
+    {
+        // Arrange
+        var controller = CreateUninitializedController();
 
-            // Act & Assert
-            var exception = Record.Exception(() => controller.EnsureValid());
+        // Act & Assert
+        var exception = Record.Exception(() => controller.EnsureValid());
 
-            Assert.Null(exception);
-        }
+        Assert.Null(exception);
     }
 }

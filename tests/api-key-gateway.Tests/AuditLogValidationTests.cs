@@ -4,10 +4,10 @@
 // Unit tests for AuditLogValidation extension methods
 // =====================================================================
 
-using Xunit;
-using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

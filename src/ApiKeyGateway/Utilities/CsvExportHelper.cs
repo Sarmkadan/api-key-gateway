@@ -23,7 +23,9 @@ public static class CsvExportHelper
     public static string ToCsv<T>(IEnumerable<T> items, bool includeHeaders = true)
     {
         if (items == null || !items.Any())
+        {
             return string.Empty;
+        }
 
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var sb = new StringBuilder();
@@ -43,7 +45,10 @@ public static class CsvExportHelper
             for (int i = 0; i < properties.Length; i++)
             {
                 if (i > 0)
+                {
                     sb.Append(',');
+                }
+
                 sb.Append(QuoteCsvField(properties[i].GetValue(item)));
             }
             sb.AppendLine();
@@ -91,7 +96,9 @@ public static class CsvExportHelper
     private static string QuoteCsvField(object? value)
     {
         if (value == null)
+        {
             return string.Empty;
+        }
 
         var fieldValue = value switch
         {

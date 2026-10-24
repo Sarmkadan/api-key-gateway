@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // ===================================================================
 
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 
 namespace ApiKeyGateway.Tests;
 

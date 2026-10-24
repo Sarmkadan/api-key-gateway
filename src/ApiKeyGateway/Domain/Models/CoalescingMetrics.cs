@@ -11,7 +11,7 @@ namespace ApiKeyGateway.Domain.Models;
 public sealed class CoalescingMetrics
 {
     /// <summary>
-    /// Total number of <see cref="IRequestCoalescingService.ExecuteAsync{T}"/> invocations since
+    /// Total number of <see cref="ApiKeyGateway.Services.IRequestCoalescingService.ExecuteAsync{T}"/> invocations since
     /// the service was last instantiated.
     /// </summary>
     public long TotalRequests { get; init; }

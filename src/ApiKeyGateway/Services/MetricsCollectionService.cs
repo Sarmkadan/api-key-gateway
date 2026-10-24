@@ -14,9 +14,32 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IMetricsCollectionService
 {
+    /// <summary>
+    /// Records a request metric with API key, endpoint, status code, and latency.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key used in the request.</param>
+    /// <param name="endpoint">API endpoint that was requested.</param>
+    /// <param name="statusCode">HTTP status code of the response.</param>
+    /// <param name="latencyMs">Request latency in milliseconds.</param>
     void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs);
+
+    /// <summary>
+    /// Records a rate limit exceeded event for the given API key.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key that exceeded rate limits.</param>
     void RecordRateLimitExceeded(string apiKeyId);
+
+    /// <summary>
+    /// Records an error metric for the given API key and error code.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key associated with the error.</param>
+    /// <param name="errorCode">Error code to record.</param>
     void RecordError(string apiKeyId, string errorCode);
+
+    /// <summary>
+    /// Returns a snapshot of the current metrics.
+    /// </summary>
+    /// <returns>A snapshot of the current metrics.</returns>
     MetricsSnapshot GetSnapshot();
 }
 
@@ -41,14 +64,14 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
         _logger = logger;
     }
 
-            /// <summary>
-        /// Records a request metric with API key, endpoint, status code, and latency.
-        /// </summary>
-        /// <param name="apiKeyId">Identifier of the API key used in the request</param>
-        /// <param name="endpoint">API endpoint that was requested</param>
-        /// <param name="statusCode">HTTP status code of the response</param>
-        /// <param name="latencyMs">Request latency in milliseconds</param>
-        public void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs)
+    /// <summary>
+    /// Records a request metric with API key, endpoint, status code, and latency.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key used in the request</param>
+    /// <param name="endpoint">API endpoint that was requested</param>
+    /// <param name="statusCode">HTTP status code of the response</param>
+    /// <param name="latencyMs">Request latency in milliseconds</param>
+    public void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs)
     {
         var key = $"{apiKeyId}:{endpoint}";
         _requestCounters.AddOrUpdate(key, 1, (_, v) => v + 1);
@@ -61,30 +84,30 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
         }
     }
 
-            /// <summary>
-        /// Records a rate limit exceeded event for the given API key.
-        /// </summary>
-        /// <param name="apiKeyId">Identifier of the API key that exceeded rate limits</param>
-        public void RecordRateLimitExceeded(string apiKeyId)
+    /// <summary>
+    /// Records a rate limit exceeded event for the given API key.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key that exceeded rate limits</param>
+    public void RecordRateLimitExceeded(string apiKeyId)
     {
         _rateLimitCounters.AddOrUpdate(apiKeyId, 1, (_, v) => v + 1);
     }
 
     /// <summary>
-        /// Records an error metric for the given API key and error code.
-        /// </summary>
-        /// <param name="apiKeyId">Identifier of the API key associated with the error</param>
-        /// <param name="errorCode">Error code to record</param>
-        public void RecordError(string apiKeyId, string errorCode)
+    /// Records an error metric for the given API key and error code.
+    /// </summary>
+    /// <param name="apiKeyId">Identifier of the API key associated with the error</param>
+    /// <param name="errorCode">Error code to record</param>
+    public void RecordError(string apiKeyId, string errorCode)
     {
         _errorCounters.AddOrUpdate(errorCode, 1, (_, v) => v + 1);
     }
 
     /// <summary>
-        /// Returns a snapshot of the current metrics.
-        /// </summary>
-        /// <returns>A snapshot of the current metrics</returns>
-        public MetricsSnapshot GetSnapshot()
+    /// Returns a snapshot of the current metrics.
+    /// </summary>
+    /// <returns>A snapshot of the current metrics</returns>
+    public MetricsSnapshot GetSnapshot()
     {
         var latenciesArray = _latencies.ToArray();
         var avgLatency = latenciesArray.Length > 0 ? latenciesArray.Average() : 0;
@@ -116,18 +139,32 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
 /// <summary>
 /// Snapshot of current metrics at a point in time.
 /// </summary>
-/// <summary>
-        /// Represents a snapshot of metrics at a specific point in time.
-        /// </summary>
-        public record MetricsSnapshot
+public record MetricsSnapshot
 {
+    /// <summary>UTC time when the snapshot was taken.</summary>
     public DateTime Timestamp { get; set; }
+
+    /// <summary>Total number of recorded requests.</summary>
     public long TotalRequests { get; set; }
+
+    /// <summary>Total number of recorded error responses.</summary>
     public long TotalErrors { get; set; }
+
+    /// <summary>Percentage of requests that resulted in an error.</summary>
     public double ErrorRate { get; set; }
+
+    /// <summary>Average request latency in milliseconds.</summary>
     public double AverageLatencyMs { get; set; }
+
+    /// <summary>95th percentile request latency in milliseconds.</summary>
     public long P95LatencyMs { get; set; }
+
+    /// <summary>Total number of rate limit exceeded events.</summary>
     public long TotalRateLimitExceeded { get; set; }
+
+    /// <summary>Request counts keyed by endpoint.</summary>
     public Dictionary<string, long> RequestsByEndpoint { get; set; } = new();
+
+    /// <summary>Error counts keyed by error code.</summary>
     public Dictionary<string, long> ErrorsByCode { get; set; } = new();
 }

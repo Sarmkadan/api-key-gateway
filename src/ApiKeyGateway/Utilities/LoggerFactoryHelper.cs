@@ -50,7 +50,9 @@ public static class LoggerFactoryHelper
         ArgumentException.ThrowIfNullOrEmpty(value);
 
         if (string.IsNullOrEmpty(value) || value.Length < 8)
+        {
             return "***";
+        }
 
         // Show first and last few characters, mask middle
         var prefix = value.Substring(0, Math.Min(4, value.Length));

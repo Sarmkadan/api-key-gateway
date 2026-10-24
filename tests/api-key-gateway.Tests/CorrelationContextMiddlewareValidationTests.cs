@@ -4,79 +4,78 @@
 
 using System;
 using System.Threading.Tasks;
+using ApiKeyGateway.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using ApiKeyGateway.Middleware;
 
-namespace ApiKeyGateway.Tests
+namespace ApiKeyGateway.Tests;
+
+public class CorrelationContextMiddlewareValidationTests
 {
-    public class CorrelationContextMiddlewareValidationTests
+    private static RequestDelegate ValidNext => _ => Task.CompletedTask;
+    private static ILogger<CorrelationContextMiddleware> ValidLogger => NullLogger<CorrelationContextMiddleware>.Instance;
+
+    [Fact]
+    public void Validate_ReturnsEmpty_WhenMiddlewareIsValid()
     {
-        private static RequestDelegate ValidNext => _ => Task.CompletedTask;
-        private static ILogger<CorrelationContextMiddleware> ValidLogger => NullLogger<CorrelationContextMiddleware>.Instance;
+        var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
 
-        [Fact]
-        public void Validate_ReturnsEmpty_WhenMiddlewareIsValid()
-        {
-            var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
+        var result = middleware.Validate();
 
-            var result = middleware.Validate();
+        Assert.Empty(result);
+    }
 
-            Assert.Empty(result);
-        }
+    [Fact]
+    public void IsValid_ReturnsTrue_WhenMiddlewareIsValid()
+    {
+        var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
 
-        [Fact]
-        public void IsValid_ReturnsTrue_WhenMiddlewareIsValid()
-        {
-            var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
+        var result = middleware.IsValid();
 
-            var result = middleware.IsValid();
+        Assert.True(result);
+    }
 
-            Assert.True(result);
-        }
+    [Fact]
+    public void EnsureValid_DoesNotThrow_WhenMiddlewareIsValid()
+    {
+        var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
 
-        [Fact]
-        public void EnsureValid_DoesNotThrow_WhenMiddlewareIsValid()
-        {
-            var middleware = new CorrelationContextMiddleware(ValidNext, ValidLogger);
+        var exception = Record.Exception(() => middleware.EnsureValid());
 
-            var exception = Record.Exception(() => middleware.EnsureValid());
+        Assert.Null(exception);
+    }
 
-            Assert.Null(exception);
-        }
+    [Fact]
+    public void Validate_ThrowsArgumentNullException_WhenArgumentIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => CorrelationContextMiddlewareValidation.Validate(null!));
+    }
 
-        [Fact]
-        public void Validate_ThrowsArgumentNullException_WhenArgumentIsNull()
-        {
-            Assert.Throws<ArgumentNullException>(() => CorrelationContextMiddlewareValidation.Validate(null!));
-        }
+    [Fact]
+    public void IsValid_ThrowsArgumentNullException_WhenArgumentIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => CorrelationContextMiddlewareValidation.IsValid(null!));
+    }
 
-        [Fact]
-        public void IsValid_ThrowsArgumentNullException_WhenArgumentIsNull()
-        {
-            Assert.Throws<ArgumentNullException>(() => CorrelationContextMiddlewareValidation.IsValid(null!));
-        }
+    [Fact]
+    public void EnsureValid_ThrowsArgumentException_WhenNextIsNull()
+    {
+        var middleware = new CorrelationContextMiddleware(null!, ValidLogger);
 
-        [Fact]
-        public void EnsureValid_ThrowsArgumentException_WhenNextIsNull()
-        {
-            var middleware = new CorrelationContextMiddleware(null, ValidLogger);
+        var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
 
-            var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
+        Assert.Contains("The RequestDelegate (next middleware) is null", ex.Message);
+    }
 
-            Assert.Contains("The RequestDelegate (next middleware) is null", ex.Message);
-        }
+    [Fact]
+    public void EnsureValid_ThrowsArgumentException_WhenLoggerIsNull()
+    {
+        var middleware = new CorrelationContextMiddleware(ValidNext, null!);
 
-        [Fact]
-        public void EnsureValid_ThrowsArgumentException_WhenLoggerIsNull()
-        {
-            var middleware = new CorrelationContextMiddleware(ValidNext, null!);
+        var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
 
-            var ex = Assert.ThrowsAny<ArgumentException>(() => middleware.EnsureValid());
-
-            Assert.Contains("The ILogger instance is null", ex.Message);
-        }
+        Assert.Contains("The ILogger instance is null", ex.Message);
     }
 }

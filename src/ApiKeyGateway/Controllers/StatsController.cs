@@ -23,6 +23,10 @@ public sealed class StatsController : ControllerBase
 {
     private readonly ILogger<StatsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatsController"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
     public StatsController(ILogger<StatsController> logger)
     {
         _logger = logger;

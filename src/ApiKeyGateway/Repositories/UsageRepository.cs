@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Data;
 using System.Data.Common;
+using ApiKeyGateway.Data;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
@@ -19,6 +19,11 @@ public class UsageRepository : IUsageRepository
     private readonly IDbConnection _connection;
     private readonly ILogger<UsageRepository> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageRepository"/> class.
+    /// </summary>
+    /// <param name="connection">The database connection used for usage queries.</param>
+    /// <param name="logger">The logger for repository diagnostics.</param>
     public UsageRepository(IDbConnection connection, ILogger<UsageRepository> logger)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -30,7 +35,10 @@ public class UsageRepository : IUsageRepository
     /// </summary>
     public async Task CreateAsync(UsageRecord record)
     {
-        if (record == null) throw new ArgumentNullException(nameof(record));
+        if (record == null)
+        {
+            throw new ArgumentNullException(nameof(record));
+        }
 
         try
         {
@@ -66,10 +74,14 @@ public class UsageRepository : IUsageRepository
     public async Task WriteBatchAsync(IReadOnlyList<UsageRecord> records)
     {
         if (records == null)
+        {
             throw new ArgumentNullException(nameof(records));
+        }
 
         if (records.Count == 0)
+        {
             return;
+        }
 
         try
         {
@@ -108,7 +120,10 @@ public class UsageRepository : IUsageRepository
     /// </summary>
     public async Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate)
     {
-        if (string.IsNullOrWhiteSpace(apiKeyId)) return [];
+        if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
+            return [];
+        }
 
         try
         {
@@ -185,7 +200,10 @@ public class UsageRepository : IUsageRepository
     /// </summary>
     public async Task<List<UsageRecord>> GetByConsumerAndDateRangeAsync(string consumerId, DateTime startDate, DateTime endDate)
     {
-        if (string.IsNullOrWhiteSpace(consumerId)) return [];
+        if (string.IsNullOrWhiteSpace(consumerId))
+        {
+            return [];
+        }
 
         try
         {
@@ -226,7 +244,9 @@ public class UsageRepository : IUsageRepository
     public async Task DeleteOldRecordsAsync(int retentionDays)
     {
         if (retentionDays <= 0)
+        {
             throw new ArgumentException("Retention days must be positive", nameof(retentionDays));
+        }
 
         try
         {

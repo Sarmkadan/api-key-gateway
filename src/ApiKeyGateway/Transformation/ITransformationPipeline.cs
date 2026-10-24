@@ -214,7 +214,10 @@ public sealed class TransformationContext
     private static string ExtractIp(HttpContext ctx)
     {
         if (ctx.Request.Headers.TryGetValue("X-Forwarded-For", out var fwd))
+        {
             return fwd.ToString().Split(',')[0].Trim();
+        }
+
         return ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 }

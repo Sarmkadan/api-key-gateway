@@ -1,11 +1,11 @@
 using System;
 using System.Security.Claims;
 using System.Text.Json;
+using ApiKeyGateway.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using ApiKeyGateway.Controllers;
 
 namespace api_key_gateway.Tests;
 
@@ -85,7 +85,7 @@ public sealed class StatsControllerTests
     public void GetUsageStatistics_Throws_WhenPeriodIsNull()
     {
         var controller = CreateController();
-        Assert.Throws<NullReferenceException>(() => controller.GetUsageStatistics(null));
+        Assert.Throws<NullReferenceException>(() => controller.GetUsageStatistics(null!));
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public static class AnalyticsControllerExtensions
         this AnalyticsController controller,
         string keyId,
         string period = "30d",
-        string comparisonPeriod = null)
+        string? comparisonPeriod = null)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentException.ThrowIfNullOrWhiteSpace(keyId);
@@ -59,7 +59,7 @@ public static class AnalyticsControllerExtensions
         var currentSummary = await controller.GetSummary(keyId, currentStart, currentEnd);
         if (currentSummary.Result is not OkObjectResult currentOkResult)
         {
-            return currentSummary.Result;
+            return currentSummary.Result ?? new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
         var current = (AnalyticsSummary)currentOkResult.Value!;
@@ -68,7 +68,7 @@ public static class AnalyticsControllerExtensions
         var comparisonSummary = await controller.GetSummary(keyId, comparisonStart, comparisonEnd);
         if (comparisonSummary.Result is not OkObjectResult comparisonOkResult)
         {
-            return comparisonSummary.Result;
+            return comparisonSummary.Result ?? new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
         var comparison = (AnalyticsSummary)comparisonOkResult.Value!;
@@ -152,7 +152,7 @@ public static class AnalyticsControllerExtensions
         var endpointsResult = await controller.GetTopEndpoints(keyId, limit, from, to);
         if (endpointsResult.Result is not OkObjectResult endpointsOkResult)
         {
-            return endpointsResult.Result;
+            return endpointsResult.Result ?? new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
         var endpoints = (List<EndpointStat>)endpointsOkResult.Value!;
@@ -198,7 +198,7 @@ public static class AnalyticsControllerExtensions
         var hourlyResult = await controller.GetHourlyTrend(keyId, from, to);
         if (hourlyResult.Result is not OkObjectResult hourlyOkResult)
         {
-            return hourlyResult.Result;
+            return hourlyResult.Result ?? new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
         var hourlyBuckets = (List<HourlyBucket>)hourlyOkResult.Value!;
@@ -246,7 +246,7 @@ public static class AnalyticsControllerExtensions
         var dailyResult = await controller.GetDailyTrend(keyId, startDate, endDate);
         if (dailyResult.Result is not OkObjectResult dailyOkResult)
         {
-            return dailyResult.Result;
+            return dailyResult.Result ?? new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
         var dailyBuckets = (List<DailyBucket>)dailyOkResult.Value!;

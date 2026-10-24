@@ -17,6 +17,11 @@ public sealed class RateLimitResetScheduler : BackgroundServiceBase<RateLimitRes
 {
     private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(5);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimitResetScheduler"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider used to create scopes.</param>
+    /// <param name="logger">The logger.</param>
     public RateLimitResetScheduler(IServiceProvider serviceProvider, ILogger<RateLimitResetScheduler> logger)
         : base(serviceProvider, logger)
     {
@@ -44,6 +49,11 @@ public sealed class RateLimitResetScheduler : BackgroundServiceBase<RateLimitRes
         await Task.Delay(_checkInterval, stoppingToken);
     }
 
+    /// <summary>
+    /// Returns the delay to wait before retrying after a failed cycle.
+    /// </summary>
+    /// <param name="stoppingToken">Token that signals the service is stopping.</param>
+    /// <returns>A fixed 30 second delay.</returns>
     protected override TimeSpan GetErrorDelay(CancellationToken stoppingToken)
     {
         return TimeSpan.FromSeconds(30);

@@ -12,7 +12,10 @@ namespace ApiKeyGateway.Domain.Models;
 /// </summary>
 public class UsageQuota
 {
+    /// <summary>Unique identifier of the quota</summary>
     public string Id { get; init; } = string.Empty;
+
+    /// <summary>ID of the API key this quota applies to</summary>
     public string ApiKeyId { get; init; } = string.Empty;
 
     /// <summary>Maximum number of requests allowed per period</summary>
@@ -24,6 +27,7 @@ public class UsageQuota
     /// <summary>Calendar period on which the counter resets</summary>
     public Enums.QuotaPeriod Period { get; init; } = Enums.QuotaPeriod.Daily;
 
+    /// <summary>When the quota was created (UTC)</summary>
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 
     /// <summary>Start of the current period (midnight UTC of day/month)</summary>
@@ -32,7 +36,10 @@ public class UsageQuota
     /// <summary>Number of requests counted in the current period</summary>
     public long CurrentUsage { get; set; }
 
+    /// <summary>Number of requests still allowed in the current period</summary>
     public long RemainingRequests => Math.Max(0, QuotaLimit - CurrentUsage);
+
+    /// <summary>Whether the quota is enabled and the usage has reached the limit</summary>
     public bool IsExceeded => IsEnabled && CurrentUsage >= QuotaLimit;
 
     /// <summary>
@@ -75,8 +82,14 @@ public class UsageQuota
     public void RecordRequest()
     {
         if (IsEnabled)
+        {
             CurrentUsage++;
+        }
     }
 
+    /// <summary>
+    /// Returns a short text representation of the quota state.
+    /// </summary>
+    /// <returns>A string describing whether the quota is enabled, its period start, and current usage.</returns>
     public override string ToString() => $"UsageQuota {{ IsEnabled = {IsEnabled}, PeriodStartAt = {PeriodStartAt}, CurrentUsage = {CurrentUsage} }}";
 }

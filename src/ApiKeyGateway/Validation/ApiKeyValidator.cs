@@ -24,21 +24,27 @@ public static class ApiKeyValidator
     public static ValidationResult ValidateKeyFormat(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
+        {
             return new ValidationResult { IsValid = false, Message = "API key cannot be empty" };
+        }
 
         if (key.Length < MinKeyLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"API key must be at least {MinKeyLength} characters long"
             };
+        }
 
         if (key.Length > MaxKeyLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"API key cannot exceed {MaxKeyLength} characters"
             };
+        }
 
         // Single-pass span scan for character-type entropy.
         // Short-circuits as soon as all four categories are found, avoiding
@@ -46,19 +52,49 @@ public static class ApiKeyValidator
         bool hasUppercase = false, hasLowercase = false, hasDigits = false, hasSpecial = false;
         foreach (char c in key.AsSpan())
         {
-            if (char.IsUpper(c)) hasUppercase = true;
-            else if (char.IsLower(c)) hasLowercase = true;
-            else if (char.IsDigit(c)) hasDigits = true;
-            else hasSpecial = true;
+            if (char.IsUpper(c))
+            {
+                hasUppercase = true;
+            }
+            else if (char.IsLower(c))
+            {
+                hasLowercase = true;
+            }
+            else if (char.IsDigit(c))
+            {
+                hasDigits = true;
+            }
+            else
+            {
+                hasSpecial = true;
+            }
 
-            if (hasUppercase && hasLowercase && hasDigits && hasSpecial) break;
+            if (hasUppercase && hasLowercase && hasDigits && hasSpecial)
+            {
+                break;
+            }
         }
 
         var characterTypesUsed = 0;
-        if (hasUppercase) characterTypesUsed++;
-        if (hasLowercase) characterTypesUsed++;
-        if (hasDigits) characterTypesUsed++;
-        if (hasSpecial) characterTypesUsed++;
+        if (hasUppercase)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasLowercase)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasDigits)
+        {
+            characterTypesUsed++;
+        }
+
+        if (hasSpecial)
+        {
+            characterTypesUsed++;
+        }
 
         if (characterTypesUsed < 3)
         {
@@ -78,21 +114,27 @@ public static class ApiKeyValidator
     public static ValidationResult ValidateKeyName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
+        {
             return new ValidationResult { IsValid = false, Message = "API key name is required" };
+        }
 
         if (name.Length < MinNameLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"API key name must be at least {MinNameLength} characters"
             };
+        }
 
         if (name.Length > MaxNameLength)
+        {
             return new ValidationResult
             {
                 IsValid = false,
                 Message = $"API key name cannot exceed {MaxNameLength} characters"
             };
+        }
 
         // Check for valid characters
         if (!name.All(c => char.IsLetterOrDigit(c) || c is ' ' or '_' or '-'))
@@ -114,13 +156,19 @@ public static class ApiKeyValidator
     public static ValidationResult ValidateQuotaLimit(int limit)
     {
         if (limit is Domain.Models.QuotaLimit.Unlimited)
+        {
             return new ValidationResult { IsValid = true };
+        }
 
         if (limit <= 0)
+        {
             return new ValidationResult { IsValid = false, Message = "Quota limit must be greater than 0, or -1 for unlimited" };
+        }
 
         if (limit > Domain.Models.QuotaLimit.MaxValue)
+        {
             return new ValidationResult { IsValid = false, Message = "Quota limit cannot exceed 1 billion" };
+        }
 
         return new ValidationResult { IsValid = true };
     }
@@ -131,7 +179,12 @@ public static class ApiKeyValidator
 /// </summary>
 public record ValidationResult
 {
+    /// <summary>True when the validated input passed all checks.</summary>
     public bool IsValid { get; set; }
+
+    /// <summary>Optional message describing the validation outcome.</summary>
     public string? Message { get; set; }
+
+    /// <summary>Individual validation error messages.</summary>
     public List<string> Errors { get; set; } = new();
 }

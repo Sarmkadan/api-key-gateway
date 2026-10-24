@@ -86,8 +86,8 @@ public static class ApiEndpointValidationTests
             TimeoutMs = 0,
             MaxPayloadBytes = -1,
             CacheTtlSeconds = -5,
-            Headers = null,
-            AllowedConsumers = null
+            Headers = null!,
+            AllowedConsumers = null!
         };
 
         var problems = endpoint.Validate();
@@ -118,8 +118,8 @@ public static class ApiEndpointValidationTests
             TimeoutMs = 0,
             MaxPayloadBytes = -1,
             CacheTtlSeconds = -5,
-            Headers = null,
-            AllowedConsumers = null
+            Headers = null!,
+            AllowedConsumers = null!
         };
 
         var ex = Assert.ThrowsAny<ArgumentException>(() => endpoint.EnsureValid());

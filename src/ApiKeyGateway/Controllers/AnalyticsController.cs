@@ -20,6 +20,11 @@ public class AnalyticsController : ControllerBase
     private readonly IUsageAnalyticsService _analytics;
     private readonly ILogger<AnalyticsController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnalyticsController"/> class
+    /// </summary>
+    /// <param name="analytics">Service that produces usage analytics</param>
+    /// <param name="logger">Logger for controller diagnostics</param>
     public AnalyticsController(IUsageAnalyticsService analytics, ILogger<AnalyticsController> logger)
     {
         _analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
@@ -41,11 +46,15 @@ public class AnalyticsController : ControllerBase
         [FromQuery] DateTime? to = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             return BadRequest(new { error = "keyId is required" });
+        }
 
         var (start, end, validationError) = ResolveDateRange(from, to);
         if (validationError is not null)
+        {
             return BadRequest(new { error = validationError });
+        }
 
         try
         {
@@ -76,14 +85,20 @@ public class AnalyticsController : ControllerBase
         [FromQuery] DateTime? to = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             return BadRequest(new { error = "keyId is required" });
+        }
 
         if (limit < 1 || limit > 100)
+        {
             return BadRequest(new { error = "limit must be between 1 and 100" });
+        }
 
         var (start, end, validationError) = ResolveDateRange(from, to);
         if (validationError is not null)
+        {
             return BadRequest(new { error = validationError });
+        }
 
         try
         {
@@ -113,13 +128,17 @@ public class AnalyticsController : ControllerBase
         [FromQuery] DateTime? to = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             return BadRequest(new { error = "keyId is required" });
+        }
 
         var start = from?.ToUniversalTime() ?? DateTime.UtcNow.AddHours(-24);
         var end = to?.ToUniversalTime() ?? DateTime.UtcNow;
 
         if (end < start)
+        {
             return BadRequest(new { error = "to must be after from" });
+        }
 
         try
         {
@@ -148,11 +167,15 @@ public class AnalyticsController : ControllerBase
         [FromQuery] DateTime? to = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             return BadRequest(new { error = "keyId is required" });
+        }
 
         var (start, end, validationError) = ResolveDateRange(from, to);
         if (validationError is not null)
+        {
             return BadRequest(new { error = validationError });
+        }
 
         try
         {
@@ -177,7 +200,9 @@ public class AnalyticsController : ControllerBase
         var start = from?.ToUniversalTime() ?? end.AddDays(-30);
 
         if (end < start)
+        {
             return (start, end, "to must be after from");
+        }
 
         return (start, end, null);
     }
@@ -197,13 +222,17 @@ public class AnalyticsController : ControllerBase
         [FromQuery] int topN = 10)
     {
         if (topN < 1 || topN > 100)
+        {
             return BadRequest(new { error = "topN must be between 1 and 100" });
+        }
 
         var start = from?.ToUniversalTime() ?? DateTime.UtcNow.AddDays(-30);
         var end = to?.ToUniversalTime() ?? DateTime.UtcNow;
 
         if (end < start)
+        {
             return BadRequest(new { error = "to must be after from" });
+        }
 
         try
         {

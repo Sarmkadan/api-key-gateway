@@ -12,10 +12,19 @@ namespace ApiKeyGateway.Events;
 /// </summary>
 public abstract record UsageEvent
 {
+    /// <summary>Unique identifier of the event.</summary>
     public Guid EventId { get; } = Guid.NewGuid();
+
+    /// <summary>UTC time when the event was created.</summary>
     public DateTime Timestamp { get; } = DateTime.UtcNow;
+
+    /// <summary>Identifier of the API key that was used.</summary>
     public string ApiKeyId { get; set; } = null!;
+
+    /// <summary>Endpoint that was requested.</summary>
     public string Endpoint { get; set; } = null!;
+
+    /// <summary>HTTP status code returned for the request.</summary>
     public int HttpStatusCode { get; set; }
 }
 
@@ -24,7 +33,10 @@ public abstract record UsageEvent
 /// </summary>
 public record ApiKeyUsedEvent : UsageEvent
 {
+    /// <summary>Time taken to process the request, in milliseconds.</summary>
     public long ResponseTimeMs { get; set; }
+
+    /// <summary>Size of the response body, in bytes.</summary>
     public long ResponseSizeBytes { get; set; }
 }
 
@@ -33,8 +45,13 @@ public record ApiKeyUsedEvent : UsageEvent
 /// </summary>
 public record RateLimitExceededEvent : UsageEvent
 {
+    /// <summary>Usage count in the current window at the time of the event.</summary>
     public int CurrentUsage { get; set; }
+
+    /// <summary>Maximum number of requests allowed in the window.</summary>
     public int Limit { get; set; }
+
+    /// <summary>Seconds until the rate limit window resets.</summary>
     public int SecondsUntilReset { get; set; }
 }
 
@@ -43,8 +60,13 @@ public record RateLimitExceededEvent : UsageEvent
 /// </summary>
 public record UsageWarningEvent : UsageEvent
 {
+    /// <summary>Current usage count.</summary>
     public int CurrentUsage { get; set; }
+
+    /// <summary>Total quota limit.</summary>
     public int Limit { get; set; }
+
+    /// <summary>Percentage of the quota that has been used.</summary>
     public int PercentageUsed { get; set; }
 }
 
@@ -53,6 +75,9 @@ public record UsageWarningEvent : UsageEvent
 /// </summary>
 public record QuotaExhaustedEvent : UsageEvent
 {
+    /// <summary>Total quota limit.</summary>
     public int Limit { get; set; }
+
+    /// <summary>UTC time when the quota window resets.</summary>
     public DateTime WindowResetTime { get; set; }
 }

@@ -43,7 +43,9 @@ public static class StringExtensions
         ArgumentOutOfRangeException.ThrowIfLessThan(maxLength, 3);
 
         if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+        {
             return value;
+        }
 
         return value[..(maxLength - 3)] + "...";
     }
@@ -85,7 +87,9 @@ public static class StringExtensions
     public static string ToSlug(this string value)
     {
         if (string.IsNullOrEmpty(value))
+        {
             return string.Empty;
+        }
 
         // Convert to lowercase
         value = value.ToLowerInvariant();
@@ -95,9 +99,13 @@ public static class StringExtensions
         foreach (var c in value)
         {
             if (char.IsLetterOrDigit(c) || c is '-' or '_')
+            {
                 sb.Append(c);
+            }
             else if (char.IsWhiteSpace(c))
+            {
                 sb.Append('-');
+            }
         }
 
         // Remove consecutive dashes

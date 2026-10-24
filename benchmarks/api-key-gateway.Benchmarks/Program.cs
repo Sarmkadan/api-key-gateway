@@ -3,12 +3,16 @@
 // CTO & Software Architect
 // =============================================================================
 
-using BenchmarkDotNet.Running;
 using ApiKeyGateway.Benchmarks;
+using BenchmarkDotNet.Running;
 
-var switcher = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly);
+var switcher = BenchmarkSwitcher.FromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
 
 if (args.Length == 0)
+{
     switcher.RunAll();
+}
 else
+{
     switcher.Run(args);
+}

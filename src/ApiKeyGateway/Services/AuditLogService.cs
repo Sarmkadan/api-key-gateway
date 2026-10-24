@@ -4,10 +4,10 @@
 // Manages audit logging for compliance and security monitoring
 // =============================================================================
 
+using System.Collections.Concurrent;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Utilities;
-using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
@@ -186,10 +186,14 @@ public class AuditLogService : IAuditLogService
     public async Task<List<AuditLog>> GetLogsAsync(string resourceId, int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(resourceId))
+        {
             return [];
+        }
 
         if (limit <= 0)
+        {
             throw new ArgumentException("Limit must be positive", nameof(limit));
+        }
 
         return await _repository.GetByResourceIdAsync(resourceId, limit);
     }
@@ -200,7 +204,9 @@ public class AuditLogService : IAuditLogService
     public async Task<List<AuditLog>> GetLogsForPeriodAsync(DateTime startDate, DateTime endDate)
     {
         if (endDate < startDate)
+        {
             throw new ArgumentException("End date must be after start date");
+        }
 
         return await _repository.GetByDateRangeAsync(startDate, endDate);
     }
@@ -238,7 +244,9 @@ public class AuditLogService : IAuditLogService
     public async Task CleanupOldLogsAsync(int retentionDays)
     {
         if (retentionDays <= 0)
+        {
             throw new ArgumentException("Retention days must be positive", nameof(retentionDays));
+        }
 
         try
         {
@@ -267,7 +275,9 @@ public class AuditLogService : IAuditLogService
     protected virtual void Dispose(bool disposing)
     {
         if (_disposed)
+        {
             return;
+        }
 
         if (disposing)
         {

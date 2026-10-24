@@ -22,6 +22,12 @@ public class ApiKeyAuthenticationMiddleware
     private readonly ILogger<ApiKeyAuthenticationMiddleware> _logger;
     private readonly bool _failOpenOnKeyStoreUnavailable;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyAuthenticationMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
+    /// <param name="logger">Logger for authentication events.</param>
+    /// <param name="gatewayConfig">Optional gateway configuration controlling fail-open behavior.</param>
     public ApiKeyAuthenticationMiddleware(
         RequestDelegate next,
         ILogger<ApiKeyAuthenticationMiddleware> logger,
@@ -227,7 +233,9 @@ public class ApiKeyAuthenticationMiddleware
     private static string ExtractClientIp(HttpContext context)
     {
         if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+        {
             return forwardedFor.ToString().Split(',')[0].Trim();
+        }
 
         return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
@@ -298,6 +306,11 @@ public class ApiKeyAuthenticationMiddleware
 /// </summary>
 public static class ApiKeyAuthenticationMiddlewareExtensions
 {
+    /// <summary>
+    /// Adds API key authentication middleware to the request pipeline.
+    /// </summary>
+    /// <param name="app">The application builder.</param>
+    /// <returns>The application builder for chaining.</returns>
     public static IApplicationBuilder UseApiKeyAuthentication(this IApplicationBuilder app)
     {
         return app.UseMiddleware<ApiKeyAuthenticationMiddleware>();

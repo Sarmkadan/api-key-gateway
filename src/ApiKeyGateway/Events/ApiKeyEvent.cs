@@ -13,8 +13,19 @@ namespace ApiKeyGateway.Events;
 /// </summary>
 public record ApiKeyEvent
 {
+    /// <summary>
+    /// Gets the unique identifier of this event
+    /// </summary>
     public Guid EventId { get; } = Guid.NewGuid();
+
+    /// <summary>
+    /// Gets the UTC time the event was raised
+    /// </summary>
     public DateTime Timestamp { get; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets or sets the identifier of the API key the event relates to
+    /// </summary>
     public string ApiKeyId { get; set; } = null!;
 }
 
@@ -23,7 +34,14 @@ public record ApiKeyEvent
 /// </summary>
 public record ApiKeyCreatedEvent : ApiKeyEvent
 {
+    /// <summary>
+    /// Gets or sets the name of the created API key
+    /// </summary>
     public string Name { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the identity of the user or service that created the key
+    /// </summary>
     public string CreatedBy { get; set; } = null!;
 }
 
@@ -32,6 +50,9 @@ public record ApiKeyCreatedEvent : ApiKeyEvent
 /// </summary>
 public record ApiKeyRotatedEvent : ApiKeyEvent
 {
+    /// <summary>
+    /// Gets or sets the identity of the user or service that rotated the key
+    /// </summary>
     public string RotatedBy { get; set; } = null!;
 }
 
@@ -40,7 +61,14 @@ public record ApiKeyRotatedEvent : ApiKeyEvent
 /// </summary>
 public record ApiKeyDisabledEvent : ApiKeyEvent
 {
+    /// <summary>
+    /// Gets or sets the identity of the user or service that disabled the key
+    /// </summary>
     public string DisabledBy { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the reason the key was disabled
+    /// </summary>
     public string Reason { get; set; } = null!;
 }
 
@@ -49,7 +77,14 @@ public record ApiKeyDisabledEvent : ApiKeyEvent
 /// </summary>
 public record ApiKeyUpdatedEvent : ApiKeyEvent
 {
+    /// <summary>
+    /// Gets or sets the fields that changed, keyed by field name
+    /// </summary>
     public Dictionary<string, object> ChangedFields { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the identity of the user or service that updated the key
+    /// </summary>
     public string UpdatedBy { get; set; } = null!;
 }
 
@@ -58,7 +93,18 @@ public record ApiKeyUpdatedEvent : ApiKeyEvent
 /// </summary>
 public record ApiKeyQuotaChangedEvent : ApiKeyEvent
 {
+    /// <summary>
+    /// Gets or sets the quota limit before the change
+    /// </summary>
     public int OldLimit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quota limit after the change
+    /// </summary>
     public int NewLimit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the identity of the user or service that changed the quota
+    /// </summary>
     public string ChangedBy { get; set; } = null!;
 }

@@ -61,7 +61,9 @@ public class RateLimit
     public bool CanProcessRequest()
     {
         if (!IsEnabled || Unit == Enums.RateLimitUnit.Unlimited)
+        {
             return true;
+        }
 
         return CurrentRequestCount < RequestsPerUnit;
     }

@@ -21,31 +21,49 @@ public static class UsageRecordValidation
         var problems = new List<string>();
 
         if (string.IsNullOrEmpty(value.Id))
+        {
             problems.Add("Id is required.");
+        }
 
         if (value.RecordedAt == default)
+        {
             problems.Add("Recorded at is required.");
+        }
 
         if (string.IsNullOrEmpty(value.Endpoint))
+        {
             problems.Add("Endpoint is required.");
+        }
 
         if (string.IsNullOrEmpty(value.Method))
+        {
             problems.Add("Method is required.");
+        }
 
         if (value.StatusCode < 0)
+        {
             problems.Add("Status code must be a non-negative integer.");
+        }
 
         if (value.RequestBytes < 0)
+        {
             problems.Add("Request bytes must be a non-negative integer.");
+        }
 
         if (value.ResponseBytes < 0)
+        {
             problems.Add("Response bytes must be a non-negative integer.");
+        }
 
         if (value.ResponseTimeMs < 0)
+        {
             problems.Add("Response time must be a non-negative integer.");
+        }
 
         if (string.IsNullOrEmpty(value.SourceIp))
+        {
             problems.Add("Source IP is required.");
+        }
 
         return problems.AsReadOnly();
     }
@@ -70,10 +88,15 @@ public static class UsageRecordValidation
         var problems = Validate(value).ToList();
 
         if (problems.Any())
+        {
             throw new ArgumentException($"Invalid UsageRecordResponse instance: {string.Join(", ", problems)}");
+        }
     }
 }
 
+/// <summary>
+/// Validation helpers for usage statistics responses.
+/// </summary>
 public static class UsageStatisticsResponseValidation
 {
     /// <summary>
@@ -88,37 +111,59 @@ public static class UsageStatisticsResponseValidation
         var problems = new List<string>();
 
         if (string.IsNullOrEmpty(value.ApiKeyId))
+        {
             problems.Add("API Key ID is required.");
+        }
 
         if (value.StartDate == default)
+        {
             problems.Add("Start date is required.");
+        }
 
         if (value.EndDate == default)
+        {
             problems.Add("End date is required.");
+        }
 
         if (value.EndDate < value.StartDate)
+        {
             problems.Add("End date must be after start date.");
+        }
 
         if (value.TotalRequests < 0)
+        {
             problems.Add("Total requests must be a non-negative integer.");
+        }
 
         if (value.SuccessfulRequests < 0)
+        {
             problems.Add("Successful requests must be a non-negative integer.");
+        }
 
         if (value.FailedRequests < 0)
+        {
             problems.Add("Failed requests must be a non-negative integer.");
+        }
 
         if (value.SuccessRate < 0 || value.SuccessRate > 100)
+        {
             problems.Add("Success rate must be between 0 and 100.");
+        }
 
         if (value.TotalBytesTransferred < 0)
+        {
             problems.Add("Total bytes transferred must be a non-negative integer.");
+        }
 
         if (value.AverageResponseTimeMs < 0)
+        {
             problems.Add("Average response time must be a non-negative integer.");
+        }
 
         if (value.UniqueEndpoints < 0)
+        {
             problems.Add("Unique endpoints must be a non-negative integer.");
+        }
 
         return problems.AsReadOnly();
     }
@@ -143,10 +188,15 @@ public static class UsageStatisticsResponseValidation
         var problems = Validate(value).ToList();
 
         if (problems.Any())
+        {
             throw new ArgumentException($"Invalid UsageStatisticsResponse instance: {string.Join(", ", problems)}");
+        }
     }
 }
 
+/// <summary>
+/// Validation helpers for consumer usage responses.
+/// </summary>
 public static class ConsumerUsageResponseValidation
 {
     /// <summary>
@@ -161,19 +211,29 @@ public static class ConsumerUsageResponseValidation
         var problems = new List<string>();
 
         if (string.IsNullOrEmpty(value.ConsumerId))
+        {
             problems.Add("Consumer ID is required.");
+        }
 
         if (value.StartDate == default)
+        {
             problems.Add("Start date is required.");
+        }
 
         if (value.EndDate == default)
+        {
             problems.Add("End date is required.");
+        }
 
         if (value.EndDate < value.StartDate)
+        {
             problems.Add("End date must be after start date.");
+        }
 
         if (value.TotalBytesTransferred < 0)
+        {
             problems.Add("Total bytes transferred must be a non-negative integer.");
+        }
 
         return problems.AsReadOnly();
     }
@@ -198,6 +258,8 @@ public static class ConsumerUsageResponseValidation
         var problems = Validate(value).ToList();
 
         if (problems.Any())
+        {
             throw new ArgumentException($"Invalid ConsumerUsageResponse instance: {string.Join(", ", problems)}");
+        }
     }
 }

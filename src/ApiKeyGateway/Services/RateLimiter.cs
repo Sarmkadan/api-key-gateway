@@ -56,6 +56,12 @@ public class RateLimiter : IRateLimiter
     private readonly TimeSpan _defaultWindow;
     private readonly ILogger<RateLimiter> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RateLimiter"/> class.
+    /// </summary>
+    /// <param name="logger">The logger for rate limiter diagnostics.</param>
+    /// <param name="defaultMaxRequests">The default maximum number of requests allowed per window.</param>
+    /// <param name="defaultWindow">The default window length, or null to use one minute.</param>
     public RateLimiter(ILogger<RateLimiter> logger, int defaultMaxRequests = 60, TimeSpan? defaultWindow = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -107,7 +113,9 @@ public class RateLimiter : IRateLimiter
         ArgumentException.ThrowIfNullOrWhiteSpace(apiKeyId);
 
         if (!_windows.TryGetValue(apiKeyId, out var window))
+        {
             return _defaultMaxRequests;
+        }
 
         lock (window)
         {
@@ -122,12 +130,16 @@ public class RateLimiter : IRateLimiter
         ArgumentException.ThrowIfNullOrWhiteSpace(apiKeyId);
 
         if (!_windows.TryGetValue(apiKeyId, out var window))
+        {
             return DateTime.UtcNow;
+        }
 
         lock (window)
         {
             if (window.Timestamps.Count == 0)
+            {
                 return DateTime.UtcNow;
+            }
 
             return window.Timestamps.Peek().Add(window.WindowSize);
         }

@@ -13,23 +13,94 @@ namespace ApiKeyGateway.Domain.Models;
 [DebuggerDisplay("ApiKey {Id,nq} {MaskedKey,nq} Status={Status,nq}")]
 public class ApiKey
 {
+    /// <summary>
+    /// Unique identifier of the API key.
+    /// </summary>
     public string Id { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Identifier of the consumer that owns the key.
+    /// </summary>
     public string ConsumerId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Human-readable name of the key.
+    /// </summary>
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Hash of the secret key value. Never exposed in logs or string output.
+    /// </summary>
     public string KeyHash { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Public prefix of the key used for identification.
+    /// </summary>
     public string Prefix { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Current lifecycle status of the key.
+    /// </summary>
     public Enums.ApiKeyStatus Status { get; set; } = Enums.ApiKeyStatus.Active;
+
+    /// <summary>
+    /// Creation time of the key in UTC.
+    /// </summary>
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Expiration time of the key in UTC, or null if it does not expire.
+    /// </summary>
     public DateTime? ExpiresAt { get; set; }
+
+    /// <summary>
+    /// Time the key was last used in UTC, or null if never used.
+    /// </summary>
     public DateTime? LastUsedAt { get; set; }
+
+    /// <summary>
+    /// Time the key was disabled in UTC, or null if it is not disabled.
+    /// </summary>
     public DateTime? DisabledAt { get; set; }
+
+    /// <summary>
+    /// Optional free-text description of the key.
+    /// </summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Arbitrary key-value metadata attached to the key.
+    /// </summary>
     public Dictionary<string, string> Metadata { get; set; } = [];
+
+    /// <summary>
+    /// Total number of requests made with the key.
+    /// </summary>
     public int RequestCount { get; set; }
+
+    /// <summary>
+    /// Total bytes transferred with the key.
+    /// </summary>
     public long BytesTransferred { get; set; }
+
+    /// <summary>
+    /// Optional comma-separated list of allowed source IP addresses.
+    /// </summary>
     public string? IpWhitelist { get; set; }
+
+    /// <summary>
+    /// Optional identifier of the rate limit policy applied to the key.
+    /// </summary>
     public string? RateLimitId { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the key is active and not expired.
+    /// </summary>
     public bool IsActive => Status == Enums.ApiKeyStatus.Active && !IsExpired;
+
+    /// <summary>
+    /// Gets a value indicating whether the key has passed its expiration time.
+    /// </summary>
     public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
 
     /// <summary>
@@ -98,7 +169,9 @@ public class ApiKey
     public bool IsIpAllowed(string requestIp)
     {
         if (string.IsNullOrWhiteSpace(IpWhitelist))
+        {
             return true;
+        }
 
         var allowedIps = IpWhitelist.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(ip => ip.Trim())
@@ -115,7 +188,9 @@ public class ApiKey
     public bool IsScopeAllowed(string requestPath)
     {
         if (string.IsNullOrWhiteSpace(AllowedScopes))
+        {
             return true;
+        }
 
         var scopes = AllowedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())

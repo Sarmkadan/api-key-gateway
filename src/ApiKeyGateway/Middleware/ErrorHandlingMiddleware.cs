@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =====================================================================
 
+using System.Text.Json;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Middleware;
-using System.Text.Json;
 using UnauthorizedAccessException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Middleware;
@@ -20,12 +20,22 @@ public sealed class ErrorHandlingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ErrorHandlingMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
+    /// <param name="logger">The logger.</param>
     public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Invokes the next middleware and converts any unhandled exception into a ProblemDetails response.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns>A task that completes when the request has been processed.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         try

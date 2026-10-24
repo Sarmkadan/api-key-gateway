@@ -23,6 +23,11 @@ public sealed class UsageAggregationWorker : BackgroundServiceBase<UsageAggregat
 {
     private readonly TimeSpan _aggregationInterval = TimeSpan.FromHours(1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageAggregationWorker"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider used to create scopes for each aggregation cycle.</param>
+    /// <param name="logger">The logger for worker diagnostics.</param>
     public UsageAggregationWorker(IServiceProvider serviceProvider, ILogger<UsageAggregationWorker> logger)
         : base(serviceProvider, logger)
     {
@@ -77,6 +82,7 @@ public sealed class UsageAggregationWorker : BackgroundServiceBase<UsageAggregat
         _logger.LogInformation("Usage aggregation cycle completed successfully");
     }
 
+    /// <inheritdoc/>
     protected override TimeSpan GetErrorDelay(CancellationToken stoppingToken)
     {
         return TimeSpan.FromSeconds(30);

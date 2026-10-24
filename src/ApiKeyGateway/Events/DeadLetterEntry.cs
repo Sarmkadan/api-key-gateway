@@ -53,10 +53,8 @@ public sealed class DeadLetterEntry
     /// <summary>
     /// Creates a dead-letter entry from a failed event publishing attempt.
     /// </summary>
-    /// <param name="eventType">Type of the event that failed.</param>
-    /// <param name="eventPayload">The event payload that failed to publish.</param>
-    /// <param name="failureReason">Exception message describing the failure.</param>
-    /// <param name="stackTrace">Exception stack trace.</param>
+    /// <param name="event">The event that failed to publish.</param>
+    /// <param name="failureReason">The exception that caused the failure.</param>
     /// <param name="retryAttempts">Number of retry attempts made.</param>
     /// <param name="includeEventDetails">Whether to include event details in the entry.</param>
     public static DeadLetterEntry Create<T>(

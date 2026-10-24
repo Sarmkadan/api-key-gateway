@@ -1,8 +1,8 @@
-using Xunit;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

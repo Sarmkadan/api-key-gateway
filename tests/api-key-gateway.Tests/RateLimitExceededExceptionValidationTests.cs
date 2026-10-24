@@ -118,7 +118,7 @@ public class RateLimitExceededExceptionValidationTests
         // Arrange: create an exception with several distinct problems
         var ex = new RateLimitExceededException("") // empty message
         {
-            ApiKeyId = null,                     // ApiKeyId null
+            ApiKeyId = null!,                     // ApiKeyId null
             Limit = 2_000_000,                   // Limit exceeds max
             WindowInSeconds = 400_000_000,       // Window exceeds 1 year
             RetryAfter = default(DateTime)       // default DateTime value (non-null)

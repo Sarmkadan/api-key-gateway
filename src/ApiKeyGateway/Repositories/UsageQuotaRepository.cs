@@ -20,19 +20,29 @@ public class UsageQuotaRepository : IUsageQuotaRepository
     private readonly ILogger<UsageQuotaRepository> _logger;
     private readonly Dictionary<string, UsageQuota> _cache = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageQuotaRepository"/> class
+    /// </summary>
+    /// <param name="connection">The database connection used for queries</param>
+    /// <param name="logger">Logger for repository diagnostics</param>
     public UsageQuotaRepository(IDbConnection connection, ILogger<UsageQuotaRepository> logger)
     {
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <inheritdoc/>
     public async Task<UsageQuota?> GetByApiKeyIdAsync(string apiKeyId)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return null;
+        }
 
         if (_cache.TryGetValue(apiKeyId, out var cached))
+        {
             return cached;
+        }
 
         try
         {
@@ -62,10 +72,13 @@ public class UsageQuotaRepository : IUsageQuotaRepository
         }
     }
 
+    /// <inheritdoc/>
     public async Task<UsageQuota> CreateAsync(UsageQuota quota)
     {
         if (quota == null)
+        {
             throw new ArgumentNullException(nameof(quota));
+        }
 
         try
         {
@@ -91,10 +104,13 @@ public class UsageQuotaRepository : IUsageQuotaRepository
         }
     }
 
+    /// <inheritdoc/>
     public async Task UpdateAsync(UsageQuota quota)
     {
         if (quota == null)
+        {
             throw new ArgumentNullException(nameof(quota));
+        }
 
         try
         {
@@ -126,10 +142,13 @@ public class UsageQuotaRepository : IUsageQuotaRepository
         }
     }
 
+    /// <inheritdoc/>
     public async Task DeleteAsync(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
+        {
             return;
+        }
 
         try
         {
@@ -145,7 +164,9 @@ public class UsageQuotaRepository : IUsageQuotaRepository
 
             var key = _cache.FirstOrDefault(kv => kv.Value.Id == id).Key;
             if (key != null)
+            {
                 _cache.Remove(key);
+            }
         }
         catch (Exception ex)
         {

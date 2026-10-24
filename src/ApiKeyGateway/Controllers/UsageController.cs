@@ -21,6 +21,12 @@ public class UsageController : ControllerBase
     private readonly IUsageQuotaService _usageQuotaService;
     private readonly ILogger<UsageController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageController"/> class
+    /// </summary>
+    /// <param name="usageService">Service for usage tracking and statistics</param>
+    /// <param name="usageQuotaService">Service for quota consumption lookups</param>
+    /// <param name="logger">Logger for controller diagnostics</param>
     public UsageController(
         IUsageTrackingService usageService,
         IUsageQuotaService usageQuotaService,
@@ -43,13 +49,17 @@ public class UsageController : ControllerBase
         [FromQuery] DateTime? endDate)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return BadRequest(new { error = "API Key ID is required" });
+        }
 
         var start = startDate ?? DateTime.UtcNow.AddDays(-30);
         var end = endDate ?? DateTime.UtcNow;
 
         if (end < start)
+        {
             return BadRequest(new { error = "End date must be after start date" });
+        }
 
         try
         {
@@ -91,13 +101,17 @@ public class UsageController : ControllerBase
         [FromQuery] int limit = 100)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             return BadRequest(new { error = "API Key ID is required" });
+        }
 
         var start = startDate ?? DateTime.UtcNow.AddDays(-7);
         var end = endDate ?? DateTime.UtcNow;
 
         if (end < start)
+        {
             return BadRequest(new { error = "End date must be after start date" });
+        }
 
         try
         {
@@ -137,13 +151,17 @@ public class UsageController : ControllerBase
         [FromQuery] DateTime? endDate)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             return BadRequest(new { error = "Consumer ID is required" });
+        }
 
         var start = startDate ?? DateTime.UtcNow.AddDays(-30);
         var end = endDate ?? DateTime.UtcNow;
 
         if (end < start)
+        {
             return BadRequest(new { error = "End date must be after start date" });
+        }
 
         try
         {
@@ -178,14 +196,18 @@ public class UsageController : ControllerBase
         string keyId)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             return BadRequest(new { error = "Key ID is required" });
+        }
 
         try
         {
             var quota = await _usageQuotaService.GetQuotaAsync(keyId);
 
             if (quota == null)
+            {
                 return NotFound(new { error = "Quota not configured for this key" });
+            }
 
             var periodEnd = quota.GetPeriodEndUtc();
             var isExceeded = quota.IsExceeded;
@@ -222,15 +244,54 @@ public class UsageController : ControllerBase
 /// </summary>
 public class UsageStatisticsResponse
 {
+    /// <summary>
+    /// Gets or sets the API key identifier
+    /// </summary>
     public string ApiKeyId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the start of the reporting period
+    /// </summary>
     public DateTime StartDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the end of the reporting period
+    /// </summary>
     public DateTime EndDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total number of requests
+    /// </summary>
     public int TotalRequests { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of successful requests
+    /// </summary>
     public int SuccessfulRequests { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of failed requests
+    /// </summary>
     public int FailedRequests { get; set; }
+
+    /// <summary>
+    /// Gets or sets the success rate of requests
+    /// </summary>
     public double SuccessRate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total bytes transferred
+    /// </summary>
     public long TotalBytesTransferred { get; set; }
+
+    /// <summary>
+    /// Gets or sets the average response time in milliseconds
+    /// </summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of unique endpoints accessed
+    /// </summary>
     public int UniqueEndpoints { get; set; }
 }
 
@@ -239,14 +300,49 @@ public class UsageStatisticsResponse
 /// </summary>
 public class UsageRecordResponse
 {
+    /// <summary>
+    /// Gets or sets the record identifier
+    /// </summary>
     public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the time the request was recorded
+    /// </summary>
     public DateTime RecordedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the endpoint that was called
+    /// </summary>
     public string Endpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the HTTP method of the request
+    /// </summary>
     public string Method { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the HTTP status code of the response
+    /// </summary>
     public int StatusCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the size of the request in bytes
+    /// </summary>
     public long RequestBytes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the size of the response in bytes
+    /// </summary>
     public long ResponseBytes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the response time in milliseconds
+    /// </summary>
     public int ResponseTimeMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source IP address of the request
+    /// </summary>
     public string? SourceIp { get; set; }
 }
 
@@ -255,10 +351,29 @@ public class UsageRecordResponse
 /// </summary>
 public class ConsumerUsageResponse
 {
+    /// <summary>
+    /// Gets or sets the consumer identifier
+    /// </summary>
     public string ConsumerId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the start of the reporting period
+    /// </summary>
     public DateTime StartDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the end of the reporting period
+    /// </summary>
     public DateTime EndDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total bytes transferred
+    /// </summary>
     public long TotalBytesTransferred { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total bytes transferred expressed in gigabytes
+    /// </summary>
     public double TotalGBTransferred { get; set; }
 }
 
@@ -267,13 +382,48 @@ public class ConsumerUsageResponse
 /// </summary>
 public class QuotaConsumptionResponse
 {
+    /// <summary>
+    /// Gets or sets the API key identifier
+    /// </summary>
     public string KeyId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the amount of quota used in the current period
+    /// </summary>
     public long Used { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quota limit for the period
+    /// </summary>
     public long Limit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage of quota used
+    /// </summary>
     public double PercentUsed { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the quota has been exceeded
+    /// </summary>
     public bool IsExceeded { get; set; }
+
+    /// <summary>
+    /// Gets or sets the quota period name
+    /// </summary>
     public string Period { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the start of the current quota period
+    /// </summary>
     public DateTime PeriodStart { get; set; }
+
+    /// <summary>
+    /// Gets or sets the end of the current quota period
+    /// </summary>
     public DateTime PeriodEnd { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of requests remaining in the period
+    /// </summary>
     public long Remaining { get; set; }
 }

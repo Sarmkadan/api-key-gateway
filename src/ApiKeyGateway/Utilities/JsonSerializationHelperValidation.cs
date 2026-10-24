@@ -2,154 +2,153 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-namespace ApiKeyGateway.Utilities
+namespace ApiKeyGateway.Utilities;
+
+/// <summary>
+/// Provides validation helpers for <see cref="JsonSerializationHelper"/> operations.
+/// Validates the behavior of JSON serialization and deserialization methods.
+/// </summary>
+public static class JsonSerializationHelperValidation
 {
     /// <summary>
-    /// Provides validation helpers for <see cref="JsonSerializationHelper"/> operations.
-    /// Validates the behavior of JSON serialization and deserialization methods.
+    /// Validates the behavior of <see cref="JsonSerializationHelper"/> methods.
+    /// Returns any validation problems found in the serialization behavior.
     /// </summary>
-    public static class JsonSerializationHelperValidation
+    /// <returns>A list of validation errors; empty if valid.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if <see cref="JsonSerializationHelper"/> methods are not accessible.</exception>
+    public static IReadOnlyList<string> Validate()
     {
-        /// <summary>
-        /// Validates the behavior of <see cref="JsonSerializationHelper"/> methods.
-        /// Returns any validation problems found in the serialization behavior.
-        /// </summary>
-        /// <returns>A list of validation errors; empty if valid.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if <see cref="JsonSerializationHelper"/> methods are not accessible.</exception>
-        public static IReadOnlyList<string> Validate()
+        // Validate that all required methods exist and are accessible
+        try
         {
-            // Validate that all required methods exist and are accessible
-            try
-            {
-                _ = JsonSerializationHelper.SerializeCompact(new { });
-                _ = JsonSerializationHelper.SerializeFormatted(new { });
-                _ = JsonSerializationHelper.IsValidJson("{}");
-            }
-            catch (Exception ex)
-            {
-                return new[] { $"JsonSerializationHelper methods are not accessible: {ex.Message}" };
-            }
+            _ = JsonSerializationHelper.SerializeCompact(new { });
+            _ = JsonSerializationHelper.SerializeFormatted(new { });
+            _ = JsonSerializationHelper.IsValidJson("{}");
+        }
+        catch (Exception ex)
+        {
+            return new[] { $"JsonSerializationHelper methods are not accessible: {ex.Message}" };
+        }
 
-            var errors = new List<string>();
+        var errors = new List<string>();
 
-            // Test SerializeCompact with a simple object
-            var testObject = new { Name = "Test", Value = 42 };
-            var serializedCompact = JsonSerializationHelper.SerializeCompact(testObject);
-            if (string.IsNullOrWhiteSpace(serializedCompact))
-            {
-                errors.Add("SerializeCompact returned null or whitespace.");
-            }
-            else if (serializedCompact == "{}")
-            {
-                errors.Add("SerializeCompact returned empty object serialization.");
-            }
-            else
-            {
-                // Verify it's valid JSON
-                if (!JsonSerializationHelper.IsValidJson(serializedCompact))
-                {
-                    errors.Add("SerializeCompact produced invalid JSON.");
-                }
-            }
-
-            // Test SerializeFormatted with a simple object
-            var serializedFormatted = JsonSerializationHelper.SerializeFormatted(testObject);
-            if (string.IsNullOrWhiteSpace(serializedFormatted))
-            {
-                errors.Add("SerializeFormatted returned null or whitespace.");
-            }
-            else if (serializedFormatted == "{}")
-            {
-                errors.Add("SerializeFormatted returned empty object serialization.");
-            }
-            else
-            {
-                // Verify it's valid JSON
-                if (!JsonSerializationHelper.IsValidJson(serializedFormatted))
-                {
-                    errors.Add("SerializeFormatted produced invalid JSON.");
-                }
-            }
-
-            // Test Deserialize with valid JSON
-            try
-            {
-                var deserialized = JsonSerializationHelper.Deserialize<TestDto>(serializedCompact);
-                if (deserialized is null)
-                {
-                    errors.Add("Deserialize returned null for valid JSON input.");
-                }
-                else if (deserialized.Name != "Test" || deserialized.Value != 42)
-                {
-                    errors.Add("Deserialize did not correctly deserialize the object.");
-                }
-            }
-            catch (Exception ex)
-            {
-                errors.Add($"Deserialize threw an exception: {ex.Message}");
-            }
-
-            // Test SafeDeserialize with valid JSON
-            var safeDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>(serializedCompact);
-            if (safeDeserialized is null)
-            {
-                errors.Add("SafeDeserialize returned null for valid JSON input.");
-            }
-            else if (safeDeserialized.Name != "Test" || safeDeserialized.Value != 42)
-            {
-                errors.Add("SafeDeserialize did not correctly deserialize the object.");
-            }
-
-            // Test SafeDeserialize with invalid JSON
-            var invalidDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>("invalid json");
-            if (invalidDeserialized is not null)
-            {
-                errors.Add("SafeDeserialize did not return null for invalid JSON input.");
-            }
-
-            // Test IsValidJson with valid JSON
+        // Test SerializeCompact with a simple object
+        var testObject = new { Name = "Test", Value = 42 };
+        var serializedCompact = JsonSerializationHelper.SerializeCompact(testObject);
+        if (string.IsNullOrWhiteSpace(serializedCompact))
+        {
+            errors.Add("SerializeCompact returned null or whitespace.");
+        }
+        else if (serializedCompact == "{}")
+        {
+            errors.Add("SerializeCompact returned empty object serialization.");
+        }
+        else
+        {
+            // Verify it's valid JSON
             if (!JsonSerializationHelper.IsValidJson(serializedCompact))
             {
-                errors.Add("IsValidJson returned false for valid JSON.");
+                errors.Add("SerializeCompact produced invalid JSON.");
             }
+        }
 
-            // Test IsValidJson with invalid JSON
-            if (JsonSerializationHelper.IsValidJson("invalid json"))
+        // Test SerializeFormatted with a simple object
+        var serializedFormatted = JsonSerializationHelper.SerializeFormatted(testObject);
+        if (string.IsNullOrWhiteSpace(serializedFormatted))
+        {
+            errors.Add("SerializeFormatted returned null or whitespace.");
+        }
+        else if (serializedFormatted == "{}")
+        {
+            errors.Add("SerializeFormatted returned empty object serialization.");
+        }
+        else
+        {
+            // Verify it's valid JSON
+            if (!JsonSerializationHelper.IsValidJson(serializedFormatted))
             {
-                errors.Add("IsValidJson returned true for invalid JSON.");
+                errors.Add("SerializeFormatted produced invalid JSON.");
             }
-
-            return errors.AsReadOnly();
         }
 
-        /// <summary>
-        /// Determines whether the <see cref="JsonSerializationHelper"/> methods behave correctly.
-        /// </summary>
-        /// <returns>True if valid; otherwise, false.</returns>
-        public static bool IsValid()
+        // Test Deserialize with valid JSON
+        try
         {
-            return Validate().Count == 0;
-        }
-
-        /// <summary>
-        /// Ensures that the <see cref="JsonSerializationHelper"/> methods behave correctly.
-        /// Throws an exception if validation fails.
-        /// </summary>
-        /// <exception cref="ArgumentException">Thrown if validation fails with a list of validation errors.</exception>
-        public static void EnsureValid()
-        {
-            var errors = Validate();
-            if (errors.Count > 0)
+            var deserialized = JsonSerializationHelper.Deserialize<TestDto>(serializedCompact);
+            if (deserialized is null)
             {
-                throw new ArgumentException(
-                    $"JsonSerializationHelper validation failed. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+                errors.Add("Deserialize returned null for valid JSON input.");
+            }
+            else if (deserialized.Name != "Test" || deserialized.Value != 42)
+            {
+                errors.Add("Deserialize did not correctly deserialize the object.");
             }
         }
-
-        private sealed class TestDto
+        catch (Exception ex)
         {
-            public string? Name { get; set; }
-            public int Value { get; set; }
+            errors.Add($"Deserialize threw an exception: {ex.Message}");
         }
+
+        // Test SafeDeserialize with valid JSON
+        var safeDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>(serializedCompact);
+        if (safeDeserialized is null)
+        {
+            errors.Add("SafeDeserialize returned null for valid JSON input.");
+        }
+        else if (safeDeserialized.Name != "Test" || safeDeserialized.Value != 42)
+        {
+            errors.Add("SafeDeserialize did not correctly deserialize the object.");
+        }
+
+        // Test SafeDeserialize with invalid JSON
+        var invalidDeserialized = JsonSerializationHelper.SafeDeserialize<TestDto>("invalid json");
+        if (invalidDeserialized is not null)
+        {
+            errors.Add("SafeDeserialize did not return null for invalid JSON input.");
+        }
+
+        // Test IsValidJson with valid JSON
+        if (!JsonSerializationHelper.IsValidJson(serializedCompact))
+        {
+            errors.Add("IsValidJson returned false for valid JSON.");
+        }
+
+        // Test IsValidJson with invalid JSON
+        if (JsonSerializationHelper.IsValidJson("invalid json"))
+        {
+            errors.Add("IsValidJson returned true for invalid JSON.");
+        }
+
+        return errors.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Determines whether the <see cref="JsonSerializationHelper"/> methods behave correctly.
+    /// </summary>
+    /// <returns>True if valid; otherwise, false.</returns>
+    public static bool IsValid()
+    {
+        return Validate().Count == 0;
+    }
+
+    /// <summary>
+    /// Ensures that the <see cref="JsonSerializationHelper"/> methods behave correctly.
+    /// Throws an exception if validation fails.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown if validation fails with a list of validation errors.</exception>
+    public static void EnsureValid()
+    {
+        var errors = Validate();
+        if (errors.Count > 0)
+        {
+            throw new ArgumentException(
+                $"JsonSerializationHelper validation failed. Problems:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+        }
+    }
+
+    private sealed class TestDto
+    {
+        public string? Name { get; set; }
+        public int Value { get; set; }
     }
 }

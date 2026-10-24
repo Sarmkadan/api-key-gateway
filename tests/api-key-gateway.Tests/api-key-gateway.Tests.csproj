@@ -1,10 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Test/benchmark assemblies are not published APIs, so XML doc generation (CS1591 etc.) does not apply. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <RootNamespace>ApiKeyGateway.Tests</RootNamespace>
   </PropertyGroup>
@@ -20,6 +19,11 @@
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Stray top-level-statements debug script; it declares a second entry point and clashes with the app's Program class (CS0436/CS7022). -->
+    <Compile Remove="DebugXmlExport.cs" />
   </ItemGroup>
 
   <ItemGroup>

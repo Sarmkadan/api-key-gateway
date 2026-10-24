@@ -64,7 +64,9 @@ public static class UsageRepositoryValidation
 
         var problems = value.Validate();
         if (problems.Count == 0)
+        {
             return;
+        }
 
         throw new ArgumentException(
             $"UsageRepository is invalid:{Environment.NewLine}{string.Join(Environment.NewLine, problems)}");
@@ -86,7 +88,7 @@ public static class UsageRepositoryValidation
             throw new InvalidOperationException("Failed to access connection field via reflection.");
         }
 
-        return (IDbConnection)connectionField.GetValue(repository) ?? throw new InvalidOperationException("Connection field is null.");
+        return (IDbConnection?)connectionField.GetValue(repository) ?? throw new InvalidOperationException("Connection field is null.");
     }
 
     /// <summary>
@@ -105,7 +107,7 @@ public static class UsageRepositoryValidation
             throw new InvalidOperationException("Failed to access logger field via reflection.");
         }
 
-        return (ILogger<UsageRepository>)loggerField.GetValue(repository) ?? throw new InvalidOperationException("Logger field is null.");
+        return (ILogger<UsageRepository>?)loggerField.GetValue(repository) ?? throw new InvalidOperationException("Logger field is null.");
     }
 
     /// <summary>

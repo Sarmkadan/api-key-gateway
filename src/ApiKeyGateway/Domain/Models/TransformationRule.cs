@@ -123,12 +123,15 @@ public sealed class TransformationRule
     public string? LuaScript { get; set; }
 
     /// <summary>
-    /// Gets the parameter dictionary used to configure built-in actions.
-    /// Common keys: <c>HeaderName</c>, <c>HeaderValue</c>, <c>ParamName</c>,
-    /// <c>ParamValue</c>, <c>PathTemplate</c>.
+    /// Returns a concise representation of the rule's identifying fields.
     /// </summary>
     public override string ToString() => $"TransformationRule {{ Id = {Id}, Name = {Name}, Description = {Description}, Scope = {Scope}, ApiKeyId = {ApiKeyId}, ConsumerId = {ConsumerId} }}";
 
+    /// <summary>
+    /// Gets or sets the parameter dictionary used to configure built-in actions.
+    /// Common keys: <c>HeaderName</c>, <c>HeaderValue</c>, <c>ParamName</c>,
+    /// <c>ParamValue</c>, <c>PathTemplate</c>.
+    /// </summary>
     public Dictionary<string, string> Parameters { get; set; } = [];
 
     /// <summary>

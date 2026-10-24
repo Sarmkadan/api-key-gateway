@@ -5,15 +5,15 @@
 // handle bulk operations and event delegation for audit logging.
 // =====================================================================
 
-using Xunit;
-using ApiKeyGateway.Events;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Events;
 using ApiKeyGateway.Repositories;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

@@ -1,9 +1,9 @@
-using Xunit;
+using System;
+using System.Collections.Generic;
 using ApiKeyGateway.Domain.Enums;
 using ApiKeyGateway.Domain.Models;
 using FluentAssertions;
-using System;
-using System.Collections.Generic;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 
@@ -50,7 +50,7 @@ public class ApiKeyValidationTests
             Prefix = "123", // Invalid: wrong length
             Status = (ApiKeyStatus)999, // Invalid: undefined
             CreatedAt = default, // Invalid: default
-            Metadata = null // Invalid: null
+            Metadata = null! // Invalid: null
         };
 
         // Act

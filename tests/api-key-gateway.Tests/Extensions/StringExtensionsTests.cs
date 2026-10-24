@@ -1,5 +1,5 @@
-using Xunit;
 using ApiKeyGateway.Extensions;
+using Xunit;
 
 namespace api_key_gateway.Tests.Extensions;
 
@@ -13,7 +13,7 @@ public class StringExtensionsTests
     public void Truncate_ReturnsExpectedResult(string? input, int maxLength, string? expected)
     {
         // Act
-        var result = input.Truncate(maxLength);
+        var result = input!.Truncate(maxLength);
 
         // Assert
         Assert.Equal(expected, result);
@@ -37,7 +37,7 @@ public class StringExtensionsTests
     public void TruncateWithEllipsis_ReturnsExpectedResult(string? input, int maxLength, string? expected)
     {
         // Act
-        var result = input.TruncateWithEllipsis(maxLength);
+        var result = input!.TruncateWithEllipsis(maxLength);
 
         // Assert
         Assert.Equal(expected, result);
@@ -61,7 +61,7 @@ public class StringExtensionsTests
     public void ContainsAny_ReturnsExpectedResult(string? input, string[] searches, bool expected)
     {
         // Act
-        var result = input.ContainsAny(searches);
+        var result = input!.ContainsAny(searches);
 
         // Assert
         Assert.Equal(expected, result);
@@ -77,7 +77,7 @@ public class StringExtensionsTests
     public void ToSlug_ReturnsExpectedResult(string? input, string expected)
     {
         // Act
-        var result = input.ToSlug();
+        var result = input!.ToSlug();
 
         // Assert
         Assert.Equal(expected, result);
@@ -91,7 +91,7 @@ public class StringExtensionsTests
     public void CapitalizeFirst_ReturnsExpectedResult(string? input, string? expected)
     {
         // Act
-        var result = input.CapitalizeFirst();
+        var result = input!.CapitalizeFirst();
 
         // Assert
         Assert.Equal(expected, result);
@@ -105,7 +105,7 @@ public class StringExtensionsTests
     public void IsNumeric_ReturnsExpectedResult(string? input, bool expected)
     {
         // Act
-        var result = input.IsNumeric();
+        var result = input!.IsNumeric();
 
         // Assert
         Assert.Equal(expected, result);

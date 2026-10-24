@@ -13,18 +13,61 @@ namespace ApiKeyGateway.Services;
 /// </summary>
 public interface IUsageTrackingService
 {
+    /// <summary>
+    /// Records a new usage entry for an API key.
+    /// </summary>
+    /// <param name="record">The usage record to record.</param>
     Task RecordUsageAsync(UsageRecord record);
+
+    /// <summary>
+    /// Retrieves aggregated usage statistics for an API key within a date range.
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The aggregated usage statistics.</returns>
     Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Retrieves detailed usage records for an API key within a date range.
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The matching usage records.</returns>
     Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Calculates the total bytes transferred by a consumer within a date range.
+    /// </summary>
+    /// <param name="consumerId">The ID of the consumer.</param>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The total number of bytes transferred.</returns>
     Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Retrieves all usage records across all API keys within a date range.
+    /// </summary>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The matching usage records.</returns>
     Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IUsageTrackingService"/> backed by <see cref="IUsageRepository"/>.
+/// </summary>
 public class UsageTrackingService : IUsageTrackingService
 {
     private readonly IUsageRepository _repository;
     private readonly ILogger<UsageTrackingService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageTrackingService"/> class.
+    /// </summary>
+    /// <param name="repository">The usage data repository.</param>
+    /// <param name="logger">The logger.</param>
     public UsageTrackingService(IUsageRepository repository, ILogger<UsageTrackingService> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -38,7 +81,9 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task RecordUsageAsync(UsageRecord record)
     {
         if (record == null)
+        {
             throw new ArgumentNullException(nameof(record));
+        }
 
         try
         {
@@ -59,10 +104,14 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ValidationException("API Key ID cannot be empty", nameof(apiKeyId), apiKeyId);
+        }
 
         if (endDate < startDate)
+        {
             throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
+        }
 
         try
         {
@@ -96,7 +145,9 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
+        {
             throw new ValidationException("API Key ID cannot be empty", nameof(apiKeyId), apiKeyId);
+        }
 
         try
         {
@@ -115,7 +166,9 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
+        {
             return 0;
+        }
 
         try
         {
@@ -135,7 +188,9 @@ public class UsageTrackingService : IUsageTrackingService
     public async Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate)
     {
         if (endDate < startDate)
+        {
             throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
+        }
 
         try
         {
@@ -154,15 +209,34 @@ public class UsageTrackingService : IUsageTrackingService
 /// </summary>
 public class UsageStatistics
 {
+    /// <summary>The ID of the API key these statistics belong to</summary>
     public string ApiKeyId { get; set; } = string.Empty;
+
+    /// <summary>Start of the reporting period</summary>
     public DateTime StartDate { get; set; }
+
+    /// <summary>End of the reporting period</summary>
     public DateTime EndDate { get; set; }
+
+    /// <summary>Total number of requests in the period</summary>
     public int TotalRequests { get; set; }
+
+    /// <summary>Number of successful requests in the period</summary>
     public int SuccessfulRequests { get; set; }
+
+    /// <summary>Number of failed requests in the period</summary>
     public int FailedRequests { get; set; }
+
+    /// <summary>Total bytes transferred in the period</summary>
     public long TotalBytesTransferred { get; set; }
+
+    /// <summary>Average response time in milliseconds</summary>
     public double AverageResponseTimeMs { get; set; }
+
+    /// <summary>Number of distinct endpoints accessed in the period</summary>
     public int UniqueEndpoints { get; set; }
+
+    /// <summary>Percentage of requests that succeeded (0 to 100)</summary>
     public double SuccessRate => TotalRequests > 0 ? (SuccessfulRequests * 100.0) / TotalRequests : 0;
 }
 
@@ -171,10 +245,47 @@ public class UsageStatistics
 /// </summary>
 public interface IUsageRepository
 {
+    /// <summary>
+    /// Persists a single usage record.
+    /// </summary>
+    /// <param name="record">The usage record to persist.</param>
     Task CreateAsync(UsageRecord record);
+
+    /// <summary>
+    /// Persists a batch of usage records in a single operation.
+    /// </summary>
+    /// <param name="records">The usage records to persist.</param>
     Task WriteBatchAsync(IReadOnlyList<UsageRecord> records);
+
+    /// <summary>
+    /// Retrieves usage records for an API key within a date range.
+    /// </summary>
+    /// <param name="apiKeyId">The ID of the API key.</param>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The matching usage records.</returns>
     Task<List<UsageRecord>> GetByApiKeyAndDateRangeAsync(string apiKeyId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Retrieves usage records for a consumer within a date range.
+    /// </summary>
+    /// <param name="consumerId">The ID of the consumer.</param>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The matching usage records.</returns>
     Task<List<UsageRecord>> GetByConsumerAndDateRangeAsync(string consumerId, DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Retrieves all usage records within a date range.
+    /// </summary>
+    /// <param name="startDate">Start of the date range.</param>
+    /// <param name="endDate">End of the date range.</param>
+    /// <returns>The matching usage records.</returns>
     Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
+
+    /// <summary>
+    /// Deletes usage records older than the given retention period.
+    /// </summary>
+    /// <param name="retentionDays">Number of days of records to keep.</param>
     Task DeleteOldRecordsAsync(int retentionDays);
 }

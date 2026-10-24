@@ -3,12 +3,12 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 using GatewayUnauthorizedException = ApiKeyGateway.Domain.Exceptions.UnauthorizedAccessException;
 
 namespace ApiKeyGateway.Tests;

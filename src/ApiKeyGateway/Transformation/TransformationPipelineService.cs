@@ -69,7 +69,9 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         CancellationToken cancellationToken = default)
     {
         if (!_options.IsEnabled)
+        {
             return TransformationResult.Skipped();
+        }
 
         var sw = Stopwatch.StartNew();
         var errors = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -81,14 +83,19 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         foreach (var rule in rules)
         {
             if (context.IsBlocked || cancellationToken.IsCancellationRequested)
+            {
                 break;
+            }
 
             evaluated++;
 
             try
             {
                 var didApply = await ApplyRuleAsync(rule, context, cancellationToken);
-                if (didApply) applied++;
+                if (didApply)
+                {
+                    applied++;
+                }
 
                 _logger.LogDebug(
                     "Rule {RuleId} ({RuleName}) — {Status}",
@@ -98,13 +105,19 @@ public sealed class TransformationPipelineService : ITransformationPipeline
             {
                 _logger.LogWarning("Rule {RuleId} ({RuleName}) timed out", rule.Id, rule.Name);
                 errors[rule.Id] = "Execution timed out";
-                if (_options.StopOnError) break;
+                if (_options.StopOnError)
+                {
+                    break;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Rule {RuleId} ({RuleName}) failed", rule.Id, rule.Name);
                 errors[rule.Id] = ex.Message;
-                if (_options.StopOnError) break;
+                if (_options.StopOnError)
+                {
+                    break;
+                }
             }
         }
 
@@ -163,10 +176,14 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         };
 
         if (context.ConsumerId is not null)
+        {
             tasks.Add(_repository.GetByConsumerAsync(context.ConsumerId, ct));
+        }
 
         if (context.ApiKeyId is not null)
+        {
             tasks.Add(LoadKeyRulesAsync(context.ApiKeyId, ct));
+        }
 
         var buckets = await Task.WhenAll(tasks);
 
@@ -195,7 +212,9 @@ public sealed class TransformationPipelineService : ITransformationPipeline
         var rules = await _repository.GetByApiKeyAsync(apiKeyId, ct);
 
         if (ttl > TimeSpan.Zero)
+        {
             _ruleCache[apiKeyId] = (rules, DateTime.UtcNow.Add(ttl));
+        }
 
         return rules;
     }

@@ -71,6 +71,11 @@ public class UsageTracker : IUsageTracker
     private readonly IUsageTrackingService _persistentStore;
     private readonly ILogger<UsageTracker> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UsageTracker"/> class
+    /// </summary>
+    /// <param name="persistentStore">The service used to persist usage data</param>
+    /// <param name="logger">Logger for tracker diagnostics</param>
     public UsageTracker(IUsageTrackingService persistentStore, ILogger<UsageTracker> logger)
     {
         _persistentStore = persistentStore ?? throw new ArgumentNullException(nameof(persistentStore));
@@ -117,14 +122,20 @@ public class UsageTracker : IUsageTracker
         foreach (var key in keys)
         {
             if (cancellationToken.IsCancellationRequested)
+            {
                 break;
+            }
 
             if (!_counters.TryRemove(key, out var counters))
+            {
                 continue;
+            }
 
             var requestCount = Interlocked.Read(ref counters.RequestCount);
             if (requestCount == 0)
+            {
                 continue;
+            }
 
             try
             {

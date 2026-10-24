@@ -19,12 +19,23 @@ public sealed class PerformanceMonitoringMiddleware
     private const long WarningThresholdMs = 1000;
     private const long CriticalThresholdMs = 5000;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PerformanceMonitoringMiddleware"/> class.
+    /// </summary>
+    /// <param name="next">The next middleware in the request pipeline.</param>
+    /// <param name="logger">The logger used to report slow requests.</param>
     public PerformanceMonitoringMiddleware(RequestDelegate next, ILogger<PerformanceMonitoringMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Invokes the next middleware and logs a warning or error if the request exceeds the configured thresholds.
+    /// Health check endpoints are skipped.
+    /// </summary>
+    /// <param name="context">The HTTP context for the current request.</param>
+    /// <returns>A task that completes when the request has been processed.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         // Skip health check endpoint to reduce noise in logs

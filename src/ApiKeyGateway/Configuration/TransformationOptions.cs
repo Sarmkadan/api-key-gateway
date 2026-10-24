@@ -3,8 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
-using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Domain.Models;
+using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Transformation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -215,7 +215,11 @@ internal sealed class ConfigurationTransformationRuleRepository : ITransformatio
     public Task<bool> UpdateAsync(TransformationRule rule, CancellationToken cancellationToken = default)
     {
         var idx = _rules.FindIndex(r => r.Id == rule.Id);
-        if (idx < 0) return Task.FromResult(false);
+        if (idx < 0)
+        {
+            return Task.FromResult(false);
+        }
+
         _rules[idx] = rule;
         return Task.FromResult(true);
     }
@@ -224,7 +228,11 @@ internal sealed class ConfigurationTransformationRuleRepository : ITransformatio
     public Task<bool> DeleteAsync(string ruleId, CancellationToken cancellationToken = default)
     {
         var rule = _rules.FirstOrDefault(r => r.Id == ruleId);
-        if (rule is null) return Task.FromResult(false);
+        if (rule is null)
+        {
+            return Task.FromResult(false);
+        }
+
         rule.IsEnabled = false;
         return Task.FromResult(true);
     }

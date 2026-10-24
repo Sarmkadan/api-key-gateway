@@ -60,7 +60,10 @@ public class ValidationException : ApiKeyGatewayException
     {
         ArgumentNullException.ThrowIfNull(validationErrors);
         if (!validationErrors.Any())
+        {
             throw new ArgumentException("Validation errors cannot be empty.", nameof(validationErrors));
+        }
+
         ErrorCode = "VALIDATION_ERROR";
         ValidationErrors = validationErrors;
     }

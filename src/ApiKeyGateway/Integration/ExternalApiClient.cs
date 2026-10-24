@@ -45,6 +45,13 @@ public sealed class HttpExternalApiClient : IExternalApiClient
     private readonly ILogger<HttpExternalApiClient> _logger;
     private readonly string _apiName;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpExternalApiClient"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used to call the external API.</param>
+    /// <param name="cache">The cache provider used for GET responses.</param>
+    /// <param name="logger">The logger for request diagnostics.</param>
+    /// <param name="apiName">The logical name of the external API, used in logs and cache keys.</param>
     public HttpExternalApiClient(
         HttpClient httpClient,
         ICacheProvider cache,
@@ -57,10 +64,19 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         _apiName = apiName ?? throw new ArgumentNullException(nameof(apiName));
     }
 
+    /// <summary>
+    /// Performs a GET request to the external API, optionally serving and storing the response in the cache.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+    /// <param name="endpoint">The endpoint path to request.</param>
+    /// <param name="cacheDuration">How long to cache the response, or null to disable caching.</param>
+    /// <returns>The deserialized response.</returns>
     public async Task<T> GetAsync<T>(string endpoint, TimeSpan? cacheDuration = null) where T : class
     {
         if (string.IsNullOrWhiteSpace(endpoint))
+        {
             throw new ArgumentException("Endpoint cannot be empty", nameof(endpoint));
+        }
 
         _logger.LogDebug("Starting GET request to {Endpoint} for API {ApiName}", endpoint, _apiName);
         var cacheKey = CacheKeyGenerator.GetExternalApiCacheKey(_apiName, endpoint);
@@ -82,13 +98,11 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializationHelper.Deserialize<T>(content);
-
-            if (result == null)
-                throw new ConfigurationException($"External API {_apiName} returned null response for endpoint {endpoint}");
+            var result = JsonSerializationHelper.Deserialize<T>(content)
+                ?? throw new ConfigurationException($"External API {_apiName} returned null response for endpoint {endpoint}");
 
             // Cache successful response if duration specified
-            if (result != null && cacheDuration.HasValue)
+            if (cacheDuration.HasValue)
             {
                 await _cache.SetAsync(cacheKey, result, cacheDuration);
                 _logger.LogDebug(
@@ -127,13 +141,24 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         }
     }
 
+    /// <summary>
+    /// Performs a POST request with a JSON-serialized payload to the external API.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+    /// <param name="endpoint">The endpoint path to post to.</param>
+    /// <param name="payload">The object to serialize as the request body.</param>
+    /// <returns>The deserialized response.</returns>
     public async Task<T> PostAsync<T>(string endpoint, object payload) where T : class
     {
         if (string.IsNullOrWhiteSpace(endpoint))
+        {
             throw new ArgumentException("Endpoint cannot be empty", nameof(endpoint));
+        }
 
         if (payload == null)
+        {
             throw new ArgumentNullException(nameof(payload));
+        }
 
         _logger.LogDebug("Starting POST request to {Endpoint} for API {ApiName}", endpoint, _apiName);
 
@@ -149,7 +174,9 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             var result = JsonSerializationHelper.Deserialize<T>(responseContent);
 
             if (result == null)
+            {
                 throw new ConfigurationException($"External API {_apiName} returned null response for POST to {endpoint}");
+            }
 
             _logger.LogInformation("POST request succeeded for {Endpoint} on API {ApiName}", endpoint, _apiName);
             return result;
@@ -180,10 +207,18 @@ public sealed class HttpExternalApiClient : IExternalApiClient
         }
     }
 
+    /// <summary>
+    /// Sends a custom HTTP request to the external API and deserializes the response.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize the response into.</typeparam>
+    /// <param name="request">The HTTP request message to send.</param>
+    /// <returns>The deserialized response.</returns>
     public async Task<T> SendAsync<T>(HttpRequestMessage request) where T : class
     {
         if (request == null)
+        {
             throw new ArgumentNullException(nameof(request));
+        }
 
         _logger.LogDebug("Starting custom request for API {ApiName}", _apiName);
 
@@ -196,7 +231,9 @@ public sealed class HttpExternalApiClient : IExternalApiClient
             var result = JsonSerializationHelper.Deserialize<T>(content);
 
             if (result == null)
+            {
                 throw new ConfigurationException($"External API {_apiName} returned null response for custom request");
+            }
 
             _logger.LogInformation("Custom request succeeded for API {ApiName}", _apiName);
             return result;

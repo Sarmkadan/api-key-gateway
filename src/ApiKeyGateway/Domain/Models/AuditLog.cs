@@ -79,5 +79,9 @@ public class AuditLog
         };
     }
 
+    /// <summary>
+    /// Returns a string representation of the audit log entry with its key fields.
+    /// </summary>
+    /// <returns>A string describing this audit log entry.</returns>
     public override string ToString() => $"AuditLog {{ Id = {Id}, ResourceId = {ResourceId}, ResourceType = {ResourceType}, Action = {Action}, PerformedBy = {PerformedBy}, PerformedAt = {PerformedAt}, HttpStatusCode = {HttpStatusCode}, SourceIp = {SourceIp}, Reason = {Reason}, Changes = {Changes}, ErrorMessage = {ErrorMessage}, IsSuccess = {IsSuccess} }}";
 }

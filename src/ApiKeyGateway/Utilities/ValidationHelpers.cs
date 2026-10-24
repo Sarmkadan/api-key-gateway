@@ -30,7 +30,9 @@ public static class ValidationHelpers
     public static bool IsValidEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
+        {
             return false;
+        }
 
         return EmailRegex.IsMatch(email) && email.Length <= 255;
     }
@@ -41,7 +43,9 @@ public static class ValidationHelpers
     public static bool IsValidApiKeyFormat(string keyValue)
     {
         if (string.IsNullOrWhiteSpace(keyValue))
+        {
             return false;
+        }
 
         return ApiKeyFormatRegex.IsMatch(keyValue);
     }
@@ -54,10 +58,14 @@ public static class ValidationHelpers
         ArgumentException.ThrowIfNullOrEmpty(ipAddress);
 
         if (string.IsNullOrWhiteSpace(ipAddress))
+        {
             return false;
+        }
 
         if (!IpAddressRegex.IsMatch(ipAddress))
+        {
             return false;
+        }
 
         var parts = ipAddress.Split('.');
         return parts.All(part => int.TryParse(part, out var num) && num >= 0 && num <= 255);
@@ -92,7 +100,9 @@ public static class ValidationHelpers
         ArgumentException.ThrowIfNullOrEmpty(input);
 
         if (string.IsNullOrWhiteSpace(input))
+        {
             return string.Empty;
+        }
 
         var trimmed = input.Trim();
         return trimmed.Length > maxLength ? trimmed[..maxLength] : trimmed;

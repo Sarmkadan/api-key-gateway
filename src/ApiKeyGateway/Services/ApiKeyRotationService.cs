@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
-using System.Collections.Concurrent;
 
 namespace ApiKeyGateway.Services;
 
@@ -113,6 +113,12 @@ public partial class ApiKeyRotationService : IApiKeyRotationService
     private readonly ILogger<ApiKeyRotationService> _logger;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _rotationLocks = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiKeyRotationService"/> class
+    /// </summary>
+    /// <param name="apiKeyService">Service used to generate and manage API keys</param>
+    /// <param name="repository">Repository used to load and persist API keys</param>
+    /// <param name="logger">Logger for rotation diagnostics</param>
     public ApiKeyRotationService(
         IApiKeyService apiKeyService,
         IApiKeyRepository repository,
@@ -127,10 +133,14 @@ public partial class ApiKeyRotationService : IApiKeyRotationService
     public async Task<RotationResult> RotateKeyAsync(string keyId, int? newExpirationDays = null)
     {
         if (string.IsNullOrWhiteSpace(keyId))
+        {
             throw new ValidationException("Key ID cannot be empty", nameof(keyId), keyId);
+        }
 
         if (newExpirationDays.HasValue && newExpirationDays <= 0)
+        {
             throw new ValidationException("Expiration days must be positive", nameof(newExpirationDays), newExpirationDays);
+        }
 
         // Acquire a per-key lock to prevent concurrent rotations of the same key
         var keyLock = _rotationLocks.GetOrAdd(keyId, _ => new SemaphoreSlim(1, 1));
@@ -180,7 +190,9 @@ public partial class ApiKeyRotationService : IApiKeyRotationService
             newKey.IpWhitelist = oldKey.IpWhitelist;
             newKey.AllowedScopes = oldKey.AllowedScopes;
             if (oldKey.Metadata.Count > 0)
+            {
                 await _apiKeyService.UpdateKeyMetadataAsync(newKey.Id, oldKey.Metadata);
+            }
 
             // Persist whitelist/scope on the new key
             await _repository.UpdateAsync(newKey);
@@ -227,10 +239,14 @@ public partial class ApiKeyRotationService : IApiKeyRotationService
         int? newExpirationDays = null)
     {
         if (warningDays <= 0)
+        {
             throw new ValidationException("Warning days must be positive", nameof(warningDays), warningDays);
+        }
 
         if (newExpirationDays.HasValue && newExpirationDays <= 0)
+        {
             throw new ValidationException("Expiration days must be positive", nameof(newExpirationDays), newExpirationDays);
+        }
 
         var threshold = DateTime.UtcNow.AddDays(warningDays);
         var expiringKeys = await _repository.GetKeysExpiringBeforeAsync(threshold);

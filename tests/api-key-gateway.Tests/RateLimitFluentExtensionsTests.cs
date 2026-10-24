@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Xunit;
-using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Domain.Enums;
+using ApiKeyGateway.Domain.Models;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

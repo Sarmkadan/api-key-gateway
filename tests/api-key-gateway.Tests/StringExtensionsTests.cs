@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
-using Xunit;
 using ApiKeyGateway.Extensions;
 using FluentAssertions;
+using Xunit;
 
 namespace ApiKeyGateway.Tests;
 

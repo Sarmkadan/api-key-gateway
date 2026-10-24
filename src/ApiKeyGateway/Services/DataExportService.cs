@@ -3,11 +3,11 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Text;
 using ApiKeyGateway.Domain.Exceptions;
 using ApiKeyGateway.Domain.Models;
 using ApiKeyGateway.Repositories;
 using ApiKeyGateway.Utilities;
-using System.Text;
 
 namespace ApiKeyGateway.Services;
 
@@ -163,7 +163,9 @@ public sealed class DataExportService : IDataExportService
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         if (endDate < startDate)
+        {
             throw new ValidationException("End date must be after start date", nameof(endDate), endDate);
+        }
 
         _logger.LogInformation(
             "Exporting usage data in {Format} format from {StartDate} to {EndDate}",

@@ -25,6 +25,12 @@ public sealed class HealthController : ControllerBase
     private readonly IDbConnection _dbConnection;
     private readonly ICacheProvider _cacheProvider;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HealthController"/> class.
+    /// </summary>
+    /// <param name="logger">Logger for health check operations.</param>
+    /// <param name="dbConnection">Database connection used for readiness checks.</param>
+    /// <param name="cacheProvider">Cache provider used for readiness checks.</param>
     public HealthController(
         ILogger<HealthController> logger,
         IDbConnection dbConnection,
