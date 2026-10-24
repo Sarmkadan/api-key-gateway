@@ -778,3 +778,7 @@ Other: `benchmarks/api-key-gateway.Benchmarks/` (BenchmarkDotNet), `examples/` (
 - Logging via `ILogger<T>` structured templates; `DateTime.UtcNow` everywhere; `CancellationToken` as last parameter on async methods; async methods suffixed `Async`.
 - Classes that are not meant for inheritance are `sealed`; models use `init` setters.
 - Do not commit `.aider*`, `bin/`, `obj/`, `appsettings.Development.json` (gitignored). `CHANGELOG.md` exists but history lives in git.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
