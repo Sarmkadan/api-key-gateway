@@ -19,6 +19,22 @@ public static class CacheKeyGenerator
     private const string Prefix = "apigw";
     private const char Separator = ':';
 
+    private const string ApiKeyKeyPrefix = "apigw:apikey:";
+    private const string ApiKeyMetadataKeyPrefix = "apigw:apikey_meta:";
+    private const string RateLimitKeyPrefix = "apigw:ratelimit:";
+    private const string UsageStatsKeyPrefix = "apigw:usage:";
+    private const string QuotaKeyPrefix = "apigw:quota:";
+    private const string WebhookDeliveryKeyPrefix = "apigw:webhook:delivery:";
+    private const string ExternalApiKeyPrefix = "apigw:external:";
+    private const string AnyNamespaceWildcardPrefix = "apigw:*:";
+    private const string UsageStatsDateFormat = "yyyy-MM-dd";
+
+    // Worst-case delimiters per parameter in the hash input: '=' and '&'.
+    private const int ParameterDelimiterChars = 2;
+
+    // Number of SHA-256 bytes kept for the parameter hash (4 bytes → 8 hex chars).
+    private const int ParameterHashBytes = 4;
+
     /// <summary>
     /// Generates cache key for an API key entity.
     /// </summary>
@@ -29,10 +45,10 @@ public static class CacheKeyGenerator
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
-        return string.Create(13 + idLength, apiKeyId, (span, id) =>
+        return string.Create(ApiKeyKeyPrefix.Length + idLength, apiKeyId, (span, id) =>
         {
-            "apigw:apikey:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(13));
+            ApiKeyKeyPrefix.AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(ApiKeyKeyPrefix.Length));
         });
     }
 
@@ -47,10 +63,10 @@ public static class CacheKeyGenerator
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         int idLength = apiKeyId.Length;
-        return string.Create(18 + idLength, apiKeyId, (span, id) =>
+        return string.Create(ApiKeyMetadataKeyPrefix.Length + idLength, apiKeyId, (span, id) =>
         {
-            "apigw:apikey_meta:".AsSpan().CopyTo(span);
-            id.AsSpan().CopyTo(span.Slice(18));
+            ApiKeyMetadataKeyPrefix.AsSpan().CopyTo(span);
+            id.AsSpan().CopyTo(span.Slice(ApiKeyMetadataKeyPrefix.Length));
         });
     }
 
@@ -66,8 +82,7 @@ public static class CacheKeyGenerator
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
         ArgumentException.ThrowIfNullOrEmpty(endpoint);
-        const string prefix = "apigw:ratelimit:";
-        return $"{prefix}{apiKeyId}:{endpoint}";
+        return $"{RateLimitKeyPrefix}{apiKeyId}{Separator}{endpoint}";
     }
 
     /// <summary>
@@ -80,7 +95,7 @@ public static class CacheKeyGenerator
     public static string GetUsageStatsKey(string apiKeyId, DateTime date)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        return $"apigw:usage:{apiKeyId}:{date:yyyy-MM-dd}";
+        return $"{UsageStatsKeyPrefix}{apiKeyId}{Separator}{date.ToString(UsageStatsDateFormat)}";
     }
 
     /// <summary>
@@ -92,7 +107,7 @@ public static class CacheKeyGenerator
     public static string GetQuotaKey(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        return $"apigw:quota:{apiKeyId}";
+        return $"{QuotaKeyPrefix}{apiKeyId}";
     }
 
     /// <summary>
@@ -103,7 +118,7 @@ public static class CacheKeyGenerator
     /// <returns>Cache key string for the webhook delivery status.</returns>
     public static string GetWebhookDeliveryKey(Guid eventId)
     {
-        return $"apigw:webhook:delivery:{eventId}";
+        return $"{WebhookDeliveryKeyPrefix}{eventId}";
     }
 
     /// <summary>
@@ -122,11 +137,11 @@ public static class CacheKeyGenerator
         if (parameters?.Count > 0)
         {
             var paramHash = ComputeParameterHash(parameters);
-            return $"apigw:external:{apiName}:{endpoint}:{paramHash}";
+            return $"{ExternalApiKeyPrefix}{apiName}{Separator}{endpoint}{Separator}{paramHash}";
         }
         else
         {
-            return $"apigw:external:{apiName}:{endpoint}";
+            return $"{ExternalApiKeyPrefix}{apiName}{Separator}{endpoint}";
         }
     }
 
@@ -139,7 +154,7 @@ public static class CacheKeyGenerator
     public static string GetApiKeyInvalidationPattern(string apiKeyId)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKeyId);
-        return $"apigw:*:{apiKeyId}:*";
+        return $"{AnyNamespaceWildcardPrefix}{apiKeyId}{Separator}*";
     }
 
     /// <summary>
@@ -147,7 +162,7 @@ public static class CacheKeyGenerator
     /// </summary>
     /// <returns>Cache key pattern string for rate limit invalidation.</returns>
     public static string GetRateLimitInvalidationPattern() =>
-        "apigw:ratelimit:*";
+        $"{RateLimitKeyPrefix}*";
 
     /// <summary>
     /// Creates a hash of parameters for consistent cache key generation.
@@ -166,7 +181,7 @@ public static class CacheKeyGenerator
         int bufLen = 0;
         foreach (var k in keys)
         {
-            bufLen += k.Length + parameters[k].Length + 2; // "k=v&" worst case
+            bufLen += k.Length + parameters[k].Length + ParameterDelimiterChars;
         }
 
         char[] charBuf = ArrayPool<char>.Shared.Rent(bufLen);
@@ -195,7 +210,7 @@ public static class CacheKeyGenerator
 
             Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
             SHA256.HashData(byteBuf.AsSpan(0, byteCount), hash);
-            return Convert.ToHexString(hash[..4]); // 4 bytes → 8 uppercase hex chars
+            return Convert.ToHexString(hash[..ParameterHashBytes]);
         }
         finally
         {
