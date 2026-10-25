@@ -92,8 +92,9 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
     /// Records a usage entry by adding it to the buffer
     /// </summary>
     /// <param name="record">The usage record to record</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <exception cref="ArgumentNullException">Thrown if record is null</exception>
-    public async Task RecordUsageAsync(UsageRecord record)
+    public async Task RecordUsageAsync(UsageRecord record, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(record);
 
@@ -106,7 +107,7 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
         {
             // During shutdown, fall back to immediate write
             _logger.LogDebug("Shutdown in progress, falling back to immediate write for API key {ApiKeyId}", record.ApiKeyId);
-            await _innerService.RecordUsageAsync(record);
+            await _innerService.RecordUsageAsync(record, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -121,10 +122,11 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
     /// <param name="apiKeyId">The API key identifier</param>
     /// <param name="startDate">Start date of the range</param>
     /// <param name="endDate">End date of the range</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>Usage statistics</returns>
     /// <exception cref="ValidationException">Thrown if parameters are invalid</exception>
-    public Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
-        => _innerService.GetUsageStatisticsAsync(apiKeyId, startDate, endDate);
+    public Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        => _innerService.GetUsageStatisticsAsync(apiKeyId, startDate, endDate, cancellationToken);
 
     /// <summary>
     /// Retrieves detailed usage records for an API key
@@ -132,10 +134,11 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
     /// <param name="apiKeyId">The API key identifier</param>
     /// <param name="startDate">Start date of the range</param>
     /// <param name="endDate">End date of the range</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>List of usage records</returns>
     /// <exception cref="ValidationException">Thrown if parameters are invalid</exception>
-    public Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
-        => _innerService.GetUsageRecordsAsync(apiKeyId, startDate, endDate);
+    public Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        => _innerService.GetUsageRecordsAsync(apiKeyId, startDate, endDate, cancellationToken);
 
     /// <summary>
     /// Calculates total bytes transferred by a consumer
@@ -143,19 +146,21 @@ public sealed class BufferedUsageTrackingService : IUsageTrackingService, IAsync
     /// <param name="consumerId">The consumer identifier</param>
     /// <param name="startDate">Start date of the range</param>
     /// <param name="endDate">End date of the range</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>Total bytes transferred</returns>
-    public Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate)
-        => _innerService.GetTotalBytesUsedAsync(consumerId, startDate, endDate);
+    public Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        => _innerService.GetTotalBytesUsedAsync(consumerId, startDate, endDate, cancellationToken);
 
     /// <summary>
     /// Retrieves all usage records across all API keys within a date range
     /// </summary>
     /// <param name="startDate">Start date of the range</param>
     /// <param name="endDate">End date of the range</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     /// <returns>List of usage records</returns>
     /// <exception cref="ValidationException">Thrown if parameters are invalid</exception>
-    public Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate)
-        => _innerService.GetUsageAsync(startDate, endDate);
+    public Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+        => _innerService.GetUsageAsync(startDate, endDate, cancellationToken);
 
     /// <summary>
     /// Starts the background flusher task that processes buffered records
