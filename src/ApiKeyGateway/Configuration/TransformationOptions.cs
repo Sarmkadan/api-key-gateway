@@ -81,7 +81,8 @@ public sealed class LuaExecutionOptions
 
     /// <summary>
     /// Gets or sets the wall-clock timeout in milliseconds applied per script invocation.
-    /// Scripts that do not complete within this window are abandoned.
+    /// Scripts that do not complete within this window are terminated between Lua instructions,
+    /// so tight loops are stopped as well.
     /// Keep this low (≤ 50 ms) to prevent slow scripts from degrading gateway throughput.
     /// Defaults to <c>50</c> ms.
     /// </summary>
@@ -95,15 +96,19 @@ public sealed class LuaExecutionOptions
     public int MaxScriptSizeBytes { get; set; } = 65_536;
 
     /// <summary>
-    /// Gets or sets the maximum memory in bytes that a Lua script is allowed to consume.
+    /// Gets or sets the maximum managed memory in bytes that a Lua script may allocate while it runs.
     /// Scripts exceeding this limit are terminated and marked as failed.
-    /// Defaults to <c>1 048 576</c> bytes (1 MiB).
+    /// Defaults to <c>67 108 864</c> bytes (64 MiB).
     /// </summary>
     /// <remarks>
-    /// Memory tracking is approximate and measured at intervals during execution.
-    /// Set to <c>0</c> to disable memory enforcement.
+    /// The budget counts bytes allocated on the script's worker thread during execution, not the live
+    /// heap, so it bounds allocation volume rather than peak retained size. The interpreter allocates
+    /// heavily per instruction, so the budget is set well above what a script can allocate within the
+    /// default <see cref="MaxExecutionMs"/>; it acts as a backstop when the timeout is raised. It is
+    /// sampled between Lua instructions, so a single built-in call that allocates a very large result
+    /// finishes before the limit is applied. Set to <c>0</c> to disable memory enforcement.
     /// </remarks>
-    public int MaxMemoryBytes { get; set; } = 1_048_576;
+    public int MaxMemoryBytes { get; set; } = 67_108_864;
 
     /// <summary>
     /// Gets or sets the number of consecutive failures/timeouts after which a script
@@ -121,6 +126,15 @@ public sealed class LuaExecutionOptions
     /// Defaults to <c>300</c> seconds (5 minutes).
     /// </summary>
     public int QuarantineDurationSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets the additional Lua globals that must be blocked in the sandbox environment,
+    /// beyond the built-in defaults (<c>dofile</c>, <c>loadfile</c>, <c>load</c>, <c>require</c>,
+    /// <c>collectgarbage</c>, <c>rawset</c>, <c>rawget</c>, <c>setmetatable</c>).
+    /// Use this to further restrict the available API surface for tenant-supplied scripts.
+    /// Defaults to an empty collection.
+    /// </summary>
+    public IReadOnlyCollection<string> DisallowedGlobals { get; set; } = Array.Empty<string>();
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,9 @@
 using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Events;
 using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.Debugging;
 using MoonSharp.Interpreter.Diagnostics;
+using MoonSharp.Interpreter.Execution;
 using MoonSharp.Interpreter.Loaders;
 
 // =============================================================================
@@ -74,13 +76,18 @@ public interface ILuaScriptExecutor
 /// <para>
 /// Script execution is delegated to a <see cref="Task.Run(System.Action)"/> worker thread so the calling
 /// async context is not blocked. A linked <see cref="CancellationTokenSource"/> enforces the
-/// wall-clock timeout; if the script exceeds the limit the task is abandoned and a timeout
-/// error is recorded — note that a tight CPU-bound loop inside Lua cannot be pre-empted by
-/// cancellation alone, so script authors should keep operations O(1) or O(n) with small n.
+/// wall-clock timeout. The worker is not abandoned: a debugger-based instruction hook polls the
+/// token between Lua instructions, so a runaway script (including a tight loop) is unwound on its
+/// own thread instead of spinning after the caller has given up.
 /// </para>
 /// <para>
-/// Memory usage is monitored during execution. If a script exceeds <see cref="LuaExecutionOptions.MaxMemoryBytes"/>
-/// it is terminated and quarantined after <see cref="LuaExecutionOptions.QuarantineThreshold"/> consecutive failures.
+/// Each invocation allocates a fresh <see cref="Script"/>, so no globals, metatables, or
+/// registry entries survive from one request or API key to the next.
+/// </para>
+/// <para>
+/// The managed allocation budget <see cref="LuaExecutionOptions.MaxMemoryBytes"/> is checked by the
+/// same hook. Exceeding it terminates the script and quarantines it after
+/// <see cref="LuaExecutionOptions.QuarantineThreshold"/> consecutive failures.
 /// </para>
 /// </remarks>
 public sealed class LuaScriptExecutor : ILuaScriptExecutor
@@ -97,8 +104,8 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
     private readonly IEventPublisher _eventPublisher;
     private readonly Dictionary<string, (int failureCount, DateTime quarantineUntil)> _quarantineRegistry = new();
 
-    // Globals that are always stripped from the sandbox environment.
-    private static readonly string[] _blockedGlobals =
+    // Built-in globals that are always stripped from the sandbox environment.
+    private static readonly string[] _builtinBlockedGlobals =
     ["dofile", "loadfile", "load", "require", "collectgarbage", "rawset", "rawget", "setmetatable"];
 
     /// <summary>
@@ -165,7 +172,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         try
         {
             result = await Task.Run(
-                () => RunScriptWithMemoryTracking(script, context, out memoryUsed),
+                () => RunScript(script, context, timeoutCts.Token, out memoryUsed),
                 timeoutCts.Token);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -215,7 +222,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
             HandleScriptFailure(context.ApiKeyId, context.ConsumerId);
             throw new TransformationScriptException($"Lua syntax error: {ex.DecoratedMessage}", ex);
         }
-        catch (OutOfMemoryException ex)
+        catch (LuaAllocationLimitExceededException ex)
         {
             await PublishFailedEvent(
                 context.ApiKeyId,
@@ -281,8 +288,17 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
             errors.Add($"Script exceeds maximum size of {_options.MaxScriptSizeBytes} bytes.");
         }
 
-        // Check for blocked globals via simple string scan before attempting a parse.
-        foreach (var blocked in _blockedGlobals)
+        // Check for built-in blocked globals via simple string scan before attempting a parse.
+        foreach (var blocked in _builtinBlockedGlobals)
+        {
+            if (script.Contains(blocked, StringComparison.Ordinal))
+            {
+                errors.Add($"Use of disallowed global '{blocked}' detected.");
+            }
+        }
+
+        // Check for additionally configured disallowed globals.
+        foreach (var blocked in _options.DisallowedGlobals)
         {
             if (script.Contains(blocked, StringComparison.Ordinal))
             {
@@ -437,143 +453,11 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         return $"{apiKeyId}:{consumerId}";
     }
 
-    private DynValue RunScriptWithMemoryTracking(string source, TransformationContext context, out long memoryUsed)
-    {
-        memoryUsed = 0;
-        var lua = BuildSandbox();
-
-        // Build the `request` global table that scripts read from and write to.
-        var requestTable = new Table(lua);
-        var headersTable = BuildTable(lua, context.Headers);
-        var queryTable = BuildTable(lua, context.QueryParameters);
-
-        requestTable["headers"] = headersTable;
-        requestTable["query"] = queryTable;
-        requestTable["body"] = context.Body ?? (object)DynValue.Nil;
-        requestTable["method"] = context.Method;
-        requestTable["path"] = context.Path;
-        requestTable["ip"] = context.SourceIp;
-        requestTable["consumer_id"] = context.ConsumerId ?? (object)DynValue.Nil;
-        requestTable["api_key_id"] = context.ApiKeyId ?? (object)DynValue.Nil;
-
-        lua.Globals["request"] = requestTable;
-
-        // Set up memory limit enforcement
-        if (_options.MaxMemoryBytes > 0)
-        {
-            long currentMemoryUsage = 0;
-            lua.Options.DebugPrint = s =>
-            {
-                // This callback is invoked during script execution for memory tracking
-                currentMemoryUsage = EstimateMemoryUsage(lua);
-                if (currentMemoryUsage > _options.MaxMemoryBytes)
-                {
-                    throw new OutOfMemoryException(
-                        $"Script exceeded memory limit of {_options.MaxMemoryBytes} bytes (used: {currentMemoryUsage})");
-                }
-            };
-            memoryUsed = currentMemoryUsage;
-        }
-
-        var result = lua.DoString(source);
-
-        // Write mutations back — headers.
-        SyncTableToDict(headersTable, context.Headers);
-
-        // Write mutations back — query parameters.
-        SyncTableToDict(queryTable, context.QueryParameters);
-
-        // Path and method may also have been overwritten.
-        if (requestTable.Get("path") is { Type: DataType.String } pathVal)
-        {
-            context.Path = pathVal.String;
-        }
-
-        if (requestTable.Get("method") is { Type: DataType.String } methodVal)
-        {
-            context.Method = methodVal.String;
-        }
-
-        // If the script wrote a block_reason string, capture it.
-        if (requestTable.Get("block_reason") is { Type: DataType.String } reasonVal)
-        {
-            context.BlockReason = reasonVal.String;
-        }
-
-        memoryUsed = EstimateMemoryUsage(lua);
-        return result;
-    }
-
-    private long EstimateMemoryUsage(Script lua)
-    {
-        // Approximate memory usage estimation
-        // This is a heuristic since MoonSharp doesn't expose precise memory metrics
-        long total = 0;
-
-        // Estimate global table size
-        if (lua.Globals != null)
-        {
-            total += EstimateTableSize(DynValue.NewTable(lua.Globals));
-        }
-
-        // Estimate registry size
-        if (lua.Registry != null)
-        {
-            total += EstimateTableSize(DynValue.NewTable(lua.Registry));
-        }
-
-        return total;
-    }
-
-    private long EstimateTableSize(DynValue tableValue)
-    {
-        if (tableValue.IsNil() || tableValue.Type != DataType.Table)
-        {
-            return 0;
-        }
-
-        var table = tableValue.Table!;
-        long size = 0;
-
-        // Count array part
-        for (int i = 1; i <= table.Length; i++)
-        {
-            var value = table.Get(i);
-            size += EstimateDynValueSize(value);
-        }
-
-        // Count hash part
-        foreach (var pair in table.Pairs)
-        {
-            size += EstimateDynValueSize(pair.Key);
-            size += EstimateDynValueSize(pair.Value);
-        }
-
-        return size;
-    }
-
-    private long EstimateDynValueSize(DynValue value)
-    {
-        if (value.IsNil())
-        {
-            return 0;
-        }
-
-        return value.Type switch
-        {
-            DataType.String => value.String?.Length * sizeof(char) ?? 0,
-            DataType.Number => sizeof(double),
-            DataType.Boolean => sizeof(bool),
-            DataType.Table => EstimateTableSize(DynValue.NewTable(value.Table)),
-            DataType.Function => 1024, // Approximate function size
-            DataType.UserData => 512, // Approximate userdata size
-            DataType.TailCallRequest => 256,
-            DataType.Void => 0,
-            _ => 128 // Default size for unknown types
-        };
-    }
-
-    private DynValue RunScript(string source, TransformationContext context)
+    private DynValue RunScript(
+        string source,
+        TransformationContext context,
+        CancellationToken cancellationToken,
+        out long memoryUsed)
     {
         var lua = BuildSandbox();
 
@@ -593,7 +477,22 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
 
         lua.Globals["request"] = requestTable;
 
-        var result = lua.DoString(source);
+        // Compile before the guard is attached so parser allocations are not charged to the script.
+        var chunk = lua.LoadString(source);
+
+        var guard = new LuaExecutionGuard(cancellationToken, _options.MaxMemoryBytes);
+        lua.AttachDebugger(guard);
+        lua.DebuggerEnabled = true;
+
+        DynValue result;
+        try
+        {
+            result = lua.Call(chunk);
+        }
+        finally
+        {
+            memoryUsed = guard.AllocatedBytes;
+        }
 
         // Write mutations back — headers.
         SyncTableToDict(headersTable, context.Headers);
@@ -621,7 +520,7 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
         return result;
     }
 
-    private static Script BuildSandbox()
+    private Script BuildSandbox()
     {
         var lua = new Script(SandboxModules)
         {
@@ -632,8 +531,14 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
             }
         };
 
-        // Remove any remaining dangerous globals.
-        foreach (var g in _blockedGlobals)
+        // Remove built-in dangerous globals.
+        foreach (var g in _builtinBlockedGlobals)
+        {
+            lua.Globals[g] = DynValue.Nil;
+        }
+
+        // Remove additionally configured disallowed globals.
+        foreach (var g in _options.DisallowedGlobals)
         {
             lua.Globals[g] = DynValue.Nil;
         }
@@ -673,6 +578,71 @@ public sealed class LuaScriptExecutor : ILuaScriptExecutor
                 target[pair.Key.String] = pair.Value.String;
             }
         }
+    }
+
+    // Instruction-level hook. MoonSharp polls IsPauseRequested between Lua instructions, so throwing
+    // from it unwinds the interpreter on the worker thread, including tight loops that never yield.
+    private sealed class LuaExecutionGuard : IDebugger
+    {
+        // Allocation sampling interval in polls; the counter read is cheap but not free.
+        private const int AllocationCheckInterval = 64;
+
+        private readonly CancellationToken _cancellationToken;
+        private readonly long _allocationBudget;
+        private readonly long _startAllocatedBytes;
+        private int _polls;
+
+        public LuaExecutionGuard(CancellationToken cancellationToken, long allocationBudget)
+        {
+            _cancellationToken = cancellationToken;
+            _allocationBudget = allocationBudget;
+            _startAllocatedBytes = GC.GetAllocatedBytesForCurrentThread();
+        }
+
+        /// <summary>Gets the managed bytes allocated on the executing thread since the guard was created.</summary>
+        public long AllocatedBytes => GC.GetAllocatedBytesForCurrentThread() - _startAllocatedBytes;
+
+        public bool IsPauseRequested()
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+
+            if (_allocationBudget > 0
+                && ++_polls % AllocationCheckInterval == 0
+                && AllocatedBytes > _allocationBudget)
+            {
+                throw new LuaAllocationLimitExceededException(AllocatedBytes);
+            }
+
+            return false;
+        }
+
+        public DebuggerAction GetAction(int ip, SourceRef sourceref) =>
+            new() { Action = DebuggerAction.ActionType.Run };
+
+        public DebuggerCaps GetDebuggerCaps() => DebuggerCaps.CanDebugSourceCode;
+
+        public List<DynamicExpression> GetWatchItems() => [];
+
+        public void RefreshBreakpoints(IEnumerable<SourceRef> refs) { }
+
+        public void SetByteCode(string[] byteCode) { }
+
+        public void SetDebugService(DebugService debugService) { }
+
+        public void SetSourceCode(SourceCode sourceCode) { }
+
+        public void SignalExecutionEnded() { }
+
+        public bool SignalRuntimeException(ScriptRuntimeException ex) => false;
+
+        public void Update(WatchType watchType, IEnumerable<WatchItem> items) { }
+    }
+
+    // Raised by LuaExecutionGuard when a script's allocation budget is exhausted.
+    private sealed class LuaAllocationLimitExceededException(long allocatedBytes) : Exception(
+        $"Lua script allocated {allocatedBytes} bytes, exceeding its memory limit.")
+    {
+        public long AllocatedBytes { get; } = allocatedBytes;
     }
 
     // Prevents scripts from using `dofile`, `loadfile`, or `require` to load external Lua files.
