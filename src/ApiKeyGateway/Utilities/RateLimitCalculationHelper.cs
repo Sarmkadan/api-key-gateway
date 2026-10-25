@@ -15,6 +15,10 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public static class RateLimitCalculationHelper
 {
+    private const int WarningThresholdPercent = 80;
+    private const int CriticalThresholdPercent = 90;
+    private const int MaxPercent = 100;
+
     /// <summary>
     /// Calculates the window end time based on the limit unit.
     /// For example, if current time is 14:23:45 and unit is HOUR,
@@ -118,8 +122,8 @@ public static class RateLimitCalculationHelper
             currentUsage = 0;
         }
 
-        var percentage = (currentUsage * 100) / limit;
-        return Math.Min(100, percentage);
+        var percentage = (currentUsage * MaxPercent) / limit;
+        return Math.Min(MaxPercent, percentage);
     }
 
     /// <summary>
@@ -133,7 +137,7 @@ public static class RateLimitCalculationHelper
     {
         ArgumentOutOfRangeException.ThrowIfNegative(percentage);
 
-        return percentage >= 80;
+        return percentage >= WarningThresholdPercent;
     }
 
     /// <summary>
