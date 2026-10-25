@@ -18,6 +18,18 @@ public static class CryptoHelpers
     private const string AlphanumericAlphabet =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+    /// <summary>Message for the <see cref="ArgumentException"/> thrown when a random string length is not positive.</summary>
+    private const string LengthMustBePositiveMessage = "Length must be positive";
+
+    /// <summary>Message for the <see cref="ArgumentException"/> thrown when the hash input is empty or whitespace.</summary>
+    private const string InputCannotBeEmptyMessage = "Input cannot be empty";
+
+    /// <summary>Message for the <see cref="ArgumentException"/> thrown when the HMAC message is empty or whitespace.</summary>
+    private const string MessageCannotBeEmptyMessage = "Message cannot be empty";
+
+    /// <summary>Message for the <see cref="ArgumentException"/> thrown when the HMAC secret is empty or whitespace.</summary>
+    private const string SecretCannotBeEmptyMessage = "Secret cannot be empty";
+
     /// <summary>
     /// Generates a cryptographically secure random string.
     /// Delegates to <see cref="RandomNumberGenerator.GetString"/>, which performs
@@ -29,7 +41,7 @@ public static class CryptoHelpers
     {
         if (length <= 0)
         {
-            throw new ArgumentException("Length must be positive", nameof(length));
+            throw new ArgumentException(LengthMustBePositiveMessage, nameof(length));
         }
 
         return RandomNumberGenerator.GetString(AlphanumericAlphabet, length);
@@ -44,7 +56,7 @@ public static class CryptoHelpers
     {
         if (string.IsNullOrWhiteSpace(input))
         {
-            throw new ArgumentException("Input cannot be empty", nameof(input));
+            throw new ArgumentException(InputCannotBeEmptyMessage, nameof(input));
         }
 
         int maxBytes = Encoding.UTF8.GetMaxByteCount(input.Length);
@@ -88,12 +100,12 @@ public static class CryptoHelpers
     {
         if (string.IsNullOrWhiteSpace(message))
         {
-            throw new ArgumentException("Message cannot be empty", nameof(message));
+            throw new ArgumentException(MessageCannotBeEmptyMessage, nameof(message));
         }
 
         if (string.IsNullOrWhiteSpace(secret))
         {
-            throw new ArgumentException("Secret cannot be empty", nameof(secret));
+            throw new ArgumentException(SecretCannotBeEmptyMessage, nameof(secret));
         }
 
         int maxSecretBytes = Encoding.UTF8.GetMaxByteCount(secret.Length);
