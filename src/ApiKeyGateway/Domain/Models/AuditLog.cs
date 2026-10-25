@@ -71,6 +71,8 @@ public class AuditLog
     /// <param name="newValue">New value</param>
     public void RecordChange(string fieldName, object? oldValue, object? newValue)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
         Changes[fieldName] = new
         {
             Old = oldValue,
