@@ -24,6 +24,9 @@ public sealed class RequestLoggingMiddleware
     /// <param name="logger">Logger for request and response diagnostics</param>
     public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _next = next;
         _logger = logger;
     }
