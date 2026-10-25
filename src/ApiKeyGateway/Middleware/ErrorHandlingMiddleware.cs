@@ -63,6 +63,7 @@ public sealed class ErrorHandlingMiddleware
                 ex.Limit,
                 ex.WindowInSeconds),
             UnauthorizedAccessException => GatewayProblemDetailsFactory.CreateUnauthorizedAccessProblem(context),
+            KeyStoreUnavailableException => GatewayProblemDetailsFactory.CreateServiceUnavailableProblem(context),
             DataAccessException => GatewayProblemDetailsFactory.CreateInternalServerErrorProblem(context),
             _ => GatewayProblemDetailsFactory.CreateInternalServerErrorProblem(context)
         };
