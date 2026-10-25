@@ -50,4 +50,11 @@ public sealed record RequestContext
     /// The page size extracted from query parameters (defaults to 50, capped at 1000).
     /// </summary>
     public int PageSize { get; init; } = 50;
+
+    /// <summary>
+    /// Returns a string representation of the request context.
+    /// The API key is intentionally excluded to avoid leaking secrets into logs.
+    /// </summary>
+    public override string ToString() =>
+        $"RequestContext {{ CorrelationId = {CorrelationId}, ClientIpAddress = {ClientIpAddress}, RequestScope = {RequestScope} }}";
 }
