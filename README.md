@@ -794,3 +794,63 @@ The full guide is in [CONTRIBUTING.md](CONTRIBUTING.md). The essentials:
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Troubleshooting
+
+### Host fails to start with a rate limiting error
+
+`RateLimitingOptionsValidator` runs with `ValidateOnStart`, so an invalid `RateLimiting` section stops the host before it accepts traffic. The exception lists every problem at once. Common causes:
+
+- **Policy window is not a supported unit.** `WindowSeconds` must be between 1 and 86400 and equal 1, 60, 3600 or 86400.
+- **`RequestsPerUnit` is zero or negative.** Both policies and per-key overrides need a positive value.
+- **Key override references an unknown policy.** Each `KeyOverrides` entry's `Policy` must match a key in `RateLimiting:Policies`. Names are case-insensitive.
+- **Override has no policy name.** `Policy` is required on every override, even when `RequestsPerUnit` or `WindowSeconds` is set.
+- **`CircuitBreakerFailureThreshold` below 1**, or a non-positive `CircuitBreakerFailureWindow` or `CircuitBreakerCooldown`.
+
+The rate limit settings live under the top-level `RateLimiting` section, not under `Gateway`:
+
+```json
+{
+  "RateLimiting": {
+    "FailurePolicy": "FailClosed",
+    "CircuitBreakerFailureThreshold": 5,
+    "CircuitBreakerFailureWindow": "00:00:30",
+    "CircuitBreakerCooldown": "00:00:30",
+    "Policies": {
+      "free": { "RequestsPerUnit": 100, "WindowSeconds": 60 }
+    },
+    "KeyOverrides": {
+      "<api-key-id>": { "Policy": "free", "RequestsPerUnit": 500 }
+    }
+  }
+}
+```
+
+Settings placed under `Gateway:RateLimiting` are not read. The `Gateway:RateLimiting` example earlier in this README uses keys (`DefaultLimit`, `WindowInSeconds`) that the gateway does not bind.
+
+### Clients receive 503 Service Unavailable
+
+A 503 means the key store or rate limit store could not be reached, and the gateway is failing closed by design.
+
+- `RateLimiting:FailurePolicy` defaults to `FailClosed`. With a store outage, rate-limited requests return 503 until the store recovers. Set `FailOpen` only if availability matters more than strict enforcement. A `FailOpen` outage then skips limit checks entirely.
+- `Gateway:FailOpenOnKeyStoreUnavailable` (default `false`) controls authentication when the key store is down. Leave it `false` unless you accept unauthenticated traffic during an outage.
+- The circuit breaker skips the store for `CircuitBreakerCooldown` after `CircuitBreakerFailureThreshold` failures inside `CircuitBreakerFailureWindow`. Requests during that window follow `FailurePolicy` without touching the store, so a 503 can persist briefly after the database recovers.
+- Check `GET /health`. It returns 503 when the key store is unreachable. The store error text is written to the log, not to the response.
+
+### Cache connectivity
+
+The default registration uses `AddMemoryCache` with a 100 MB size limit and `InMemoryCacheProvider`. There is no external cache to connect to. At startup, `CachingConfiguration.ValidateCacheConfiguration` writes and reads a test key. A failure there means the in-process cache is broken, which usually points to an exhausted memory limit or a host-level problem, not a network issue.
+
+If you swap in a distributed cache, the registration is commented out in `CachingConfiguration`. Configure its connection string and verify connectivity before startup.
+
+### Missing environment variables or connection string
+
+- **`Connection string 'DefaultConnection' not found.`** Program startup and `AddGatewayServices` both require `ConnectionStrings:DefaultConnection`. Set it in `appsettings.json`, in `appsettings.{Environment}.json`, or as an environment variable named `ConnectionStrings__DefaultConnection`.
+- **`UsageTracking:StoreProvider must be set.`** and **`UsageTracking:StoreProvider '...' is not supported.`** The only supported value is `SqlServer`. The check is case-insensitive.
+- **`UsageTracking:RetentionDays must cover at least one UsageTracking:FlushInterval.`** Retention must be longer than the flush interval. Also check that `RetentionDays` is greater than zero.
+- **`Gateway configuration section 'Gateway' is missing or invalid.`** The `Gateway` section must exist, even if it contains only defaults.
+- **Environment variables not applied.** Use the double underscore form (`RateLimiting__FailurePolicy=FailOpen`, `RateLimiting__Policies__free__RequestsPerUnit=100`). A single underscore is not parsed as a section separator.
+
+### HTTPS redirect loops or requests rejected
+
+`Gateway:RequireSsl` defaults to `true`. Program startup then calls `UseHttpsRedirection`, so plain HTTP requests are redirected to HTTPS. Behind a TLS-terminating proxy, either forward the HTTPS scheme correctly or set `RequireSsl` to `false` for that environment.
