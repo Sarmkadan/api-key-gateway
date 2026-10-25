@@ -2,6 +2,8 @@
 
 A self-hosted ASP.NET Core API key authentication gateway with rate limiting, usage quotas, audit logging, and request transformation. Backed by SQL Server via raw ADO.NET. Also packaged as NuGet `Zaiets.api.key.gateway`.
 
+New to the project? Start with [docs/getting-started.md](docs/getting-started.md).
+
 ## Architecture
 
 For the system design, request pipeline, and component layout, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/architecture.md](docs/architecture.md).
