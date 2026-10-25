@@ -779,6 +779,18 @@ Other: `benchmarks/api-key-gateway.Benchmarks/` (BenchmarkDotNet), `examples/` (
 - Classes that are not meant for inheritance are `sealed`; models use `init` setters.
 - Do not commit `.aider*`, `bin/`, `obj/`, `appsettings.Development.json` (gitignored). `CHANGELOG.md` exists but history lives in git.
 
+## Contributing
+
+The full guide is in [CONTRIBUTING.md](CONTRIBUTING.md). The essentials:
+
+- **Build and test before opening a PR.** Run `dotnet build --no-restore --configuration Release` on the whole solution (what CI runs) and `dotnet test --no-build`. Warnings are errors (`TreatWarningsAsErrors` in `Directory.Build.props`).
+- **Follow `.editorconfig`.** Four-space indent, LF line endings, Allman braces, file-scoped namespaces that match the folder, one primary type per file. `dotnet format` applies the rules and `dotnet format --verify-no-changes` checks them.
+- **Document public members.** `GenerateDocumentationFile` is enabled for the app, so public types and members in `src/ApiKeyGateway` need `/// <summary>` XML comments or the build reports CS1591.
+- **Guard clauses.** Use `ArgumentNullException.ThrowIfNull(argument)` for null checks. The helpers in `src/ApiKeyGateway/Validation/Guard.cs` cover the other cases (`NotNullOrWhiteSpace`, `NotNullOrEmpty`, `Positive`, `NonNegative`, `InRange`, `NotEmpty`, `MinCount`, `NotDefault`, `Against`). `Guard.NotNull` is marked `[Obsolete]`, so don't use it in new code.
+- **Commit messages use Conventional Commits:** `type: summary` or `type(scope): summary`, where type is one of `feat`, `fix`, `refactor`, `docs`, `test`, `style`, or `chore`. Keep the summary short, lowercase, and in the imperative mood (for example, `fix: return 503 when rate limit store is unavailable`).
+- **Keep changes focused.** One logical change per PR. Add or update tests for behavior changes and bug fixes.
+- **Never commit secrets or local files.** Keep `appsettings.Development.json`, `.aider*`, `bin/`, and `obj/` out of git. Report security issues privately, as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
