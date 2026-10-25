@@ -33,4 +33,7 @@ public sealed class CoalescingMetrics
     /// </summary>
     public double CoalescingRatio =>
         TotalRequests == 0 ? 0.0 : (double)CoalescedRequests / TotalRequests;
+
+    /// <inheritdoc />
+    public override string ToString() => $"CoalescingMetrics {{ TotalRequests = {TotalRequests}, CoalescedRequests = {CoalescedRequests}, ActiveRequests = {ActiveRequests}, CoalescingRatio = {CoalescingRatio} }}";
 }
