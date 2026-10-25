@@ -78,6 +78,9 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     /// <param name="latencyMs">Request latency in milliseconds</param>
     public void RecordRequest(string apiKeyId, string endpoint, int statusCode, long latencyMs)
     {
+        ArgumentNullException.ThrowIfNull(apiKeyId);
+        ArgumentNullException.ThrowIfNull(endpoint);
+
         var key = $"{apiKeyId}:{endpoint}";
         _requestCounters.AddOrUpdate(key, 1, (_, v) => v + 1);
         _latencies.Enqueue(latencyMs);
@@ -99,6 +102,8 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     /// <param name="apiKeyId">Identifier of the API key that exceeded rate limits</param>
     public void RecordRateLimitExceeded(string apiKeyId)
     {
+        ArgumentNullException.ThrowIfNull(apiKeyId);
+
         _rateLimitCounters.AddOrUpdate(apiKeyId, 1, (_, v) => v + 1);
     }
 
@@ -109,6 +114,9 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     /// <param name="errorCode">Error code to record</param>
     public void RecordError(string apiKeyId, string errorCode)
     {
+        ArgumentNullException.ThrowIfNull(apiKeyId);
+        ArgumentNullException.ThrowIfNull(errorCode);
+
         _errorCounters.AddOrUpdate(errorCode, 1, (_, v) => v + 1);
     }
 
