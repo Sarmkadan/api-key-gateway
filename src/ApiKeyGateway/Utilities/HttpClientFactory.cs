@@ -18,6 +18,11 @@ public static class HttpClientFactory
 {
     private const int DefaultTimeoutSeconds = 30;
     private const int MaxRetries = 3;
+    private const int PooledConnectionLifetimeMinutes = 2;
+    private const int PooledConnectionIdleTimeoutMinutes = 1;
+    private const int MaxConnectionsPerServer = 10;
+    private const int WebhookTimeoutSeconds = 60;
+    private const int ExternalApiTimeoutSeconds = 45;
 
     /// <summary>
     /// Creates a configured HttpClient with default settings.
@@ -28,10 +33,10 @@ public static class HttpClientFactory
         var handler = new SocketsHttpHandler
         {
             AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(PooledConnectionLifetimeMinutes),
             // Connection pooling prevents socket exhaustion
-            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
-            MaxConnectionsPerServer = 10
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(PooledConnectionIdleTimeoutMinutes),
+            MaxConnectionsPerServer = MaxConnectionsPerServer
         };
 
         var client = new HttpClient(handler)
@@ -52,7 +57,7 @@ public static class HttpClientFactory
     public static HttpClient CreateWebhookClient()
     {
         var client = CreateClient("ApiKeyGateway-WebhookDelivery/1.0");
-        client.Timeout = TimeSpan.FromSeconds(60);
+        client.Timeout = TimeSpan.FromSeconds(WebhookTimeoutSeconds);
         return client;
     }
 
@@ -64,7 +69,7 @@ public static class HttpClientFactory
         var ua = string.IsNullOrEmpty(apiName) ? "ApiKeyGateway/1.0" : $"ApiKeyGateway-{apiName}/1.0";
         var client = CreateClient(ua);
         // External APIs may have rate limiting, so we use slightly higher timeout
-        client.Timeout = TimeSpan.FromSeconds(45);
+        client.Timeout = TimeSpan.FromSeconds(ExternalApiTimeoutSeconds);
         return client;
     }
 }
