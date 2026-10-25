@@ -10,6 +10,12 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public static class DateTimeExtensions
 {
+    private const int SecondsPerMinute = 60;
+    private const int SecondsPerHour = 3600;
+    private const int SecondsPerDay = 86400;
+    private const int DaysPerWeek = 7;
+    private const int DaysPerMonth = 30;
+
     /// <summary>
     /// Gets the start of the current day (00:00:00)
     /// </summary>
@@ -39,7 +45,7 @@ public static class DateTimeExtensions
         var diff = (int)date.DayOfWeek - (int)culture.DateTimeFormat.FirstDayOfWeek;
         if (diff < 0)
         {
-            diff += 7;
+            diff += DaysPerWeek;
         }
 
         if (diff > date.Date.Subtract(DateTime.MinValue).TotalDays)
@@ -108,11 +114,11 @@ public static class DateTimeExtensions
 
         return totalSeconds switch
         {
-            < 60 => "just now",
-            < 3600 => $"{(int)timeSpan.TotalMinutes}m ago",
-            < 86400 => $"{(int)timeSpan.TotalHours}h ago",
-            < 86400 * 30 => $"{(int)timeSpan.TotalDays}d ago",
-            _ => $"{(int)(timeSpan.TotalDays / 30)}mo ago"
+            < SecondsPerMinute => "just now",
+            < SecondsPerHour => $"{(int)timeSpan.TotalMinutes}m ago",
+            < SecondsPerDay => $"{(int)timeSpan.TotalHours}h ago",
+            < SecondsPerDay * DaysPerMonth => $"{(int)timeSpan.TotalDays}d ago",
+            _ => $"{(int)(timeSpan.TotalDays / DaysPerMonth)}mo ago"
         };
     }
 }
