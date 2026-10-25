@@ -55,6 +55,8 @@ public interface ICacheProvider
 /// </summary>
 public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
 {
+    private const int PatternMatchTimeoutSeconds = 1;
+
     private readonly IMemoryCache _cache;
     private readonly ILogger<InMemoryCacheProvider> _logger;
     private readonly ConcurrentDictionary<string, long> _counters = new();
@@ -177,7 +179,7 @@ public sealed class InMemoryCacheProvider : ICacheProvider, IDisposable
     private static Regex BuildPatternRegex(string pattern)
     {
         var escaped = Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".");
-        return new Regex($"^{escaped}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+        return new Regex($"^{escaped}$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(PatternMatchTimeoutSeconds));
     }
 
     /// <summary>
