@@ -40,6 +40,13 @@ public record AuthenticationResult
     /// <param name="failureReason">The reason for authentication failure</param>
     public static AuthenticationResult FailureResult(AuthenticationFailureReason failureReason) =>
         new AuthenticationResult { Success = false, FailureReason = failureReason };
+
+    /// <summary>
+    /// Returns a log-safe representation of the result. Only status fields and the API key's ID are included;
+    /// the key hash and prefix are never printed.
+    /// </summary>
+    public override string ToString() =>
+        $"AuthenticationResult {{ Success = {Success}, FailureReason = {FailureReason}, ApiKeyId = {ApiKey?.Id} }}";
 }
 
 /// <summary>
