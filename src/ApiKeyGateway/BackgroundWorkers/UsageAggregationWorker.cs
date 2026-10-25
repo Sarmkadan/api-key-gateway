@@ -31,6 +31,8 @@ public sealed class UsageAggregationWorker : BackgroundServiceBase<UsageAggregat
     public UsageAggregationWorker(IServiceProvider serviceProvider, ILogger<UsageAggregationWorker> logger)
         : base(serviceProvider, logger)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(logger);
     }
 
     /// <inheritdoc/>
