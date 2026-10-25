@@ -25,6 +25,8 @@ public sealed class RateLimitResetScheduler : BackgroundServiceBase<RateLimitRes
     public RateLimitResetScheduler(IServiceProvider serviceProvider, ILogger<RateLimitResetScheduler> logger)
         : base(serviceProvider, logger)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(logger);
     }
 
     /// <inheritdoc/>
