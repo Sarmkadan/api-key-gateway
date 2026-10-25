@@ -17,7 +17,8 @@ public interface IUsageTrackingService
     /// Records a new usage entry for an API key.
     /// </summary>
     /// <param name="record">The usage record to record.</param>
-    Task RecordUsageAsync(UsageRecord record);
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    Task RecordUsageAsync(UsageRecord record, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves aggregated usage statistics for an API key within a date range.
@@ -25,8 +26,9 @@ public interface IUsageTrackingService
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="startDate">Start of the date range.</param>
     /// <param name="endDate">End of the date range.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The aggregated usage statistics.</returns>
-    Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
+    Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves detailed usage records for an API key within a date range.
@@ -34,8 +36,9 @@ public interface IUsageTrackingService
     /// <param name="apiKeyId">The ID of the API key.</param>
     /// <param name="startDate">Start of the date range.</param>
     /// <param name="endDate">End of the date range.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The matching usage records.</returns>
-    Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate);
+    Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Calculates the total bytes transferred by a consumer within a date range.
@@ -43,16 +46,18 @@ public interface IUsageTrackingService
     /// <param name="consumerId">The ID of the consumer.</param>
     /// <param name="startDate">Start of the date range.</param>
     /// <param name="endDate">End of the date range.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The total number of bytes transferred.</returns>
-    Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate);
+    Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all usage records across all API keys within a date range.
     /// </summary>
     /// <param name="startDate">Start of the date range.</param>
     /// <param name="endDate">End of the date range.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>The matching usage records.</returns>
-    Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate);
+    Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -78,7 +83,8 @@ public class UsageTrackingService : IUsageTrackingService
     /// Records a new usage entry for an API key
     /// </summary>
     /// <param name="record">The usage record to record.</param>
-    public async Task RecordUsageAsync(UsageRecord record)
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    public async Task RecordUsageAsync(UsageRecord record, CancellationToken cancellationToken = default)
     {
         if (record == null)
         {
@@ -101,7 +107,7 @@ public class UsageTrackingService : IUsageTrackingService
     /// <summary>
     /// Retrieves usage statistics for an API key within a date range
     /// </summary>
-    public async Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
+    public async Task<UsageStatistics> GetUsageStatisticsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
         {
@@ -142,7 +148,7 @@ public class UsageTrackingService : IUsageTrackingService
     /// <summary>
     /// Retrieves detailed usage records for an API key
     /// </summary>
-    public async Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate)
+    public async Task<List<UsageRecord>> GetUsageRecordsAsync(string apiKeyId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(apiKeyId))
         {
@@ -163,7 +169,7 @@ public class UsageTrackingService : IUsageTrackingService
     /// <summary>
     /// Calculates total bytes transferred by a consumer
     /// </summary>
-    public async Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate)
+    public async Task<long> GetTotalBytesUsedAsync(string consumerId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(consumerId))
         {
@@ -185,7 +191,7 @@ public class UsageTrackingService : IUsageTrackingService
     /// <summary>
     /// Retrieves all usage records across all API keys within a date range
     /// </summary>
-    public async Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate)
+    public async Task<List<UsageRecord>> GetUsageAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         if (endDate < startDate)
         {
