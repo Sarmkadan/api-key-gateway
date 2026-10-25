@@ -1,6 +1,8 @@
+using ApiKeyGateway.Configuration;
 using ApiKeyGateway.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -22,7 +24,7 @@ public class MetricsCollectionServiceTests
     public MetricsCollectionServiceTests()
     {
         _loggerMock = new Mock<ILogger<MetricsCollectionService>>();
-        _sut = new MetricsCollectionService(_loggerMock.Object);
+        _sut = new MetricsCollectionService(_loggerMock.Object, Options.Create(new MetricsOptions()));
     }
 
     /// <summary>

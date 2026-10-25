@@ -54,6 +54,10 @@ public static class ServiceRegistrationExtensions
         services.AddScoped<IDataExportService, DataExportService>();
 
         // Metrics
+        services.AddOptions<MetricsOptions>()
+            .Bind(configuration.GetSection(MetricsOptions.SectionName))
+            .Validate(o => o.MaxLatencySamples > 0, "Metrics:MaxLatencySamples must be greater than zero.")
+            .ValidateOnStart();
         services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
 
         // HTTP clients
