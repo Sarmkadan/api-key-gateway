@@ -107,6 +107,11 @@ public sealed class QuotaAlertStateCache
 /// </summary>
 public class QuotaAlertEvaluator : IQuotaAlertEvaluator
 {
+    /// <summary>
+    /// Multiplier that converts a usage ratio into a percentage (0-100 scale).
+    /// </summary>
+    private const double PercentScale = 100.0;
+
     private readonly IUsageRepository _usageRepository;
     private readonly IUsageQuotaRepository _quotaRepository;
     private readonly IEventPublisher _eventPublisher;
@@ -176,7 +181,7 @@ public class QuotaAlertEvaluator : IQuotaAlertEvaluator
             var periodStart = UsageQuota.GetPeriodStart(now, quota.Period);
             var records = await _usageRepository.GetByConsumerAndDateRangeAsync(consumerId, periodStart, now);
             var currentUsage = (long)records.Count;
-            var percentUsed = currentUsage * 100.0 / quota.QuotaLimit;
+            var percentUsed = currentUsage * PercentScale / quota.QuotaLimit;
 
             foreach (var threshold in thresholds)
             {
