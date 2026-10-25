@@ -854,3 +854,41 @@ If you swap in a distributed cache, the registration is commented out in `Cachin
 ### HTTPS redirect loops or requests rejected
 
 `Gateway:RequireSsl` defaults to `true`. Program startup then calls `UseHttpsRedirection`, so plain HTTP requests are redirected to HTTPS. Behind a TLS-terminating proxy, either forward the HTTPS scheme correctly or set `RequireSsl` to `false` for that environment.
+
+## Security Considerations
+
+### How API keys are hashed
+
+Raw key values are never stored. `ApiKeyHasher` (`src/ApiKeyGateway/Utilities/ApiKeyHasher.cs`) hashes each key with a fresh 16-byte salt from `RandomNumberGenerator`, then applies SHA-256 100,000 times. The stored value has the form `v1$<base64 salt>$<base64 hash>`, and the version prefix leaves room for future schemes. This is iterated SHA-256, not a memory-hard KDF such as Argon2 or scrypt, so the strength of stored hashes depends on the entropy of the generated keys. `ApiKeyHasher.Verify` compares hashes with `CryptographicOperations.FixedTimeEquals` to avoid timing leaks, and returns `false` instead of throwing on malformed input.
+
+### How requests are authenticated
+
+`ApiKeyAuthenticationMiddleware` (`src/ApiKeyGateway/Middleware/ApiKeyAuthenticationMiddleware.cs`) looks for a key in this order:
+
+1. The `X-API-Key` header.
+2. The `Authorization: Bearer <key>` header.
+3. The `api_key` query string parameter.
+
+Prefer the header. Query-string keys can end up in access logs, proxy logs, and browser history.
+
+Requests that carry no key are passed through to the next middleware. Authentication is enforced only when a key is present, so each protected endpoint must have its own authorization. The admin endpoints do this with standard ASP.NET Core authentication.
+
+When a key is present, the middleware runs these checks in order:
+
+- **Key lookup and status.** `AuthenticationService.AuthenticateAsync` returns a specific failure for a missing, unknown, expired, or disabled key. The middleware maps each failure to a problem response.
+- **IP allow-list.** Applied during authentication (see below).
+- **Scope allow-list.** Applied after authentication. A rejected path gets the route-scope-restricted problem response.
+- **Usage quota.** A daily or monthly cap that returns the quota-exceeded problem response when reached.
+- **Rate limit.** A per-key limit that returns 429 when exceeded.
+
+If the key store is unavailable, the gateway fails closed and returns 503. The `FailOpenOnKeyStoreUnavailable` setting exists in the gateway configuration, but the middleware does not read it yet, so setting it has no effect.
+
+### IP allow-listing
+
+`ApiKey.IsIpAllowed` (`src/ApiKeyGateway/Domain/Models/ApiKey.cs`) reads the key's `IpWhitelist` field, a comma-separated list of addresses. An empty field allows all clients. Otherwise the client address must match one entry exactly. CIDR ranges are not supported.
+
+The client address comes from the first entry in `X-Forwarded-For` when that header is present, and from the connection's remote address otherwise. The gateway does not check whether the header came from a trusted proxy. Any client that can reach the gateway directly can send a spoofed `X-Forwarded-For` and bypass an IP allow-list. Only deploy with an IP allow-list behind a proxy that overwrites this header, or with the gateway reachable only through that proxy.
+
+### Scope allow-listing
+
+`ApiKey.IsScopeAllowed` reads the key's `AllowedScopes` field, a comma-separated list of path prefixes. An empty field allows all paths. Otherwise the request path must start with one of the prefixes, compared case-insensitively. Prefix matching has no path-segment boundary, so `/api/orders` also matches `/api/orders-admin`. End prefixes with `/` when the boundary matters, for example `/api/orders/`.
