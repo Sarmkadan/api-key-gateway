@@ -66,6 +66,11 @@ public sealed class DataExportService : IDataExportService
         IUsageRepository usageRepository,
         ILogger<DataExportService> logger)
     {
+        ArgumentNullException.ThrowIfNull(apiKeyRepository);
+        ArgumentNullException.ThrowIfNull(auditLogRepository);
+        ArgumentNullException.ThrowIfNull(usageRepository);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _apiKeyRepository = apiKeyRepository;
         _auditLogRepository = auditLogRepository;
         _usageRepository = usageRepository;
@@ -79,6 +84,7 @@ public sealed class DataExportService : IDataExportService
     /// <returns>The serialized API key data as a string.</returns>
     public async Task<string> ExportApiKeysAsync(string format)
     {
+        ArgumentNullException.ThrowIfNull(format);
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         _logger.LogInformation("Exporting API keys in {Format} format", format);
@@ -117,6 +123,7 @@ public sealed class DataExportService : IDataExportService
     /// <returns>The serialized audit log data as a string.</returns>
     public async Task<string> ExportAuditLogsAsync(string format, DateTime? since = null)
     {
+        ArgumentNullException.ThrowIfNull(format);
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         _logger.LogInformation(
@@ -160,6 +167,7 @@ public sealed class DataExportService : IDataExportService
     /// <returns>The serialized usage data as a string.</returns>
     public async Task<string> ExportUsageAsync(string format, DateTime startDate, DateTime endDate)
     {
+        ArgumentNullException.ThrowIfNull(format);
         ArgumentException.ThrowIfNullOrEmpty(nameof(format));
 
         if (endDate < startDate)
