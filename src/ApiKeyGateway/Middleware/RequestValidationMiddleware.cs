@@ -26,6 +26,9 @@ public sealed class RequestValidationMiddleware
     /// <param name="logger">Logger for validation diagnostics</param>
     public RequestValidationMiddleware(RequestDelegate next, ILogger<RequestValidationMiddleware> logger)
     {
+        ArgumentNullException.ThrowIfNull(next);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _next = next;
         _logger = logger;
     }
