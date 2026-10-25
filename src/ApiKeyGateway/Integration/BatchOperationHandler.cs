@@ -96,6 +96,8 @@ public sealed class BatchOperationHandler : IBatchOperationHandler
     /// <param name="logger">The logger.</param>
     public BatchOperationHandler(ILogger<BatchOperationHandler> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+
         _logger = logger;
     }
 
