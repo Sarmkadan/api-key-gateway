@@ -41,10 +41,7 @@ public sealed class KeyRotationScheduler : BackgroundServiceBase<KeyRotationSche
         IConfiguration configuration)
         : base(serviceProvider, logger)
     {
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
+        ArgumentNullException.ThrowIfNull(configuration);
 
         var section = configuration.GetSection("KeyRotation");
         _checkInterval = TimeSpan.FromHours(section.GetValue("CheckIntervalHours", 24));
