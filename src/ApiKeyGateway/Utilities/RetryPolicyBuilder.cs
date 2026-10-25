@@ -12,10 +12,15 @@ namespace ApiKeyGateway.Utilities;
 /// </summary>
 public sealed class RetryPolicyBuilder
 {
-    private int _maxRetries = 3;
-    private int _initialDelayMs = 100;
-    private double _backoffMultiplier = 2.0;
-    private int _maxDelayMs = 30000;
+    private const int DefaultMaxRetries = 3;
+    private const int DefaultInitialDelayMs = 100;
+    private const double DefaultBackoffMultiplier = 2.0;
+    private const int DefaultMaxDelayMs = 30000;
+
+    private int _maxRetries = DefaultMaxRetries;
+    private int _initialDelayMs = DefaultInitialDelayMs;
+    private double _backoffMultiplier = DefaultBackoffMultiplier;
+    private int _maxDelayMs = DefaultMaxDelayMs;
     private readonly List<Type> _retryableExceptions = new();
 
     /// <summary>
