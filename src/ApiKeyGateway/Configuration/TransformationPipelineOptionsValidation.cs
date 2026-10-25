@@ -70,6 +70,29 @@ public static class TransformationPipelineOptionsValidation
             {
                 errors.Add("Lua.MaxScriptSizeBytes must be a positive integer greater than zero.");
             }
+
+            // Validate Lua.MaxMemoryBytes (0 disables memory enforcement)
+            if (value.Lua.MaxMemoryBytes < 0)
+            {
+                errors.Add("Lua.MaxMemoryBytes cannot be negative.");
+            }
+
+            // Validate Lua.DisallowedGlobals
+            if (value.Lua.DisallowedGlobals is null)
+            {
+                errors.Add("Lua.DisallowedGlobals cannot be null.");
+            }
+            else
+            {
+                foreach (var global in value.Lua.DisallowedGlobals)
+                {
+                    if (string.IsNullOrWhiteSpace(global))
+                    {
+                        errors.Add("Lua.DisallowedGlobals cannot contain empty or whitespace-only entries.");
+                        break;
+                    }
+                }
+            }
         }
 
         return errors.AsReadOnly();
