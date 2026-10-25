@@ -905,3 +905,7 @@ The `benchmarks/api-key-gateway.Benchmarks/` project (BenchmarkDotNet) measures 
 - [CacheKeyGenerationBenchmarks](docs/CacheKeyGenerationBenchmarks.md): cache key construction for rate limiting, key lookup, and quota checks.
 - [ApiKeyValidationBenchmarks](docs/ApiKeyValidationBenchmarks.md): format, name, and quota validation of API keys.
 - [RateLimitBenchmarks](docs/RateLimitBenchmarks.md): rate limit window boundaries and quota usage calculations.
+
+## FAQ
+
+Answers to frequently asked questions are in [docs/faq.md](docs/faq.md).
