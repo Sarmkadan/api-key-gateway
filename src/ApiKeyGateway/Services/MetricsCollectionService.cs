@@ -4,6 +4,8 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using ApiKeyGateway.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace ApiKeyGateway.Services;
 
@@ -52,16 +54,19 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     private readonly ConcurrentDictionary<string, long> _requestCounters = new();
     private readonly ConcurrentDictionary<string, long> _rateLimitCounters = new();
     private readonly ConcurrentDictionary<string, long> _errorCounters = new();
-    private readonly ConcurrentBag<long> _latencies = new();
+    private readonly ConcurrentQueue<long> _latencies = new();
     private readonly ILogger<MetricsCollectionService> _logger;
+    private readonly int _maxLatencySamples;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MetricsCollectionService"/> class.
     /// </summary>
     /// <param name="logger">Logger used for diagnostics</param>
-    public MetricsCollectionService(ILogger<MetricsCollectionService> logger)
+    /// <param name="options">Metrics options controlling the latency sample buffer size</param>
+    public MetricsCollectionService(ILogger<MetricsCollectionService> logger, IOptions<MetricsOptions> options)
     {
         _logger = logger;
+        _maxLatencySamples = options.Value.MaxLatencySamples;
     }
 
     /// <summary>
@@ -75,7 +80,11 @@ public sealed class MetricsCollectionService : IMetricsCollectionService
     {
         var key = $"{apiKeyId}:{endpoint}";
         _requestCounters.AddOrUpdate(key, 1, (_, v) => v + 1);
-        _latencies.Add(latencyMs);
+        _latencies.Enqueue(latencyMs);
+        if (_latencies.Count > _maxLatencySamples)
+        {
+            _latencies.TryDequeue(out _);
+        }
 
         if (statusCode >= 400)
         {
