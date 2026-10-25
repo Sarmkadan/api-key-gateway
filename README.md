@@ -783,6 +783,10 @@ Other: `benchmarks/api-key-gateway.Benchmarks/` (BenchmarkDotNet), `examples/` (
 - Classes that are not meant for inheritance are `sealed`; models use `init` setters.
 - Do not commit `.aider*`, `bin/`, `obj/`, `appsettings.Development.json` (gitignored). `CHANGELOG.md` exists but history lives in git.
 
+## Deployment
+
+For production deployment steps and configuration, see [docs/deployment.md](docs/deployment.md).
+
 ## Contributing
 
 The full guide is in [CONTRIBUTING.md](CONTRIBUTING.md). The essentials:
