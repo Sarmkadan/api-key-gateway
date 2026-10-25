@@ -36,6 +36,10 @@ public sealed class HealthController : ControllerBase
         IDbConnection dbConnection,
         ICacheProvider cacheProvider)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(dbConnection);
+        ArgumentNullException.ThrowIfNull(cacheProvider);
+
         _logger = logger;
         _dbConnection = dbConnection;
         _cacheProvider = cacheProvider;
