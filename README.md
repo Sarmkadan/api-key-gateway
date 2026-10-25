@@ -892,3 +892,12 @@ The client address comes from the first entry in `X-Forwarded-For` when that hea
 ### Scope allow-listing
 
 `ApiKey.IsScopeAllowed` reads the key's `AllowedScopes` field, a comma-separated list of path prefixes. An empty field allows all paths. Otherwise the request path must start with one of the prefixes, compared case-insensitively. Prefix matching has no path-segment boundary, so `/api/orders` also matches `/api/orders-admin`. End prefixes with `/` when the boundary matters, for example `/api/orders/`.
+
+## Performance Benchmarks
+
+The `benchmarks/api-key-gateway.Benchmarks/` project (BenchmarkDotNet) measures the hot paths. Each benchmark class has a reference page in `docs/`:
+
+- [CryptoBenchmarks](docs/CryptoBenchmarks.md): random key generation, SHA-256 and HMAC hashing, and hash verification.
+- [CacheKeyGenerationBenchmarks](docs/CacheKeyGenerationBenchmarks.md): cache key construction for rate limiting, key lookup, and quota checks.
+- [ApiKeyValidationBenchmarks](docs/ApiKeyValidationBenchmarks.md): format, name, and quota validation of API keys.
+- [RateLimitBenchmarks](docs/RateLimitBenchmarks.md): rate limit window boundaries and quota usage calculations.
