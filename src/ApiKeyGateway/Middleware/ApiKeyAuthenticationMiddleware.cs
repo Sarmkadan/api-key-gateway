@@ -176,6 +176,13 @@ public class ApiKeyAuthenticationMiddleware
                 ex.WindowInSeconds);
             await context.WriteProblemAsync(problemDetails);
         }
+        catch (KeyStoreUnavailableException ex)
+        {
+            // Fail-closed rate limiting: the limit store is down, so reject with 503 rather than 500.
+            _logger.LogWarning(ex, "Rate limit store unavailable; rejecting request with 503");
+            var problemDetails = GatewayProblemDetailsFactory.CreateServiceUnavailableProblem(context);
+            await context.WriteProblemAsync(problemDetails);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in authentication middleware");
